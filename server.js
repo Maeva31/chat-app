@@ -23,6 +23,15 @@ const elevatedUsers = {
   'ModoUser': 'modo'
 };
 
+// Vérification du pseudo [USER] et autres contraintes
+function isValidUsername(username) {
+  if (username === '[USER]' || username.length > 16 || /\s/.test(username)) {
+    return false;
+  }
+  return true;
+}
+
+// Connexion de Socket.io
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
   socket.emit('chat history', messageHistory['Général'] || []);
@@ -31,8 +40,12 @@ io.on('connection', (socket) => {
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
-    if (!username || username.length > 16 || /\s/.test(username) ||
-        !age || isNaN(age) || age < 18 || age > 89) {
+    if (!isValidUsername(username)) {
+      socket.emit('username exists', username);
+      return;
+    }
+
+    if (!age || isNaN(age) || age < 18 || age > 89) {
       socket.emit('username exists', username);
       return;
     }
