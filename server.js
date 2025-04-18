@@ -58,7 +58,7 @@ io.on('connection', (socket) => {
     const sender = users.find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général'; // Salon spécifique à l'utilisateur
     const messageToSend = {
-      username: msg.username || "Anonyme",
+      username: sender ? sender.username : "Anonyme",
       gender: sender ? sender.gender : "Non précisé",
       message: msg.message || "",
       timestamp: msg.timestamp || new Date().toISOString(),
@@ -88,6 +88,7 @@ io.on('connection', (socket) => {
       // Retirer l'utilisateur des salons
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
+        io.to(channel).emit('user list', roomUsers[channel].map(user => user.username)); // Mise à jour de la liste des utilisateurs du salon
       }
     } else {
       console.log('❌ Utilisateur inconnu déconnecté');
@@ -96,7 +97,7 @@ io.on('connection', (socket) => {
     // Retirer l'utilisateur de la liste des utilisateurs
     users = users.filter(user => user.id !== socket.id);
     io.emit('user list', users);
-    
+
     // Retirer l'utilisateur des salons
     delete userChannels[socket.id];
   });
@@ -109,7 +110,7 @@ io.on('connection', (socket) => {
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(user => user.id !== socket.id);
     }
-    
+
     socket.leave(oldChannel); // quitte l'ancien salon
     socket.join(channel);     // rejoint le nouveau salon
 
@@ -123,13 +124,16 @@ io.on('connection', (socket) => {
 
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
 
+    // Notifier tous les utilisateurs du salon de l'entrée de l'utilisateur
     io.to(channel).emit('chat message', {
       username: 'Système',
       message: `${socket.id} a rejoint le salon ${channel}`,
       channel
     });
 
+    // Envoi de l'historique des messages et de la liste des utilisateurs dans le salon
     socket.emit('chat history', messageHistory[channel] || []);
+    io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
   });
 
   // Création d'un nouveau salon
