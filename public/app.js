@@ -31,6 +31,17 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  // mise à jour pseudo
+  socket.on('user list', (userList) => {
+  const userListContainer = document.getElementById('user-list');
+  userListContainer.innerHTML = ''; // Réinitialise la liste avant de la remplir
+  userList.forEach(username => {
+    const userItem = document.createElement('li');
+    userItem.textContent = username;
+    userListContainer.appendChild(userItem);
+  });
+});
+  
   // Historique des messages
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
