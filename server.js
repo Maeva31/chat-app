@@ -8,7 +8,7 @@ const io = new Server(server);
 
 // 👑 Définis ici les rôles manuellement par pseudo
 const userRoles = {
-  'Maeva': 'admin',
+  'MaEvA': 'admin',
   'Katia': 'modo',
   'Jean': 'user'
 };
