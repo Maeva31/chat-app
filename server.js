@@ -4,24 +4,24 @@ import { Server } from 'socket.io';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-// Utiliser __dirname en ESM
+// Utiliser __dirname avec ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Initialiser Express et HTTP
+// Création de l'application Express et du serveur HTTP
 const app = express();
 const server = createServer(app);
 const io = new Server(server);
 
-// Fichiers statiques (public/)
+// Définir un répertoire public pour les fichiers statiques
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Route principale
+// Définir la route principale pour la page de chat
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
 
-// --- Données mémoire ---
+// --- Données en mémoire ---
 const users = {};
 const messageHistory = { Général: [] };
 const userChannels = {};
@@ -39,22 +39,26 @@ io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
   socket.emit('chat history', messageHistory['Général'] || []);
 
-  // Authentification
+  // Authentification de l'utilisateur
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
+    // Vérification de l'existence du pseudo
     if (!username || users[username] || bannedUsers[username]) {
       return socket.emit('username exists', username);
     }
 
+    // Vérification de la validité de l'âge
     if (!age || isNaN(age) || age < 18 || age > 89) {
       return socket.emit('username exists', username);
     }
 
+    // Assignation du rôle et ajout de l'utilisateur
     const role = elevatedUsers[username] || defaultRole;
     const userData = { username, gender, age, id: socket.id, role };
     users[username] = userData;
 
+    // Assignation du salon et mise à jour de l'historique
     const channel = userChannels[socket.id] || 'Général';
     userChannels[socket.id] = channel;
     socket.join(channel);
@@ -67,6 +71,7 @@ io.on('connection', (socket) => {
     io.to(channel).emit('user list', getUserListWithoutUser(username, channel));
   });
 
+  // Envoi de message
   socket.on('chat message', (msg) => {
     const sender = Object.values(users).find(user => user.id === socket.id);
     const channel = userChannels[socket.id] || 'Général';
@@ -89,6 +94,7 @@ io.on('connection', (socket) => {
     io.to(channel).emit('chat message', messageToSend);
   });
 
+  // Rejoindre un salon
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
     const user = Object.values(users).find(user => user.id === socket.id);
@@ -114,6 +120,7 @@ io.on('connection', (socket) => {
     });
   });
 
+  // Création d'un salon
   socket.on('createRoom', (newChannel) => {
     if (!messageHistory[newChannel]) {
       messageHistory[newChannel] = [];
@@ -124,6 +131,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Modération : Kick, Ban, Mute
   socket.on('moderation', (action) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
     if (!sender || (sender.role !== 'admin' && sender.role !== 'modo')) {
@@ -157,6 +165,7 @@ io.on('connection', (socket) => {
     console.log(`🛡️ ${sender.username} a utilisé ${command} sur ${target.username}`);
   });
 
+  // Déconnexion
   socket.on('disconnect', () => {
     const user = Object.values(users).find(user => user.id === socket.id);
     if (user) {
@@ -173,9 +182,10 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Fonction pour obtenir la liste des utilisateurs sans l'utilisateur spécifié
   function getUserListWithoutUser(currentUsername, channel) {
     return (roomUsers[channel] || [])
-      .filter(user => user.username !== '[USER]')
+      .filter(user => user.username !== currentUsername)
       .map(user => ({
         username: user.username,
         gender: user.gender,
