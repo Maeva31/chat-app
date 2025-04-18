@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Récupérer les messages d'un salon
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
+    chatMessages.innerHTML = ''; // Effacer les messages précédents
     messages.forEach(msg => addMessageToChat(msg, chatMessages));
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
@@ -33,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const usernameSpan = document.createElement("span");
     usernameSpan.classList.add("clickable-username");
     usernameSpan.style.color = getUsernameColor(msg.gender);
-    usernameSpan.textContent = msg.username;
+    usernameSpan.textContent = msg.username || 'Inconnu'; // Si le pseudo est vide, afficher "Inconnu"
 
     usernameSpan.addEventListener("click", function () {
       const messageInput = document.getElementById("message-input");
@@ -54,14 +55,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
     chatMessages.appendChild(newMessage);
   }
-
-  // Déconnexion
-  window.addEventListener("beforeunload", function () {
-    const username = localStorage.getItem("username");
-    if (username) {
-      socket.emit("user disconnect", username);
-    }
-  });
 
   // Envoi message
   function sendMessage() {
@@ -177,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
       channel.classList.add('selected');
       currentChannel = channel.textContent.replace('# ', '');
       socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
+      document.querySelector('#chat-messages').innerHTML = ''; // Effacer les messages précédents
     });
   });
 
@@ -192,7 +185,7 @@ document.addEventListener('DOMContentLoaded', function () {
       li.classList.add('selected');
       currentChannel = newRoom;
       socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
+      document.querySelector('#chat-messages').innerHTML = ''; // Effacer les messages précédents
     });
     channelList.appendChild(li);
   });
