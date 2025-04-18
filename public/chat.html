@@ -12,37 +12,41 @@
     <!-- (inchangé) -->
   </div>
 
-  <!-- Nouveau wrapper principal -->
- <main>
-  <!-- Sidebar gauche : salons -->
-  <aside id="channel-sidebar">
-    <h3>Salons</h3>
-    <ul id="channel-list">
-      <li class="channel selected"># Général</li>
-      <li class="channel"># Musique</li>
-      <li class="channel"># Gaming</li>
-      <li class="channel"># Détente</li>
-    </ul>
-  </aside>
+  <!-- Wrapper principal -->
+  <main>
+    <!-- Sidebar gauche : salons -->
+    <aside id="channel-sidebar">
+      <h3>Salons</h3>
 
-  <!-- Zone centrale : chat -->
-  <section id="chat-container">
-    <div id="chat-messages" class="chat-messages"></div>
-    <div id="chat-input">
-      <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" />
-    </div>
-  </section>
+      <div id="create-channel">
+        <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" />
+        <button id="create-channel-button">Créer</button>
+      </div>
 
-  <!-- Sidebar droite : utilisateurs -->
-  <aside id="user-list">
-    <center><h3>Liste du salon</h3></center>
-    <ul id="users"></ul>
-  </aside>
-</main>
+      <ul id="channel-list">
+        <li class="channel selected"># Général</li>
+        <li class="channel"># Musique</li>
+        <li class="channel"># Gaming</li>
+        <li class="channel"># Détente</li>
+      </ul>
+    </aside>
 
+    <!-- Zone centrale : chat -->
+    <section id="chat-container">
+      <div id="chat-messages" class="chat-messages"></div>
+      <div id="chat-input">
+        <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" />
+      </div>
+    </section>
+
+    <!-- Sidebar droite : utilisateurs -->
+    <aside id="user-list">
+      <center><h3>Liste du salon</h3></center>
+      <ul id="users"></ul>
+    </aside>
+  </main>
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
-
 </html>
