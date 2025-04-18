@@ -13,19 +13,33 @@ document.addEventListener('DOMContentLoaded', function () {
   // ✅ Version sécurisée et unique de updateUserList
   function updateUserList(users) {
     const userList = document.getElementById('users');
-    userList.innerHTML = '';
+    userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
+
+    // Vérifier si les données des utilisateurs sont valides
+    if (!Array.isArray(users)) {
+      console.error("La liste des utilisateurs n'est pas un tableau.");
+      return;
+    }
 
     users.forEach(user => {
+      // Vérification de la présence des données utilisateur avec valeurs par défaut
       const username = user?.username || 'Inconnu';
       const age = user?.age || '?';
       const gender = user?.gender || 'Non spécifié';
 
+      // Créer un élément de liste pour chaque utilisateur
       const li = document.createElement('li');
-      li.innerHTML = 
-        `<div class="gender-square" style="background-color: ${getGenderColor(gender)}">
+      li.classList.add('user-item');  // Ajouter une classe pour un meilleur style CSS
+
+      // Structure de l'élément utilisateur
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
         </div>
-        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>`;
+        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
+      `;
+
+      // Ajouter l'utilisateur à la liste
       userList.appendChild(li);
     });
   }
