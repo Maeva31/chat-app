@@ -56,6 +56,7 @@ io.on('connection', (socket) => {
     userChannels[socket.id] = currentChannel;
     socket.join(currentChannel);
 
+    // Assure que roomUsers[currentChannel] est bien initialisé
     if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
     roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
     roomUsers[currentChannel].push(userData);
@@ -99,9 +100,12 @@ io.on('connection', (socket) => {
       console.log(`❌ Déconnexion : ${disconnectedUser.username}`);
       io.emit('user disconnect', disconnectedUser.username);
 
+      // Assurer que roomUsers[channel] existe avant de tenter de l'utiliser
       for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel]);
+        if (roomUsers[channel]) {
+          roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
+          io.to(channel).emit('user list', roomUsers[channel]);
+        }
       }
 
       delete users[disconnectedUser.username];
@@ -122,6 +126,7 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Assurer que roomUsers[oldChannel] existe avant de tenter de l'utiliser
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
       io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
@@ -131,6 +136,7 @@ io.on('connection', (socket) => {
     socket.join(channel);
     userChannels[socket.id] = channel;
 
+    // Assurer que roomUsers[channel] est bien initialisé
     if (!roomUsers[channel]) roomUsers[channel] = [];
     roomUsers[channel].push({
       id: socket.id,
