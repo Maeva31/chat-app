@@ -69,12 +69,17 @@ io.on('connection', (socket) => {
     const currentChannel = userChannels[socket.id] || 'Général';
 
     const messageToSend = {
-      username: sender ? sender.username : "Inconnu",  // On s'assure de l'affichage du pseudo
+      username: sender ? sender.username : "Inconnu",  // Affiche 'Inconnu' si l'utilisateur est mal récupéré
       gender: sender ? sender.gender : "Non précisé",
       message: msg.message || "",
       timestamp: msg.timestamp || new Date().toISOString(),
       channel: currentChannel,
     };
+
+    // Affichage du message pour débogage
+    if (!sender) {
+      console.warn('Message envoyé sans utilisateur défini, message ignoré ou problème avec l\'utilisateur');
+    }
 
     console.log(`💬 ${messageToSend.username} dans #${messageToSend.channel}: ${messageToSend.message}`);
 
