@@ -320,4 +320,40 @@ main {
 #content-container {
   flex-direction: column;
 }
+#channel-sidebar {
+  width: 200px;
+  background: #222222b8;
+  padding: 1em;
+  border-right: 2px solid #333;
+  color: white;
+}
+
+#channel-sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  text-align: center;
+  color: #00ffff;
+}
+
+#channel-list {
+  list-style: none;
+  padding: 0;
+}
+
+#channel-list .channel {
+  padding: 0.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+#channel-list .channel:hover {
+  background-color: #444;
+}
+
+#channel-list .channel.selected {
+  background-color: #00ffff;
+  color: black;
+  font-weight: bold;
+}
 
