@@ -6,6 +6,39 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+const PORT = process.env.PORT || 3000;
+
+// Liste des salons
+let channels = ['Général', 'Musique', 'Gaming', 'Détente'];
+
+app.use(express.static(path.join(__dirname, 'public')));
+
+// À la connexion d’un utilisateur
+io.on('connection', (socket) => {
+  console.log('Nouvel utilisateur connecté');
+
+  // Rejoindre le salon par défaut
+  socket.join('Général');
+
+  // Création d'un nouveau salon
+  socket.on('createChannel', (channelName) => {
+    if (!channels.includes(channelName)) {
+      channels.push(channelName);
+      io.emit('channelCreated', channelName); // Diffuse à tous les utilisateurs
+      console.log(`Salon créé : ${channelName}`);
+    }
+  });
+
+  // Changement de salon
+  socket.on('joinChannel', (channelName) => {
+    const rooms = Array.from(socket.rooms).filter(r => r !== socket.id);
+    rooms.forEach(room => socket.leave(room)); // Quitte tous les salons sauf son ID
+
+    socket.join(channelName);
+    console.log(`Utilisateur rejoint le salon : ${channelName}`);
+  });
+});
+
 // Données en mémoire
 let users = {};            // Stockage des utilisateurs avec leurs infos
 let messageHistory = {};   // Historique des messages par salon
