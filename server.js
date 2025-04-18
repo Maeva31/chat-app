@@ -10,10 +10,11 @@ let users = {};
 let messageHistory = {};
 let roomUsers = {};
 let userChannels = {};
+let bannedUsers = new Set();
+let mutedUsers = new Set();
 
 app.use(express.static('public'));
 
-// 🔁 Fonction pour mettre à jour la liste des salons avec le nombre d'utilisateurs
 function updateRoomList() {
   const rooms = Object.keys(roomUsers).map((roomName) => ({
     name: roomName,
@@ -40,7 +41,13 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const userData = { username, gender, age, id: socket.id };
+    if (bannedUsers.has(username)) {
+      socket.emit('banned', 'Vous avez été banni du serveur.');
+      return;
+    }
+
+    const role = Object.keys(users).length === 0 ? 'admin' : 'user'; // Le premier connecté est admin
+    const userData = { username, gender, age, id: socket.id, role };
     users[username] = userData;
 
     const currentChannel = userChannels[socket.id] || 'Général';
@@ -51,15 +58,20 @@ io.on('connection', (socket) => {
     roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
     roomUsers[currentChannel].push(userData);
 
-    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
+    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans, rôle: ${role})`);
     io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
     socket.emit('username accepted', username);
-    updateRoomList(); // ✅
+    updateRoomList();
   });
 
   socket.on('chat message', (msg) => {
     const sender = Object.values(users).find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général';
+
+    if (sender && mutedUsers.has(sender.username)) {
+      socket.emit('muted', 'Vous êtes muet et ne pouvez pas envoyer de messages.');
+      return;
+    }
 
     const messageToSend = {
       username: sender ? sender.username : "Inconnu",
@@ -101,7 +113,7 @@ io.on('connection', (socket) => {
       console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
     }
 
-    updateRoomList(); // ✅
+    updateRoomList();
   });
 
   socket.on('joinRoom', (channel) => {
@@ -127,7 +139,8 @@ io.on('connection', (socket) => {
       id: socket.id,
       username: user.username,
       gender: user.gender,
-      age: user.age
+      age: user.age,
+      role: user.role
     });
 
     console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
@@ -140,7 +153,7 @@ io.on('connection', (socket) => {
 
     socket.emit('chat history', messageHistory[channel] || []);
     io.to(channel).emit('user list', roomUsers[channel]);
-    updateRoomList(); // ✅
+    updateRoomList();
   });
 
   socket.on('createRoom', (newChannel) => {
@@ -149,9 +162,49 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = [];
       console.log(`✅ Salon créé : ${newChannel}`);
       io.emit('room created', newChannel);
-      updateRoomList(); // ✅
+      updateRoomList();
     } else {
       socket.emit('room exists', newChannel);
+    }
+  });
+
+  // 🔧 Commandes de modération
+
+  socket.on('moderation', ({ action, targetUsername }) => {
+    const issuer = Object.values(users).find(u => u.id === socket.id);
+    const target = users[targetUsername];
+
+    if (!issuer || (issuer.role !== 'admin' && issuer.role !== 'modo')) {
+      socket.emit('moderation failed', 'Permission refusée.');
+      return;
+    }
+
+    if (!target) {
+      socket.emit('moderation failed', 'Utilisateur introuvable.');
+      return;
+    }
+
+    switch (action) {
+      case 'kick':
+        io.to(target.id).emit('kicked', 'Vous avez été expulsé du salon.');
+        io.sockets.sockets.get(target.id)?.disconnect();
+        break;
+      case 'ban':
+        bannedUsers.add(target.username);
+        io.to(target.id).emit('banned', 'Vous avez été banni du serveur.');
+        io.sockets.sockets.get(target.id)?.disconnect();
+        break;
+      case 'mute':
+        mutedUsers.add(target.username);
+        socket.emit('moderation success', `${target.username} a été mis en sourdine.`);
+        break;
+      case 'unmute':
+        mutedUsers.delete(target.username);
+        socket.emit('moderation success', `${target.username} peut de nouveau parler.`);
+        break;
+      default:
+        socket.emit('moderation failed', 'Commande inconnue.');
+        break;
     }
   });
 });
