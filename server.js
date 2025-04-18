@@ -9,6 +9,7 @@ const io = new Server(server);
 let users = {};            // Utilisation d'un objet pour les utilisateurs
 let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs par salon
+let userChannels = {};     // Salon actuel par utilisateur
 
 // Fichiers statiques
 app.use(express.static('public'));
@@ -80,6 +81,7 @@ io.on('connection', (socket) => {
       messageHistory[currentChannel] = [];
     }
 
+    // Limiter l'historique à 10 messages
     messageHistory[currentChannel].push(messageToSend);
     if (messageHistory[currentChannel].length > 10) {
       messageHistory[currentChannel].shift();
@@ -96,17 +98,19 @@ io.on('connection', (socket) => {
 
       // Retirer l'utilisateur de tous les salons
       for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
+        if (roomUsers[channel]) {
+          roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
+          io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
+        }
       }
+
+      // Nettoyer les utilisateurs
+      delete users[disconnectedUser.username];
+      io.emit('user list', Object.values(users).map(u => u.username));
+      delete userChannels[socket.id];
     } else {
       console.log('❌ Utilisateur inconnu déconnecté');
     }
-
-    // Nettoyer les utilisateurs
-    delete users[disconnectedUser.username];
-    io.emit('user list', Object.values(users).map(u => u.username));
-    delete userChannels[socket.id];
   });
 
   socket.on('joinRoom', (channel) => {
@@ -132,21 +136,26 @@ io.on('connection', (socket) => {
       roomUsers[channel] = [];
     }
 
-    roomUsers[channel].push({
-      id: socket.id,
-      username: user.username,
-      gender: user.gender,
-      age: user.age
-    });
+    // Ajouter l'utilisateur au nouveau salon
+    if (!roomUsers[channel].find(u => u.id === socket.id)) {
+      roomUsers[channel].push({
+        id: socket.id,
+        username: user.username,
+        gender: user.gender,
+        age: user.age
+      });
+    }
 
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
 
+    // Envoyer un message de bienvenue
     io.to(channel).emit('chat message', {
       username: 'Système',
       message: `${user.username} a rejoint le salon ${channel}`,
       channel
     });
 
+    // Envoyer l'historique des messages du salon
     socket.emit('chat history', messageHistory[channel] || []);
     io.to(channel).emit('user list', roomUsers[channel].map(u => u.username));
   });
