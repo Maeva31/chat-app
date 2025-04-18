@@ -10,75 +10,38 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
-  const roleIcons = {
-    admin: '👑',
-    modo: '🛡️',
-    user: ''
-  };
-
-  // Mise à jour de la liste des utilisateurs
+  // ✅ Version sécurisée et unique de updateUserList
   function updateUserList(users) {
     const userList = document.getElementById('users');
     userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
 
+    // Vérifier si les données des utilisateurs sont valides
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
       return;
     }
 
     users.forEach(user => {
-      if (!user || !user.username || !user.age || !user.gender || !user.role) {
-        console.error("Données utilisateur manquantes ou invalides", user);
-        return;
-      }
+      // Vérification de la présence des données utilisateur avec valeurs par défaut
+      const username = user?.username || 'Inconnu';
+      const age = user?.age || '?';
+      const gender = user?.gender || 'Non spécifié';
 
-      const username = user.username;
-      const age = user.age;
-      const gender = user.gender;
-      const role = user.role;
-      const roleIcon = roleIcons[role] || '';
-
+      // Créer un élément de liste pour chaque utilisateur
       const li = document.createElement('li');
-      li.classList.add('user-item');
-      li.innerHTML = `
+      li.classList.add('user-item');  // Ajouter une classe pour un meilleur style CSS
+
+      // Structure de l'élément utilisateur
+      li.innerHTML = ` 
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
         </div>
-        <span class="username-span" style="color: ${getUsernameColor(gender)}">
-          ${roleIcon} ${username}
-        </span>
+        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
       `;
 
-      const currentUser = localStorage.getItem("username");
-
-      // 1. Les admins et modos ne voient pas les boutons de modération sur eux-mêmes
-      // 2. Les utilisateurs normaux voient les boutons de modération sur les autres utilisateurs seulement
-      if (currentUser !== username) {
-        if (role === 'admin' || role === 'modo') {
-          if (user.role !== 'admin' && user.role !== 'modo') {
-            const kickButton = createButton('Kick', 'kick');
-            const banButton = createButton('Ban', 'ban');
-            const muteButton = createButton('Mute', 'mute');
-            li.appendChild(kickButton);
-            li.appendChild(banButton);
-            li.appendChild(muteButton);
-          }
-        }
-      }
-
+      // Ajouter l'utilisateur à la liste
       userList.appendChild(li);
     });
-  }
-
-  function createButton(label, action) {
-    const button = document.createElement('button');
-    button.textContent = label;
-    button.classList.add(action);
-    button.addEventListener('click', function () {
-      console.log(`${action} user`);
-      socket.emit(`${action} user`, { username: selectedUser });
-    });
-    return button;
   }
 
   // Historique des messages
@@ -106,6 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('gender').textContent = gender;
   });
 
+  // Ajout de message dans le chat
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
     const date = new Date(msg.timestamp);
@@ -121,7 +85,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const current = messageInput.value.trim();
       const mention = `@${msg.username} `;
       if (!current.includes(mention)) {
-        messageInput.value = mention + current;
+        messageInput.value = mention + current; // Ajoute l'@pseudo avec un espace
       }
       messageInput.focus();
       selectedUser = msg.username;
@@ -136,6 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
+  // Envoi de message
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -166,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.key === "Enter") sendMessage();
   });
 
+  // Gestion des infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
     const genderSelect = document.getElementById("gender-select");
@@ -203,6 +169,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "none";
   }
 
+  // Pseudo déjà utilisé
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
     modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
@@ -211,6 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   });
 
+  // Couleurs selon genre
   function getUsernameColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
@@ -219,22 +187,34 @@ document.addEventListener('DOMContentLoaded', function () {
     return genderColors[gender] || genderColors.default;
   }
 
+  // Mise à jour des utilisateurs
   socket.on('user list', updateUserList);
 
+  // Sélection de salons
   const channelElements = document.querySelectorAll('.channel');
   channelElements.forEach(channel => {
     channel.addEventListener('click', () => {
+      // Réinitialiser le champ de message
       const messageInput = document.getElementById("message-input");
-      messageInput.value = '';
+      messageInput.value = '';  // Effacer le contenu du champ message
+
+      // Réinitialiser le pseudo mentionné
       selectedUser = null;
+
+      // Gérer le changement de salon
       channelElements.forEach(c => c.classList.remove('selected'));
       channel.classList.add('selected');
       currentChannel = channel.textContent.replace('# ', '');
+
+      // Informer le serveur de rejoindre le salon
       socket.emit('joinRoom', currentChannel);
+
+      // Réinitialiser l'affichage des messages
       document.querySelector('#chat-messages').innerHTML = '';
     });
   });
 
+  // Salon créé dynamiquement
   socket.on('room created', function (newRoom) {
     const channelList = document.getElementById('channel-list');
     const li = document.createElement('li');
@@ -250,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
     channelList.appendChild(li);
   });
 
+  // Chargement auto depuis localStorage
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
   const savedAge = localStorage.getItem("age");
@@ -265,8 +246,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
+  // Soumission modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
+  // Boîte à erreurs
   function showErrorMessage(message) {
     const errorBox = document.getElementById("error-box");
     if (!errorBox) return;
