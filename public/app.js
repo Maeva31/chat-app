@@ -46,18 +46,23 @@ document.addEventListener('DOMContentLoaded', function () {
         </span>
       `;
 
-      // Afficher les boutons uniquement si l'utilisateur connecté est admin ou modo
-      const isAdmin = role === 'admin';
-      const isModo = role === 'modo';
       const currentUser = localStorage.getItem("username");
 
-      // Boutons visibles pour l'admin sur tous les utilisateurs
-      if (isAdmin || (isModo && currentUser !== username)) {
+      // Boutons visibles pour l'admin sur tous les utilisateurs normaux
+      if (role === 'admin' && currentUser !== username) {
         const kickButton = createButton('Kick', 'kick');
         const banButton = createButton('Ban', 'ban');
         const muteButton = createButton('Mute', 'mute');
+        li.appendChild(kickButton);
+        li.appendChild(banButton);
+        li.appendChild(muteButton);
+      }
 
-        // Ajouter les boutons à la liste utilisateur
+      // Boutons visibles pour le modo sur les utilisateurs normaux (pas sur lui-même)
+      if (role === 'modo' && currentUser !== username) {
+        const kickButton = createButton('Kick', 'kick');
+        const banButton = createButton('Ban', 'ban');
+        const muteButton = createButton('Mute', 'mute');
         li.appendChild(kickButton);
         li.appendChild(banButton);
         li.appendChild(muteButton);
