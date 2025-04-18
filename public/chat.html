@@ -9,7 +9,25 @@
 <body>
   <!-- Modal d'information utilisateur -->
   <div id="myModal" class="modal">
-    <!-- Modal inchangé -->
+    <div class="modal-content">
+      <h2>Bienvenue !</h2>
+      <p>Veuillez entrer vos informations pour accéder au chat.</p>
+
+      <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" />
+
+      <select id="gender-select">
+        <option value="">Genre</option>
+        <option value="Homme">Homme</option>
+        <option value="Femme">Femme</option>
+        <option value="Autre">Autre</option>
+      </select>
+
+      <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" />
+
+      <div id="modal-error" class="modal-error" style="display: none;"></div>
+
+      <button id="username-submit">Valider</button>
+    </div>
   </div>
 
   <!-- Wrapper principal -->
@@ -47,6 +65,8 @@
       <ul id="users"></ul>
     </aside>
   </main>
+
+  <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
