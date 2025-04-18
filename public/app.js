@@ -102,71 +102,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "none";
   }
 
-  // Message d'erreur temporaire en bas de page
-  function showErrorMessage(message) {
-    const errorMessage = document.createElement("div");
-    errorMessage.classList.add("error-message");
-    errorMessage.textContent = message;
-    document.body.appendChild(errorMessage);
-    setTimeout(() => errorMessage.remove(), 3000);
-  }
-
-  // Charger les infos sauvegardées
-  const savedUsername = localStorage.getItem("username");
-  const savedGender = localStorage.getItem("gender");
-  const savedAge = localStorage.getItem("age");
-
-  if (savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || "non spécifié",
-      age: savedAge
-    });
-    document.getElementById("myModal").style.display = "none";
-  } else {
-    document.getElementById("myModal").style.display = "block";
-  }
-
-  // Bouton "Valider" dans le modal
-  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
-
-  // Entrée dans le modal
-  document.getElementById("myModal").addEventListener("keypress", function (event) {
-    if (event.key === "Enter") submitUserInfo();
-  });
-
-  // Envoyer un message
-  function sendMessage() {
-    const messageInput = document.getElementById("message-input");
-    const message = messageInput.value.trim();
-    const username = localStorage.getItem("username");
-
-    if (!message) {
-      showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
-      return;
-    }
-
-    if (message.length > 300) {
-      showErrorMessage("Message trop long (300 caractères max).");
-      return;
-    }
-
-    if (username) {
-      socket.emit('chat message', {
-        username,
-        message,
-        timestamp: new Date().toISOString(),
-        channel: currentChannel // Ajouter le salon ici
-      });
-      messageInput.value = "";
-    }
-  }
-
-  // Entrée pour envoyer un message
-  document.getElementById("message-input").addEventListener("keypress", function (event) {
-    if (event.key === "Enter") sendMessage();
-  });
-
   // Mise à jour de la liste des utilisateurs connectés
   function updateUserList(users) {
     const userList = document.getElementById('users');
@@ -203,20 +138,40 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   });
 
-  // Déconnexion utilisateur
-  socket.on('user disconnect', function (disconnectedUser) {
-    const usersList = document.getElementById("users");
-    const userItems = usersList.getElementsByTagName("li");
-    for (let i = 0; i < userItems.length; i++) {
-      if (userItems[i].textContent.includes(disconnectedUser)) {
-        usersList.removeChild(userItems[i]);
-        break;
-      }
-    }
-  });
-
   // Réception liste utilisateurs
   socket.on('user list', updateUserList);
+
+  // Envoyer un message
+  function sendMessage() {
+    const messageInput = document.getElementById("message-input");
+    const message = messageInput.value.trim();
+    const username = localStorage.getItem("username");
+
+    if (!message) {
+      showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
+      return;
+    }
+
+    if (message.length > 300) {
+      showErrorMessage("Message trop long (300 caractères max).");
+      return;
+    }
+
+    if (username) {
+      socket.emit('chat message', {
+        username,
+        message,
+        timestamp: new Date().toISOString(),
+        channel: currentChannel // Ajouter le salon ici
+      });
+      messageInput.value = "";
+    }
+  }
+
+  // Entrée pour envoyer un message
+  document.getElementById("message-input").addEventListener("keypress", function (event) {
+    if (event.key === "Enter") sendMessage();
+  });
 
   // Gestion du salon
   let currentChannel = 'Général'; // Salon par défaut
@@ -242,4 +197,23 @@ document.addEventListener('DOMContentLoaded', function () {
       document.querySelector('#chat-messages').innerHTML = '';
     });
   });
+
+  // Charger les infos sauvegardées
+  const savedUsername = localStorage.getItem("username");
+  const savedGender = localStorage.getItem("gender");
+  const savedAge = localStorage.getItem("age");
+
+  if (savedUsername && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || "non spécifié",
+      age: savedAge
+    });
+    document.getElementById("myModal").style.display = "none";
+  } else {
+    document.getElementById("myModal").style.display = "block";
+  }
+
+  // Bouton "Valider" dans le modal
+  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 });
