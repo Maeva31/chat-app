@@ -87,6 +87,7 @@ main {
   background-color: #00ffff;
   color: black;
   font-weight: bold;
+  border-left: 4px solid #00ffff; /* Accent border */
 }
 
 /* === CHAT CONTAINER (CENTER) === */
@@ -104,6 +105,7 @@ main {
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 10px;
+  max-height: 70vh; /* Prevent overflow */
 }
 
 .chat-messages .message {
@@ -145,6 +147,8 @@ main {
   padding: 1em;
   border-left: 2px solid #333;
   border-radius: 10px;
+  max-height: 70vh;
+  overflow-y: auto;
 }
 
 #users {
