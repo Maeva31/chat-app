@@ -43,7 +43,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Enregistrer l'utilisateur
     const existingUserIndex = users.findIndex(user => user.id === socket.id);
     if (existingUserIndex !== -1) {
       users[existingUserIndex] = { username, gender, age, id: socket.id };
@@ -58,15 +57,9 @@ io.on('connection', (socket) => {
   socket.on('chat message', (msg) => {
     const sender = users.find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général'; // Salon spécifique à l'utilisateur
-
-    if (!sender) {
-      console.log("❌ Utilisateur non trouvé");
-      return;
-    }
-
     const messageToSend = {
-      username: sender.username,
-      gender: sender.gender,
+      username: sender ? sender.username : "Anonyme",
+      gender: sender ? sender.gender : "Non précisé",
       message: msg.message || "",
       timestamp: msg.timestamp || new Date().toISOString(),
       channel: currentChannel, // Ajout du salon
