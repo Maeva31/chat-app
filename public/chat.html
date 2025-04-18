@@ -48,7 +48,47 @@
     </aside>
   </main>
 
+  <button onclick="createRoom()">Créer un salon</button>
+  <input type="text" id="newRoomName" placeholder="Nom du salon">
+  
   <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();
+
+    // Fonction pour créer un salon
+    function createRoom() {
+      const newRoomName = document.getElementById('newRoomName').value;
+      if (newRoomName) {
+        socket.emit('createRoom', newRoomName); // Émettre l'événement de création de salon
+      } else {
+        alert('Veuillez entrer un nom de salon');
+      }
+    }
+
+    // Gérer l'événement de création de salon
+    socket.on('room created', (newRoom) => {
+      alert(`Le salon "${newRoom}" a été créé avec succès.`);
+      const newChannelListItem = document.createElement('li');
+      newChannelListItem.classList.add('channel');
+      newChannelListItem.textContent = `# ${newRoom}`;
+      document.getElementById('channel-list').appendChild(newChannelListItem);
+    });
+
+    // Gérer l'événement de salon existant
+    socket.on('room exists', (roomName) => {
+      alert(`Le salon "${roomName}" existe déjà.`);
+    });
+
+    // Gérer les messages de chat
+    socket.on('chat message', (msg) => {
+      const chatMessages = document.getElementById('chat-messages');
+      const messageDiv = document.createElement('div');
+      messageDiv.classList.add('message');
+      messageDiv.textContent = `${msg.username}: ${msg.message}`;
+      chatMessages.appendChild(messageDiv);
+    });
+  </script>
+  
   <script src="app.js"></script>
 </body>
 </html>
