@@ -1,38 +1,3 @@
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
-
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
-
-app.use(express.static('public'));
-
-// Données en mémoire
-let users = {}; // username => { username, gender, age, id, role }
-let bannedUsers = {}; // username => true
-let mutedUsers = {}; // socket.id => true
-let messageHistory = {}; // channel => messages[]
-let roomUsers = {}; // channel => [{username, gender, age, id}]
-let userChannels = {}; // socket.id => channel
-
-// Définition des rôles par défaut (peut être étendu ou stocké autrement)
-const defaultRole = 'user';
-const elevatedUsers = {
-  'AdminUser': 'admin',
-  'ModoUser': 'modo'
-};
-
-// Vérification du pseudo [USER] et autres contraintes (sans restriction sur [USER])
-function isValidUsername(username) {
-  // Empêcher le pseudo [USER] et les pseudos invalides
-  if (username.length > 16 || /\s/.test(username) || username === '[USER]') {
-    return false;
-  }
-  return true;
-}
-
-// Connexion de Socket.io
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
   socket.emit('chat history', messageHistory['Général'] || []);
@@ -75,9 +40,19 @@ io.on('connection', (socket) => {
     roomUsers[currentChannel].push(userData);
 
     console.log(`👤 Utilisateur connecté : ${username} (${role})`);
-    io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
+    io.to(currentChannel).emit('user list', getUserListWithoutUser(username, currentChannel));
     socket.emit('username accepted', username);
   });
+
+  // Fonction pour filtrer [USER] de la liste des utilisateurs
+  function getUserListWithoutUser(currentUsername, channel) {
+    return roomUsers[channel]
+      .filter(user => user.username !== '[USER]')
+      .map(user => {
+        // Vous pouvez modifier cette logique si vous souhaitez traiter les autres utilisateurs différemment
+        return { username: user.username, gender: user.gender, age: user.age };
+      });
+  }
 
   // Envoi d’un message
   socket.on('chat message', (msg) => {
@@ -86,12 +61,6 @@ io.on('connection', (socket) => {
 
     if (!sender || mutedUsers[socket.id]) {
       return; // Ne pas envoyer si l'utilisateur est muet
-    }
-
-    // Vérifier que le pseudo n'est pas [USER]
-    if (sender.username === '[USER]') {
-      socket.emit('error', 'Pseudo invalide');
-      return;
     }
 
     const messageToSend = {
@@ -126,7 +95,7 @@ io.on('connection', (socket) => {
 
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel]);
+        io.to(channel).emit('user list', getUserListWithoutUser(disconnectedUser.username, channel));
       }
 
       delete users[disconnectedUser.username];
@@ -150,7 +119,7 @@ io.on('connection', (socket) => {
     socket.leave(oldChannel);
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+      io.to(oldChannel).emit('user list', getUserListWithoutUser(user.username, oldChannel));
     }
 
     socket.join(channel);
@@ -167,7 +136,7 @@ io.on('connection', (socket) => {
     });
 
     socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('user list', roomUsers[channel]);
+    io.to(channel).emit('user list', getUserListWithoutUser(user.username, channel));
   });
 
   // Création de salon
@@ -223,9 +192,4 @@ io.on('connection', (socket) => {
 
     console.log(`🛡️ ${sender.username} a utilisé ${command} sur ${target.username}`);
   });
-});
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
 });
