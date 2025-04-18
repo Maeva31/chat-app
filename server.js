@@ -1,173 +1,278 @@
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
+document.addEventListener('DOMContentLoaded', function () {
+  const socket = io();
+  let selectedUser = null;
+  let currentChannel = 'Général';
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+  const genderColors = {
+    Homme: '#00f',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    default: '#aaa'
+  };
 
-// 👑 Définis ici les rôles manuellement par pseudo
-const userRoles = {
-  'MaEvA': 'admin',
-  'Katia': 'modo',
-  'Jean': 'user'
-};
+  const roleIcons = {
+    admin: '👑',
+    modo: '🛡️',
+    user: ''
+  };
 
-let users = {};
-let messageHistory = {};
-let roomUsers = {};
-let userChannels = {};
+  // ✅ Version sécurisée et unique de updateUserList
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
 
-app.use(express.static('public'));
-
-// 🔁 Fonction pour mettre à jour la liste des salons avec le nombre d'utilisateurs
-function updateRoomList() {
-  const rooms = Object.keys(roomUsers).map((roomName) => ({
-    name: roomName,
-    userCount: roomUsers[roomName]?.length || 0
-  }));
-  io.emit('room list', rooms);
-}
-
-io.on('connection', (socket) => {
-  console.log(`✅ Nouvelle connexion : ${socket.id}`);
-  
-  socket.emit('chat history', messageHistory['Général'] || []);
-
-  socket.on('set username', (data) => {
-    const { username, gender, age } = data;
-
-    const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
-    if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
-      socket.emit('username exists', username);
+    // Vérification de la validité des données des utilisateurs
+    if (!Array.isArray(users)) {
+      console.error("La liste des utilisateurs n'est pas un tableau.");
       return;
     }
 
-    if (users[username] && users[username].id !== socket.id) {
-      socket.emit('username exists', username);
-      return;
-    }
-
-    // 🔐 Rôle défini manuellement ou 'user' par défaut
-    const role = userRoles[username] || 'user';
-    const userData = { username, gender, age, id: socket.id, role };
-    users[username] = userData;
-
-    const currentChannel = userChannels[socket.id] || 'Général';
-    userChannels[socket.id] = currentChannel;
-    socket.join(currentChannel);
-
-    if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
-    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
-    roomUsers[currentChannel].push(userData);
-
-    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans, rôle: ${role})`);
-    io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
-    socket.emit('username accepted', { username, role });  // Envoi du rôle à l'utilisateur
-    updateRoomList();
-  });
-
-  socket.on('chat message', (msg) => {
-    const sender = Object.values(users).find(user => user.id === socket.id);
-    const currentChannel = userChannels[socket.id] || 'Général';
-
-    const messageToSend = {
-      username: sender ? sender.username : "Inconnu",
-      gender: sender ? sender.gender : "Non précisé",
-      message: msg.message || "",
-      timestamp: msg.timestamp || new Date().toISOString(),
-      channel: currentChannel,
-    };
-
-    console.log(`💬 ${messageToSend.username} dans #${currentChannel}: ${messageToSend.message}`);
-
-    if (!messageHistory[currentChannel]) {
-      messageHistory[currentChannel] = [];
-    }
-
-    messageHistory[currentChannel].push(messageToSend);
-    if (messageHistory[currentChannel].length > 10) {
-      messageHistory[currentChannel].shift();
-    }
-
-    io.to(currentChannel).emit('chat message', messageToSend);
-  });
-
-  socket.on('disconnect', () => {
-    const disconnectedUser = Object.values(users).find(user => user.id === socket.id);
-
-    if (disconnectedUser) {
-      console.log(`❌ Déconnexion : ${disconnectedUser.username}`);
-      io.emit('user disconnect', disconnectedUser.username);
-
-      for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel]);
+    users.forEach(user => {
+      if (!user || !user.username || !user.age || !user.gender || !user.role) {
+        console.error("Données utilisateur manquantes ou invalides", user);
+        return;
       }
 
-      delete users[disconnectedUser.username];
-      delete userChannels[socket.id];
-    } else {
-      console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
-    }
+      const username = user.username;
+      const age = user.age;
+      const gender = user.gender;
+      const role = user.role;
+      const roleIcon = roleIcons[role] || '';
 
-    updateRoomList();
+      const li = document.createElement('li');
+      li.classList.add('user-item');
+
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
+          ${age}
+        </div>
+        <span class="username-span" style="color: ${getUsernameColor(gender)}">
+          ${roleIcon} ${username}
+        </span>
+      `;
+
+      const currentUser = localStorage.getItem("username");
+
+      // 1. Les admins et modos ne voient pas les boutons de modération sur eux-mêmes
+      // 2. Les utilisateurs normaux voient les boutons de modération sur les autres utilisateurs seulement
+      if (currentUser !== username && (role === 'admin' || role === 'modo')) {
+        // Les admins et modos peuvent avoir des boutons de modération uniquement sur les utilisateurs normaux
+        const kickButton = createButton('Kick', 'kick');
+        const banButton = createButton('Ban', 'ban');
+        const muteButton = createButton('Mute', 'mute');
+        li.appendChild(kickButton);
+        li.appendChild(banButton);
+        li.appendChild(muteButton);
+      }
+
+      userList.appendChild(li);
+    });
+  }
+
+  function createButton(label, action) {
+    const button = document.createElement('button');
+    button.textContent = label;
+    button.classList.add(action);
+    button.addEventListener('click', function () {
+      console.log(`${action} user`);
+      socket.emit(`${action} user`, { username: selectedUser });
+    });
+    return button;
+  }
+
+  // Historique des messages
+  socket.on('chat history', function (messages) {
+    const chatMessages = document.getElementById("chat-messages");
+    chatMessages.innerHTML = '';
+    messages.forEach(msg => addMessageToChat(msg, chatMessages));
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  socket.on('joinRoom', (channel) => {
-    const oldChannel = userChannels[socket.id] || 'Général';
-    const user = Object.values(users).find(user => user.id === socket.id);
+  // Nouveau message
+  socket.on('chat message', function (msg) {
+    const chatMessages = document.getElementById("chat-messages");
+    addMessageToChat(msg, chatMessages);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
 
-    if (!user) {
-      socket.emit('error', 'Utilisateur non défini');
+  socket.on('user data', (userData) => {
+    const username = userData.username || 'Inconnu';
+    const age = userData.age || 'Inconnu';
+    const gender = userData.gender || 'Non spécifié';
+
+    document.getElementById('username').textContent = username;
+    document.getElementById('age').textContent = age;
+    document.getElementById('gender').textContent = gender;
+  });
+
+  function addMessageToChat(msg, chatMessages) {
+    const newMessage = document.createElement("div");
+    const date = new Date(msg.timestamp);
+    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const usernameSpan = document.createElement("span");
+    usernameSpan.classList.add("clickable-username");
+    usernameSpan.style.color = getUsernameColor(msg.gender);
+    usernameSpan.textContent = msg.username || 'Inconnu';
+
+    usernameSpan.addEventListener("click", function () {
+      const messageInput = document.getElementById("message-input");
+      const current = messageInput.value.trim();
+      const mention = `@${msg.username} `;
+      if (!current.includes(mention)) {
+        messageInput.value = mention + current;
+      }
+      messageInput.focus();
+      selectedUser = msg.username;
+    });
+
+    newMessage.innerHTML = `[${timeString}] `;
+    newMessage.appendChild(usernameSpan);
+    newMessage.insertAdjacentHTML("beforeend", `: ${msg.message}`);
+    newMessage.classList.add("message");
+    newMessage.dataset.username = msg.username;
+
+    chatMessages.appendChild(newMessage);
+  }
+
+  function sendMessage() {
+    const messageInput = document.getElementById("message-input");
+    const message = messageInput.value.trim();
+    const username = localStorage.getItem("username");
+
+    if (!message) {
+      showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
       return;
     }
 
-    if (roomUsers[oldChannel]) {
-      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+    if (message.length > 300) {
+      showErrorMessage("Message trop long (300 caractères max).");
+      return;
     }
 
-    socket.leave(oldChannel);
-    socket.join(channel);
-    userChannels[socket.id] = channel;
-
-    if (!roomUsers[channel]) roomUsers[channel] = [];
-    roomUsers[channel].push({
-      id: socket.id,
-      username: user.username,
-      gender: user.gender,
-      age: user.age,
-      role: user.role
-    });
-
-    console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
-
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${user.username} a rejoint le salon ${channel}`,
-      channel
-    });
-
-    socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('user list', roomUsers[channel]);
-    updateRoomList();
-  });
-
-  socket.on('createRoom', (newChannel) => {
-    if (!messageHistory[newChannel]) {
-      messageHistory[newChannel] = [];
-      roomUsers[newChannel] = [];
-      console.log(`✅ Salon créé : ${newChannel}`);
-      io.emit('room created', newChannel);
-      updateRoomList();
-    } else {
-      socket.emit('room exists', newChannel);
+    if (username) {
+      socket.emit('chat message', {
+        username,
+        message,
+        timestamp: new Date().toISOString(),
+        channel: currentChannel
+      });
+      messageInput.value = "";
     }
-  });
-});
+  }
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+  document.getElementById("message-input").addEventListener("keypress", function (event) {
+    if (event.key === "Enter") sendMessage();
+  });
+
+  function submitUserInfo() {
+    const usernameInput = document.getElementById("username-input");
+    const genderSelect = document.getElementById("gender-select");
+    const ageInput = document.getElementById("age-input");
+    const modalError = document.getElementById("modal-error");
+
+    const username = usernameInput.value.trim();
+    const gender = genderSelect.value;
+    const age = parseInt(ageInput.value.trim(), 10);
+
+    if (!username || username.includes(" ") || username.length > 16) {
+      modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (isNaN(age) || age < 18 || age > 89) {
+      modalError.textContent = "❌ L'âge doit être un nombre entre 18 et 89.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (!gender) {
+      modalError.textContent = "❌ Veuillez sélectionner un genre.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    modalError.style.display = "none";
+    localStorage.setItem("username", username);
+    localStorage.setItem("gender", gender);
+    localStorage.setItem("age", age);
+
+    socket.emit('set username', { username, gender, age });
+    document.getElementById("myModal").style.display = "none";
+  }
+
+  socket.on('username exists', function (username) {
+    const modalError = document.getElementById("modal-error");
+    modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
+    modalError.style.display = "block";
+    localStorage.removeItem("username");
+    document.getElementById("myModal").style.display = "block";
+  });
+
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  function getGenderColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  socket.on('user list', updateUserList);
+
+  const channelElements = document.querySelectorAll('.channel');
+  channelElements.forEach(channel => {
+    channel.addEventListener('click', () => {
+      const messageInput = document.getElementById("message-input");
+      messageInput.value = '';
+      selectedUser = null;
+      channelElements.forEach(c => c.classList.remove('selected'));
+      channel.classList.add('selected');
+      currentChannel = channel.textContent.replace('# ', '');
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+  });
+
+  socket.on('room created', function (newRoom) {
+    const channelList = document.getElementById('channel-list');
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    li.textContent = `# ${newRoom}`;
+    li.addEventListener('click', () => {
+      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+      li.classList.add('selected');
+      currentChannel = newRoom;
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+    channelList.appendChild(li);
+  });
+
+  const savedUsername = localStorage.getItem("username");
+  const savedGender = localStorage.getItem("gender");
+  const savedAge = localStorage.getItem("age");
+
+  if (savedUsername && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || "non spécifié",
+      age: savedAge
+    });
+    document.getElementById("myModal").style.display = "none";
+  } else {
+    document.getElementById("myModal").style.display = "block";
+  }
+
+  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
+
+  function showErrorMessage(message) {
+    const errorBox = document.getElementById("error-box");
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.style.display = "block";
+    setTimeout(() => {
+      errorBox.style.display = "none";
+    }, 4000);
+  }
 });
