@@ -131,6 +131,32 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.key === "Enter") sendMessage();
   });
 
+
+  /* création channel */
+  // Gestion du bouton de création de salon
+const createChannelButton = document.getElementById('create-channel-button');
+const newChannelNameInput = document.getElementById('new-channel-name');
+const channelList = document.getElementById('channel-list');
+
+createChannelButton.addEventListener('click', () => {
+  const newChannel = newChannelNameInput.value.trim();
+  if (newChannel && newChannel.length <= 20) {
+    socket.emit('createChannel', newChannel);
+    newChannelNameInput.value = '';
+  }
+});
+
+// Réception d'un nouveau salon depuis le serveur
+socket.on('channelCreated', (channelName) => {
+  const li = document.createElement('li');
+  li.classList.add('channel');
+  li.textContent = `# ${channelName}`;
+  li.addEventListener('click', () => {
+    socket.emit('joinChannel', channelName);
+  });
+  channelList.appendChild(li);
+});
+  
   // Gestion des infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
