@@ -20,7 +20,7 @@ io.on('connection', (socket) => {
   // Envoi de l'historique par défaut (salon Général)
   socket.emit('chat history', messageHistory['Général'] || []);
 
-  // Lorsque l'utilisateur définit son nom
+  // Lorsqu'un utilisateur définit son nom
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
