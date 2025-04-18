@@ -13,12 +13,22 @@ let userChannels = {};
 
 app.use(express.static('public'));
 
+// 🔁 Fonction pour mettre à jour la liste des salons avec le nombre d'utilisateurs
+function updateRoomList() {
+  const rooms = Object.keys(roomUsers).map((roomName) => ({
+    name: roomName,
+    userCount: roomUsers[roomName]?.length || 0
+  }));
+  io.emit('room list', rooms);
+}
+
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
   socket.emit('chat history', messageHistory['Général'] || []);
 
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
+
     const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
       socket.emit('username exists', username);
@@ -44,6 +54,7 @@ io.on('connection', (socket) => {
     console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
     io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
     socket.emit('username accepted', username);
+    updateRoomList(); // ✅
   });
 
   socket.on('chat message', (msg) => {
@@ -89,6 +100,8 @@ io.on('connection', (socket) => {
     } else {
       console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
     }
+
+    updateRoomList(); // ✅
   });
 
   socket.on('joinRoom', (channel) => {
@@ -110,7 +123,6 @@ io.on('connection', (socket) => {
     userChannels[socket.id] = channel;
 
     if (!roomUsers[channel]) roomUsers[channel] = [];
-
     roomUsers[channel].push({
       id: socket.id,
       username: user.username,
@@ -128,6 +140,7 @@ io.on('connection', (socket) => {
 
     socket.emit('chat history', messageHistory[channel] || []);
     io.to(channel).emit('user list', roomUsers[channel]);
+    updateRoomList(); // ✅
   });
 
   socket.on('createRoom', (newChannel) => {
@@ -136,6 +149,7 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = [];
       console.log(`✅ Salon créé : ${newChannel}`);
       io.emit('room created', newChannel);
+      updateRoomList(); // ✅
     } else {
       socket.emit('room exists', newChannel);
     }
