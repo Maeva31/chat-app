@@ -1,10 +1,10 @@
-const express = require('express');
-const http = require('http');
-const socketIo = require('socket.io');
+import express from 'express';
+import http from 'http';
+import { Server } from 'socket.io';
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = new Server(server);
 
 const users = {};  // Stockage des utilisateurs connectés
 const channels = {};  // Stockage des salons et de leurs messages
