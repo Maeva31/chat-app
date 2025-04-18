@@ -176,14 +176,6 @@ io.on('connection', (socket) => {
   });
 });
 
-socket.on('createRoom', (roomName) => {
-  if (!messageHistory[roomName]) {
-    messageHistory[roomName] = [];
-    io.emit('room created', roomName);
-  }
-});
-
-
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
