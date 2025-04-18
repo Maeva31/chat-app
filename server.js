@@ -16,11 +16,13 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
   console.log(`✅ Nouvel utilisateur connecté (socket ID: ${socket.id})`);
 
+  // Envoi de l'historique des messages à la connexion
   socket.emit('chat history', messageHistory);
 
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
+    // Validation du nom d'utilisateur
     const usernameIsInvalid =
       !username ||
       username.length > 16 ||
@@ -80,6 +82,7 @@ io.on('connection', (socket) => {
       console.log('❌ Utilisateur inconnu déconnecté');
     }
 
+    // Retirer l'utilisateur de la liste des utilisateurs
     users = users.filter(user => user.id !== socket.id);
     io.emit('user list', users);
   });
