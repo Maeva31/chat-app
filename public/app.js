@@ -10,6 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
+  // Fonction pour mettre à jour la liste des utilisateurs
   function updateUserList(users) {
     const userList = document.getElementById('users');
     if (!userList) return; // Vérifier si l'élément existe
