@@ -12,6 +12,7 @@ let userRoles = {};        // Stockage des rôles (admin, modo, user)
 let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs présents par salon
 let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
+let channels = ['Général', 'Musique', 'Gaming', 'Détente']; // Liste des salons
 
 app.use(express.static('public'));
 
@@ -24,9 +25,35 @@ function escapeHTML(str) {
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
 
+  // Envoyer l'historique des messages et la liste des salons existants
   socket.emit('chat history', messageHistory['Général'] || []);
   socket.emit('room list', Object.keys(messageHistory));
 
+  // Rejoindre un salon existant ou créer un salon
+  socket.on('createRoom', (newChannel) => {
+    console.log(`Tentative de création du salon : ${newChannel}`);
+
+    // Vérification du rôle de l'utilisateur avant de créer le salon
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user || userRoles[user.username] === 'user') {
+      socket.emit('error', 'Permission refusée pour créer un salon');
+      return;
+    }
+
+    // Vérification si le salon existe déjà
+    if (!channels.includes(newChannel)) {
+      channels.push(newChannel);  // Ajout du salon à la liste des salons
+      messageHistory[newChannel] = []; // Créer un historique de messages vide pour le nouveau salon
+      roomUsers[newChannel] = []; // Créer une liste vide d'utilisateurs pour le salon
+      console.log(`✅ Salon créé : ${newChannel}`);
+      io.emit('room created', newChannel); // Diffuse la création du salon à tous les utilisateurs
+    } else {
+      console.log(`Le salon ${newChannel} existe déjà.`);
+      socket.emit('room exists', newChannel); // Si le salon existe déjà, on informe l'utilisateur
+    }
+  });
+
+  // Écouter l'événement de changement de pseudo et d'information
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
     const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
@@ -54,7 +81,6 @@ io.on('connection', (socket) => {
     socket.join(currentChannel);
 
     if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
-    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
     roomUsers[currentChannel].push(userData);
 
     console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
@@ -62,6 +88,7 @@ io.on('connection', (socket) => {
     socket.emit('username accepted', userData);
   });
 
+  // Envoyer un message dans le salon
   socket.on('chat message', (msg) => {
     const sender = Object.values(users).find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général';
@@ -83,23 +110,7 @@ io.on('connection', (socket) => {
     io.to(currentChannel).emit('chat message', messageToSend);
   });
 
-  socket.on('createRoom', (newChannel) => {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user || userRoles[user.username] === 'user') {
-      socket.emit('error', 'Permission refusée pour créer un salon');
-      return;
-    }
-
-    if (!messageHistory[newChannel]) {
-      messageHistory[newChannel] = [];
-      roomUsers[newChannel] = [];
-      console.log(`✅ Salon créé : ${newChannel}`);
-      io.emit('room created', newChannel);
-    } else {
-      socket.emit('room exists', newChannel);
-    }
-  });
-
+  // Événement pour rejoindre un salon
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
     const user = Object.values(users).find(user => user.id === socket.id);
@@ -134,17 +145,7 @@ io.on('connection', (socket) => {
     io.to(channel).emit('user list', roomUsers[channel]);
   });
 
-  socket.on('kick', (targetUsername) => {
-    const issuer = Object.values(users).find(u => u.id === socket.id);
-    if (!issuer || (userRoles[issuer.username] !== 'admin' && userRoles[issuer.username] !== 'modo')) return;
-
-    const target = users[targetUsername];
-    if (target) {
-      io.to(target.id).emit('kicked');
-      io.sockets.sockets.get(target.id)?.disconnect();
-    }
-  });
-
+  // Gérer la déconnexion d'un utilisateur
   socket.on('disconnect', () => {
     const disconnectedUser = Object.values(users).find(user => user.id === socket.id);
 
