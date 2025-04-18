@@ -78,6 +78,8 @@ document.addEventListener('DOMContentLoaded', function () {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
     const username = localStorage.getItem("username");
+    const gender = localStorage.getItem("gender");
+    const age = localStorage.getItem("age");
 
     if (!message) {
       showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
@@ -94,7 +96,9 @@ document.addEventListener('DOMContentLoaded', function () {
         username,
         message,
         timestamp: new Date().toISOString(),
-        channel: currentChannel
+        channel: currentChannel,
+        gender,
+        age
       });
       messageInput.value = "";
     }
@@ -147,6 +151,20 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 4000);
   }
 
+  function addChannelClickListeners() {
+    document.querySelectorAll('.channel').forEach(channel => {
+      channel.addEventListener('click', () => {
+        document.getElementById("message-input").value = '';
+        selectedUser = null;
+        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+        channel.classList.add('selected');
+        currentChannel = channel.textContent.replace('# ', '');
+        socket.emit('joinRoom', currentChannel);
+        document.getElementById('chat-messages').innerHTML = '';
+      });
+    });
+  }
+
   // SOCKET EVENTS
   socket.on('user list', updateUserList);
 
@@ -163,12 +181,6 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  socket.on('user data', (userData) => {
-    document.getElementById('username').textContent = userData.username || 'Inconnu';
-    document.getElementById('age').textContent = userData.age || 'Inconnu';
-    document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
-  });
-
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
     modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
@@ -181,24 +193,17 @@ document.addEventListener('DOMContentLoaded', function () {
     const li = document.createElement('li');
     li.classList.add('channel');
     li.textContent = `# ${newRoom}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.getElementById('chat-messages').innerHTML = '';
-    });
     document.getElementById('channel-list').appendChild(li);
+    addChannelClickListeners(); // Ajouter écouteur
   });
 
   socket.on('room exists', (name) => {
     alert(`⚠️ Le salon "${name}" existe déjà.`);
   });
 
-  // CREATION DE SALON
+  // CRÉATION DE SALON
   const createChannelButton = document.getElementById('create-channel-button');
   const newChannelNameInput = document.getElementById('new-channel-name');
-  const channelList = document.getElementById('channel-list');
 
   createChannelButton.addEventListener('click', () => {
     const newChannel = newChannelNameInput.value.trim();
@@ -208,26 +213,15 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // GESTION DES CLICS SUR LES SALONS EXISTANTS
-  const channelElements = document.querySelectorAll('.channel');
-  channelElements.forEach(channel => {
-    channel.addEventListener('click', () => {
-      document.getElementById("message-input").value = '';
-      selectedUser = null;
-      channelElements.forEach(c => c.classList.remove('selected'));
-      channel.classList.add('selected');
-      currentChannel = channel.textContent.replace('# ', '');
-      socket.emit('joinRoom', currentChannel);
-      document.getElementById('chat-messages').innerHTML = '';
-    });
-  });
+  // CLICS INITIAUX SUR LES SALONS EXISTANTS
+  addChannelClickListeners();
 
   // ENVOI DES MESSAGES
   document.getElementById("message-input").addEventListener("keypress", function (event) {
     if (event.key === "Enter") sendMessage();
   });
 
-  // MODAL DE CONNEXION UTILISATEUR
+  // MODAL DE CONNEXION
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
   const savedAge = localStorage.getItem("age");
