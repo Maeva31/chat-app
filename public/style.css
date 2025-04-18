@@ -87,7 +87,6 @@ main {
   background-color: #00ffff;
   color: black;
   font-weight: bold;
-  border-left: 4px solid #00ffff; /* Accent border */
 }
 
 /* === CHAT CONTAINER (CENTER) === */
@@ -105,7 +104,6 @@ main {
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 10px;
-  max-height: 70vh; /* Prevent overflow */
 }
 
 .chat-messages .message {
@@ -147,8 +145,7 @@ main {
   padding: 1em;
   border-left: 2px solid #333;
   border-radius: 10px;
-  max-height: 70vh;
-  overflow-y: auto;
+ /* margin: 10px; */
 }
 
 #users {
@@ -330,51 +327,4 @@ main {
     opacity: 1;
     transform: translateY(0);
   }
-}
-
-/* === USER ROLES === */
-.user-item {
-  display: flex;
-  justify-content: space-between;
-  padding: 5px;
-  border-bottom: 1px solid #ddd;
-}
-
-.user-username {
-  font-weight: bold;
-}
-
-.user-role {
-  font-size: 12px;
-  color: gray;
-}
-
-.user-item .admin {
-  color: red;
-}
-
-.user-item .modo {
-  color: orange;
-}
-
-.user-item .user {
-  color: blue;
-}
-
-/* === MODERATION MENU === */
-#moderation-menu button {
-  margin: 5px 0;
-  padding: 5px 10px;
-  background-color: #00ffff;
-  border: none;
-  color: black;
-  font-weight: bold;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-#moderation-menu button:hover {
-  background-color: #ff00ff;
-  color: white;
 }
