@@ -6,6 +6,13 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
+// 👑 Définis ici les rôles manuellement par pseudo
+const userRoles = {
+  'Maeva': 'admin',
+  'Katia': 'modo',
+  'Jean': 'user'
+};
+
 let users = {};
 let messageHistory = {};
 let roomUsers = {};
@@ -27,7 +34,7 @@ io.on('connection', (socket) => {
   socket.emit('chat history', messageHistory['Général'] || []);
 
   socket.on('set username', (data) => {
-    const { username, gender, age, role } = data; // Récupération du rôle
+    const { username, gender, age } = data;
 
     const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
@@ -40,7 +47,9 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const userData = { username, gender, age, role: role || 'user', id: socket.id }; // Ajout du rôle
+    // 🔐 Rôle défini manuellement ou 'user' par défaut
+    const role = userRoles[username] || 'user';
+    const userData = { username, gender, age, id: socket.id, role };
     users[username] = userData;
 
     const currentChannel = userChannels[socket.id] || 'Général';
@@ -48,12 +57,13 @@ io.on('connection', (socket) => {
     socket.join(currentChannel);
 
     if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
+    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
     roomUsers[currentChannel].push(userData);
 
-    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans, Rôle : ${role})`);
+    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans, rôle: ${role})`);
     io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
     socket.emit('username accepted', username);
-    updateRoomList(); // ✅
+    updateRoomList();
   });
 
   socket.on('chat message', (msg) => {
@@ -100,7 +110,7 @@ io.on('connection', (socket) => {
       console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
     }
 
-    updateRoomList(); // ✅
+    updateRoomList();
   });
 
   socket.on('joinRoom', (channel) => {
@@ -127,7 +137,7 @@ io.on('connection', (socket) => {
       username: user.username,
       gender: user.gender,
       age: user.age,
-      role: user.role, // Ajout du rôle à la salle
+      role: user.role
     });
 
     console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
@@ -140,7 +150,7 @@ io.on('connection', (socket) => {
 
     socket.emit('chat history', messageHistory[channel] || []);
     io.to(channel).emit('user list', roomUsers[channel]);
-    updateRoomList(); // ✅
+    updateRoomList();
   });
 
   socket.on('createRoom', (newChannel) => {
@@ -149,54 +159,9 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = [];
       console.log(`✅ Salon créé : ${newChannel}`);
       io.emit('room created', newChannel);
-      updateRoomList(); // ✅
+      updateRoomList();
     } else {
       socket.emit('room exists', newChannel);
-    }
-  });
-
-  // Actions de modération
-  socket.on('kick', (targetUsername) => {
-    const requester = users[socket.id];
-    if (requester && (requester.role === 'admin' || requester.role === 'modo')) {
-      const target = Object.values(users).find(user => user.username === targetUsername);
-      if (target) {
-        io.to(target.id).emit('kick');
-        target.leave(currentChannel);
-        io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
-        console.log(`${requester.username} a expulsé ${target.username}`);
-      }
-    } else {
-      socket.emit('error', 'Vous n\'avez pas la permission de kick.');
-    }
-  });
-
-  socket.on('ban', (targetUsername) => {
-    const requester = users[socket.id];
-    if (requester && requester.role === 'admin') {
-      const target = Object.values(users).find(user => user.username === targetUsername);
-      if (target) {
-        io.to(target.id).emit('ban');
-        target.leave(currentChannel);
-        io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
-        console.log(`${requester.username} a banni ${target.username}`);
-      }
-    } else {
-      socket.emit('error', 'Vous n\'avez pas la permission de bannir.');
-    }
-  });
-
-  socket.on('mute', (targetUsername) => {
-    const requester = users[socket.id];
-    if (requester && (requester.role === 'admin' || requester.role === 'modo')) {
-      const target = Object.values(users).find(user => user.username === targetUsername);
-      if (target) {
-        target.isMuted = true; // Ajout de l'attribut isMuted
-        io.to(target.id).emit('mute');
-        console.log(`${requester.username} a mis en sourdine ${target.username}`);
-      }
-    } else {
-      socket.emit('error', 'Vous n\'avez pas la permission de mute.');
     }
   });
 });
