@@ -26,13 +26,12 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   socket.on('user data', (userData) => {
-  // Assurer que le pseudo et l'âge sont bien définis dans l'interface utilisateur
-  document.getElementById('username').textContent = userData.username;
-  document.getElementById('age').textContent = userData.age;
-  document.getElementById('gender').textContent = userData.gender;
-});
+    // Assurer que le pseudo et l'âge sont bien définis dans l'interface utilisateur
+    document.getElementById('username').textContent = userData.username;
+    document.getElementById('age').textContent = userData.age;
+    document.getElementById('gender').textContent = userData.gender;
+  });
 
-  
   // Ajouter un message
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
