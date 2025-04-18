@@ -1,7 +1,7 @@
+/* === GENERAL === */
 body {
   font-family: Arial, sans-serif;
   margin: 0;
-  /* background: #111; */
   background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
   color: #fff;
   display: flex;
@@ -9,12 +9,87 @@ body {
   height: 100vh;
 }
 
+/* === LAYOUT === */
 main {
   display: flex;
   flex: 1;
   overflow: hidden;
 }
 
+#content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* === CHANNEL SIDEBAR (LEFT) === */
+#channel-sidebar {
+  flex: 1;
+  min-width: 200px;
+  background: #222222b8;
+  padding: 1em;
+  border-right: 2px solid #333;
+  border-radius: 10px;
+  color: white;
+}
+
+#channel-sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  text-align: center;
+  color: #00ffff;
+}
+
+#create-channel {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 1em;
+}
+
+#create-channel input {
+  flex: 1;
+  padding: 0.5em;
+  border: none;
+  border-radius: 6px;
+  background-color: #121212;
+  color: white;
+}
+
+#create-channel button {
+  padding: 0.5em 0.8em;
+  border: none;
+  border-radius: 6px;
+  background-color: #00ffff;
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#channel-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#channel-list .channel {
+  padding: 0.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  transition: 0.2s ease;
+}
+
+#channel-list .channel:hover {
+  background-color: #444;
+}
+
+#channel-list .channel.selected {
+  background-color: #00ffff;
+  color: black;
+  font-weight: bold;
+}
+
+/* === CHAT CONTAINER (CENTER) === */
 #chat-container {
   flex: 6;
   display: flex;
@@ -25,20 +100,19 @@ main {
 .chat-messages {
   flex: 1;
   overflow-y: auto;
- /* background: #222; */
   background: #222222b8;
   padding: 1em;
   border-radius: 10px;
   margin-bottom: 10px;
 }
 
-/* Message dans le chat */
 .chat-messages .message {
   margin-bottom: 1em;
-  word-wrap: break-word; /* Coupe les mots longs */
-  white-space: pre-wrap;  /* Gère les retours à la ligne */
+  word-wrap: break-word;
+  white-space: pre-wrap;
   line-height: 1.4;
-  word-break: break-word; /* Assure que même les mots trop longs seront cassés */
+  word-break: break-word;
+  animation: fadeInUp 0.3s ease;
 }
 
 #chat-input {
@@ -48,11 +122,12 @@ main {
 
 #message-input {
   flex: 1;
-  padding: 1.5em;
+  padding: 1em;
+  font-size: 1em;
   border-radius: 5px;
   border: none;
-  background-color: #121212; /* ou un autre fond foncé */
-  color: white; /* couleur du texte d'envoi */
+  background-color: #121212;
+  color: white;
 }
 
 #send-button {
@@ -63,9 +138,9 @@ main {
   border-radius: 5px;
 }
 
+/* === USER LIST (RIGHT SIDEBAR) === */
 #user-list {
   flex: 1;
-  /* background: #1a1a1a; */
   background: #222222b8;
   padding: 1em;
   border-left: 2px solid #333;
@@ -108,14 +183,31 @@ main {
   font-size: 1.1em;
 }
 
-/* Modale */
+#users li.selected {
+  background-color: #333;
+  border-left: 4px solid #00ffff;
+  padding-left: 6px;
+  border-radius: 5px;
+}
+
+.clickable-username {
+  color: #00ffff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.clickable-username:hover {
+  text-decoration: none;
+  color: #ff00ff;
+}
+
+/* === MODAL === */
 .modal {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  /* background: rgba(0, 0, 0, 0.9); */
   background: #000000;
   background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
   display: flex;
@@ -188,7 +280,34 @@ main {
   box-shadow: 0 0 15px #00ffff;
 }
 
-/* Animations */
+#modal-error {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: #ff4d4d;
+  display: none;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+
+  #channel-sidebar,
+  #user-list {
+    width: 100%;
+    border: none;
+    border-top: 2px solid #333;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  #chat-container {
+    padding: 0.5em;
+  }
+}
+
+/* === ANIMATIONS === */
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -199,232 +318,13 @@ main {
   100% { transform: scale(1); opacity: 1; }
 }
 
-/* Sélection pseudo */
-#users li.selected {
-  background-color: #333;
-  border-left: 4px solid #00ffff;
-  padding-left: 6px;
-  border-radius: 5px;
-}
-
-
-/* Pseudo cliquable */
-.clickable-username {
-  color: #00ffff;
-  font-weight: bold;
-  cursor: pointer;
-}
-
-.clickable-username:hover {
-  text-decoration: none;
-  color: #ff00ff;
-}
-/* Ajouté : Responsive pour mobile */
-@media (max-width: 768px) {
-  main {
-    flex-direction: column;
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
   }
-
-  #chat-container {
-    flex: 1;
-  }
-
-  #user-list {
-    flex: none;
-    margin: 0;
-    border-left: none;
-    border-top: 2px solid #333;
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
-
-
-/* Ajouté : Message d’erreur du modal */
-#modal-error {
-  margin-top: 0.5em;
-  font-size: 0.9em;
-  color: #ff4d4d;
-  display: none;
-}
-
-/* Harmonisation : champ de message plus petit */
-#message-input {
-  padding: 1em;
-  font-size: 1em;
-}
-
-/* Optionnel : alignement propre des messages */
-.chat-messages .message {
-  word-wrap: break-word;
-  line-height: 1.4;
-}
-
-/* Sidebar des salons */
-#channel-sidebar {
-  flex: 0 0 200px;
-  background: #1a1a1a;
-  padding: 1em;
-  border-right: 2px solid #333;
-  border-radius: 0 10px 10px 0;
-  color: #00ffff;
-  display: flex;
-  flex-direction: column;
-  gap: 1em;
-}
-
-#channel-sidebar h3 {
-  margin: 0;
-  font-size: 1.3em;
-  color: #00ffff;
-  text-align: center;
-}
-
-#channel-list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-#channel-list .channel {
-  padding: 0.5em 1em;
-  border-radius: 8px;
-  cursor: pointer;
-  color: #fff;
-  transition: 0.2s ease;
-}
-
-#channel-list .channel:hover {
-  background-color: #333;
-  color: #ff00ff;
-}
-
-#channel-list .channel.selected {
-  background-color: #00ffff;
-  color: #000;
-  font-weight: bold;
-}
-
-/* Ajuste le container principal */
-#content-container {
-  display: flex;
-  flex: 1;
-  overflow: hidden;
-}
-#channel-sidebar {
-  flex: none;
-  width: 100%;
-  border-right: none;
-  border-bottom: 2px solid #333;
-  border-radius: 0;
-}
-
-#content-container {
-  flex-direction: column;
-}
-#channel-sidebar {
-  width: 200px;
-  background: #222222b8;
-  padding: 1em;
-  border-right: 2px solid #333;
-  color: white;
-}
-
-#channel-sidebar h3 {
-  margin-top: 0;
-  margin-bottom: 1em;
-  text-align: center;
-  color: #00ffff;
-}
-
-#channel-list {
-  list-style: none;
-  padding: 0;
-}
-
-#channel-list .channel {
-  padding: 0.5em;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-#channel-list .channel:hover {
-  background-color: #444;
-}
-
-#channel-list .channel.selected {
-  background-color: #00ffff;
-  color: black;
-  font-weight: bold;
-}
-
-
-/* Sidebar gauche - salons */
-#channel-sidebar {
-  flex: 1;
-  min-width: 200px;
-  background: #222222b8;
-  padding: 1em;
-  border-right: 2px solid #333;
-  border-radius: 10px;
-}
-
-/* Centre - chat */
-#chat-container {
-  flex: 6;
-  display: flex;
-  flex-direction: column;
-  padding: 1em;
-}
-
-/* Sidebar droite - utilisateurs */
-#user-list {
-  flex: 1;
-  background: #222222b8;
-  padding: 1em;
-  border-left: 2px solid #333;
-  border-radius: 10px;
-  margin: 10px;
-}
-
-#create-channel {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 1em;
-}
-
-#create-channel input {
-  flex: 1;
-  padding: 0.5em;
-  border: none;
-  border-radius: 6px;
-  background-color: #121212;
-  color: white;
-}
-
-#create-channel button {
-  padding: 0.5em 0.8em;
-  border: none;
-  border-radius: 6px;
-  background-color: #00ffff;
-  color: #000;
-  cursor: pointer;
-  font-weight: bold;
-}
-
-.channel {
-  padding: 0.5em;
-  border-radius: 5px;
-  cursor: pointer;
-  color: white;
-}
-
-.channel:hover {
-  background-color: #333;
-}
-
-.channel.selected {
-  background-color: #00ffff;
-  color: #000;
-  font-weight: bold;
-}
-
