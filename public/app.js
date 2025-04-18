@@ -165,6 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // Gestion de la création du salon
   socket.on('room created', function (newRoom) {
     const channelList = document.getElementById('channel-list');
     const li = document.createElement('li');
@@ -178,6 +179,14 @@ document.addEventListener('DOMContentLoaded', function () {
       document.querySelector('#chat-messages').innerHTML = '';
     });
     channelList.appendChild(li);
+  });
+
+  // Création d'un salon (exemple)
+  document.getElementById('create-room-btn').addEventListener('click', () => {
+    const newRoom = prompt('Nom du nouveau salon :');
+    if (newRoom && newRoom.trim() !== '') {
+      socket.emit('createRoom', newRoom.trim());
+    }
   });
 
   const savedUsername = localStorage.getItem("username");
