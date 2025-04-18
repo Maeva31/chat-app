@@ -25,8 +25,8 @@ const elevatedUsers = {
 
 // Vérification du pseudo [USER] et autres contraintes (sans restriction sur [USER])
 function isValidUsername(username) {
-  if (username.length > 16 || /\s/.test(username)) {
-    return false;
+  if (username.length > 16 || /\s/.test(username) || username === '[USER]') {
+    return false;  // Empêcher l'utilisation du pseudo [USER]
   }
   return true;
 }
