@@ -7,8 +7,8 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 let users = [];
-let messageHistory = []; // Historique des messages
-let currentChannel = 'Général'; // Salon par défaut
+let messageHistory = {}; // Historique des messages par salon
+let userChannels = {}; // Liste des salons auxquels les utilisateurs appartiennent
 
 // Servir les fichiers statiques
 app.use(express.static('public'));
@@ -17,7 +17,7 @@ io.on('connection', (socket) => {
   console.log(`✅ Nouvel utilisateur connecté (socket ID: ${socket.id})`);
 
   // Envoi de l'historique des messages à la connexion
-  socket.emit('chat history', messageHistory);
+  socket.emit('chat history', messageHistory['Général'] || []);
 
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
@@ -55,6 +55,7 @@ io.on('connection', (socket) => {
 
   socket.on('chat message', (msg) => {
     const sender = users.find(user => user.id === socket.id);
+    const currentChannel = userChannels[socket.id] || 'Général'; // Salon spécifique à l'utilisateur
     const messageToSend = {
       username: msg.username || "Anonyme",
       gender: sender ? sender.gender : "Non précisé",
@@ -65,9 +66,13 @@ io.on('connection', (socket) => {
 
     console.log(`💬 ${messageToSend.username} dans #${messageToSend.channel}: ${messageToSend.message}`);
 
-    messageHistory.push(messageToSend);
-    if (messageHistory.length > 10) {
-      messageHistory.shift();
+    // Ajout des messages dans l'historique du salon spécifique
+    if (!messageHistory[currentChannel]) {
+      messageHistory[currentChannel] = [];
+    }
+    messageHistory[currentChannel].push(messageToSend);
+    if (messageHistory[currentChannel].length > 10) {
+      messageHistory[currentChannel].shift(); // Limiter à 10 messages par salon
     }
 
     io.emit('chat message', messageToSend);
@@ -85,13 +90,22 @@ io.on('connection', (socket) => {
     // Retirer l'utilisateur de la liste des utilisateurs
     users = users.filter(user => user.id !== socket.id);
     io.emit('user list', users);
+    
+    // Retirer l'utilisateur des salons
+    delete userChannels[socket.id];
   });
 
   // Changer de salon
   socket.on('joinRoom', (channel) => {
-    currentChannel = channel;
-    console.log(`👥 ${socket.id} a rejoint le salon : ${currentChannel}`);
-    io.emit('chat message', { username: 'Système', message: `${socket.id} a rejoint le salon ${currentChannel}`, channel });
+    const oldChannel = userChannels[socket.id] || 'Général';
+    userChannels[socket.id] = channel;
+    console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
+
+    // Envoi d'un message indiquant que l'utilisateur a rejoint un salon
+    io.emit('chat message', { username: 'Système', message: `${socket.id} a rejoint le salon ${channel}`, channel });
+
+    // Envoi de l'historique du salon
+    socket.emit('chat history', messageHistory[channel] || []);
   });
 });
 
