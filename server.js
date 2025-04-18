@@ -51,6 +51,7 @@ io.on('connection', (socket) => {
     console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
     io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
     socket.emit('username accepted', username);
+    io.to(currentChannel).emit('user count', roomUsers[currentChannel].length); // Mise à jour du nombre d'utilisateurs
   });
 
   // Envoi d’un message
@@ -92,6 +93,7 @@ io.on('connection', (socket) => {
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
         io.to(channel).emit('user list', roomUsers[channel]);
+        io.to(channel).emit('user count', roomUsers[channel].length); // Mise à jour du nombre d'utilisateurs
       }
 
       delete users[disconnectedUser.username];
@@ -115,6 +117,7 @@ io.on('connection', (socket) => {
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
       io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+      io.to(oldChannel).emit('user count', roomUsers[oldChannel].length); // Mise à jour du nombre d'utilisateurs
     }
 
     socket.leave(oldChannel);
@@ -140,6 +143,7 @@ io.on('connection', (socket) => {
 
     socket.emit('chat history', messageHistory[channel] || []);
     io.to(channel).emit('user list', roomUsers[channel]);
+    io.to(channel).emit('user count', roomUsers[channel].length); // Mise à jour du nombre d'utilisateurs
   });
 
   // Création de salon
