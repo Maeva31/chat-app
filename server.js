@@ -1,178 +1,242 @@
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
+document.addEventListener('DOMContentLoaded', function () {
+  const socket = io();
+  let selectedUser = null;
+  let currentChannel = 'Général';
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+  const genderColors = {
+    Homme: '#00f',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    default: '#aaa'
+  };
 
-let users = [];
-let messageHistory = {}; // Historique des messages par salon
-let userChannels = {};   // Association socket.id → salon
-let roomUsers = {};      // Utilisateurs par salon
+  // ✅ Version sécurisée et unique de updateUserList
+  function updateUserList(users) {
+    const userList = document.getElementById('user-list'); // Assurez-vous que l'ID est correct
+    userList.innerHTML = ''; // Réinitialise la liste avant de la remplir
 
-// Fichiers statiques
-app.use(express.static('public'));
+    users.forEach(user => {
+      const username = user?.username || 'Inconnu';
+      const age = user?.age || '?';
+      const gender = user?.gender || 'Non spécifié';
 
-io.on('connection', (socket) => {
-  console.log(`✅ Nouvel utilisateur connecté (socket ID: ${socket.id})`);
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
+          ${age}
+        </div>
+        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
+      `;
+      userList.appendChild(li);
+    });
+  }
 
-  // Envoi de l'historique par défaut (salon Général)
-  socket.emit('chat history', messageHistory['Général'] || []);
-
-  socket.on('set username', (data) => {
-    const { username, gender, age } = data;
-
-    const usernameIsInvalid =
-      !username || username.length > 16 || /\s/.test(username);
-
-    if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
-      socket.emit('username exists', username);
-      return;
-    }
-
-    const alreadyExists = users.some(
-      (user) => user.username === username && user.id !== socket.id
-    );
-
-    if (alreadyExists) {
-      socket.emit('username exists', username);
-      return;
-    }
-
-    // 🔁 Mise à jour ou ajout dans `users`
-    const existingUserIndex = users.findIndex(user => user.id === socket.id);
-    const userData = { username, gender, age, id: socket.id };
-
-    if (existingUserIndex !== -1) {
-      users[existingUserIndex] = userData;
-    } else {
-      users.push(userData);
-    }
-
-    // 🔁 Rejoindre ou mettre à jour le salon
-    const currentChannel = userChannels[socket.id] || 'Général';
-    userChannels[socket.id] = currentChannel;
-    socket.join(currentChannel);
-
-    if (!roomUsers[currentChannel]) {
-      roomUsers[currentChannel] = [];
-    }
-
-    // Supprimer l'utilisateur précédent dans le salon
-    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
-    roomUsers[currentChannel].push(userData);
-
-    console.log(`👤 Utilisateur enregistré ou mis à jour : ${username} (${gender}, ${age} ans)`);
-
-    // 🔁 Mettre à jour la liste des utilisateurs dans le salon
-    io.to(currentChannel).emit('user list', roomUsers[currentChannel].map(u => u.username));
-
-    // Optionnel : notifier du changement
-    socket.emit('username accepted', username);
+  // mise à jour pseudo
+  socket.on('user list', (userList) => {
+    updateUserList(userList); // Appelle la fonction updateUserList
+  });
+  
+  // Historique des messages
+  socket.on('chat history', function (messages) {
+    const chatMessages = document.getElementById("chat-messages");
+    chatMessages.innerHTML = '';
+    messages.forEach(msg => addMessageToChat(msg, chatMessages));
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  socket.on('chat message', (msg) => {
-    const sender = users.find(user => user.id === socket.id);
-    const currentChannel = userChannels[socket.id] || 'Général';
-
-    const messageToSend = {
-      username: sender ? sender.username : "Anonyme",
-      gender: sender ? sender.gender : "Non précisé",
-      message: msg.message || "",
-      timestamp: msg.timestamp || new Date().toISOString(),
-      channel: currentChannel,
-    };
-
-    console.log(`💬 ${messageToSend.username} dans #${messageToSend.channel}: ${messageToSend.message}`);
-
-    if (!messageHistory[currentChannel]) {
-      messageHistory[currentChannel] = [];
-    }
-
-    messageHistory[currentChannel].push(messageToSend);
-    if (messageHistory[currentChannel].length > 10) {
-      messageHistory[currentChannel].shift();
-    }
-
-    io.to(currentChannel).emit('chat message', messageToSend);
+  // Nouveau message
+  socket.on('chat message', function (msg) {
+    const chatMessages = document.getElementById("chat-messages");
+    addMessageToChat(msg, chatMessages);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  socket.on('disconnect', () => {
-    const disconnectedUser = users.find(user => user.id === socket.id);
-    if (disconnectedUser) {
-      console.log(`❌ Utilisateur déconnecté : ${disconnectedUser.username}`);
-      io.emit('user disconnect', disconnectedUser.username);
+  socket.on('user data', (userData) => {
+    const username = userData.username || 'Inconnu';
+    const age = userData.age || 'Inconnu';
+    const gender = userData.gender || 'Non spécifié';
 
-      // Retirer l'utilisateur de tous les salons
-      for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
+    document.getElementById('username').textContent = username;
+    document.getElementById('age').textContent = age;
+    document.getElementById('gender').textContent = gender;
+  });
+
+  // Ajout de message dans le chat
+  function addMessageToChat(msg, chatMessages) {
+    const newMessage = document.createElement("div");
+    const date = new Date(msg.timestamp);
+    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const usernameSpan = document.createElement("span");
+    usernameSpan.classList.add("clickable-username");
+    usernameSpan.style.color = getUsernameColor(msg.gender);
+    usernameSpan.textContent = msg.username || 'Inconnu';
+
+    usernameSpan.addEventListener("click", function () {
+      const messageInput = document.getElementById("message-input");
+      const current = messageInput.value.trim();
+      const mention = `@${msg.username} `;
+      if (!current.includes(mention)) {
+        messageInput.value = mention + current;
       }
-    } else {
-      console.log('❌ Utilisateur inconnu déconnecté');
-    }
+      messageInput.focus();
+      selectedUser = msg.username;
+    });
 
-    users = users.filter(user => user.id !== socket.id);
-    io.emit('user list', users);
-    delete userChannels[socket.id];
-  });
+    newMessage.innerHTML = `[${timeString}] `;
+    newMessage.appendChild(usernameSpan);
+    newMessage.insertAdjacentHTML("beforeend", `: ${msg.message}`);
+    newMessage.classList.add("message");
+    newMessage.dataset.username = msg.username;
 
-  socket.on('joinRoom', (channel) => {
-    const oldChannel = userChannels[socket.id] || 'Général';
-    const user = users.find(user => user.id === socket.id);
+    chatMessages.appendChild(newMessage);
+  }
 
-    if (!user) {
-      socket.emit('error', 'Utilisateur non défini');
+  // Envoi de message
+  function sendMessage() {
+    const messageInput = document.getElementById("message-input");
+    const message = messageInput.value.trim();
+    const username = localStorage.getItem("username");
+
+    if (!message) {
+      showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
       return;
     }
 
-    // Quitter ancien salon
-    if (roomUsers[oldChannel]) {
-      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel].map(u => u.username));
+    if (message.length > 300) {
+      showErrorMessage("Message trop long (300 caractères max).");
+      return;
     }
 
-    socket.leave(oldChannel);
-    socket.join(channel);
-    userChannels[socket.id] = channel;
-
-    if (!roomUsers[channel]) {
-      roomUsers[channel] = [];
+    if (username) {
+      socket.emit('chat message', {
+        username,
+        message,
+        timestamp: new Date().toISOString(),
+        channel: currentChannel
+      });
+      messageInput.value = "";
     }
+  }
 
-    roomUsers[channel].push({
-      id: socket.id,
-      username: user.username,
-      gender: user.gender,
-      age: user.age
-    });
-
-    console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
-
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${user.username} a rejoint le salon ${channel}`,
-      channel
-    });
-
-    socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('user list', roomUsers[channel].map(u => u.username));
+  document.getElementById("message-input").addEventListener("keypress", function (event) {
+    if (event.key === "Enter") sendMessage();
   });
 
-  socket.on('createRoom', (newChannel) => {
-    if (!messageHistory[newChannel]) {
-      messageHistory[newChannel] = [];
-      roomUsers[newChannel] = [];
-      console.log(`✅ Nouveau salon créé : ${newChannel}`);
-      io.emit('room created', newChannel);
-    } else {
-      socket.emit('room exists', newChannel);
-    }
-  });
-});
+  // Gestion des infos utilisateur
+  function submitUserInfo() {
+    const usernameInput = document.getElementById("username-input");
+    const genderSelect = document.getElementById("gender-select");
+    const ageInput = document.getElementById("age-input");
+    const modalError = document.getElementById("modal-error");
 
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+    const username = usernameInput.value.trim();
+    const gender = genderSelect.value;
+    const age = parseInt(ageInput.value.trim(), 10);
+
+    if (!username || username.includes(" ") || username.length > 16) {
+      modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (isNaN(age) || age < 18 || age > 89) {
+      modalError.textContent = "❌ L'âge doit être un nombre entre 18 et 89.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (!gender) {
+      modalError.textContent = "❌ Veuillez sélectionner un genre.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    modalError.style.display = "none";
+    localStorage.setItem("username", username);
+    localStorage.setItem("gender", gender);
+    localStorage.setItem("age", age);
+
+    socket.emit('set username', { username, gender, age });
+    document.getElementById("myModal").style.display = "none";
+  }
+
+  // Pseudo déjà utilisé
+  socket.on('username exists', function (username) {
+    const modalError = document.getElementById("modal-error");
+    modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
+    modalError.style.display = "block";
+    localStorage.removeItem("username");
+    document.getElementById("myModal").style.display = "block";
+  });
+
+  // Couleurs selon genre
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  function getGenderColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  // Mise à jour des utilisateurs
+  socket.on('user list', updateUserList);
+
+  // Sélection de salons
+  const channelElements = document.querySelectorAll('.channel');
+  channelElements.forEach(channel => {
+    channel.addEventListener('click', () => {
+      channelElements.forEach(c => c.classList.remove('selected'));
+      channel.classList.add('selected');
+      currentChannel = channel.textContent.replace('# ', '');
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+  });
+
+  // Salon créé dynamiquement
+  socket.on('room created', function (newRoom) {
+    const channelList = document.getElementById('channel-list');
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    li.textContent = `# ${newRoom}`;
+    li.addEventListener('click', () => {
+      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+      li.classList.add('selected');
+      currentChannel = newRoom;
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+    channelList.appendChild(li);
+  });
+
+  // Chargement auto depuis localStorage
+  const savedUsername = localStorage.getItem("username");
+  const savedGender = localStorage.getItem("gender");
+  const savedAge = localStorage.getItem("age");
+
+  if (savedUsername && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || "non spécifié",
+      age: savedAge
+    });
+    document.getElementById("myModal").style.display = "none";
+  } else {
+    document.getElementById("myModal").style.display = "block";
+  }
+
+  // Soumission modal
+  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
+
+  // Boîte à erreurs
+  function showErrorMessage(message) {
+    const errorBox = document.getElementById("error-box");
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.style.display = "block";
+    setTimeout(() => {
+      errorBox.style.display = "none";
+    }, 4000);
+  }
 });
