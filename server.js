@@ -117,18 +117,19 @@ io.on('connection', (socket) => {
 
     userChannels[socket.id] = channel;
 
-    // Ajouter l'utilisateur au salon actuel
+    // Ajouter l'utilisateur au salon actuel avec son pseudo mis à jour
+    const user = users.find(user => user.id === socket.id); // Récupère l'utilisateur avec son pseudo actuel
     if (!roomUsers[channel]) {
       roomUsers[channel] = [];
     }
-    roomUsers[channel].push({ id: socket.id, username: users.find(user => user.id === socket.id)?.username });
+    roomUsers[channel].push({ id: socket.id, username: user ? user.username : 'Anonyme' });
 
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
 
     // Notifier tous les utilisateurs du salon de l'entrée de l'utilisateur
     io.to(channel).emit('chat message', {
       username: 'Système',
-      message: `${socket.id} a rejoint le salon ${channel}`,
+      message: `${user ? user.username : 'Un utilisateur'} a rejoint le salon ${channel}`,
       channel
     });
 
