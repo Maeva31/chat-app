@@ -105,7 +105,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     const usernameSpan = document.createElement("span");
     usernameSpan.classList.add("clickable-username");
-    usernameSpan.style.color = getUsernameColor(msg.gender);
+    const messageColor = (msg.role === 'admin') ? 'red' : (msg.role === 'modo') ? 'orange' : 'black';
+    usernameSpan.style.color = messageColor;
     const username = msg.username || 'Inconnu';
 
     if (username === '[USER]') return; // Ne pas afficher les messages de [USER]
