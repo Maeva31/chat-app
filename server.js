@@ -35,41 +35,56 @@ io.on('connection', (socket) => {
   socket.emit('room list', channels);
 
   // 💥 FUSION des deux versions de createRoom ici :
-  socket.on('createRoom', (newChannel) => {
+    socket.on('createRoom', (newChannel) => {
     const channelName = newChannel?.trim();
 
+    // Vérifications de base
     if (!channelName || channelName.length > 20 || channels.includes(channelName)) {
       socket.emit('error', 'Nom de salon invalide ou déjà existant');
       return;
     }
 
+    // Vérification du rôle
     const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user || userRoles[user.username] === 'user') {
-      socket.emit('error', 'Permission refusée pour créer un salon');
+    const role = user ? userRoles[user.username] : null;
+
+    if (!user) {
+      socket.emit('error', 'Utilisateur non identifié');
       return;
     }
 
+    // Autoriser admin et modo, bloquer les simples users
+    if (role === 'user') {
+      socket.emit('error', 'Permission refusée : seuls les admins ou modérateurs peuvent créer un salon.');
+      return;
+    }
+
+    // Création du salon
     channels.push(channelName);
     messageHistory[channelName] = [];
     roomUsers[channelName] = [];
 
     console.log(`✅ Salon créé : ${channelName}`);
-    io.emit('room created', channelName);
+    io.emit('room created', channelName); // envoie à tous les clients
 
-    // Optionnel : rejoindre automatiquement
-    socket.leave(userChannels[socket.id]);
+    // Passage automatique au nouveau salon
+    const oldChannel = userChannels[socket.id];
+    socket.leave(oldChannel);
     socket.join(channelName);
     userChannels[socket.id] = channelName;
+
     roomUsers[channelName].push({
       id: socket.id,
       username: user.username,
       gender: user.gender,
       age: user.age,
-      role: user.role
+      role: role
     });
 
     io.to(channelName).emit('user list', roomUsers[channelName]);
+    socket.emit('chat history', messageHistory[channelName]);
   });
+
 
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
