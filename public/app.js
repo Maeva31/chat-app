@@ -58,16 +58,9 @@ document.addEventListener('DOMContentLoaded', function () {
         li.appendChild(muteButton);
       }
 
-      // 2. Les utilisateurs normaux voient les boutons de modération sur les admins et modos
-      if (role === 'user' && (currentUser !== username)) {
-        if (user.role === 'admin' || user.role === 'modo') {
-          const kickButton = createButton('Kick', 'kick');
-          const banButton = createButton('Ban', 'ban');
-          const muteButton = createButton('Mute', 'mute');
-          li.appendChild(kickButton);
-          li.appendChild(banButton);
-          li.appendChild(muteButton);
-        }
+      // 2. Les utilisateurs normaux ne voient pas les boutons de modération
+      if (role === 'user' && currentUser !== username) {
+        // Pas de boutons de modération pour les utilisateurs normaux
       }
 
       userList.appendChild(li);
