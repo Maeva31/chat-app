@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', function () {
       highlightMessages();
     });
 
+    // Processus de mise en gras des mentions @pseudo et du message
     const formattedMessage = formatMessageWithMentions(msg.message, msg.username);
 
     newMessage.innerHTML = `[${timeString}] `;
@@ -59,12 +60,15 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
+  // Fonction pour mettre en gras les mentions @pseudo et le message entier
   function formatMessageWithMentions(message, username) {
-    const messageWithMentions = message?.replace(/@([a-zA-Z0-9_]+)/g, (match, mentionedUsername) => {
+    // Remplacer les mentions @pseudo par des spans en gras
+    const messageWithMentions = message.replace(/@([a-zA-Z0-9_]+)/g, (match, mentionedUsername) => {
       return `<span class="bold">@${mentionedUsername}</span>`;
     });
 
-    if (messageWithMentions && messageWithMentions.includes(`<span class="bold">`)) {
+    // Si le message contient une mention, tout le message devient en gras
+    if (messageWithMentions.includes(`<span class="bold">`)) {
       return `<span class="bold">${messageWithMentions}</span>`;
     }
 
@@ -79,19 +83,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Soumission des infos utilisateur
+  // Fonction principale pour soumettre les infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
     const genderSelect = document.getElementById("gender-select");
     const ageInput = document.getElementById("age-input");
-    const adminKeyInput = document.getElementById("admin-key-input");
     const modalError = document.getElementById("modal-error");
 
     const username = usernameInput.value.trim();
     const gender = genderSelect.value;
     const age = parseInt(ageInput.value.trim(), 10);
-    const adminKey = adminKeyInput.value.trim();
 
+    // Validation
     if (!username || username.includes(" ") || username.length > 16) {
       modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
       modalError.style.display = "block";
@@ -110,18 +113,16 @@ document.addEventListener('DOMContentLoaded', function () {
       return;
     }
 
-    modalError.style.display = "none";
+    modalError.style.display = "none"; // Cache l'erreur lorsque tout est valide
 
     localStorage.setItem("username", username);
     localStorage.setItem("gender", gender);
     localStorage.setItem("age", age);
-    localStorage.setItem("adminKey", adminKey);
-
-    socket.emit('set username', { username, gender, age, adminKey });
+    socket.emit('set username', { username, gender, age });
     document.getElementById("myModal").style.display = "none";
   }
 
-  // Message d'erreur temporaire
+  // Message d'erreur temporaire en bas de page
   function showErrorMessage(message) {
     const errorMessage = document.createElement("div");
     errorMessage.classList.add("error-message");
@@ -134,26 +135,27 @@ document.addEventListener('DOMContentLoaded', function () {
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
   const savedAge = localStorage.getItem("age");
-  const savedAdminKey = localStorage.getItem("adminKey");
 
   if (savedUsername && savedAge) {
     socket.emit('set username', {
       username: savedUsername,
       gender: savedGender || "non spécifié",
-      age: savedAge,
-      adminKey: savedAdminKey || ""
+      age: savedAge
     });
     document.getElementById("myModal").style.display = "none";
   } else {
     document.getElementById("myModal").style.display = "block";
   }
 
+  // Bouton "Valider" dans le modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
+  // Entrée dans le modal
   document.getElementById("myModal").addEventListener("keypress", function (event) {
     if (event.key === "Enter") submitUserInfo();
   });
 
+  // Envoyer un message
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -170,13 +172,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (username) {
-      const gender = localStorage.getItem("gender");
-      const age = localStorage.getItem("age");
-
       socket.emit('chat message', {
         username,
-        gender,
-        age,
         message,
         timestamp: new Date().toISOString()
       });
@@ -184,11 +181,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
+  // Entrée pour envoyer un message
   document.getElementById("message-input").addEventListener("keypress", function (event) {
     if (event.key === "Enter") sendMessage();
   });
 
-  // Met à jour la liste des utilisateurs
+  // Mise à jour de la liste des utilisateurs connectés
   function updateUserList(users) {
     const userList = document.getElementById('users');
     userList.innerHTML = '';
@@ -199,22 +197,23 @@ document.addEventListener('DOMContentLoaded', function () {
         <div class="gender-square" style="background-color: ${getGenderColor(user.gender)}">
           ${user.age}
         </div>
-        <span class="username-span" style="color: ${getUsernameColor(user.gender)}">
-          ${user.username}${user.isAdmin ? ' <span class="admin-badge">[ADMIN]</span>' : ''}
-        </span>
+        <span class="username-span" style="color: ${getUsernameColor(user.gender)}">${user.username}</span>
       `;
       userList.appendChild(li);
     });
   }
 
+  // Couleur pseudo
   function getUsernameColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
 
+  // Couleur carré genre
   function getGenderColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
 
+  // Surligne les messages du user sélectionné
   function highlightMessages() {
     document.querySelectorAll('.message').forEach(msg => {
       if (msg.dataset.username === selectedUser) {
@@ -225,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Gère le pseudo déjà existant
+  // Username déjà existant
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
     modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
@@ -234,7 +233,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   });
 
-  // Gère la déconnexion
+  // Déconnexion utilisateur
   socket.on('user disconnect', function (disconnectedUser) {
     const usersList = document.getElementById("users");
     const userItems = usersList.getElementsByTagName("li");
