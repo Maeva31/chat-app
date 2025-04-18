@@ -32,7 +32,7 @@ document.addEventListener('DOMContentLoaded', function () {
       li.classList.add('user-item');  // Ajouter une classe pour un meilleur style CSS
 
       // Structure de l'élément utilisateur
-      li.innerHTML = `
+      li.innerHTML = ` 
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
         </div>
@@ -83,9 +83,9 @@ document.addEventListener('DOMContentLoaded', function () {
     usernameSpan.addEventListener("click", function () {
       const messageInput = document.getElementById("message-input");
       const current = messageInput.value.trim();
-      const mention = `@${msg.username}` ;
+      const mention = `@${msg.username} `;
       if (!current.includes(mention)) {
-        messageInput.value = mention + current;
+        messageInput.value = mention + current; // Ajoute l'@pseudo avec un espace
       }
       messageInput.focus();
       selectedUser = msg.username;
