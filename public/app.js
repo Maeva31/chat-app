@@ -155,7 +155,8 @@ document.addEventListener('DOMContentLoaded', function () {
       socket.emit('chat message', {
         username,
         message,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        channel: currentChannel // Ajouter le salon ici
       });
       messageInput.value = "";
     }
@@ -216,30 +217,29 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // Réception liste utilisateurs
   socket.on('user list', updateUserList);
-});
 
-// Variable pour garder en mémoire le salon actif
-let currentChannel = 'Général'; // Salon par défaut
+  // Gestion du salon
+  let currentChannel = 'Général'; // Salon par défaut
 
-// Récupère tous les éléments <li> de la liste de salons
-const channelElements = document.querySelectorAll('.channel');
+  const channelElements = document.querySelectorAll('.channel');
 
-channelElements.forEach(channel => {
-  channel.addEventListener('click', () => {
-    // Supprime la classe "selected" de tous les salons
-    channelElements.forEach(c => c.classList.remove('selected'));
+  channelElements.forEach(channel => {
+    channel.addEventListener('click', () => {
+      // Supprime la classe "selected" de tous les salons
+      channelElements.forEach(c => c.classList.remove('selected'));
 
-    // Ajoute "selected" au salon cliqué
-    channel.classList.add('selected');
+      // Ajoute "selected" au salon cliqué
+      channel.classList.add('selected');
 
-    // Met à jour le salon actuel
-    currentChannel = channel.textContent.replace('# ', '');
-    console.log('Salon actuel :', currentChannel);
+      // Met à jour le salon actuel
+      currentChannel = channel.textContent.replace('# ', '');
+      console.log('Salon actuel :', currentChannel);
 
-    // 👉 Tu peux ici envoyer l'info au serveur si tu veux changer de room socket.io
-    // socket.emit('joinRoom', currentChannel);
-
-    // 👉 Tu peux aussi filtrer ou vider les messages selon le salon
-    // document.querySelector('#chat-messages').innerHTML = '';
+      // 👉 Tu peux ici envoyer l'info au serveur pour changer de room socket.io
+      socket.emit('joinRoom', currentChannel);
+      
+      // Efface les messages ou filtre selon le salon
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
   });
 });
