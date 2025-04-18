@@ -55,14 +55,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
       // 1. Les admins et modos ne voient pas les boutons de modération sur eux-mêmes
       // 2. Les utilisateurs normaux voient les boutons de modération sur les autres utilisateurs seulement
-      if (currentUser !== username && (role === 'admin' || role === 'modo')) {
-        // Les admins et modos peuvent avoir des boutons de modération uniquement sur les utilisateurs normaux
-        const kickButton = createButton('Kick', 'kick');
-        const banButton = createButton('Ban', 'ban');
-        const muteButton = createButton('Mute', 'mute');
-        li.appendChild(kickButton);
-        li.appendChild(banButton);
-        li.appendChild(muteButton);
+      if (currentUser !== username) {
+        if (role === 'admin' || role === 'modo') {
+          // Les admins et modos peuvent avoir des boutons de modération uniquement sur les utilisateurs normaux
+          if (user.role !== 'admin' && user.role !== 'modo') {
+            const kickButton = createButton('Kick', 'kick');
+            const banButton = createButton('Ban', 'ban');
+            const muteButton = createButton('Mute', 'mute');
+            li.appendChild(kickButton);
+            li.appendChild(banButton);
+            li.appendChild(muteButton);
+          }
+        }
       }
 
       userList.appendChild(li);
