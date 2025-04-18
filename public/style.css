@@ -386,3 +386,45 @@ main {
   margin: 10px;
 }
 
+#create-channel {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 1em;
+}
+
+#create-channel input {
+  flex: 1;
+  padding: 0.5em;
+  border: none;
+  border-radius: 6px;
+  background-color: #121212;
+  color: white;
+}
+
+#create-channel button {
+  padding: 0.5em 0.8em;
+  border: none;
+  border-radius: 6px;
+  background-color: #00ffff;
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.channel {
+  padding: 0.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+}
+
+.channel:hover {
+  background-color: #333;
+}
+
+.channel.selected {
+  background-color: #00ffff;
+  color: #000;
+  font-weight: bold;
+}
+
