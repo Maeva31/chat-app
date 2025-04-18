@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Fonction pour mettre à jour la liste des utilisateurs
   function updateUserList(users) {
     const userList = document.getElementById('users');
-    if (!userList) return; // Vérifier si l'élément existe
+    if (!userList) return;
     userList.innerHTML = '';
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const li = document.createElement('li');
       li.classList.add('user-item');
-      li.innerHTML = ` 
+      li.innerHTML = `
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
         </div>
@@ -179,38 +179,37 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   // Crée un salon, envoie un événement à l'API backend
-socket.on('room created', function (newRoom) {
-  const channelList = document.getElementById('channel-list');
-  if (channelList) {
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    li.textContent = `# ${newRoom}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = ''; // Vider les messages
-    });
-    channelList.appendChild(li);
-  } else {
-    console.error("La liste des salons (channel-list) est introuvable.");
-  }
-});
-
-// Création d'un salon (exemple)
-const createRoomBtn = document.getElementById('create-room-btn');
-if (createRoomBtn) {
-  createRoomBtn.addEventListener('click', () => {
-    const newRoom = prompt('Nom du nouveau salon :');
-    if (newRoom && newRoom.trim() !== '') {
-      socket.emit('createRoom', newRoom.trim());
+  socket.on('room created', function (newRoom) {
+    const channelList = document.getElementById('channel-list');
+    if (channelList) {
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      li.textContent = `# ${newRoom}`;
+      li.addEventListener('click', () => {
+        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+        li.classList.add('selected');
+        currentChannel = newRoom;
+        socket.emit('joinRoom', currentChannel);
+        document.querySelector('#chat-messages').innerHTML = '';
+      });
+      channelList.appendChild(li);
     } else {
-      alert('Le nom du salon ne peut pas être vide.');
+      console.error("La liste des salons (channel-list) est introuvable.");
     }
   });
-}
 
+  // Création d'un salon (exemple)
+  const createRoomBtn = document.getElementById('create-room-btn');
+  if (createRoomBtn) {
+    createRoomBtn.addEventListener('click', () => {
+      const newRoom = prompt('Nom du nouveau salon :');
+      if (newRoom && newRoom.trim() !== '') {
+        socket.emit('createRoom', newRoom.trim());
+      } else {
+        alert('Le nom du salon ne peut pas être vide.');
+      }
+    });
+  }
 
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
