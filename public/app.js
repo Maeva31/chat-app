@@ -12,8 +12,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ✅ Version sécurisée et unique de updateUserList
   function updateUserList(users) {
-    const userList = document.getElementById('users');
-    userList.innerHTML = '';
+    const userList = document.getElementById('user-list'); // Assurez-vous que l'ID est correct
+    userList.innerHTML = ''; // Réinitialise la liste avant de la remplir
 
     users.forEach(user => {
       const username = user?.username || 'Inconnu';
@@ -33,14 +33,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // mise à jour pseudo
   socket.on('user list', (userList) => {
-  const userListContainer = document.getElementById('user-list');
-  userListContainer.innerHTML = ''; // Réinitialise la liste avant de la remplir
-  userList.forEach(username => {
-    const userItem = document.createElement('li');
-    userItem.textContent = username;
-    userListContainer.appendChild(userItem);
+    updateUserList(userList); // Appelle la fonction updateUserList
   });
-});
   
   // Historique des messages
   socket.on('chat history', function (messages) {
