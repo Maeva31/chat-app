@@ -19,6 +19,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     users.forEach(user => {
       const username = user?.username || 'Inconnu';
+      if (username === '[USER]') return; // Ne pas afficher [USER]
+
       const age = user?.age || '?';
       const gender = user?.gender || 'Non spécifié';
       const role = user?.role || 'user';
@@ -104,7 +106,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const usernameSpan = document.createElement("span");
     usernameSpan.classList.add("clickable-username");
     usernameSpan.style.color = getUsernameColor(msg.gender);
-    usernameSpan.textContent = msg.username || 'Inconnu';
+    const username = msg.username || 'Inconnu';
+
+    if (username === '[USER]') return; // Ne pas afficher les messages de [USER]
+
+    usernameSpan.textContent = username;
 
     usernameSpan.addEventListener("click", function () {
       const messageInput = document.getElementById("message-input");
@@ -130,6 +136,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
     const username = localStorage.getItem("username");
+
+    if (username === '[USER]') {
+      showErrorMessage("Le pseudo [USER] n'est pas autorisé.");
+      return;
+    }
 
     if (!message) {
       showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
@@ -168,6 +179,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
     if (!username || username.includes(" ") || username.length > 16) {
       modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (username === '[USER]') {
+      modalError.textContent = "❌ Le pseudo [USER] n'est pas autorisé.";
       modalError.style.display = "block";
       return;
     }
