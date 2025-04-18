@@ -213,30 +213,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
-  socket.on('joinRoom', (channel) => {
-    const oldChannel = userChannels[socket.id] || 'Général'; // Salon précédent de l'utilisateur
-  
-    // Quitter l'ancien salon
-    if (roomUsers[oldChannel]) {
-      roomUsers[oldChannel] = roomUsers[oldChannel].filter(user => user.id !== socket.id); // Retirer l'utilisateur de l'ancien salon
-    }
-  
-    socket.leave(oldChannel); // L'utilisateur quitte l'ancien salon
-    socket.join(channel);     // L'utilisateur rejoint le nouveau salon
-  
-    userChannels[socket.id] = channel; // Mise à jour du salon actuel de l'utilisateur
-  
-    // Ajouter l'utilisateur au salon actuel
-    if (!roomUsers[channel]) {
-      roomUsers[channel] = [];
-    }
-    roomUsers[channel].push({ id: socket.id, username: users.find(user => user.id === socket.id)?.username });
-  
-    // Émettre la liste des utilisateurs du salon
-    io.to(channel).emit('user list', roomUsers[channel]);
-  });
-  
-
   // Bouton validation modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
