@@ -66,6 +66,13 @@
     </aside>
   </main>
 
+  <!-- Modération : boutons visibles uniquement pour les admins et modérateurs -->
+  <div id="moderation-buttons" style="display: none;">
+    <button id="kickButton">Kick</button>
+    <button id="banButton">Ban</button>
+    <button id="muteButton">Mute</button>
+  </div>
+
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
