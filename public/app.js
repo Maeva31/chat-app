@@ -234,6 +234,47 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
+const socket = io();
+
+// Sélecteurs
+const createChannelBtn = document.getElementById("create-channel-button");
+const newChannelInput = document.getElementById("new-channel-name");
+const channelList = document.getElementById("channel-list");
+
+// Gestion de la création d'un salon
+createChannelBtn.addEventListener("click", () => {
+  const newChannelName = newChannelInput.value.trim();
+
+  if (newChannelName === "") return alert("Le nom du salon ne peut pas être vide.");
+
+  // Vérifie si le salon existe déjà (insensible à la casse)
+  const existingChannels = [...channelList.querySelectorAll(".channel")];
+  const alreadyExists = existingChannels.some(li =>
+    li.textContent.toLowerCase() === `# ${newChannelName.toLowerCase()}`
+  );
+
+  if (alreadyExists) return alert("Ce salon existe déjà.");
+
+  // Création de l'élément <li>
+  const li = document.createElement("li");
+  li.classList.add("channel");
+  li.textContent = `# ${newChannelName}`;
+
+  // Sélection automatique du nouveau salon (optionnel)
+  existingChannels.forEach(c => c.classList.remove("selected"));
+  li.classList.add("selected");
+
+  // Ajout à la liste
+  channelList.appendChild(li);
+
+  // Vide l’input
+  newChannelInput.value = "";
+
+  // Notifie le serveur si nécessaire
+  socket.emit("createChannel", newChannelName); // côté serveur à gérer
+});
+
+  
   // Soumission modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
