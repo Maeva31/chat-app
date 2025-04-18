@@ -14,12 +14,14 @@
       <p>Veuillez entrer vos informations pour accéder au chat.</p>
 
       <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" />
+
       <select id="gender-select">
         <option value="">Genre</option>
         <option value="Homme">Homme</option>
         <option value="Femme">Femme</option>
         <option value="Autre">Autre</option>
       </select>
+
       <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" />
 
       <div id="modal-error" class="modal-error" style="display: none;"></div>
@@ -32,7 +34,9 @@
   <main>
     <!-- Sidebar gauche : salons -->
     <aside id="channel-sidebar">
-      <header><h3>Salons</h3></header>
+      <header>
+        <h3>Salons</h3>
+      </header>
 
       <div id="create-channel">
         <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" />
@@ -40,10 +44,10 @@
       </div>
 
       <ul id="channel-list">
-        <li class="channel selected" data-channel="Général"># Général</li>
-        <li class="channel" data-channel="Musique"># Musique</li>
-        <li class="channel" data-channel="Gaming"># Gaming</li>
-        <li class="channel" data-channel="Détente"># Détente</li>
+        <li class="channel selected"># Général</li>
+        <li class="channel"># Musique</li>
+        <li class="channel"># Gaming</li>
+        <li class="channel"># Détente</li>
       </ul>
     </aside>
 
@@ -64,130 +68,6 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const socket = io();
-
-    let currentChannel = "Général";
-
-    // Modal login
-    const modal = document.getElementById("myModal");
-    const usernameInput = document.getElementById("username-input");
-    const genderSelect = document.getElementById("gender-select");
-    const ageInput = document.getElementById("age-input");
-    const modalError = document.getElementById("modal-error");
-    const submitButton = document.getElementById("username-submit");
-
-    submitButton.addEventListener("click", () => {
-      const username = usernameInput.value.trim();
-      const gender = genderSelect.value;
-      const age = parseInt(ageInput.value);
-
-      if (!username || username.length > 16 || /\s/.test(username) || !gender || isNaN(age) || age < 18 || age > 89) {
-        modalError.innerText = "Informations invalides. Vérifiez votre pseudo, genre et âge.";
-        modalError.style.display = "block";
-        return;
-      }
-
-      socket.emit("set username", { username, gender, age });
-    });
-
-    socket.on("username accepted", () => {
-      modal.style.display = "none";
-    });
-
-    socket.on("username exists", () => {
-      modalError.innerText = "Ce pseudo est déjà utilisé ou invalide.";
-      modalError.style.display = "block";
-    });
-
-    // Affichage des messages
-    const chatMessages = document.getElementById("chat-messages");
-    const messageInput = document.getElementById("message-input");
-
-    socket.on("chat message", (msg) => {
-      const div = document.createElement("div");
-      div.classList.add("message");
-      div.innerHTML = `<strong>${msg.username}</strong> : ${msg.message}`;
-      chatMessages.appendChild(div);
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-
-    // Envoi message
-    messageInput.addEventListener("keydown", (e) => {
-      if (e.key === "Enter" && messageInput.value.trim() !== "") {
-        socket.emit("chat message", {
-          message: messageInput.value.trim(),
-          timestamp: new Date().toISOString()
-        });
-        messageInput.value = "";
-      }
-    });
-
-    // Affichage utilisateurs
-    const userList = document.getElementById("users");
-
-    socket.on("user list", (users) => {
-      userList.innerHTML = "";
-      users.forEach(user => {
-        const li = document.createElement("li");
-        li.textContent = `${user.username} (${user.gender}, ${user.age})`;
-        userList.appendChild(li);
-      });
-    });
-
-    // Historique des messages
-    socket.on("chat history", (history) => {
-      chatMessages.innerHTML = "";
-      history.forEach((msg) => {
-        const div = document.createElement("div");
-        div.classList.add("message");
-        div.innerHTML = `<strong>${msg.username}</strong> : ${msg.message}`;
-        chatMessages.appendChild(div);
-      });
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-
-    // Gestion des salons
-    const channelList = document.getElementById("channel-list");
-
-    channelList.addEventListener("click", (e) => {
-      if (e.target.classList.contains("channel")) {
-        document.querySelectorAll(".channel").forEach((el) => el.classList.remove("selected"));
-        e.target.classList.add("selected");
-        const newChannel = e.target.getAttribute("data-channel");
-        if (newChannel !== currentChannel) {
-          currentChannel = newChannel;
-          socket.emit("joinRoom", newChannel);
-        }
-      }
-    });
-
-    // Création de salon
-    const createChannelInput = document.getElementById("new-channel-name");
-    const createChannelButton = document.getElementById("create-channel-button");
-
-    createChannelButton.addEventListener("click", () => {
-      const newChannel = createChannelInput.value.trim();
-      if (newChannel && ![...channelList.children].some(li => li.getAttribute("data-channel") === newChannel)) {
-        socket.emit("createRoom", newChannel);
-        createChannelInput.value = "";
-      }
-    });
-
-    // Quand un nouveau salon est créé
-    socket.on("room created", (newChannel) => {
-      if (![...channelList.children].some(li => li.getAttribute("data-channel") === newChannel)) {
-        const li = document.createElement("li");
-        li.classList.add("channel");
-        li.setAttribute("data-channel", newChannel);
-        li.textContent = `# ${newChannel}`;
-        channelList.appendChild(li);
-      }
-    });
-
-    socket.on("room exists", (channelName) => {
-      alert(`⚠️ Le salon "${channelName}" existe déjà.`);
-    });
-  </script>
+  <script src="app.js"></script>
 </body>
 </html>
