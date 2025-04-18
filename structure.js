@@ -4,6 +4,5 @@
 │   ├── app.js           # JS côté client
 │   ├── styles.css       # Fichier CSS (si séparé)
 ├── server.js            # Backend WebSocket + HTTP
-├── .env
 ├── package.json         # Fichier de configuration npm
 └── node_modules/        # Dépendances
