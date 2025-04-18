@@ -101,7 +101,7 @@ io.on('connection', (socket) => {
       // Retirer l'utilisateur de tous les salons
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
+        io.to(channel).emit('user list', roomUsers[channel].map(user => user.username)); // Mise à jour correcte
       }
 
       // Nettoyer les utilisateurs
@@ -126,7 +126,7 @@ io.on('connection', (socket) => {
     // Quitter ancien salon
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel].map(u => u.username));
+      io.to(oldChannel).emit('user list', roomUsers[oldChannel].map(u => u.username));  // Mise à jour correcte
     }
 
     socket.leave(oldChannel);
@@ -155,7 +155,7 @@ io.on('connection', (socket) => {
 
     // Envoyer l'historique des messages du salon
     socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('user list', roomUsers[channel].map(u => u.username));
+    io.to(channel).emit('user list', roomUsers[channel].map(u => u.username));  // Mise à jour correcte
   });
 
   // Création d'un nouveau salon
