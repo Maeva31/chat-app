@@ -106,6 +106,13 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
 
+    // Vérification de l'utilisateur
+    const user = users.find(user => user.id === socket.id);
+    if (!user) {
+      socket.emit('error', 'Utilisateur non défini');
+      return;
+    }
+
     // Quitter l'ancien salon
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(user => user.id !== socket.id);
@@ -118,15 +125,10 @@ io.on('connection', (socket) => {
     userChannels[socket.id] = channel;
 
     // Ajouter l'utilisateur au salon actuel avec son pseudo mis à jour
-    const user = users.find(user => user.id === socket.id); // Récupère l'utilisateur avec son pseudo actuel
-    if (!user) {
-      // Si l'utilisateur n'a pas encore défini son pseudo, ne l'ajoute pas
-      return socket.emit('error', 'Utilisateur non défini');
-    }
-
     if (!roomUsers[channel]) {
       roomUsers[channel] = [];
     }
+
     roomUsers[channel].push({ id: socket.id, username: user.username });
 
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
