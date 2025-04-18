@@ -97,9 +97,23 @@ io.on('connection', (socket) => {
 
   // Changer de salon
   socket.on('joinRoom', (channel) => {
-    const oldChannel = userChannels[socket.id] || 'Général';
-    userChannels[socket.id] = channel;
-    console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
+  const oldChannel = userChannels[socket.id] || 'Général';
+
+  socket.leave(oldChannel); // quitte l'ancien salon
+  socket.join(channel);     // rejoint le nouveau salon
+
+  userChannels[socket.id] = channel;
+  console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
+
+  io.to(channel).emit('chat message', {
+    username: 'Système',
+    message: `${socket.id} a rejoint le salon ${channel}`,
+    channel
+  });
+
+  socket.emit('chat history', messageHistory[channel] || []);
+});
+
 
     // Envoi d'un message indiquant que l'utilisateur a rejoint un salon
     io.emit('chat message', { username: 'Système', message: `${socket.id} a rejoint le salon ${channel}`, channel });
