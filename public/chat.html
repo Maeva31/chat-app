@@ -95,6 +95,7 @@
         socket.emit('join room', selectedChannel); // Envoi du salon sélectionné
         document.querySelectorAll('.channel').forEach(item => item.classList.remove('selected'));
         e.target.classList.add('selected');
+        document.getElementById("chat-messages").innerHTML = ''; // Réinitialiser les messages du chat
       }
     });
 
@@ -111,6 +112,21 @@
       });
     });
 
+    // Écoute de la création de nouveaux salons
+    socket.on('room created', function(newRoom) {
+      const channelListElement = document.getElementById("channel-list");
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      li.textContent = `# ${newRoom}`;
+      li.addEventListener('click', () => {
+        document.querySelectorAll('.channel').forEach(item => item.classList.remove('selected'));
+        li.classList.add('selected');
+        socket.emit('join room', newRoom);
+        document.getElementById("chat-messages").innerHTML = ''; // Réinitialiser les messages du chat
+      });
+      channelListElement.appendChild(li);
+    });
+
     // Ajouter des messages dans le chat
     socket.on('message', function(message) {
       const chatMessages = document.getElementById('chat-messages');
@@ -118,6 +134,7 @@
       messageElement.textContent = message;
       chatMessages.appendChild(messageElement);
     });
+
   </script>
 </body>
 </html>
