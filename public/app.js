@@ -22,11 +22,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const li = document.createElement('li');
       li.innerHTML = 
-        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
+        `<div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
         </div>
-        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
-      ;
+        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>`;
       userList.appendChild(li);
     });
   }
@@ -70,7 +69,7 @@ document.addEventListener('DOMContentLoaded', function () {
     usernameSpan.addEventListener("click", function () {
       const messageInput = document.getElementById("message-input");
       const current = messageInput.value.trim();
-      const mention = @${msg.username} ;
+      const mention = `@${msg.username}` ;
       if (!current.includes(mention)) {
         messageInput.value = mention + current;
       }
@@ -78,9 +77,9 @@ document.addEventListener('DOMContentLoaded', function () {
       selectedUser = msg.username;
     });
 
-    newMessage.innerHTML = [${timeString}] ;
+    newMessage.innerHTML = `[${timeString}] `;
     newMessage.appendChild(usernameSpan);
-    newMessage.insertAdjacentHTML("beforeend", : ${msg.message});
+    newMessage.insertAdjacentHTML("beforeend", `: ${msg.message}`);
     newMessage.classList.add("message");
     newMessage.dataset.username = msg.username;
 
@@ -159,7 +158,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Pseudo déjà utilisé
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
-    modalError.textContent = Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.;
+    modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
     modalError.style.display = "block";
     localStorage.removeItem("username");
     document.getElementById("myModal").style.display = "block";
@@ -194,7 +193,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const channelList = document.getElementById('channel-list');
     const li = document.createElement('li');
     li.classList.add('channel');
-    li.textContent = # ${newRoom};
+    li.textContent = `# ${newRoom}`;
     li.addEventListener('click', () => {
       document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
       li.classList.add('selected');
