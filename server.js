@@ -129,7 +129,13 @@ io.on('connection', (socket) => {
       roomUsers[channel] = [];
     }
 
-    roomUsers[channel].push({ id: socket.id, username: user.username });
+    roomUsers[channel].push({
+  id: socket.id,
+  username: user.username,
+  gender: user.gender,
+  age: user.age,
+});
+
 
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
 
