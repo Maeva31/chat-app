@@ -130,12 +130,7 @@ io.on('connection', (socket) => {
     }
 
     io.to(channel).emit('user list', roomUsers[channel]);
-roomUsers[channel].push({
-  id: socket.id,
-  username: user.username,
-  gender: user.gender,
-  age: user.age,
-});
+
 
     roomUsers[channel].push({
   id: socket.id,
