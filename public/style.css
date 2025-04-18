@@ -116,6 +116,7 @@ main {
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.9);
+  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
   display: flex;
   justify-content: center;
   align-items: center;
