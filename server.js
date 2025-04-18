@@ -7,97 +7,35 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Données en mémoire
-let users = {};
-let userRoles = {};
-let messageHistory = {};
-let roomUsers = {};
-let userChannels = {};
-let channels = ['Général', 'Musique', 'Gaming', 'Détente'];
-
-channels.forEach((ch) => {
-  messageHistory[ch] = [];
-  roomUsers[ch] = [];
-});
+let users = {};            // Stockage des utilisateurs avec leurs infos
+let messageHistory = {};   // Historique des messages par salon
+let roomUsers = {};        // Utilisateurs présents par salon
+let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
 
 app.use(express.static('public'));
-
-function escapeHTML(str) {
-  return str.replace(/[&<>"]/g, (match) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'
-  }[match]));
-}
 
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
 
-  socket.emit('chat history', messageHistory['Général']);
-  socket.emit('room list', channels);
+  // Envoi de l'historique du salon Général par défaut
+  socket.emit('chat history', messageHistory['Général'] || []);
 
-  socket.on('createRoom', (newChannel) => {
-    const channelName = newChannel?.trim();
-
-    if (!channelName || channelName.length > 20 || channels.includes(channelName)) {
-      socket.emit('error', 'Nom de salon invalide ou déjà existant');
-      return;
-    }
-
-    const user = Object.values(users).find(u => u.id === socket.id);
-    const role = user ? userRoles[user.username] : null;
-
-    if (!user) {
-      socket.emit('error', 'Utilisateur non identifié');
-      return;
-    }
-
-    if (role === 'user') {
-      socket.emit('error', 'Permission refusée : seuls les admins ou modérateurs peuvent créer un salon.');
-      return;
-    }
-
-    channels.push(channelName);
-    messageHistory[channelName] = [];
-    roomUsers[channelName] = [];
-
-    console.log(`✅ Salon créé : ${channelName}`);
-    io.emit('room created', channelName);
-
-    const oldChannel = userChannels[socket.id];
-    socket.leave(oldChannel);
-    socket.join(channelName);
-    userChannels[socket.id] = channelName;
-
-    roomUsers[channelName].push({
-      id: socket.id,
-      username: user.username,
-      gender: user.gender,
-      age: user.age,
-      role: role
-    });
-
-    io.to(channelName).emit('user list', roomUsers[channelName]);
-    socket.emit('chat history', messageHistory[channelName]);
-  });
-
+  // Définition du nom d'utilisateur
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
-    const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
 
+    const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
       socket.emit('username exists', username);
       return;
     }
 
     if (users[username] && users[username].id !== socket.id) {
-      const oldSocketId = users[username].id;
-      io.to(oldSocketId).emit('kicked');
-      io.sockets.sockets.get(oldSocketId)?.disconnect();
+      socket.emit('username exists', username);
+      return;
     }
 
-    if (!userRoles[username]) {
-      userRoles[username] = Object.keys(userRoles).length === 0 ? 'admin' : 'user';
-    }
-
-    const userData = { username, gender, age, id: socket.id, role: userRoles[username] };
+    const userData = { username, gender, age, id: socket.id };
     users[username] = userData;
 
     const currentChannel = userChannels[socket.id] || 'Général';
@@ -105,76 +43,119 @@ io.on('connection', (socket) => {
     socket.join(currentChannel);
 
     if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
-    roomUsers[currentChannel].push({ ...userData });
 
-    socket.emit('user data', userData);
+    // Évite les doublons
+    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
+    roomUsers[currentChannel].push(userData);
+
+    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
     io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
+    socket.emit('username accepted', username);
   });
 
+  // Envoi d’un message
   socket.on('chat message', (msg) => {
-    const { username, message, timestamp, channel } = msg;
-    const user = users[username];
+    const sender = Object.values(users).find(user => user.id === socket.id);
+    const currentChannel = userChannels[socket.id] || 'Général';
 
-    if (!user || !channel || !channels.includes(channel)) return;
-
-    const safeMessage = escapeHTML(message);
-    const msgObj = {
-      username,
-      gender: user.gender,
-      message: safeMessage,
-      timestamp
+    const messageToSend = {
+      username: sender ? sender.username : "Inconnu",
+      gender: sender ? sender.gender : "Non précisé",
+      message: msg.message || "",
+      timestamp: msg.timestamp || new Date().toISOString(),
+      channel: currentChannel,
     };
 
-    messageHistory[channel].push(msgObj);
-    if (messageHistory[channel].length > 100) messageHistory[channel].shift();
+    console.log(`💬 ${messageToSend.username} dans #${currentChannel}: ${messageToSend.message}`);
 
-    io.to(channel).emit('chat message', msgObj);
+    if (!messageHistory[currentChannel]) {
+      messageHistory[currentChannel] = [];
+    }
+
+    messageHistory[currentChannel].push(messageToSend);
+    if (messageHistory[currentChannel].length > 10) {
+      messageHistory[currentChannel].shift(); // max 10 messages
+    }
+
+    io.to(currentChannel).emit('chat message', messageToSend);
   });
 
-  socket.on('joinRoom', (newRoom) => {
-    if (!channels.includes(newRoom)) return;
+  // Déconnexion
+  socket.on('disconnect', () => {
+    const disconnectedUser = Object.values(users).find(user => user.id === socket.id);
 
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
+    if (disconnectedUser) {
+      console.log(`❌ Déconnexion : ${disconnectedUser.username}`);
+      io.emit('user disconnect', disconnectedUser.username);
 
-    const oldRoom = userChannels[socket.id];
-    socket.leave(oldRoom);
+      // Retirer l'utilisateur de tous les salons
+      for (const channel in roomUsers) {
+        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
+        io.to(channel).emit('user list', roomUsers[channel]);
+      }
 
-    roomUsers[oldRoom] = roomUsers[oldRoom]?.filter(u => u.id !== socket.id);
+      delete users[disconnectedUser.username];
+      delete userChannels[socket.id];
+    } else {
+      console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
+    }
+  });
 
-    socket.join(newRoom);
-    userChannels[socket.id] = newRoom;
+  // Changement de salon
+  socket.on('joinRoom', (channel) => {
+    const oldChannel = userChannels[socket.id] || 'Général';
+    const user = Object.values(users).find(user => user.id === socket.id);
 
-    if (!roomUsers[newRoom]) roomUsers[newRoom] = [];
-    roomUsers[newRoom].push({
+    if (!user) {
+      socket.emit('error', 'Utilisateur non défini');
+      return;
+    }
+
+    // Quitter l'ancien salon
+    if (roomUsers[oldChannel]) {
+      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+    }
+
+    socket.leave(oldChannel);
+    socket.join(channel);
+    userChannels[socket.id] = channel;
+
+    if (!roomUsers[channel]) roomUsers[channel] = [];
+
+    roomUsers[channel].push({
       id: socket.id,
       username: user.username,
       gender: user.gender,
-      age: user.age,
-      role: user.role
+      age: user.age
     });
 
-    io.to(oldRoom).emit('user list', roomUsers[oldRoom]);
-    io.to(newRoom).emit('user list', roomUsers[newRoom]);
-    socket.emit('chat history', messageHistory[newRoom]);
+    console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
+
+    io.to(channel).emit('chat message', {
+      username: 'Système',
+      message: `${user.username} a rejoint le salon ${channel}`,
+      channel
+    });
+
+    socket.emit('chat history', messageHistory[channel] || []);
+    io.to(channel).emit('user list', roomUsers[channel]);
   });
 
-  socket.on('disconnect', () => {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
-
-    const username = user.username;
-    const room = userChannels[socket.id];
-
-    delete users[username];
-    delete userChannels[socket.id];
-    roomUsers[room] = roomUsers[room]?.filter(u => u.id !== socket.id);
-
-    io.to(room).emit('user list', roomUsers[room]);
+  // Création de salon
+  socket.on('createRoom', (newChannel) => {
+    if (!messageHistory[newChannel]) {
+      messageHistory[newChannel] = [];
+      roomUsers[newChannel] = [];
+      console.log(`✅ Salon créé : ${newChannel}`);
+      io.emit('room created', newChannel);
+    } else {
+      socket.emit('room exists', newChannel);
+    }
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
 });
