@@ -16,12 +16,11 @@ document.addEventListener('DOMContentLoaded', function () {
     user: ''
   };
 
-  // ✅ Version sécurisée et unique de updateUserList
+  // Mise à jour de la liste des utilisateurs
   function updateUserList(users) {
     const userList = document.getElementById('users');
     userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
 
-    // Vérification de la validité des données des utilisateurs
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
       return;
@@ -41,7 +40,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const li = document.createElement('li');
       li.classList.add('user-item');
-
       li.innerHTML = `
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
@@ -54,15 +52,18 @@ document.addEventListener('DOMContentLoaded', function () {
       const currentUser = localStorage.getItem("username");
 
       // 1. Les admins et modos ne voient pas les boutons de modération sur eux-mêmes
-      // 2. Les utilisateurs normaux ne voient pas les boutons de modération
-      if ((role === 'admin' || role === 'modo') && currentUser !== username) {
-        // Seuls les admins et modos voient les boutons de modération sur les utilisateurs normaux
-        const kickButton = createButton('Kick', 'kick');
-        const banButton = createButton('Ban', 'ban');
-        const muteButton = createButton('Mute', 'mute');
-        li.appendChild(kickButton);
-        li.appendChild(banButton);
-        li.appendChild(muteButton);
+      // 2. Les utilisateurs normaux voient les boutons de modération sur les autres utilisateurs seulement
+      if (currentUser !== username) {
+        if (role === 'admin' || role === 'modo') {
+          if (user.role !== 'admin' && user.role !== 'modo') {
+            const kickButton = createButton('Kick', 'kick');
+            const banButton = createButton('Ban', 'ban');
+            const muteButton = createButton('Mute', 'mute');
+            li.appendChild(kickButton);
+            li.appendChild(banButton);
+            li.appendChild(muteButton);
+          }
+        }
       }
 
       userList.appendChild(li);
