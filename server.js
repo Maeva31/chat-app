@@ -66,9 +66,13 @@ io.on('connection', (socket) => {
     const sender = Object.values(users).find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général';
 
+    // Si aucun utilisateur n'est trouvé pour ce socket, utiliser "Anonyme"
+    const username = sender ? sender.username : "Anonyme";
+    const gender = sender ? sender.gender : "Non précisé";
+
     const messageToSend = {
-      username: sender ? sender.username : "Anonyme",
-      gender: sender ? sender.gender : "Non précisé",
+      username,
+      gender,
       message: msg.message || "",
       timestamp: msg.timestamp || new Date().toISOString(),
       channel: currentChannel,
