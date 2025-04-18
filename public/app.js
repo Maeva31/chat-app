@@ -234,21 +234,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
-  // Création de salon
-document.getElementById('create-room-button').addEventListener('click', function () {
-  const roomInput = document.getElementById('new-room-name');
-  const roomName = roomInput.value.trim();
-
-  if (!roomName || roomName.length > 20) {
-    showErrorMessage("❌ Le nom du salon est invalide ou trop long.");
-    return;
-  }
-
-  socket.emit('createRoom', roomName);
-  roomInput.value = ''; // Réinitialise l'input
-});
-
-  
   // Soumission modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
