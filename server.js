@@ -6,10 +6,9 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let users = [];
-let messageHistory = {}; // Historique des messages par salon
-let userChannels = {};   // Association socket.id → salon
-let roomUsers = {};      // Utilisateurs par salon
+let users = {};            // Utilisation d'un objet pour les utilisateurs
+let messageHistory = {};   // Historique des messages par salon
+let roomUsers = {};        // Utilisateurs par salon
 
 // Fichiers statiques
 app.use(express.static('public'));
@@ -23,34 +22,24 @@ io.on('connection', (socket) => {
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
-    const usernameIsInvalid =
-      !username || username.length > 16 || /\s/.test(username);
-
+    // Validation du nom d'utilisateur et des informations
+    const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
       socket.emit('username exists', username);
       return;
     }
 
-    const alreadyExists = users.some(
-      (user) => user.username === username && user.id !== socket.id
-    );
-
-    if (alreadyExists) {
+    // Vérifier si le nom d'utilisateur existe déjà
+    if (users[username] && users[username].id !== socket.id) {
       socket.emit('username exists', username);
       return;
     }
 
-    // 🔁 Mise à jour ou ajout dans `users`
-    const existingUserIndex = users.findIndex(user => user.id === socket.id);
+    // Ajout ou mise à jour de l'utilisateur
     const userData = { username, gender, age, id: socket.id };
+    users[username] = userData;
 
-    if (existingUserIndex !== -1) {
-      users[existingUserIndex] = userData;
-    } else {
-      users.push(userData);
-    }
-
-    // 🔁 Rejoindre ou mettre à jour le salon
+    // Associer l'utilisateur au salon (Général par défaut)
     const currentChannel = userChannels[socket.id] || 'Général';
     userChannels[socket.id] = currentChannel;
     socket.join(currentChannel);
@@ -65,15 +54,15 @@ io.on('connection', (socket) => {
 
     console.log(`👤 Utilisateur enregistré ou mis à jour : ${username} (${gender}, ${age} ans)`);
 
-    // 🔁 Mettre à jour la liste des utilisateurs dans le salon
+    // Mise à jour de la liste des utilisateurs dans le salon
     io.to(currentChannel).emit('user list', roomUsers[currentChannel].map(u => u.username));
 
-    // Optionnel : notifier du changement
+    // Notifier le changement
     socket.emit('username accepted', username);
   });
 
   socket.on('chat message', (msg) => {
-    const sender = users.find(user => user.id === socket.id);
+    const sender = Object.values(users).find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général';
 
     const messageToSend = {
@@ -86,6 +75,7 @@ io.on('connection', (socket) => {
 
     console.log(`💬 ${messageToSend.username} dans #${messageToSend.channel}: ${messageToSend.message}`);
 
+    // Gérer l'historique des messages par salon
     if (!messageHistory[currentChannel]) {
       messageHistory[currentChannel] = [];
     }
@@ -99,7 +89,7 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
-    const disconnectedUser = users.find(user => user.id === socket.id);
+    const disconnectedUser = Object.values(users).find(user => user.id === socket.id);
     if (disconnectedUser) {
       console.log(`❌ Utilisateur déconnecté : ${disconnectedUser.username}`);
       io.emit('user disconnect', disconnectedUser.username);
@@ -113,14 +103,15 @@ io.on('connection', (socket) => {
       console.log('❌ Utilisateur inconnu déconnecté');
     }
 
-    users = users.filter(user => user.id !== socket.id);
-    io.emit('user list', users);
+    // Nettoyer les utilisateurs
+    delete users[disconnectedUser.username];
+    io.emit('user list', Object.values(users).map(u => u.username));
     delete userChannels[socket.id];
   });
 
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
-    const user = users.find(user => user.id === socket.id);
+    const user = Object.values(users).find(user => user.id === socket.id);
 
     if (!user) {
       socket.emit('error', 'Utilisateur non défini');
