@@ -75,7 +75,8 @@ io.on('connection', (socket) => {
       messageHistory[currentChannel].shift(); // Limiter à 10 messages par salon
     }
 
-    io.emit('chat message', messageToSend);
+    io.to(currentChannel).emit('chat message', messageToSend);
+
   });
 
   socket.on('disconnect', () => {
