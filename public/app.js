@@ -48,8 +48,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
       const currentUser = localStorage.getItem("username");
 
-      // Boutons visibles pour l'admin sur tous les utilisateurs normaux
-      if (role === 'admin' && currentUser !== username) {
+      // 1. Les admins et modos ne voient pas les boutons de modération sur eux-mêmes
+      if ((role === 'admin' || role === 'modo') && currentUser !== username) {
         const kickButton = createButton('Kick', 'kick');
         const banButton = createButton('Ban', 'ban');
         const muteButton = createButton('Mute', 'mute');
@@ -58,14 +58,16 @@ document.addEventListener('DOMContentLoaded', function () {
         li.appendChild(muteButton);
       }
 
-      // Boutons visibles pour le modo sur les utilisateurs normaux (pas sur lui-même)
-      if (role === 'modo' && currentUser !== username) {
-        const kickButton = createButton('Kick', 'kick');
-        const banButton = createButton('Ban', 'ban');
-        const muteButton = createButton('Mute', 'mute');
-        li.appendChild(kickButton);
-        li.appendChild(banButton);
-        li.appendChild(muteButton);
+      // 2. Les utilisateurs normaux voient les boutons de modération sur les admins et modos
+      if (role === 'user' && (currentUser !== username)) {
+        if (user.role === 'admin' || user.role === 'modo') {
+          const kickButton = createButton('Kick', 'kick');
+          const banButton = createButton('Ban', 'ban');
+          const muteButton = createButton('Mute', 'mute');
+          li.appendChild(kickButton);
+          li.appendChild(banButton);
+          li.appendChild(muteButton);
+        }
       }
 
       userList.appendChild(li);
