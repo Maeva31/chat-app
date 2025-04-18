@@ -21,57 +21,56 @@ io.on('connection', (socket) => {
   socket.emit('chat history', messageHistory['Général'] || []);
 
   socket.on('set username', (data) => {
-  const { username, gender, age } = data;
+    const { username, gender, age } = data;
 
-  const usernameIsInvalid =
-    !username || username.length > 16 || /\s/.test(username);
+    const usernameIsInvalid =
+      !username || username.length > 16 || /\s/.test(username);
 
-  if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
-    socket.emit('username exists', username);
-    return;
-  }
+    if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
+      socket.emit('username exists', username);
+      return;
+    }
 
-  const alreadyExists = users.some(
-    (user) => user.username === username && user.id !== socket.id
-  );
+    const alreadyExists = users.some(
+      (user) => user.username === username && user.id !== socket.id
+    );
 
-  if (alreadyExists) {
-    socket.emit('username exists', username);
-    return;
-  }
+    if (alreadyExists) {
+      socket.emit('username exists', username);
+      return;
+    }
 
-  // 🔁 Mise à jour ou ajout dans `users`
-  const existingUserIndex = users.findIndex(user => user.id === socket.id);
-  const userData = { username, gender, age, id: socket.id };
+    // 🔁 Mise à jour ou ajout dans `users`
+    const existingUserIndex = users.findIndex(user => user.id === socket.id);
+    const userData = { username, gender, age, id: socket.id };
 
-  if (existingUserIndex !== -1) {
-    users[existingUserIndex] = userData;
-  } else {
-    users.push(userData);
-  }
+    if (existingUserIndex !== -1) {
+      users[existingUserIndex] = userData;
+    } else {
+      users.push(userData);
+    }
 
-  // 🔁 Rejoindre ou mettre à jour le salon
-  const currentChannel = userChannels[socket.id] || 'Général';
-  userChannels[socket.id] = currentChannel;
-  socket.join(currentChannel);
+    // 🔁 Rejoindre ou mettre à jour le salon
+    const currentChannel = userChannels[socket.id] || 'Général';
+    userChannels[socket.id] = currentChannel;
+    socket.join(currentChannel);
 
-  if (!roomUsers[currentChannel]) {
-    roomUsers[currentChannel] = [];
-  }
+    if (!roomUsers[currentChannel]) {
+      roomUsers[currentChannel] = [];
+    }
 
-  // Supprimer l'utilisateur précédent dans le salon
-  roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
-  roomUsers[currentChannel].push(userData);
+    // Supprimer l'utilisateur précédent dans le salon
+    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
+    roomUsers[currentChannel].push(userData);
 
-  console.log(`👤 Utilisateur enregistré ou mis à jour : ${username} (${gender}, ${age} ans)`);
+    console.log(`👤 Utilisateur enregistré ou mis à jour : ${username} (${gender}, ${age} ans)`);
 
-  // 🔁 Mettre à jour la liste des utilisateurs dans le salon
-  io.to(currentChannel).emit('user list', roomUsers[currentChannel].map(u => u.username));
+    // 🔁 Mettre à jour la liste des utilisateurs dans le salon
+    io.to(currentChannel).emit('user list', roomUsers[currentChannel].map(u => u.username));
 
-  // Optionnel : notifier du changement
-  socket.emit('username accepted', username);
-});
-
+    // Optionnel : notifier du changement
+    socket.emit('username accepted', username);
+  });
 
   socket.on('chat message', (msg) => {
     const sender = users.find(user => user.id === socket.id);
