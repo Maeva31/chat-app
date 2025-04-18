@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', function () {
   const socket = io();
   let selectedUser = null;
   let currentChannel = 'Général';
+  const myUsername = localStorage.getItem('username');
+  let myRole = 'user'; // par défaut
 
   const genderColors = {
     Homme: '#00f',
@@ -14,29 +16,66 @@ document.addEventListener('DOMContentLoaded', function () {
     const userList = document.getElementById('users');
     userList.innerHTML = '';
 
-    if (!Array.isArray(users)) {
-      console.error("La liste des utilisateurs n'est pas un tableau.");
-      return;
-    }
+    if (!Array.isArray(users)) return;
 
     users.forEach(user => {
       const username = user?.username || 'Inconnu';
       const age = user?.age || '?';
       const gender = user?.gender || 'Non spécifié';
+      const role = user?.role || 'user';
 
       const li = document.createElement('li');
       li.classList.add('user-item');
 
       li.innerHTML = `
-        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
-          ${age}
-        </div>
+        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">${age}</div>
         <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
+        <span class="role-tag ${role}">[${role}]</span>
       `;
+
+      li.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+        if (myRole === 'admin' || (myRole === 'modo' && role === 'user')) {
+          showModerationMenu(e.pageX, e.pageY, username, role);
+        }
+      });
 
       userList.appendChild(li);
     });
   }
+
+  function showModerationMenu(x, y, targetUsername, targetRole) {
+    const menu = document.getElementById("moderation-menu");
+    if (!menu) return;
+
+    menu.style.left = x + "px";
+    menu.style.top = y + "px";
+    menu.style.display = "block";
+
+    menu.innerHTML = `
+      <div class="mod-action" data-action="kick">🚪 Kick ${targetUsername}</div>
+      <div class="mod-action" data-action="ban">⛔ Ban ${targetUsername}</div>
+      <div class="mod-action" data-action="mute">🔇 Mute ${targetUsername}</div>
+    `;
+
+    menu.querySelectorAll('.mod-action').forEach(actionDiv => {
+      actionDiv.addEventListener('click', () => {
+        const action = actionDiv.dataset.action;
+        socket.emit('moderation action', {
+          action,
+          target: targetUsername,
+          by: myUsername,
+          channel: currentChannel
+        });
+        menu.style.display = "none";
+      });
+    });
+  }
+
+  document.addEventListener("click", () => {
+    const menu = document.getElementById("moderation-menu");
+    if (menu) menu.style.display = "none";
+  });
 
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
@@ -52,13 +91,10 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   socket.on('user data', (userData) => {
-    const username = userData.username || 'Inconnu';
-    const age = userData.age || 'Inconnu';
-    const gender = userData.gender || 'Non spécifié';
-
-    document.getElementById('username').textContent = username;
-    document.getElementById('age').textContent = age;
-    document.getElementById('gender').textContent = gender;
+    document.getElementById('username').textContent = userData.username || 'Inconnu';
+    document.getElementById('age').textContent = userData.age || 'Inconnu';
+    document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
+    myRole = userData.role || 'user';
   });
 
   function addMessageToChat(msg, chatMessages) {
@@ -76,7 +112,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const current = messageInput.value.trim();
       const mention = `@${msg.username}`;
       if (!current.includes(mention)) {
-        messageInput.value = mention + ' ' + current;
+        messageInput.value = mention + current;
       }
       messageInput.focus();
       selectedUser = msg.username;
@@ -107,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     if (username) {
-      socket.emit('chat message', {
+      socket.emit('send message', {
         username,
         message,
         timestamp: new Date().toISOString(),
