@@ -3,7 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
   let selectedUser = null;
   let currentChannel = 'Général';
   const myUsername = localStorage.getItem('username');
-  let myRole = 'user'; // par défaut
+  let myRole = 'user'; // rôle par défaut
 
   const genderColors = {
     Homme: '#00f',
@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateUserList(users) {
     const userList = document.getElementById('users');
     userList.innerHTML = '';
-
     if (!Array.isArray(users)) return;
 
     users.forEach(user => {
@@ -112,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const current = messageInput.value.trim();
       const mention = `@${msg.username}`;
       if (!current.includes(mention)) {
-        messageInput.value = mention + current;
+        messageInput.value = mention + " " + current;
       }
       messageInput.focus();
       selectedUser = msg.username;
