@@ -27,9 +27,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
   socket.on('user data', (userData) => {
     // Assurer que le pseudo et l'âge sont bien définis dans l'interface utilisateur
-    document.getElementById('username').textContent = userData.username;
-    document.getElementById('age').textContent = userData.age;
-    document.getElementById('gender').textContent = userData.gender;
+    document.getElementById('username').textContent = userData.username || 'Inconnu';
+    document.getElementById('age').textContent = userData.age || 'Inconnu';
+    document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
   });
 
   // Ajouter un message
