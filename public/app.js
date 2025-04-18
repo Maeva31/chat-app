@@ -1,6 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
   const socket = io();
   let selectedUser = null;
+  let currentChannel = 'Général';
 
   const genderColors = {
     Homme: '#00f',
@@ -9,14 +10,14 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
-  // Affiche l'historique des messages
+  // Récupérer les messages d'un salon
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
     messages.forEach(msg => addMessageToChat(msg, chatMessages));
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  // Réception d'un nouveau message
+  // Nouveau message
   socket.on('chat message', function (msg) {
     const chatMessages = document.getElementById("chat-messages");
     addMessageToChat(msg, chatMessages);
@@ -45,7 +46,6 @@ document.addEventListener('DOMContentLoaded', function () {
       selectedUser = msg.username;
     });
 
-    // Ajout du message au chat sans animation
     newMessage.innerHTML = `[${timeString}] `;
     newMessage.appendChild(usernameSpan);
     newMessage.insertAdjacentHTML("beforeend", `: ${msg.message}`);
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
-  // Déconnexion utilisateur
+  // Déconnexion
   window.addEventListener("beforeunload", function () {
     const username = localStorage.getItem("username");
     if (username) {
@@ -63,85 +63,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  // Fonction principale pour soumettre les infos utilisateur
-  function submitUserInfo() {
-    const usernameInput = document.getElementById("username-input");
-    const genderSelect = document.getElementById("gender-select");
-    const ageInput = document.getElementById("age-input");
-    const modalError = document.getElementById("modal-error");
-
-    const username = usernameInput.value.trim();
-    const gender = genderSelect.value;
-    const age = parseInt(ageInput.value.trim(), 10);
-
-    // Validation
-    if (!username || username.includes(" ") || username.length > 16) {
-      modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
-      modalError.style.display = "block";
-      return;
-    }
-
-    if (isNaN(age) || age < 18 || age > 89) {
-      modalError.textContent = "❌ L'âge doit être un nombre entre 18 et 89.";
-      modalError.style.display = "block";
-      return;
-    }
-
-    if (!gender) {
-      modalError.textContent = "❌ Veuillez sélectionner un genre.";
-      modalError.style.display = "block";
-      return;
-    }
-
-    modalError.style.display = "none"; // Cache l'erreur lorsque tout est valide
-
-    localStorage.setItem("username", username);
-    localStorage.setItem("gender", gender);
-    localStorage.setItem("age", age);
-    socket.emit('set username', { username, gender, age });
-    document.getElementById("myModal").style.display = "none";
-  }
-
-  // Mise à jour de la liste des utilisateurs connectés
-  function updateUserList(users) {
-    const userList = document.getElementById('users');
-    userList.innerHTML = ''; // Vider la liste avant de la remplir
-
-    users.forEach(user => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="gender-square" style="background-color: ${getGenderColor(user.gender)}">
-          ${user.age}
-        </div>
-        <span class="username-span" style="color: ${getUsernameColor(user.gender)}">${user.username}</span>
-      `;
-      userList.appendChild(li);
-    });
-  }
-
-  // Couleur pseudo
-  function getUsernameColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
-
-  // Couleur carré genre
-  function getGenderColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
-
-  // Username déjà existant
-  socket.on('username exists', function (username) {
-    const modalError = document.getElementById("modal-error");
-    modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
-    modalError.style.display = "block";
-    localStorage.removeItem("username");
-    document.getElementById("myModal").style.display = "block";
-  });
-
-  // Réception liste utilisateurs
-  socket.on('user list', updateUserList);
-
-  // Envoyer un message
+  // Envoi message
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -162,43 +84,120 @@ document.addEventListener('DOMContentLoaded', function () {
         username,
         message,
         timestamp: new Date().toISOString(),
-        channel: currentChannel // Ajouter le salon ici
+        channel: currentChannel
       });
       messageInput.value = "";
     }
   }
 
-  // Entrée pour envoyer un message
   document.getElementById("message-input").addEventListener("keypress", function (event) {
     if (event.key === "Enter") sendMessage();
   });
 
-  // Gestion du salon
-  let currentChannel = 'Général'; // Salon par défaut
+  // Gérer le pseudo
+  function submitUserInfo() {
+    const usernameInput = document.getElementById("username-input");
+    const genderSelect = document.getElementById("gender-select");
+    const ageInput = document.getElementById("age-input");
+    const modalError = document.getElementById("modal-error");
 
+    const username = usernameInput.value.trim();
+    const gender = genderSelect.value;
+    const age = parseInt(ageInput.value.trim(), 10);
+
+    if (!username || username.includes(" ") || username.length > 16) {
+      modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (isNaN(age) || age < 18 || age > 89) {
+      modalError.textContent = "❌ L'âge doit être un nombre entre 18 et 89.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    if (!gender) {
+      modalError.textContent = "❌ Veuillez sélectionner un genre.";
+      modalError.style.display = "block";
+      return;
+    }
+
+    modalError.style.display = "none";
+    localStorage.setItem("username", username);
+    localStorage.setItem("gender", gender);
+    localStorage.setItem("age", age);
+
+    socket.emit('set username', { username, gender, age });
+    document.getElementById("myModal").style.display = "none";
+  }
+
+  // Erreur pseudo déjà pris
+  socket.on('username exists', function (username) {
+    const modalError = document.getElementById("modal-error");
+    modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
+    modalError.style.display = "block";
+    localStorage.removeItem("username");
+    document.getElementById("myModal").style.display = "block";
+  });
+
+  // Mettre à jour la liste des utilisateurs
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    userList.innerHTML = '';
+    users.forEach(user => {
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getGenderColor(user.gender)}">
+          ${user.age}
+        </div>
+        <span class="username-span" style="color: ${getUsernameColor(user.gender)}">${user.username}</span>
+      `;
+      userList.appendChild(li);
+    });
+  }
+
+  // Couleurs selon le genre
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  function getGenderColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  // Liste des utilisateurs
+  socket.on('user list', updateUserList);
+
+  // Sélection des salons
   const channelElements = document.querySelectorAll('.channel');
-
   channelElements.forEach(channel => {
     channel.addEventListener('click', () => {
-      // Supprime la classe "selected" de tous les salons
       channelElements.forEach(c => c.classList.remove('selected'));
-
-      // Ajoute "selected" au salon cliqué
       channel.classList.add('selected');
-
-      // Met à jour le salon actuel
       currentChannel = channel.textContent.replace('# ', '');
-      console.log('Salon actuel :', currentChannel);
-
-      // 👉 Tu peux ici envoyer l'info au serveur pour changer de room socket.io
       socket.emit('joinRoom', currentChannel);
-      
-      // Efface les messages ou filtre selon le salon
       document.querySelector('#chat-messages').innerHTML = '';
     });
   });
 
-  // Charger les infos sauvegardées
+  // Nouveau salon créé dynamiquement
+  socket.on('room created', function (newRoom) {
+    const channelList = document.getElementById('channel-list');
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    li.textContent = `# ${newRoom}`;
+    li.addEventListener('click', () => {
+      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+      li.classList.add('selected');
+      currentChannel = newRoom;
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+    channelList.appendChild(li);
+  });
+
+  // Chargement auto depuis le stockage local
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
   const savedAge = localStorage.getItem("age");
@@ -214,6 +213,17 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
-  // Bouton "Valider" dans le modal
+  // Bouton validation modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
+
+  // Message d'erreur général
+  function showErrorMessage(message) {
+    const errorBox = document.getElementById("error-box");
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.style.display = "block";
+    setTimeout(() => {
+      errorBox.style.display = "none";
+    }, 4000);
+  }
 });
