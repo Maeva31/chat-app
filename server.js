@@ -46,7 +46,17 @@ io.on('connection', (socket) => {
       messageHistory[newChannel] = []; // Créer un historique de messages vide pour le nouveau salon
       roomUsers[newChannel] = []; // Créer une liste vide d'utilisateurs pour le salon
       console.log(`✅ Salon créé : ${newChannel}`);
-      io.emit('room created', newChannel); // Diffuse la création du salon à tous les utilisateurs
+      
+      // Diffuser la création du salon à tous les clients
+      io.emit('room created', newChannel);
+
+      // Joindre le salon nouvellement créé automatiquement
+      socket.join(newChannel);
+      userChannels[socket.id] = newChannel;
+      
+      // Ajouter l'utilisateur dans la liste des utilisateurs du salon
+      roomUsers[newChannel].push({ id: socket.id, username: user.username, gender: user.gender, age: user.age, role: user.role });
+      io.to(newChannel).emit('user list', roomUsers[newChannel]);
     } else {
       console.log(`Le salon ${newChannel} existe déjà.`);
       socket.emit('room exists', newChannel); // Si le salon existe déjà, on informe l'utilisateur
