@@ -19,6 +19,18 @@ let users = {};
 let messageHistory = {};   
 let roomUsers = {};        
 let userChannels = {};     
+let moderators = {}; // {channelName: {username: [moderators]}} 
+
+// Fonction pour vérifier si un salon doit être supprimé
+function checkAndCloseRoom(channel) {
+  if (roomUsers[channel].length === 0) {
+    delete roomUsers[channel];
+    delete messageHistory[channel];
+    channels = channels.filter(c => c !== channel);
+    io.emit('room list', channels); // Notifie tous les utilisateurs que le salon a été supprimé
+    console.log(`❌ Salon supprimé : ${channel}`);
+  }
+}
 
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
@@ -33,7 +45,10 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = [];
       channels.push(newChannel);
       console.log(`✅ Salon créé : ${newChannel}`);
+      socket.join(newChannel);
+      userChannels[socket.id] = newChannel;
       io.emit('room created', newChannel);
+      socket.emit('chat history', messageHistory[newChannel] || []);
     } else {
       socket.emit('room exists', newChannel);
     }
@@ -61,7 +76,6 @@ io.on('connection', (socket) => {
     roomUsers[channel].push({ id: socket.id, username: user.username, gender: user.gender, age: user.age });
 
     console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
-
     io.to(channel).emit('chat message', {
       username: 'Système',
       message: `${user.username} a rejoint le salon ${channel}`,
@@ -134,12 +148,29 @@ io.on('connection', (socket) => {
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
         io.to(channel).emit('user list', roomUsers[channel]);
+        checkAndCloseRoom(channel);  // Vérifie si le salon doit être fermé
       }
 
       delete users[disconnectedUser.username];
       delete userChannels[socket.id];
     } else {
       console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
+    }
+  });
+
+  // Ajout d'un modérateur à un salon
+  socket.on('add moderator', (data) => {
+    const { channel, username } = data;
+
+    if (!moderators[channel]) moderators[channel] = [];
+
+    const isUserOwner = moderators[channel].includes(username);
+    if (isUserOwner) {
+      moderators[channel].push(username);
+      io.to(channel).emit('moderator added', { username, channel });
+      console.log(`✅ ${username} a été ajouté en tant que modérateur dans le salon ${channel}`);
+    } else {
+      socket.emit('error', 'Vous n\'êtes pas autorisé à ajouter des modérateurs');
     }
   });
 });
