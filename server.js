@@ -23,9 +23,9 @@ const elevatedUsers = {
   'ModoUser': 'modo'
 };
 
-// Vérification du pseudo [USER] et autres contraintes
+// Vérification du pseudo [USER] et autres contraintes (sans restriction sur [USER])
 function isValidUsername(username) {
-  if (username === '[USER]' || username.length > 16 || /\s/.test(username)) {
+  if (username.length > 16 || /\s/.test(username)) {
     return false;
   }
   return true;
