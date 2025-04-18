@@ -13,32 +13,33 @@
   </div>
 
   <!-- Nouveau wrapper principal -->
-  <main>
-    <!-- ✅ Sidebar des salons -->
-    <aside id="channel-sidebar">
-      <h3>Salons</h3>
-      <ul id="channel-list">
-        <li class="channel selected"># Général</li>
-        <li class="channel"># Musique</li>
-        <li class="channel"># Détente</li>
-      </ul>
-    </aside>
+ <main>
+  <!-- Sidebar gauche : salons -->
+  <aside id="channel-sidebar">
+    <h3>Salons</h3>
+    <ul id="channel-list">
+      <li class="channel selected"># Général</li>
+      <li class="channel"># Musique</li>
+      <li class="channel"># Gaming</li>
+      <li class="channel"># Détente</li>
+    </ul>
+  </aside>
 
-    <!-- ✅ Zone de contenu : chat + utilisateurs -->
-    <div id="content-container">
-      <section id="chat-container">
-        <div id="chat-messages" class="chat-messages"></div>
-        <div id="chat-input">
-          <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" />
-        </div>
-      </section>
-
-      <aside id="user-list">
-        <center><h3>Liste du salon</h3></center>
-        <ul id="users"></ul>
-      </aside>
+  <!-- Zone centrale : chat -->
+  <section id="chat-container">
+    <div id="chat-messages" class="chat-messages"></div>
+    <div id="chat-input">
+      <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" />
     </div>
-  </main>
+  </section>
+
+  <!-- Sidebar droite : utilisateurs -->
+  <aside id="user-list">
+    <center><h3>Liste du salon</h3></center>
+    <ul id="users"></ul>
+  </aside>
+</main>
+
 
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
