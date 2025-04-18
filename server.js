@@ -131,7 +131,7 @@ io.on('connection', (socket) => {
 
     roomUsers[channel].push({
       id: socket.id,
-      username: user.username,
+      username: user.username,  // Assurer que l'username est bien récupéré
       gender: user.gender,
       age: user.age,
     });
