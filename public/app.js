@@ -194,10 +194,22 @@ document.addEventListener('DOMContentLoaded', function () {
   const channelElements = document.querySelectorAll('.channel');
   channelElements.forEach(channel => {
     channel.addEventListener('click', () => {
+      // Réinitialiser le champ de message
+      const messageInput = document.getElementById("message-input");
+      messageInput.value = '';  // Effacer le contenu du champ message
+
+      // Réinitialiser le pseudo mentionné
+      selectedUser = null;
+
+      // Gérer le changement de salon
       channelElements.forEach(c => c.classList.remove('selected'));
       channel.classList.add('selected');
       currentChannel = channel.textContent.replace('# ', '');
+
+      // Informer le serveur de rejoindre le salon
       socket.emit('joinRoom', currentChannel);
+
+      // Réinitialiser l'affichage des messages
       document.querySelector('#chat-messages').innerHTML = '';
     });
   });
