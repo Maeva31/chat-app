@@ -13,7 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
     messages.forEach(msg => addMessageToChat(msg, chatMessages));
-    highlightMessages();
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
@@ -21,7 +20,6 @@ document.addEventListener('DOMContentLoaded', function () {
   socket.on('chat message', function (msg) {
     const chatMessages = document.getElementById("chat-messages");
     addMessageToChat(msg, chatMessages);
-    highlightMessages();
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
@@ -45,34 +43,16 @@ document.addEventListener('DOMContentLoaded', function () {
       }
       messageInput.focus();
       selectedUser = msg.username;
-      highlightMessages();
     });
 
-    // Processus de mise en gras des mentions @pseudo et du message
-    const formattedMessage = formatMessageWithMentions(msg.message, msg.username);
-
+    // Ajout du message au chat sans animation
     newMessage.innerHTML = `[${timeString}] `;
     newMessage.appendChild(usernameSpan);
-    newMessage.insertAdjacentHTML("beforeend", `: ${formattedMessage}`);
+    newMessage.insertAdjacentHTML("beforeend", `: ${msg.message}`);
     newMessage.classList.add("message");
     newMessage.dataset.username = msg.username;
 
     chatMessages.appendChild(newMessage);
-  }
-
-  // Fonction pour mettre en gras les mentions @pseudo et le message entier
-  function formatMessageWithMentions(message, username) {
-    // Remplacer les mentions @pseudo par des spans en gras
-    const messageWithMentions = message.replace(/@([a-zA-Z0-9_]+)/g, (match, mentionedUsername) => {
-      return `<span class="bold">@${mentionedUsername}</span>`;
-    });
-
-    // Si le message contient une mention, tout le message devient en gras
-    if (messageWithMentions.includes(`<span class="bold">`)) {
-      return `<span class="bold">${messageWithMentions}</span>`;
-    }
-
-    return messageWithMentions;
   }
 
   // Déconnexion utilisateur
@@ -213,17 +193,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return genderColors[gender] || genderColors.default;
   }
 
-  // Surligne les messages du user sélectionné
-  function highlightMessages() {
-    document.querySelectorAll('.message').forEach(msg => {
-      if (msg.dataset.username === selectedUser) {
-        msg.classList.add('highlighted-message');
-      } else {
-        msg.classList.remove('highlighted-message');
-      }
-    });
-  }
-
   // Username déjà existant
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
@@ -265,7 +234,6 @@ channelElements.forEach(channel => {
 
     // Met à jour le salon actuel
     currentChannel = channel.textContent.replace('# ', '');
-
     console.log('Salon actuel :', currentChannel);
 
     // 👉 Tu peux ici envoyer l'info au serveur si tu veux changer de room socket.io
@@ -275,4 +243,3 @@ channelElements.forEach(channel => {
     // document.querySelector('#chat-messages').innerHTML = '';
   });
 });
-
