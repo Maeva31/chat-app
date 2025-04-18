@@ -109,6 +109,7 @@ io.on('connection', (socket) => {
     // Quitter l'ancien salon
     if (roomUsers[oldChannel]) {
       roomUsers[oldChannel] = roomUsers[oldChannel].filter(user => user.id !== socket.id);
+      io.to(oldChannel).emit('user list', roomUsers[oldChannel].map(user => user.username)); // Mise à jour de la liste dans l'ancien salon
     }
 
     socket.leave(oldChannel); // quitte l'ancien salon
