@@ -25,8 +25,9 @@ const elevatedUsers = {
 
 // Vérification du pseudo [USER] et autres contraintes (sans restriction sur [USER])
 function isValidUsername(username) {
+  // Empêcher le pseudo [USER] et les pseudos invalides
   if (username.length > 16 || /\s/.test(username) || username === '[USER]') {
-    return false;  // Empêcher l'utilisation du pseudo [USER]
+    return false;
   }
   return true;
 }
@@ -85,6 +86,12 @@ io.on('connection', (socket) => {
 
     if (!sender || mutedUsers[socket.id]) {
       return; // Ne pas envoyer si l'utilisateur est muet
+    }
+
+    // Vérifier que le pseudo n'est pas [USER]
+    if (sender.username === '[USER]') {
+      socket.emit('error', 'Pseudo invalide');
+      return;
     }
 
     const messageToSend = {
