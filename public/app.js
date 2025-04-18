@@ -21,17 +21,22 @@ document.addEventListener('DOMContentLoaded', function () {
     const userList = document.getElementById('users');
     userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
 
-    // Vérifier si les données des utilisateurs sont valides
+    // Vérification de la validité des données des utilisateurs
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
       return;
     }
 
     users.forEach(user => {
-      const username = user?.username || 'Inconnu';
-      const age = user?.age || '?';
-      const gender = user?.gender || 'Non spécifié';
-      const role = user?.role || 'user';  // Valeur par défaut : 'user'
+      if (!user || !user.username || !user.age || !user.gender || !user.role) {
+        console.error("Données utilisateur manquantes ou invalides", user);
+        return;
+      }
+
+      const username = user.username;
+      const age = user.age;
+      const gender = user.gender;
+      const role = user.role;
       const roleIcon = roleIcons[role] || '';
 
       const li = document.createElement('li');
