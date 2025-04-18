@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Modal d'information utilisateur -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <h2>Entrez vos infos</h2>
+
+      <label for="username-input">Pseudo :</label>
+      <input id="username-input" type="text" placeholder="Pseudo" maxlength="16" />
+
+      <label for="gender-select">Genre :</label>
+      <select id="gender-select">
+        <option value="">Genre</option>
+        <option value="Femme">Femme</option>
+        <option value="Homme">Homme</option>
+        <option value="Autre">Autre</option>
+      </select>
+
+      <label for="age-input">Âge :</label>
+      <input id="age-input" type="number" placeholder="Âge" min="18" max="89" />
+
+      <p id="modal-error" class="error-text" style="display:none; color:red;"></p>
+
+      <button id="username-submit">Rejoindre</button>
+    </div>
+  </div>
+
+  <main>
+    <section id="chat-container">
+      <div id="chat-messages" class="chat-messages"></div>
+      <div id="chat-input">
+        <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" />
+        <input type="password" id="adminKey" placeholder="Clé admin (optionnel)">
+
+      </div>
+    </section>
+
+    <aside id="user-list">
+      <center><h3>Liste du salon</h3></center>
+      <ul id="users"></ul>
+    </aside>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
