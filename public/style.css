@@ -258,3 +258,55 @@ main {
   line-height: 1.4;
 }
 
+/* Sidebar des salons */
+#channel-sidebar {
+  flex: 0 0 200px;
+  background: #1a1a1a;
+  padding: 1em;
+  border-right: 2px solid #333;
+  border-radius: 0 10px 10px 0;
+  color: #00ffff;
+  display: flex;
+  flex-direction: column;
+  gap: 1em;
+}
+
+#channel-sidebar h3 {
+  margin: 0;
+  font-size: 1.3em;
+  color: #00ffff;
+  text-align: center;
+}
+
+#channel-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#channel-list .channel {
+  padding: 0.5em 1em;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  transition: 0.2s ease;
+}
+
+#channel-list .channel:hover {
+  background-color: #333;
+  color: #ff00ff;
+}
+
+#channel-list .channel.selected {
+  background-color: #00ffff;
+  color: #000;
+  font-weight: bold;
+}
+
+/* Ajuste le container principal */
+#content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
