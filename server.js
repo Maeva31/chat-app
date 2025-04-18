@@ -14,6 +14,7 @@ let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
 
 app.use(express.static('public'));
 
+// Connexion d'un utilisateur
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
 
