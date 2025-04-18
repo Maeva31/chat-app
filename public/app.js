@@ -131,55 +131,51 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.key === "Enter") sendMessage();
   });
 
-const socket = io();
-let currentChannel = "Général";
+  // Création de salon
+  document.getElementById('create-channel-button').addEventListener('click', () => {
+    const channelNameInput = document.getElementById('new-channel-name');
+    const newChannelName = channelNameInput.value.trim();
 
-// Création de salon
-document.getElementById('create-channel-button').addEventListener('click', () => {
-  const channelNameInput = document.getElementById('new-channel-name');
-  const newChannelName = channelNameInput.value.trim();
-
-  if (newChannelName && newChannelName.length <= 20) {
-    socket.emit('createChannel', newChannelName);
-    channelNameInput.value = '';
-  }
-});
-
-// Réception de mise à jour de la liste de salons
-socket.on('updateChannelList', (channels) => {
-  const list = document.getElementById('channel-list');
-  list.innerHTML = '';
-
-  channels.forEach((channel) => {
-    const li = document.createElement('li');
-    li.textContent = `# ${channel}`;
-    li.classList.add('channel');
-    if (channel === currentChannel) li.classList.add('selected');
-
-    li.addEventListener('click', () => {
-      if (channel !== currentChannel) {
-        socket.emit('joinChannel', channel);
-      }
-    });
-
-    list.appendChild(li);
-  });
-});
-
-// Rejoindre un nouveau salon
-socket.on('joinedChannel', (channel) => {
-  currentChannel = channel;
-  document.querySelectorAll('.channel').forEach((el) => el.classList.remove('selected'));
-  document.querySelectorAll('.channel').forEach((el) => {
-    if (el.textContent.trim() === `# ${channel}`) {
-      el.classList.add('selected');
+    if (newChannelName && newChannelName.length <= 20) {
+      socket.emit('createChannel', newChannelName);
+      channelNameInput.value = '';
     }
   });
 
-  document.getElementById('chat-messages').innerHTML = ''; // Reset messages
-});
+  // Réception de mise à jour de la liste de salons
+  socket.on('updateChannelList', (channels) => {
+    const list = document.getElementById('channel-list');
+    list.innerHTML = '';
 
-  
+    channels.forEach((channel) => {
+      const li = document.createElement('li');
+      li.textContent = `# ${channel}`;
+      li.classList.add('channel');
+      if (channel === currentChannel) li.classList.add('selected');
+
+      li.addEventListener('click', () => {
+        if (channel !== currentChannel) {
+          socket.emit('joinChannel', channel);
+        }
+      });
+
+      list.appendChild(li);
+    });
+  });
+
+  // Rejoindre un nouveau salon
+  socket.on('joinedChannel', (channel) => {
+    currentChannel = channel;
+    document.querySelectorAll('.channel').forEach((el) => el.classList.remove('selected'));
+    document.querySelectorAll('.channel').forEach((el) => {
+      if (el.textContent.trim() === `# ${channel}`) {
+        el.classList.add('selected');
+      }
+    });
+
+    document.getElementById('chat-messages').innerHTML = ''; // Reset messages
+  });
+
   // Gestion des infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
