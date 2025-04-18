@@ -10,10 +10,31 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
-  // Récupérer les messages d'un salon
+  // ✅ Version sécurisée et unique de updateUserList
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    userList.innerHTML = '';
+
+    users.forEach(user => {
+      const username = user?.username || 'Inconnu';
+      const age = user?.age || '?';
+      const gender = user?.gender || 'Non spécifié';
+
+      const li = document.createElement('li');
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
+          ${age}
+        </div>
+        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
+      `;
+      userList.appendChild(li);
+    });
+  }
+
+  // Historique des messages
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
-    chatMessages.innerHTML = ''; // Effacer les messages précédents
+    chatMessages.innerHTML = '';
     messages.forEach(msg => addMessageToChat(msg, chatMessages));
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
@@ -26,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   socket.on('user data', (userData) => {
-    // Assurer que le pseudo, l'âge et le genre sont bien définis dans l'interface utilisateur
     const username = userData.username || 'Inconnu';
     const age = userData.age || 'Inconnu';
     const gender = userData.gender || 'Non spécifié';
@@ -36,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('gender').textContent = gender;
   });
 
-  // Ajouter un message
+  // Ajout de message dans le chat
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
     const date = new Date(msg.timestamp);
@@ -45,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const usernameSpan = document.createElement("span");
     usernameSpan.classList.add("clickable-username");
     usernameSpan.style.color = getUsernameColor(msg.gender);
-    usernameSpan.textContent = msg.username || 'Inconnu'; // Si le pseudo est vide, afficher "Inconnu"
+    usernameSpan.textContent = msg.username || 'Inconnu';
 
     usernameSpan.addEventListener("click", function () {
       const messageInput = document.getElementById("message-input");
@@ -67,7 +87,7 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
-  // Envoi message
+  // Envoi de message
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -98,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.key === "Enter") sendMessage();
   });
 
-  // Gérer le pseudo
+  // Gestion des infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
     const genderSelect = document.getElementById("gender-select");
@@ -136,7 +156,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "none";
   }
 
-  // Erreur pseudo déjà pris
+  // Pseudo déjà utilisé
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
     modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
@@ -145,23 +165,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   });
 
-  // Mettre à jour la liste des utilisateurs
-  function updateUserList(users) {
-    const userList = document.getElementById('users');
-    userList.innerHTML = '';
-    users.forEach(user => {
-      const li = document.createElement('li');
-      li.innerHTML = `
-        <div class="gender-square" style="background-color: ${getGenderColor(user.gender)}">
-          ${user.age}
-        </div>
-        <span class="username-span" style="color: ${getUsernameColor(user.gender)}">${user.username}</span>
-      `;
-      userList.appendChild(li);
-    });
-  }
-
-  // Couleurs selon le genre
+  // Couleurs selon genre
   function getUsernameColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
@@ -170,10 +174,10 @@ document.addEventListener('DOMContentLoaded', function () {
     return genderColors[gender] || genderColors.default;
   }
 
-  // Liste des utilisateurs
+  // Mise à jour des utilisateurs
   socket.on('user list', updateUserList);
 
-  // Sélection des salons
+  // Sélection de salons
   const channelElements = document.querySelectorAll('.channel');
   channelElements.forEach(channel => {
     channel.addEventListener('click', () => {
@@ -181,11 +185,11 @@ document.addEventListener('DOMContentLoaded', function () {
       channel.classList.add('selected');
       currentChannel = channel.textContent.replace('# ', '');
       socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = ''; // Effacer les messages précédents
+      document.querySelector('#chat-messages').innerHTML = '';
     });
   });
 
-  // Nouveau salon créé dynamiquement
+  // Salon créé dynamiquement
   socket.on('room created', function (newRoom) {
     const channelList = document.getElementById('channel-list');
     const li = document.createElement('li');
@@ -196,12 +200,12 @@ document.addEventListener('DOMContentLoaded', function () {
       li.classList.add('selected');
       currentChannel = newRoom;
       socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = ''; // Effacer les messages précédents
+      document.querySelector('#chat-messages').innerHTML = '';
     });
     channelList.appendChild(li);
   });
 
-  // Chargement auto depuis le stockage local
+  // Chargement auto depuis localStorage
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
   const savedAge = localStorage.getItem("age");
@@ -217,10 +221,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
-  // Bouton validation modal
+  // Soumission modal
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
-  // Message d'erreur général
+  // Boîte à erreurs
   function showErrorMessage(message) {
     const errorBox = document.getElementById("error-box");
     if (!errorBox) return;
