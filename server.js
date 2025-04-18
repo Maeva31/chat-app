@@ -1,3 +1,30 @@
+import express from 'express'; // Assurez-vous d'utiliser express
+import http from 'http'; // Pour créer un serveur HTTP
+import { Server } from 'socket.io'; // Importation de Socket.io
+
+// Créer une instance d'Express et un serveur HTTP
+const app = express();
+const server = http.createServer(app);
+
+// Initialisation de Socket.io avec le serveur HTTP
+const io = new Server(server);
+
+// Structure de données (à ajuster selon votre logique actuelle)
+let users = {};
+let bannedUsers = {};
+let mutedUsers = {};
+let roomUsers = {};
+let messageHistory = {};
+let userChannels = {};
+let elevatedUsers = {};
+let defaultRole = 'user';
+
+// Serveur écoute sur le port 3000
+server.listen(3000, () => {
+  console.log('Le serveur écoute sur le port 3000');
+});
+
+// Socket.io gestion des connexions
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
   socket.emit('chat history', messageHistory['Général'] || []);
@@ -49,7 +76,6 @@ io.on('connection', (socket) => {
     return roomUsers[channel]
       .filter(user => user.username !== '[USER]')
       .map(user => {
-        // Vous pouvez modifier cette logique si vous souhaitez traiter les autres utilisateurs différemment
         return { username: user.username, gender: user.gender, age: user.age };
       });
   }
