@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function updateUserList(users) {
     const userList = document.getElementById('users');
+    if (!userList) return; // Vérifier si l'élément existe
     userList.innerHTML = '';
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
@@ -36,21 +37,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
-    chatMessages.innerHTML = '';
-    messages.forEach(msg => addMessageToChat(msg, chatMessages));
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (chatMessages) {
+      chatMessages.innerHTML = '';
+      messages.forEach(msg => addMessageToChat(msg, chatMessages));
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   });
 
   socket.on('chat message', function (msg) {
     const chatMessages = document.getElementById("chat-messages");
-    addMessageToChat(msg, chatMessages);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    if (chatMessages) {
+      addMessageToChat(msg, chatMessages);
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
   });
 
   socket.on('user data', (userData) => {
-    document.getElementById('username').textContent = userData.username || 'Inconnu';
-    document.getElementById('age').textContent = userData.age || 'Inconnu';
-    document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
+    if (userData) {
+      document.getElementById('username').textContent = userData.username || 'Inconnu';
+      document.getElementById('age').textContent = userData.age || 'Inconnu';
+      document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
+    }
   });
 
   function addMessageToChat(msg, chatMessages) {
@@ -153,17 +160,19 @@ document.addEventListener('DOMContentLoaded', function () {
   socket.on('user list', updateUserList);
 
   const channelElements = document.querySelectorAll('.channel');
-  channelElements.forEach(channel => {
-    channel.addEventListener('click', () => {
-      document.getElementById("message-input").value = '';
-      selectedUser = null;
-      channelElements.forEach(c => c.classList.remove('selected'));
-      channel.classList.add('selected');
-      currentChannel = channel.textContent.replace('# ', '');
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
+  if (channelElements) {
+    channelElements.forEach(channel => {
+      channel.addEventListener('click', () => {
+        document.getElementById("message-input").value = '';
+        selectedUser = null;
+        channelElements.forEach(c => c.classList.remove('selected'));
+        channel.classList.add('selected');
+        currentChannel = channel.textContent.replace('# ', '');
+        socket.emit('joinRoom', currentChannel);
+        document.querySelector('#chat-messages').innerHTML = '';
+      });
     });
-  });
+  }
 
   // Gestion de la création du salon
   socket.on('room created', function (newRoom) {
