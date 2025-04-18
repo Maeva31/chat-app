@@ -170,7 +170,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // Mise à jour de la liste des utilisateurs connectés
   function updateUserList(users) {
     const userList = document.getElementById('users');
-    userList.innerHTML = '';
+    userList.innerHTML = ''; // Vider la liste avant de la remplir
 
     users.forEach(user => {
       const li = document.createElement('li');
