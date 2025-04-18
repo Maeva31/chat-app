@@ -6,7 +6,7 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-let users = {};            // Utilisation d'un objet pour les utilisateurs
+let users = {};            // Stockage des utilisateurs avec leurs informations
 let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs par salon
 let userChannels = {};     // Salon actuel par utilisateur
@@ -20,6 +20,7 @@ io.on('connection', (socket) => {
   // Envoi de l'historique par défaut (salon Général)
   socket.emit('chat history', messageHistory['Général'] || []);
 
+  // Lorsque l'utilisateur définit son nom
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
@@ -49,7 +50,7 @@ io.on('connection', (socket) => {
       roomUsers[currentChannel] = [];
     }
 
-    // Supprimer l'utilisateur précédent dans le salon
+    // Ajouter l'utilisateur au salon actuel
     roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
     roomUsers[currentChannel].push(userData);
 
@@ -62,17 +63,14 @@ io.on('connection', (socket) => {
     socket.emit('username accepted', username);
   });
 
+  // Lors de l'envoi d'un message
   socket.on('chat message', (msg) => {
     const sender = Object.values(users).find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général';
 
-    // Si aucun utilisateur n'est trouvé pour ce socket, utiliser "Anonyme"
-    const username = sender ? sender.username : "Anonyme";
-    const gender = sender ? sender.gender : "Non précisé";
-
     const messageToSend = {
-      username,
-      gender,
+      username: sender ? sender.username : "Inconnu",  // On s'assure de l'affichage du pseudo
+      gender: sender ? sender.gender : "Non précisé",
       message: msg.message || "",
       timestamp: msg.timestamp || new Date().toISOString(),
       channel: currentChannel,
@@ -85,7 +83,6 @@ io.on('connection', (socket) => {
       messageHistory[currentChannel] = [];
     }
 
-    // Limiter l'historique à 10 messages
     messageHistory[currentChannel].push(messageToSend);
     if (messageHistory[currentChannel].length > 10) {
       messageHistory[currentChannel].shift();
@@ -94,6 +91,7 @@ io.on('connection', (socket) => {
     io.to(currentChannel).emit('chat message', messageToSend);
   });
 
+  // Lorsqu'un utilisateur se déconnecte
   socket.on('disconnect', () => {
     const disconnectedUser = Object.values(users).find(user => user.id === socket.id);
     if (disconnectedUser) {
@@ -102,10 +100,8 @@ io.on('connection', (socket) => {
 
       // Retirer l'utilisateur de tous les salons
       for (const channel in roomUsers) {
-        if (roomUsers[channel]) {
-          roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-          io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
-        }
+        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
+        io.to(channel).emit('user list', roomUsers[channel].map(user => user.username));
       }
 
       // Nettoyer les utilisateurs
@@ -117,6 +113,7 @@ io.on('connection', (socket) => {
     }
   });
 
+  // Lorsqu'un utilisateur rejoint un salon
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
     const user = Object.values(users).find(user => user.id === socket.id);
@@ -140,15 +137,12 @@ io.on('connection', (socket) => {
       roomUsers[channel] = [];
     }
 
-    // Ajouter l'utilisateur au nouveau salon
-    if (!roomUsers[channel].find(u => u.id === socket.id)) {
-      roomUsers[channel].push({
-        id: socket.id,
-        username: user.username,
-        gender: user.gender,
-        age: user.age
-      });
-    }
+    roomUsers[channel].push({
+      id: socket.id,
+      username: user.username,
+      gender: user.gender,
+      age: user.age
+    });
 
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
 
@@ -164,6 +158,7 @@ io.on('connection', (socket) => {
     io.to(channel).emit('user list', roomUsers[channel].map(u => u.username));
   });
 
+  // Création d'un nouveau salon
   socket.on('createRoom', (newChannel) => {
     if (!messageHistory[newChannel]) {
       messageHistory[newChannel] = [];
