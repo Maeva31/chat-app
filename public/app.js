@@ -44,7 +44,20 @@ document.addEventListener('DOMContentLoaded', function () {
         <span class="username-span" style="color: ${getUsernameColor(gender)}">
           ${roleIcon} ${username}
         </span>
+        ${role !== 'user' ? `<button class="mod-action" data-user="${username}" data-action="kick">Kick</button>` : ''}
+        ${role !== 'user' ? `<button class="mod-action" data-user="${username}" data-action="ban">Ban</button>` : ''}
+        ${role !== 'user' ? `<button class="mod-action" data-user="${username}" data-action="mute">Mute</button>` : ''}
       `;
+
+      // Ajout des événements pour les actions de modération
+      const modButtons = li.querySelectorAll('.mod-action');
+      modButtons.forEach(button => {
+        button.addEventListener('click', function() {
+          const action = button.getAttribute('data-action');
+          const targetUser = button.getAttribute('data-user');
+          socket.emit('moderation action', { action, targetUser, channel: currentChannel });
+        });
+      });
 
       userList.appendChild(li);
     });
