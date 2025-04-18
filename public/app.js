@@ -107,9 +107,12 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  document.getElementById("message-input").addEventListener("keypress", function (event) {
-    if (event.key === "Enter") sendMessage();
-  });
+  const messageInput = document.getElementById("message-input");
+  if (messageInput) {
+    messageInput.addEventListener("keypress", function (event) {
+      if (event.key === "Enter") sendMessage();
+    });
+  }
 
   function submitUserInfo() {
     const username = document.getElementById("username-input").value.trim();
@@ -177,26 +180,31 @@ document.addEventListener('DOMContentLoaded', function () {
   // Gestion de la création du salon
   socket.on('room created', function (newRoom) {
     const channelList = document.getElementById('channel-list');
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    li.textContent = `# ${newRoom}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-    channelList.appendChild(li);
+    if (channelList) {
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      li.textContent = `# ${newRoom}`;
+      li.addEventListener('click', () => {
+        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+        li.classList.add('selected');
+        currentChannel = newRoom;
+        socket.emit('joinRoom', currentChannel);
+        document.querySelector('#chat-messages').innerHTML = '';
+      });
+      channelList.appendChild(li);
+    }
   });
 
   // Création d'un salon (exemple)
-  document.getElementById('create-room-btn').addEventListener('click', () => {
-    const newRoom = prompt('Nom du nouveau salon :');
-    if (newRoom && newRoom.trim() !== '') {
-      socket.emit('createRoom', newRoom.trim());
-    }
-  });
+  const createRoomBtn = document.getElementById('create-room-btn');
+  if (createRoomBtn) {
+    createRoomBtn.addEventListener('click', () => {
+      const newRoom = prompt('Nom du nouveau salon :');
+      if (newRoom && newRoom.trim() !== '') {
+        socket.emit('createRoom', newRoom.trim());
+      }
+    });
+  }
 
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
@@ -213,7 +221,10 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   }
 
-  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
+  const usernameSubmitBtn = document.getElementById("username-submit");
+  if (usernameSubmitBtn) {
+    usernameSubmitBtn.addEventListener("click", submitUserInfo);
+  }
 
   function showErrorMessage(message) {
     const errorBox = document.getElementById("error-box");
