@@ -40,34 +40,36 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // 🔁 Mise à jour ou ajout dans `users`
     const existingUserIndex = users.findIndex(user => user.id === socket.id);
+    const userData = { username, gender, age, id: socket.id };
+
     if (existingUserIndex !== -1) {
-      users[existingUserIndex] = { username, gender, age, id: socket.id };
+      users[existingUserIndex] = userData;
     } else {
-      users.push({ username, gender, age, id: socket.id });
+      users.push(userData);
     }
 
-    // Rejoindre le salon général par défaut
-    const defaultChannel = 'Général';
-    userChannels[socket.id] = defaultChannel;
-    socket.join(defaultChannel);
+    // 🔁 Rejoindre ou mettre à jour le salon
+    const currentChannel = userChannels[socket.id] || 'Général';
+    userChannels[socket.id] = currentChannel;
+    socket.join(currentChannel);
 
-    if (!roomUsers[defaultChannel]) {
-      roomUsers[defaultChannel] = [];
+    if (!roomUsers[currentChannel]) {
+      roomUsers[currentChannel] = [];
     }
 
-    roomUsers[defaultChannel].push({
-      id: socket.id,
-      username,
-      gender,
-      age
-    });
+    // Supprimer l'utilisateur précédent dans le salon
+    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
+    roomUsers[currentChannel].push(userData);
 
-    // Mise à jour de la liste des utilisateurs dans le salon
-    io.to(defaultChannel).emit('user list', roomUsers[defaultChannel].map(user => user.username));
+    console.log(`👤 Utilisateur enregistré ou mis à jour : ${username} (${gender}, ${age} ans)`);
 
-    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
-    io.emit('user list', users);
+    // 🔁 Mettre à jour la liste des utilisateurs dans le salon
+    io.to(currentChannel).emit('user list', roomUsers[currentChannel].map(u => u.username));
+
+    // Optionnel : notifier du changement
+    socket.emit('username accepted', username);
   });
 
   socket.on('chat message', (msg) => {
