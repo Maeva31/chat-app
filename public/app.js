@@ -26,10 +26,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   socket.on('user data', (userData) => {
-    // Assurer que le pseudo et l'âge sont bien définis dans l'interface utilisateur
-    document.getElementById('username').textContent = userData.username || 'Inconnu';
-    document.getElementById('age').textContent = userData.age || 'Inconnu';
-    document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
+    // Assurer que le pseudo, l'âge et le genre sont bien définis dans l'interface utilisateur
+    const username = userData.username || 'Inconnu';
+    const age = userData.age || 'Inconnu';
+    const gender = userData.gender || 'Non spécifié';
+
+    document.getElementById('username').textContent = username;
+    document.getElementById('age').textContent = age;
+    document.getElementById('gender').textContent = gender;
   });
 
   // Ajouter un message
