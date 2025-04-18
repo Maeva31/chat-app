@@ -9,6 +9,7 @@ const io = new Server(server);
 let users = [];
 let messageHistory = {}; // Historique des messages par salon
 let userChannels = {}; // Liste des salons auxquels les utilisateurs appartiennent
+let roomUsers = {}; // Liste des utilisateurs dans chaque salon
 
 // Servir les fichiers statiques
 app.use(express.static('public'));
@@ -83,6 +84,11 @@ io.on('connection', (socket) => {
     if (disconnectedUser) {
       console.log(`❌ Utilisateur déconnecté : ${disconnectedUser.username}`);
       io.emit('user disconnect', disconnectedUser.username);
+
+      // Retirer l'utilisateur des salons
+      for (const channel in roomUsers) {
+        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
+      }
     } else {
       console.log('❌ Utilisateur inconnu déconnecté');
     }
@@ -99,10 +105,22 @@ io.on('connection', (socket) => {
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
 
+    // Quitter l'ancien salon
+    if (roomUsers[oldChannel]) {
+      roomUsers[oldChannel] = roomUsers[oldChannel].filter(user => user.id !== socket.id);
+    }
+    
     socket.leave(oldChannel); // quitte l'ancien salon
     socket.join(channel);     // rejoint le nouveau salon
 
     userChannels[socket.id] = channel;
+
+    // Ajouter l'utilisateur au salon actuel
+    if (!roomUsers[channel]) {
+      roomUsers[channel] = [];
+    }
+    roomUsers[channel].push({ id: socket.id, username: users.find(user => user.id === socket.id)?.username });
+
     console.log(`👥 ${socket.id} a rejoint le salon : ${channel}`);
 
     io.to(channel).emit('chat message', {
@@ -118,6 +136,7 @@ io.on('connection', (socket) => {
   socket.on('createRoom', (newChannel) => {
     if (!messageHistory[newChannel]) {
       messageHistory[newChannel] = [];
+      roomUsers[newChannel] = [];
       console.log(`✅ Nouveau salon créé : ${newChannel}`);
       io.emit('room created', newChannel); // Notifie tous les clients que le salon a été créé
     } else {
