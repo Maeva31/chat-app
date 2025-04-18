@@ -27,7 +27,8 @@ io.on('connection', (socket) => {
 
   // Envoyer l'historique des messages et la liste des salons existants
   socket.emit('chat history', messageHistory['Général'] || []);
-  socket.emit('room list', Object.keys(messageHistory));
+  socket.emit('room list', channels);
+
 
   // Rejoindre un salon existant ou créer un salon
   socket.on('createRoom', (newChannel) => {
