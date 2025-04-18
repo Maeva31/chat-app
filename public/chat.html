@@ -69,5 +69,30 @@
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
+
+  <script>
+    // Création d'un salon dynamique
+    const createChannelButton = document.getElementById("create-channel-button");
+    createChannelButton.addEventListener("click", function () {
+      const newChannelName = document.getElementById("new-channel-name").value.trim();
+      if (newChannelName && newChannelName.length <= 20) {
+        socket.emit('create channel', newChannelName); // Envoi de la requête au backend pour créer le salon
+        document.getElementById("new-channel-name").value = ''; // Réinitialiser le champ
+      }
+    });
+
+    // Rejoindre un salon au clic
+    const channelList = document.getElementById("channel-list");
+    channelList.addEventListener("click", function (e) {
+      if (e.target.classList.contains("channel")) {
+        // Clic sur un salon, on le sélectionne et rejoint
+        const selectedChannel = e.target.textContent.trim();
+        socket.emit('join room', selectedChannel); // Envoi au backend
+        document.querySelectorAll('.channel').forEach(item => item.classList.remove('selected'));
+        e.target.classList.add('selected');
+        document.getElementById("message-input").focus();
+      }
+    });
+  </script>
 </body>
 </html>
