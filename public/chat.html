@@ -71,27 +71,52 @@
   <script src="app.js"></script>
 
   <script>
-    // Création d'un salon dynamique
+    // Connexion Socket.io
+    const socket = io();
+
+    // Fonction pour créer un salon
     const createChannelButton = document.getElementById("create-channel-button");
     createChannelButton.addEventListener("click", function () {
       const newChannelName = document.getElementById("new-channel-name").value.trim();
       if (newChannelName && newChannelName.length <= 20) {
-        socket.emit('create channel', newChannelName); // Envoi de la requête au backend pour créer le salon
-        document.getElementById("new-channel-name").value = ''; // Réinitialiser le champ
+        // Emission de l'événement pour créer un salon côté serveur
+        socket.emit('create channel', newChannelName);
+        document.getElementById("new-channel-name").value = ''; // Réinitialiser l'input
+      } else {
+        alert("Le nom du salon doit être non vide et comporter 20 caractères maximum.");
       }
     });
 
-    // Rejoindre un salon au clic
+    // Fonction pour rejoindre un salon
     const channelList = document.getElementById("channel-list");
     channelList.addEventListener("click", function (e) {
       if (e.target.classList.contains("channel")) {
-        // Clic sur un salon, on le sélectionne et rejoint
         const selectedChannel = e.target.textContent.trim();
-        socket.emit('join room', selectedChannel); // Envoi au backend
+        socket.emit('join room', selectedChannel); // Envoi du salon sélectionné
         document.querySelectorAll('.channel').forEach(item => item.classList.remove('selected'));
         e.target.classList.add('selected');
-        document.getElementById("message-input").focus();
       }
+    });
+
+    // Écoute des salons créés côté serveur
+    socket.on('channel list', function(channels) {
+      const channelListElement = document.getElementById("channel-list");
+      // Réinitialiser la liste de salons et ajouter tous les salons
+      channelListElement.innerHTML = '';
+      channels.forEach(channel => {
+        const li = document.createElement('li');
+        li.classList.add('channel');
+        li.textContent = `# ${channel}`;
+        channelListElement.appendChild(li);
+      });
+    });
+
+    // Ajouter des messages dans le chat
+    socket.on('message', function(message) {
+      const chatMessages = document.getElementById('chat-messages');
+      const messageElement = document.createElement('p');
+      messageElement.textContent = message;
+      chatMessages.appendChild(messageElement);
     });
   </script>
 </body>
