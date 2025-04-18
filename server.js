@@ -107,6 +107,17 @@ io.on('connection', (socket) => {
     // Envoi de l'historique du salon
     socket.emit('chat history', messageHistory[channel] || []);
   });
+
+  // Création d'un nouveau salon
+  socket.on('createRoom', (newChannel) => {
+    if (!messageHistory[newChannel]) {
+      messageHistory[newChannel] = [];
+      console.log(`✅ Nouveau salon créé : ${newChannel}`);
+      io.emit('room created', newChannel); // Notifie tous les clients que le salon a été créé
+    } else {
+      socket.emit('room exists', newChannel); // Si le salon existe déjà
+    }
+  });
 });
 
 const PORT = process.env.PORT || 3000;
