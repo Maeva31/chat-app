@@ -4,10 +4,11 @@ import { Server } from 'socket.io';
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server); // 🔧 correction ici
+const io = new Server(server);
 
 let users = [];
 let messageHistory = []; // Historique des messages
+let currentChannel = 'Général'; // Salon par défaut
 
 // Servir les fichiers statiques
 app.use(express.static('public'));
@@ -20,9 +21,9 @@ io.on('connection', (socket) => {
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
-    const usernameIsInvalid = 
-      !username || 
-      username.length > 16 || 
+    const usernameIsInvalid =
+      !username ||
+      username.length > 16 ||
       /\s/.test(username);
 
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
@@ -56,10 +57,11 @@ io.on('connection', (socket) => {
       username: msg.username || "Anonyme",
       gender: sender ? sender.gender : "Non précisé",
       message: msg.message || "",
-      timestamp: msg.timestamp || new Date().toISOString()
+      timestamp: msg.timestamp || new Date().toISOString(),
+      channel: currentChannel, // Ajout du salon
     };
 
-    console.log(`💬 ${messageToSend.username}: ${messageToSend.message}`);
+    console.log(`💬 ${messageToSend.username} dans #${messageToSend.channel}: ${messageToSend.message}`);
 
     messageHistory.push(messageToSend);
     if (messageHistory.length > 10) {
@@ -80,6 +82,13 @@ io.on('connection', (socket) => {
 
     users = users.filter(user => user.id !== socket.id);
     io.emit('user list', users);
+  });
+
+  // Changer de salon
+  socket.on('joinRoom', (channel) => {
+    currentChannel = channel;
+    console.log(`👥 ${socket.id} a rejoint le salon : ${currentChannel}`);
+    io.emit('chat message', { username: 'Système', message: `${socket.id} a rejoint le salon ${currentChannel}`, channel });
   });
 });
 
