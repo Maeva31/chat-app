@@ -23,7 +23,7 @@ let moderators = {}; // {channelName: {username: [moderators]}}
 
 // Fonction pour vérifier si un salon doit être supprimé
 function checkAndCloseRoom(channel) {
-  if (roomUsers[channel].length === 0) {
+  if (roomUsers[channel] && roomUsers[channel].length === 0) {
     delete roomUsers[channel];
     delete messageHistory[channel];
     channels = channels.filter(c => c !== channel);
@@ -35,9 +35,13 @@ function checkAndCloseRoom(channel) {
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
 
-  const defaultChannel = 'Général';
-  socket.join(defaultChannel);
-  socket.emit('chat history', messageHistory[defaultChannel] || []);
+  // On rejoint le salon "Général" par défaut
+  socket.join('Général');
+  userChannels[socket.id] = 'Général';
+  socket.emit('chat history', messageHistory['Général'] || []);
+  
+  // Envoyer la liste des salons à tous les utilisateurs connectés
+  io.emit('room list', channels);
 
   // Création d’un salon
   socket.on('createRoom', (newChannel) => {
@@ -46,13 +50,16 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = [];
       channels.push(newChannel);
       console.log(`✅ Salon créé : ${newChannel}`);
+      
+      // On notifie tous les utilisateurs de la création d'un salon
+      io.emit('room list', channels);
+      
+      // L'utilisateur est redirigé dans le nouveau salon
       socket.join(newChannel);
       userChannels[socket.id] = newChannel;
 
-      // Rediriger l'utilisateur dans le nouveau salon
       socket.emit('room created', newChannel);
       socket.emit('chat history', messageHistory[newChannel] || []);
-      io.emit('room list', channels);
     } else {
       socket.emit('room exists', newChannel);
     }
