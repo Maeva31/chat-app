@@ -293,6 +293,22 @@ main {
     flex-direction: column;
   }
 
+/* === USER BADGE (ADMIN) === */
+.admin .badge {
+  background-color: red;
+  color: white;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-weight: bold;
+  font-size: 0.9em;
+  margin-left: 10px;
+}
+
+.admin .badge.admin-badge {
+  background-color: #ff0000;
+}
+
+  
   #channel-sidebar,
   #user-list {
     width: 100%;
