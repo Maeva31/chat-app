@@ -1,272 +1,179 @@
-document.addEventListener('DOMContentLoaded', function () {
-  const socket = io();
-  let selectedUser = null;
-  let currentChannel = 'Général';
+const socket = io();
 
-  const genderColors = {
-    Homme: '#00f',
-    Femme: '#f0f',
-    Autre: '#0ff',
-    default: '#aaa'
-  };
+// Authentification
+document.getElementById('login-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const pseudo = document.getElementById('pseudo').value.trim();
+    const genre = document.getElementById('genre').value;
+    const age = document.getElementById('age').value;
+    const role = document.getElementById('role').value;
 
-  function updateUserList(users) {
-    const userList = document.getElementById('users');
-    userList.innerHTML = '';
-
-    if (!Array.isArray(users)) {
-      console.error("La liste des utilisateurs n'est pas un tableau.");
-      return;
-    }
-
-    users.forEach(user => {
-      const username = user?.username || 'Inconnu';
-      const age = user?.age || '?';
-      const gender = user?.gender || 'Non spécifié';
-
-      const li = document.createElement('li');
-      li.classList.add('user-item');
-
-      li.innerHTML = ` 
-        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
-          ${age}
-        </div>
-        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
-      `;
-
-      userList.appendChild(li);
-    });
-  }
-
-  socket.on('chat history', function (messages) {
-    const chatMessages = document.getElementById("chat-messages");
-    chatMessages.innerHTML = '';
-    messages.forEach(msg => addMessageToChat(msg, chatMessages));
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-
-  socket.on('chat message', function (msg) {
-    const chatMessages = document.getElementById("chat-messages");
-    addMessageToChat(msg, chatMessages);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-
-  socket.on('user data', (userData) => {
-    const username = userData.username || 'Inconnu';
-    const age = userData.age || 'Inconnu';
-    const gender = userData.gender || 'Non spécifié';
-
-    document.getElementById('username').textContent = username;
-    document.getElementById('age').textContent = age;
-    document.getElementById('gender').textContent = gender;
-  });
-
-  function addMessageToChat(msg, chatMessages) {
-    const newMessage = document.createElement("div");
-    const date = new Date(msg.timestamp);
-    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const usernameSpan = document.createElement("span");
-    usernameSpan.classList.add("clickable-username");
-    usernameSpan.style.color = getUsernameColor(msg.gender);
-    usernameSpan.textContent = msg.username || 'Inconnu';
-
-    usernameSpan.addEventListener("click", function () {
-      const messageInput = document.getElementById("message-input");
-      const current = messageInput.value.trim();
-      const mention = `@${msg.username} `;
-      if (!current.includes(mention)) {
-        messageInput.value = mention + current;
-      }
-      messageInput.focus();
-      selectedUser = msg.username;
-    });
-
-    newMessage.innerHTML = `[${timeString}] `;
-    newMessage.appendChild(usernameSpan);
-    newMessage.insertAdjacentHTML("beforeend", `: ${msg.message}`);
-    newMessage.classList.add("message");
-    newMessage.dataset.username = msg.username;
-
-    chatMessages.appendChild(newMessage);
-  }
-
-  socket.on('existing rooms', function (rooms) {
-    const channelList = document.getElementById('channel-list');
-
-    rooms.forEach(room => {
-      if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
-
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      li.textContent = `# ${room}`;
-      li.addEventListener('click', () => {
-        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-        li.classList.add('selected');
-        currentChannel = room;
-        socket.emit('joinRoom', currentChannel);
-        document.querySelector('#chat-messages').innerHTML = '';
-      });
-      channelList.appendChild(li);
-    });
-  });
-
-  function sendMessage() {
-    const messageInput = document.getElementById("message-input");
-    const message = messageInput.value.trim();
-    const username = localStorage.getItem("username");
-
-    if (!message) {
-      showErrorMessage("Vous ne pouvez pas envoyer de message vide.");
-      return;
-    }
-
-    if (message.length > 300) {
-      showErrorMessage("Message trop long (300 caractères max).");
-      return;
-    }
-
-    if (username) {
-      socket.emit('chat message', {
-        username,
-        message,
-        timestamp: new Date().toISOString(),
-        channel: currentChannel
-      });
-      messageInput.value = "";
-    }
-  }
-
-  document.getElementById("message-input").addEventListener("keypress", function (event) {
-    if (event.key === "Enter") sendMessage();
-  });
-
-  function submitUserInfo() {
-    const usernameInput = document.getElementById("username-input");
-    const genderSelect = document.getElementById("gender-select");
-    const ageInput = document.getElementById("age-input");
-    const modalError = document.getElementById("modal-error");
-
-    const username = usernameInput.value.trim();
-    const gender = genderSelect.value;
-    const age = parseInt(ageInput.value.trim(), 10);
-
-    if (!username || username.includes(" ") || username.length > 16) {
-      modalError.textContent = "❌ Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
-      modalError.style.display = "block";
-      return;
-    }
-
-    if (isNaN(age) || age < 18 || age > 89) {
-      modalError.textContent = "❌ L'âge doit être un nombre entre 18 et 89.";
-      modalError.style.display = "block";
-      return;
-    }
-
-    if (!gender) {
-      modalError.textContent = "❌ Veuillez sélectionner un genre.";
-      modalError.style.display = "block";
-      return;
-    }
-
-    modalError.style.display = "none";
-    localStorage.setItem("username", username);
-    localStorage.setItem("gender", gender);
-    localStorage.setItem("age", age);
-
-    socket.emit('set username', { username, gender, age });
-    document.getElementById("myModal").style.display = "none";
-  }
-
-  socket.on('username exists', function (username) {
-    const modalError = document.getElementById("modal-error");
-    modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
-    modalError.style.display = "block";
-    localStorage.removeItem("username");
-    document.getElementById("myModal").style.display = "block";
-  });
-
-  function getUsernameColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
-
-  function getGenderColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
-
-  socket.on('user list', updateUserList);
-
-  const channelElements = document.querySelectorAll('.channel');
-  channelElements.forEach(channel => {
-    channel.addEventListener('click', () => {
-      const messageInput = document.getElementById("message-input");
-      messageInput.value = '';
-      selectedUser = null;
-      channelElements.forEach(c => c.classList.remove('selected'));
-      channel.classList.add('selected');
-      currentChannel = channel.textContent.replace('# ', '');
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-  });
-
-  socket.on('room created', function (newRoom) {
-    const channelList = document.getElementById('channel-list');
-    if ([...channelList.children].some(li => li.textContent.trim() === `# ${newRoom}`)) return;
-
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    li.textContent = `# ${newRoom}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-    channelList.appendChild(li);
-  });
-
-  const savedUsername = localStorage.getItem("username");
-  const savedGender = localStorage.getItem("gender");
-  const savedAge = localStorage.getItem("age");
-
-  if (savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || "non spécifié",
-      age: savedAge
-    });
-    document.getElementById("myModal").style.display = "none";
-  } else {
-    document.getElementById("myModal").style.display = "block";
-  }
-
-  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
-
-  function showErrorMessage(message) {
-    const errorBox = document.getElementById("error-box");
-    if (!errorBox) return;
-    errorBox.textContent = message;
-    errorBox.style.display = "block";
-    setTimeout(() => {
-      errorBox.style.display = "none";
-    }, 4000);
-  }
-
-  const createChannelButton = document.getElementById("create-channel-button");
-  if (createChannelButton) {
-    createChannelButton.addEventListener("click", () => {
-      const input = document.getElementById("new-channel-name");
-      const newChannelName = input.value.trim();
-
-      if (!newChannelName || newChannelName.length > 20 || /\s/.test(newChannelName)) {
-        showErrorMessage("❌ Nom de salon invalide (20 caractères max, sans espaces).");
-        return;
-      }
-
-      socket.emit("createRoom", newChannelName);
-      input.value = "";
-    });
-  }
+    if (!pseudo) return alert("Pseudo requis");
+    localStorage.setItem('user', JSON.stringify({ pseudo, genre, age, role }));
+    socket.emit('auth', { pseudo, genre, age, role });
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('chat').style.display = 'block';
 });
+
+// Message
+document.getElementById('message-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const text = document.getElementById('message').value.trim();
+    if (!text) return;
+    const font = document.getElementById('font').value;
+    const color = document.getElementById('color').value;
+    socket.emit('send-message', { text, font, color });
+    document.getElementById('message').value = '';
+});
+
+// Fichier
+document.getElementById('file-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+        socket.emit('send-file', {
+            type: file.type,
+            fileData: reader.result,
+            fileName: file.name
+        });
+    };
+    reader.readAsDataURL(file);
+});
+
+// Emojis
+document.getElementById('emoji-btn').addEventListener('click', () => {
+    const emojis = ['😀','😂','😍','🥺','🤔','😎','🔥','😢','🎉','👍','💀','❤️'];
+    const palette = document.getElementById('emoji-palette');
+    palette.innerHTML = '';
+    emojis.forEach(e => {
+        const btn = document.createElement('button');
+        btn.textContent = e;
+        btn.addEventListener('click', () => {
+            document.getElementById('message').value += e;
+            palette.style.display = 'none';
+        });
+        palette.appendChild(btn);
+    });
+    palette.style.display = palette.style.display === 'block' ? 'none' : 'block';
+});
+
+// Affichage
+socket.on('new-message', displayMessage);
+socket.on('file-message', displayFile);
+socket.on('history', msgs => {
+    document.getElementById('messages').innerHTML = '';
+    msgs.forEach(m => m.text ? displayMessage(m) : displayFile(m));
+});
+socket.on('user-list', updateUserList);
+socket.on('private-message', showPrivateMessage);
+socket.on('kicked', () => alert("Vous avez été expulsé."));
+socket.on('banned', () => alert("Vous avez été banni."));
+
+function displayMessage({ pseudo, genre, age, role, text, font, color, time }) {
+    const msg = document.createElement('div');
+    const userColor = genre === 'homme' ? 'blue' : genre === 'femme' ? 'hotpink' : 'gray';
+    const badgeColor = role === 'admin' ? 'red' : role === 'modo' ? 'green' : 'white';
+    const mention = text.includes(getPseudo()) ? 'mention' : '';
+
+    msg.className = `message ${mention}`;
+    msg.innerHTML = `<span style="color:${badgeColor}; font-weight:bold">[${role}]</span> 
+    <span class="pseudo" data-pseudo="${pseudo}" style="color:${userColor}">${pseudo}</span> 
+    (${age}) <span class="time">${time}</span>: 
+    <span style="font-family:${font}; color:${color}">${text}</span>`;
+
+    document.getElementById('messages').appendChild(msg);
+    msg.scrollIntoView();
+}
+
+function displayFile({ pseudo, genre, age, role, fileType, fileData, fileName, time }) {
+    const ext = fileType.split('/')[0];
+    const container = document.createElement('div');
+    const userColor = genre === 'homme' ? 'blue' : genre === 'femme' ? 'hotpink' : 'gray';
+    const badgeColor = role === 'admin' ? 'red' : role === 'modo' ? 'green' : 'white';
+
+    container.className = "message";
+    container.innerHTML = `<span style="color:${badgeColor}; font-weight:bold">[${role}]</span> 
+    <span class="pseudo" data-pseudo="${pseudo}" style="color:${userColor}">${pseudo}</span> 
+    (${age}) <span class="time">${time}</span>: `;
+
+    if (ext === 'image') {
+        const img = new Image();
+        img.src = fileData;
+        img.style.maxWidth = "200px";
+        container.appendChild(img);
+    } else if (ext === 'video') {
+        const video = document.createElement('video');
+        video.src = fileData;
+        video.controls = true;
+        video.style.maxWidth = "200px";
+        container.appendChild(video);
+    } else if (ext === 'audio') {
+        const audio = document.createElement('audio');
+        audio.src = fileData;
+        audio.controls = true;
+        container.appendChild(audio);
+    } else {
+        const link = document.createElement('a');
+        link.href = fileData;
+        link.download = fileName;
+        link.textContent = `Télécharger ${fileName}`;
+        container.appendChild(link);
+    }
+
+    document.getElementById('messages').appendChild(container);
+    container.scrollIntoView();
+}
+
+function updateUserList(users) {
+    const list = document.getElementById('users');
+    list.innerHTML = '';
+    users.forEach(u => {
+        const li = document.createElement('li');
+        const userColor = u.genre === 'homme' ? 'blue' : u.genre === 'femme' ? 'hotpink' : 'gray';
+        const badgeColor = u.role === 'admin' ? 'red' : u.role === 'modo' ? 'green' : 'white';
+
+        li.innerHTML = `<span style="color:${badgeColor}">[${u.role}]</span> 
+        <span class="pseudo" data-pseudo="${u.pseudo}" style="color:${userColor}">${u.pseudo}</span> (${u.age})`;
+
+        list.appendChild(li);
+    });
+}
+
+document.addEventListener('click', (e) => {
+    if (e.target.classList.contains('pseudo')) {
+        const target = e.target.dataset.pseudo;
+        const tabs = document.getElementById('private-tabs');
+        const tabId = `mp-${target}`;
+        if (!document.getElementById(tabId)) {
+            const tab = document.createElement('div');
+            tab.id = tabId;
+            tab.className = 'private-tab';
+            tab.innerHTML = `<h3>MP avec ${target}</h3>
+                <div class="mp-messages" id="log-${target}"></div>
+                <form class="mp-form"><input type="text" placeholder="Message privé"><button>Envoyer</button></form>`;
+            tabs.appendChild(tab);
+
+            tab.querySelector('form').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const msg = tab.querySelector('input').value;
+                if (!msg) return;
+                socket.emit('private-message', { to: target, message: msg });
+                tab.querySelector(`#log-${target}`).innerHTML += `<div class="self">Vous: ${msg}</div>`;
+                tab.querySelector('input').value = '';
+            });
+        }
+    }
+});
+
+function showPrivateMessage({ from, message, time }) {
+    const log = document.getElementById(`log-${from}`);
+    if (log) {
+        log.innerHTML += `<div>${from} (${time}): ${message}</div>`;
+    }
+}
+
+function getPseudo() {
+    const user = localStorage.getItem('user');
+    return user ? JSON.parse(user).pseudo : '';
+}
