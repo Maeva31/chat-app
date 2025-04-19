@@ -6,12 +6,11 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Stockage des données
-let users = {}; // Liste des utilisateurs connectés
-let roomUsers = {}; // Liste des utilisateurs par salon
-let createdRooms = ['Général']; // Liste des salons existants, avec le salon général par défaut
-let messageHistory = {}; // Historique des messages par salon
-let userChannels = {}; // Salon actuel de chaque utilisateur
+let users = {}; // Utilisateurs connectés
+let roomUsers = {}; // Utilisateurs par salon
+let createdRooms = ['Général']; // Salons existants
+let messageHistory = {}; // Historique des messages
+let userChannels = {}; // Salon actuel des utilisateurs
 
 app.use(express.static('public'));
 
