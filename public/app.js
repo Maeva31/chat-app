@@ -10,24 +10,9 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
-  // Liste des utilisateurs par salon
-  let currentUsers = [];
-
-  // Lorsqu'un utilisateur rejoint ou quitte un salon, on met à jour la liste des utilisateurs
-  socket.on('user list', (users) => {
-    currentUsers = users;
-    updateUserList(users);  // Mise à jour de la liste des utilisateurs
-  });
-
-  // Fonction pour rejoindre un salon
-  function joinRoom(room) {
-    socket.emit('joinRoom', room);
-  }
-
-  // ✅ Version sécurisée et unique de updateUserList
   function updateUserList(users) {
     const userList = document.getElementById('users');
-    userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
+    userList.innerHTML = '';
 
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
@@ -40,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const gender = user?.gender || 'Non spécifié';
 
       const li = document.createElement('li');
-      li.classList.add('user-item');  // Ajouter une classe pour un meilleur style CSS
+      li.classList.add('user-item');
 
       li.innerHTML = ` 
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
@@ -53,7 +38,6 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Historique des messages
   socket.on('chat history', function (messages) {
     const chatMessages = document.getElementById("chat-messages");
     chatMessages.innerHTML = '';
@@ -61,7 +45,6 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
-  // Nouveau message
   socket.on('chat message', function (msg) {
     const chatMessages = document.getElementById("chat-messages");
     addMessageToChat(msg, chatMessages);
@@ -78,7 +61,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('gender').textContent = gender;
   });
 
-  // Ajout de message dans le chat
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
     const date = new Date(msg.timestamp);
@@ -94,7 +76,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const current = messageInput.value.trim();
       const mention = `@${msg.username} `;
       if (!current.includes(mention)) {
-        messageInput.value = mention + current; // Ajoute l'@pseudo avec un espace
+        messageInput.value = mention + current;
       }
       messageInput.focus();
       selectedUser = msg.username;
@@ -109,7 +91,27 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
-  // Envoi de message
+  socket.on('existing rooms', function (rooms) {
+    const channelList = document.getElementById('channel-list');
+
+    rooms.forEach(room => {
+      // Ne pas dupliquer un salon déjà affiché
+      if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
+
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      li.textContent = `# ${room}`;
+      li.addEventListener('click', () => {
+        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+        li.classList.add('selected');
+        currentChannel = room;
+        socket.emit('joinRoom', currentChannel);
+        document.querySelector('#chat-messages').innerHTML = '';
+      });
+      channelList.appendChild(li);
+    });
+  });
+
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -140,7 +142,6 @@ document.addEventListener('DOMContentLoaded', function () {
     if (event.key === "Enter") sendMessage();
   });
 
-  // Gestion des infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
     const genderSelect = document.getElementById("gender-select");
@@ -178,7 +179,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "none";
   }
 
-  // Pseudo déjà utilisé
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
     modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   });
 
-  // Couleurs selon genre
   function getUsernameColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
@@ -196,5 +195,83 @@ document.addEventListener('DOMContentLoaded', function () {
     return genderColors[gender] || genderColors.default;
   }
 
-  document.getElementById("submit-user-info").addEventListener("click", submitUserInfo);
+  socket.on('user list', updateUserList);
+
+  const channelElements = document.querySelectorAll('.channel');
+  channelElements.forEach(channel => {
+    channel.addEventListener('click', () => {
+      const messageInput = document.getElementById("message-input");
+      messageInput.value = '';
+      selectedUser = null;
+      channelElements.forEach(c => c.classList.remove('selected'));
+      channel.classList.add('selected');
+      currentChannel = channel.textContent.replace('# ', '');
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+  });
+
+  // ✅ Version corrigée de cette section
+  socket.on('room created', function (newRoom) {
+    const channelList = document.getElementById('channel-list');
+    
+    // Vérifie si le salon existe déjà pour éviter les doublons
+    if ([...channelList.children].some(li => li.textContent.trim() === `# ${newRoom}`)) return;
+
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    li.textContent = `# ${newRoom}`;
+    li.addEventListener('click', () => {
+      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+      li.classList.add('selected');
+      currentChannel = newRoom;
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+    channelList.appendChild(li);
+  });
+
+  const savedUsername = localStorage.getItem("username");
+  const savedGender = localStorage.getItem("gender");
+  const savedAge = localStorage.getItem("age");
+
+  if (savedUsername && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || "non spécifié",
+      age: savedAge
+    });
+    document.getElementById("myModal").style.display = "none";
+  } else {
+    document.getElementById("myModal").style.display = "block";
+  }
+
+  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
+
+  function showErrorMessage(message) {
+    const errorBox = document.getElementById("error-box");
+    if (!errorBox) return;
+    errorBox.textContent = message;
+    errorBox.style.display = "block";
+    setTimeout(() => {
+      errorBox.style.display = "none";
+    }, 4000);
+  }
+
+  // ✅ AJOUT : création de salon via bouton
+  const createChannelButton = document.getElementById("create-channel-button");
+  if (createChannelButton) {
+    createChannelButton.addEventListener("click", () => {
+      const input = document.getElementById("new-channel-name");
+      const newChannelName = input.value.trim();
+
+      if (!newChannelName || newChannelName.length > 20 || /\s/.test(newChannelName)) {
+        showErrorMessage("❌ Nom de salon invalide (20 caractères max, sans espaces).");
+        return;
+      }
+
+      socket.emit("createRoom", newChannelName);
+      input.value = "";
+    });
+  }
 });
