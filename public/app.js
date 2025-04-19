@@ -95,19 +95,9 @@ document.addEventListener('DOMContentLoaded', function () {
     const channelList = document.getElementById('channel-list');
 
     rooms.forEach(room => {
-      // Ne pas dupliquer un salon déjà affiché
       if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
 
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      li.textContent = `# ${room}`;
-      li.addEventListener('click', () => {
-        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-        li.classList.add('selected');
-        currentChannel = room;
-        socket.emit('joinRoom', currentChannel);
-        document.querySelector('#chat-messages').innerHTML = '';
-      });
+      const li = createChannelElement(room);
       channelList.appendChild(li);
     });
   });
@@ -197,38 +187,35 @@ document.addEventListener('DOMContentLoaded', function () {
 
   socket.on('user list', updateUserList);
 
-  const channelElements = document.querySelectorAll('.channel');
-  channelElements.forEach(channel => {
-    channel.addEventListener('click', () => {
-      const messageInput = document.getElementById("message-input");
-      messageInput.value = '';
-      selectedUser = null;
-      channelElements.forEach(c => c.classList.remove('selected'));
-      channel.classList.add('selected');
-      currentChannel = channel.textContent.replace('# ', '');
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-  });
-
-  // ✅ Version corrigée de cette section
-  socket.on('room created', function (newRoom) {
-    const channelList = document.getElementById('channel-list');
-    
-    // Vérifie si le salon existe déjà pour éviter les doublons
-    if ([...channelList.children].some(li => li.textContent.trim() === `# ${newRoom}`)) return;
-
+  // ✅ Nouvelle fonction de création d’un élément de salon
+  function createChannelElement(roomName) {
     const li = document.createElement('li');
     li.classList.add('channel');
-    li.textContent = `# ${newRoom}`;
+    li.textContent = `# ${roomName}`;
     li.addEventListener('click', () => {
       document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
       li.classList.add('selected');
-      currentChannel = newRoom;
+      currentChannel = roomName;
       socket.emit('joinRoom', currentChannel);
       document.querySelector('#chat-messages').innerHTML = '';
     });
+    return li;
+  }
+
+  // ✅ Écoute correcte de la création de salon
+  socket.on('room created', function (newRoom) {
+    const channelList = document.getElementById('channel-list');
+    if ([...channelList.children].some(li => li.textContent.trim() === `# ${newRoom}`)) return;
+
+    const li = createChannelElement(newRoom);
     channelList.appendChild(li);
+
+    // Rejoindre le nouveau salon automatiquement
+    currentChannel = newRoom;
+    document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+    li.classList.add('selected');
+    socket.emit('joinRoom', currentChannel);
+    document.querySelector('#chat-messages').innerHTML = '';
   });
 
   const savedUsername = localStorage.getItem("username");
@@ -258,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 4000);
   }
 
-  // ✅ AJOUT : création de salon via bouton
+  // ✅ Création de salon via bouton
   const createChannelButton = document.getElementById("create-channel-button");
   if (createChannelButton) {
     createChannelButton.addEventListener("click", () => {
