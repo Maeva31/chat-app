@@ -6,26 +6,29 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Données en mémoire
-let users = {};            // Stockage des utilisateurs avec leurs infos
+let users = {};            // Tous les utilisateurs connectés (par pseudo)
+let userChannels = {};     // Canal courant de chaque socket.id
+let roomUsers = {};        // Liste des utilisateurs par salon
 let messageHistory = {};   // Historique des messages par salon
-let roomUsers = {};        // Utilisateurs présents par salon
-let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
 
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
-  console.log(`✅ Nouvelle connexion : ${socket.id}`);
+  console.log(`✅ Connexion : ${socket.id}`);
 
-  // Envoi de l'historique du salon "Général" par défaut
-  socket.emit('chat history', messageHistory['Général'] || []);
+  // Rejoindre "Général" par défaut
+  const defaultRoom = 'Général';
+  socket.join(defaultRoom);
+  userChannels[socket.id] = defaultRoom;
 
-  // Définition du nom d'utilisateur
+  socket.emit('chat history', messageHistory[defaultRoom] || []);
+
+  // Définir l'utilisateur
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
-    const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
-    if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
+    const isInvalid = !username || username.length > 16 || /\s/.test(username) || !age || isNaN(age) || age < 18 || age > 89;
+    if (isInvalid) {
       socket.emit('username exists', username);
       return;
     }
@@ -37,128 +40,85 @@ io.on('connection', (socket) => {
 
     const userData = { username, gender, age, id: socket.id };
     users[username] = userData;
+    const currentRoom = userChannels[socket.id] || defaultRoom;
+    socket.join(currentRoom);
 
-    const currentChannel = userChannels[socket.id] || 'Général';
-    userChannels[socket.id] = currentChannel;
-    socket.join(currentChannel);
-
-    if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
-
-    // Évite les doublons
-    roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
-    roomUsers[currentChannel].push(userData);
-
-    console.log(`👤 Utilisateur enregistré : ${username} (${gender}, ${age} ans)`);
-
-    // Envoyer la liste des utilisateurs au salon
-    io.to(currentChannel).emit('user list', roomUsers[currentChannel]);
+    if (!roomUsers[currentRoom]) roomUsers[currentRoom] = [];
+    roomUsers[currentRoom] = roomUsers[currentRoom].filter(u => u.id !== socket.id);
+    roomUsers[currentRoom].push(userData);
 
     socket.emit('username accepted', username);
+    socket.emit('chat history', messageHistory[currentRoom] || []);
+    io.to(currentRoom).emit('user list', roomUsers[currentRoom]);
   });
 
-  // Envoi d’un message
+  // Changement de salon
+  socket.on('joinRoom', (room) => {
+    const previousRoom = userChannels[socket.id] || defaultRoom;
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
+
+    socket.leave(previousRoom);
+    socket.join(room);
+    userChannels[socket.id] = room;
+
+    // Retirer l'utilisateur de l'ancien salon
+    if (roomUsers[previousRoom]) {
+      roomUsers[previousRoom] = roomUsers[previousRoom].filter(u => u.id !== socket.id);
+      io.to(previousRoom).emit('user list', roomUsers[previousRoom]);
+    }
+
+    if (!roomUsers[room]) roomUsers[room] = [];
+    roomUsers[room].push(user);
+
+    socket.emit('chat history', messageHistory[room] || []);
+    io.to(room).emit('user list', roomUsers[room]);
+  });
+
+  // Envoi de message
   socket.on('chat message', (msg) => {
-    const sender = Object.values(users).find(user => user.id === socket.id);
-    const currentChannel = userChannels[socket.id] || 'Général';
+    const sender = Object.values(users).find(u => u.id === socket.id);
+    const room = userChannels[socket.id] || defaultRoom;
+    if (!sender || !msg.message) return;
 
     const messageToSend = {
-      username: sender ? sender.username : "Inconnu",
-      gender: sender ? sender.gender : "Non précisé",
-      message: msg.message || "",
-      timestamp: msg.timestamp || new Date().toISOString(),
-      channel: currentChannel,
+      username: sender.username,
+      gender: sender.gender,
+      age: sender.age,
+      message: msg.message,
+      timestamp: msg.timestamp
     };
 
-    console.log(`💬 ${messageToSend.username} dans #${currentChannel}: ${messageToSend.message}`);
+    if (!messageHistory[room]) messageHistory[room] = [];
+    messageHistory[room].push(messageToSend);
 
-    if (!messageHistory[currentChannel]) {
-      messageHistory[currentChannel] = [];
+    io.to(room).emit('chat message', messageToSend);
+  });
+
+  // Création de salon
+  socket.on('createRoom', (roomName) => {
+    if (!roomUsers[roomName]) {
+      roomUsers[roomName] = [];
+      io.emit('room created', roomName);
     }
-
-    messageHistory[currentChannel].push(messageToSend);
-    if (messageHistory[currentChannel].length > 10) {
-      messageHistory[currentChannel].shift(); // max 10 messages
-    }
-
-    io.to(currentChannel).emit('chat message', messageToSend);
   });
 
   // Déconnexion
   socket.on('disconnect', () => {
-    const disconnectedUser = Object.values(users).find(user => user.id === socket.id);
-
-    if (disconnectedUser) {
-      console.log(`❌ Déconnexion : ${disconnectedUser.username}`);
-      io.emit('user disconnect', disconnectedUser.username);
-
-      // Retirer l'utilisateur de tous les salons
-      for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
-        io.to(channel).emit('user list', roomUsers[channel]);
-      }
-
-      delete users[disconnectedUser.username];
-      delete userChannels[socket.id];
-    } else {
-      console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
-    }
-  });
-
-  // Changement de salon
-  socket.on('joinRoom', (channel) => {
-    const oldChannel = userChannels[socket.id] || 'Général';
-    const user = Object.values(users).find(user => user.id === socket.id);
-
-    if (!user) {
-      socket.emit('error', 'Utilisateur non défini');
-      return;
+    const room = userChannels[socket.id] || defaultRoom;
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (user) {
+      delete users[user.username];
+      roomUsers[room] = roomUsers[room]?.filter(u => u.id !== socket.id) || [];
+      io.to(room).emit('user list', roomUsers[room]);
     }
 
-    // Quitter l'ancien salon
-    if (roomUsers[oldChannel]) {
-      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
-    }
-
-    socket.leave(oldChannel);
-    socket.join(channel);
-    userChannels[socket.id] = channel;
-
-    if (!roomUsers[channel]) roomUsers[channel] = [];
-
-    roomUsers[channel].push({
-      id: socket.id,
-      username: user.username,
-      gender: user.gender,
-      age: user.age
-    });
-
-    console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
-
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${user.username} a rejoint le salon ${channel}`,
-      channel
-    });
-
-    socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('user list', roomUsers[channel]);
-  });
-
-  // Création de salon
-  socket.on('createRoom', (newChannel) => {
-    if (!messageHistory[newChannel]) {
-      messageHistory[newChannel] = [];
-      roomUsers[newChannel] = [];
-      console.log(`✅ Salon créé : ${newChannel}`);
-      io.emit('room created', newChannel);
-    } else {
-      socket.emit('room exists', newChannel);
-    }
+    delete userChannels[socket.id];
+    console.log(`❌ Déconnexion : ${socket.id}`);
   });
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+  console.log(`🚀 Serveur en écoute sur http://localhost:${PORT}`);
 });
