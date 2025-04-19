@@ -91,6 +91,28 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
+  socket.on('existing rooms', function (rooms) {
+  const channelList = document.getElementById('channel-list');
+
+  rooms.forEach(room => {
+    // Ne pas dupliquer un salon déjà affiché
+    if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
+
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    li.textContent = `# ${room}`;
+    li.addEventListener('click', () => {
+      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+      li.classList.add('selected');
+      currentChannel = room;
+      socket.emit('joinRoom', currentChannel);
+      document.querySelector('#chat-messages').innerHTML = '';
+    });
+    channelList.appendChild(li);
+  });
+});
+
+  
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
