@@ -23,6 +23,7 @@ io.on('connection', (socket) => {
   // Définition du nom d'utilisateur
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
+socket.emit('room list', Object.keys(messageHistory)); // envoie la liste des salons au nouvel utilisateur
 
     const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
