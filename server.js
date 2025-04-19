@@ -17,7 +17,7 @@ app.use(express.static('public'));
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
 
-  // Envoi de l'historique du salon Général par défaut
+  // Envoi de l'historique du salon "Général" par défaut
   socket.emit('chat history', messageHistory['Général'] || []);
 
   // Définition du nom d'utilisateur
