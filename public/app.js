@@ -73,6 +73,11 @@ document.addEventListener('DOMContentLoaded', function () {
   updateUserList(users);
 });
 
+  socket.on('room created', function (roomName) {
+  console.log("Nouveau salon créé :", roomName);
+  // Tu peux ici mettre à jour la liste des salons dynamiquement
+});
+
 
   // Ajout de message dans le chat
   function addMessageToChat(msg, chatMessages) {
