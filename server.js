@@ -99,13 +99,21 @@ io.on('connection', (socket) => {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
         io.to(channel).emit('user list', roomUsers[channel]);
 
-        // Si le salon est vide, le supprimer
+        // Si le salon est vide, le supprimer et rediriger les utilisateurs vers le salon Général
         if (roomUsers[channel].length === 0) {
           console.log(`💀 Le salon ${channel} est maintenant vide et sera supprimé.`);
           delete roomUsers[channel];
           delete messageHistory[channel];
           createdRooms = createdRooms.filter(room => room !== channel);
           io.emit('room deleted', channel); // Notifier les autres clients
+
+          // Rediriger tous les utilisateurs dans ce salon vers le salon Général
+          Object.keys(userChannels).forEach((socketId) => {
+            if (userChannels[socketId] === channel) {
+              userChannels[socketId] = 'Général';
+              io.to(socketId).emit('joinRoom', 'Général'); // Redirection vers le salon Général
+            }
+          });
         }
       }
 
@@ -179,17 +187,18 @@ io.on('connection', (socket) => {
       socket.join(newChannel);
       userChannels[socket.id] = newChannel;
 
-      // Emission de l'événement 'room created' à tous les clients
+      // Émission de l'événement 'room created' à tous les clients
       io.emit('room created', newChannel);
 
-      // Ajouter un message système de bienvenue
+      // Ajouter un message système de bienvenue dans le salon créé
       io.to(newChannel).emit('chat message', {
         username: 'Système',
         message: `Bienvenue dans le salon ${newChannel}`,
         channel: newChannel
       });
 
-      socket.emit('joinRoom', newChannel); // Rediriger le créateur vers le salon créé
+      // Rediriger le créateur vers le salon créé
+      socket.emit('joinRoom', newChannel); // L'utilisateur rejoint le salon directement après sa création
     } else {
       socket.emit('room exists', newChannel);
     }
