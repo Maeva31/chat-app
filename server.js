@@ -1,51 +1,35 @@
-import express from 'express';
-import http from 'http';
-import path from 'path';
-import { Server } from 'socket.io';
-import { fileURLToPath } from 'url';
+const express = require("express");
+const http = require("http");
+const socketIo = require("socket.io");
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server);
-const PORT = process.env.PORT || 3000;
+const io = socketIo(server);
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const port = process.env.PORT || 3000;
+const channels = ['Général'];  // Salon de base
+const roomUsers = { 'Général': [] };
+const messageHistory = { 'Général': [] };
 
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static('public'));
 
-let channels = ['Général', 'Musique', 'Gaming', 'Détente'];  // Liste des salons
-let roomUsers = {};  // Liste des utilisateurs dans chaque salon
-let messageHistory = {};  // Historique des messages
-let userData = {};  // Données des utilisateurs (pseudo, genre, âge)
+server.listen(port, () => {
+  console.log(`Serveur démarré sur http://localhost:${port}`);
+});
 
-// Fonction pour envoyer la liste des salons à tous les utilisateurs
-function updateRoomList() {
-  io.emit('room list', channels);  // Envoie la liste mise à jour à tous les utilisateurs
-}
-
+// Gestion des connexions WebSocket
 io.on('connection', (socket) => {
-  console.log(`✅ Nouvelle connexion : ${socket.id}`);
+  console.log(`Nouvelle connexion : ${socket.id}`);
 
-  // Envoi de la liste des salons existants dès la connexion
-  socket.emit('room list', channels);
-
-  // Par défaut, on rejoint le salon "Général"
-  socket.join('Général');
-  roomUsers['Général'] = roomUsers['Général'] || [];
+  // Ajout de l'utilisateur au salon général par défaut
   roomUsers['Général'].push(socket.id);
-  socket.emit('chat history', messageHistory['Général'] || []);
-
-  // Envoi de la liste des utilisateurs du salon "Général"
+  socket.join('Général');
   io.to('Général').emit('user list', roomUsers['Général']);
 
-  // Événement pour définir les informations utilisateur (pseudo, genre, âge)
-  socket.on('set username', (data) => {
-    userData[socket.id] = data;  // Stocke les données utilisateur
-    io.to('Général').emit('user list', roomUsers['Général']);  // Mise à jour de la liste des utilisateurs
-  });
+  // Envoi de l'historique des messages du salon
+  socket.emit('chat history', messageHistory['Général']);
 
-  // Création de salon
+  // Gestion de la création de salons
   socket.on('createRoom', (newChannel) => {
     if (!channels.includes(newChannel)) {
       channels.push(newChannel);
@@ -58,32 +42,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Rejoindre un salon
-  socket.on('joinRoom', (channel) => {
-    const currentChannel = Object.keys(roomUsers).find(room => roomUsers[room].includes(socket.id)) || 'Général';
-
-    // Quitter l'ancien salon
-    socket.leave(currentChannel);
-    roomUsers[currentChannel] = roomUsers[currentChannel].filter(userId => userId !== socket.id);
-
-    // Rejoindre le nouveau salon
-    socket.join(channel);
-    roomUsers[channel] = roomUsers[channel] || [];
-    roomUsers[channel].push(socket.id);
-
-    // Envoi de l'historique des messages du salon
-    socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `Bienvenue dans le salon ${channel}`,
-      timestamp: new Date().toISOString(),
-    });
-
-    // Mise à jour de la liste des utilisateurs du salon
-    io.to(channel).emit('user list', roomUsers[channel]);
-  });
-
-  // Gestion des messages dans le salon
+  // Envoi de messages à un salon spécifique
   socket.on('chat message', (msg) => {
     const currentChannel = Object.keys(roomUsers).find(room => roomUsers[room].includes(socket.id)) || 'Général';
 
@@ -101,7 +60,7 @@ io.on('connection', (socket) => {
     io.to(currentChannel).emit('chat message', msg);
   });
 
-  // Déconnexion
+  // Gérer la déconnexion d'un utilisateur
   socket.on('disconnect', () => {
     console.log(`❌ Déconnexion : ${socket.id}`);
     const currentChannel = Object.keys(roomUsers).find(room => roomUsers[room].includes(socket.id));
@@ -119,8 +78,4 @@ io.on('connection', (socket) => {
       }
     }
   });
-});
-
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
 });
