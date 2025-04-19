@@ -202,9 +202,6 @@ socket.emit('chat history', { channel: currentChannel, messages: messageHistory?
 }
 
 
-  // Mise à jour des utilisateurs
-  socket.on('user list', updateUserList);
-
   // Sélection de salons
   const channelElements = document.querySelectorAll('.channel');
   channelElements.forEach(channel => {
