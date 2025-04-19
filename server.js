@@ -100,10 +100,10 @@ io.on('connection', (socket) => {
 
         // Si le salon est vide, le supprimer
         if (roomUsers[channel].length === 0) {
+          console.log(`💀 Le salon ${channel} est maintenant vide et sera supprimé.`);
           delete roomUsers[channel];
           delete messageHistory[channel];
           createdRooms = createdRooms.filter(room => room !== channel);
-          console.log(`💀 Le salon ${channel} est maintenant vide et a été supprimé.`);
         }
       }
 
@@ -160,7 +160,7 @@ io.on('connection', (socket) => {
     // Vérification si le salon existe déjà
     if (!createdRooms.includes(newChannel)) {
       console.log(`✅ Création du salon demandé : ${newChannel}`);
-      
+
       // Ajouter le salon créé à la liste
       createdRooms.push(newChannel);
       messageHistory[newChannel] = []; // Historique vide au début
@@ -173,7 +173,7 @@ io.on('connection', (socket) => {
 
       // Emission de l'événement 'room created' à tous les clients
       io.emit('room created', newChannel);
-      
+
       // Ajouter un message système de bienvenue
       io.to(newChannel).emit('chat message', {
         username: 'Système',
