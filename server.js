@@ -17,6 +17,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 let channels = ['Général', 'Musique', 'Gaming', 'Détente'];  // Liste des salons
 let roomUsers = {};  // Liste des utilisateurs dans chaque salon
 let messageHistory = {};  // Historique des messages
+let userData = {};  // Données des utilisateurs (pseudo, genre, âge)
 
 // Fonction pour envoyer la liste des salons à tous les utilisateurs
 function updateRoomList() {
@@ -37,6 +38,12 @@ io.on('connection', (socket) => {
 
   // Envoi de la liste des utilisateurs du salon "Général"
   io.to('Général').emit('user list', roomUsers['Général']);
+
+  // Événement pour définir les informations utilisateur (pseudo, genre, âge)
+  socket.on('set username', (data) => {
+    userData[socket.id] = data;  // Stocke les données utilisateur
+    io.to('Général').emit('user list', roomUsers['Général']);  // Mise à jour de la liste des utilisateurs
+  });
 
   // Création de salon
   socket.on('createRoom', (newChannel) => {
