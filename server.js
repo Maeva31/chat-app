@@ -11,11 +11,16 @@ let users = {};            // Stockage des utilisateurs avec leurs infos
 let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs présents par salon
 let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
+let createdRooms = [];     // Salons créés dynamiquement ✅
+const defaultRooms = ['Général']; // salon de base
 
 app.use(express.static('public'));
 
 io.on('connection', (socket) => {
   console.log(`✅ Nouvelle connexion : ${socket.id}`);
+
+  // Envoi de la liste des salons existants au nouveau client
+  socket.emit('existing rooms', [...defaultRooms, ...createdRooms]);
 
   // Envoi de l'historique du salon Général par défaut
   socket.emit('chat history', messageHistory['Général'] || []);
@@ -144,7 +149,8 @@ io.on('connection', (socket) => {
 
   // Création de salon
   socket.on('createRoom', (newChannel) => {
-    if (!messageHistory[newChannel]) {
+    if (!createdRooms.includes(newChannel)) {
+      createdRooms.push(newChannel);
       messageHistory[newChannel] = [];
       roomUsers[newChannel] = [];
       console.log(`✅ Salon créé : ${newChannel}`);
