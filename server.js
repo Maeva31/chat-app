@@ -40,7 +40,12 @@ io.on('connection', (socket) => {
         if (!user) return;
 
         const room = userChannels[socket.id] || 'Général';
-        const message = { username: user.username, message: data.message, timestamp: new Date() };
+        const message = {
+            username: user.username,
+            gender: user.gender, // 👈 Ajouté pour la couleur côté client
+            message: data.message,
+            timestamp: new Date()
+        };
 
         messageHistory[room] = messageHistory[room] || [];
         messageHistory[room].push(message);
@@ -119,10 +124,13 @@ io.on('connection', (socket) => {
         socket.join(newRoom);
         userChannels[socket.id] = newRoom;
 
+        if (!roomUsers[newRoom]) roomUsers[newRoom] = []; // 👈 Ajouté pour sécuriser
+        if (!messageHistory[newRoom]) messageHistory[newRoom] = []; // 👈 Aussi ici
+
         roomUsers[newRoom].push(user);
         io.to(newRoom).emit('user list', roomUsers[newRoom]);
-        socket.emit('chat history', messageHistory[newRoom] || []);
-        socket.emit('joinRoom', newRoom);
+        socket.emit('chat history', messageHistory[newRoom]);
+        socket.emit('joinRoom', newRoom); // 👈 Événement utile pour le client
     }
 });
 
