@@ -69,6 +69,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById('gender').textContent = gender;
   });
 
+  socket.on('user list', function (users) {
+  updateUserList(users);
+});
+
+
   // Ajout de message dans le chat
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
