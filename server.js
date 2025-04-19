@@ -1,10 +1,10 @@
 import express from "express";
 import http from "http";
-import socketIo from "socket.io";
+import { Server } from "socket.io";  // Modification ici
 
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server);
+const io = new Server(server);  // Instanciation de Socket.IO
 
 const port = process.env.PORT || 3000;
 const channels = ['Général'];  // Salon de base
