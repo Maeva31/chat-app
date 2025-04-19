@@ -13,6 +13,7 @@ let messageHistory = {};   // Historique des messages par salon
 
 app.use(express.static('public'));
 
+// Lorsqu'un utilisateur se connecte
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
