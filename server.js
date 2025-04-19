@@ -22,6 +22,7 @@ io.on('connection', (socket) => {
   socket.join(defaultRoom);
   userChannels[socket.id] = defaultRoom;
 
+  // Envoi de l'historique du chat pour ce salon
   socket.emit('chat history', messageHistory[defaultRoom] || []);
 
   // Définir l'utilisateur
@@ -59,7 +60,7 @@ io.on('connection', (socket) => {
 
   // Changement de salon
   socket.on('joinRoom', (room) => {
-    const previousRoom = userChannels[socket.id] || defaultRoom;
+    const previousRoom = userChannels[socket.id] || 'Général';
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
 
@@ -73,11 +74,7 @@ io.on('connection', (socket) => {
       io.to(previousRoom).emit('user list', roomUsers[previousRoom]);
     }
 
-    // Supprimer des autres salons au cas où
-    Object.keys(roomUsers).forEach(r => {
-      roomUsers[r] = roomUsers[r].filter(u => u.id !== socket.id);
-    });
-
+    // Ajouter l'utilisateur au nouveau salon
     if (!roomUsers[room]) roomUsers[room] = [];
     if (!roomUsers[room].some(u => u.id === socket.id)) {
       roomUsers[room].push(user);
@@ -90,7 +87,7 @@ io.on('connection', (socket) => {
   // Envoi de message
   socket.on('chat message', (msg) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
-    const room = userChannels[socket.id] || defaultRoom;
+    const room = userChannels[socket.id] || 'Général';
     if (!sender || !msg.message) return;
 
     const messageToSend = {
@@ -117,7 +114,7 @@ io.on('connection', (socket) => {
 
   // Déconnexion
   socket.on('disconnect', () => {
-    const room = userChannels[socket.id] || defaultRoom;
+    const room = userChannels[socket.id] || 'Général';
     const user = Object.values(users).find(u => u.id === socket.id);
     if (user) {
       delete users[user.username];
