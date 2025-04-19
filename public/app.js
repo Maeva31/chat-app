@@ -95,7 +95,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const channelList = document.getElementById('channel-list');
 
     rooms.forEach(room => {
-      // Ne pas dupliquer un salon déjà affiché
       if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
 
       const li = document.createElement('li');
@@ -211,11 +210,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // ✅ Version corrigée de cette section
   socket.on('room created', function (newRoom) {
     const channelList = document.getElementById('channel-list');
-    
-    // Vérifie si le salon existe déjà pour éviter les doublons
     if ([...channelList.children].some(li => li.textContent.trim() === `# ${newRoom}`)) return;
 
     const li = document.createElement('li');
@@ -258,7 +254,6 @@ document.addEventListener('DOMContentLoaded', function () {
     }, 4000);
   }
 
-  // ✅ AJOUT : création de salon via bouton
   const createChannelButton = document.getElementById("create-channel-button");
   if (createChannelButton) {
     createChannelButton.addEventListener("click", () => {
