@@ -23,7 +23,14 @@ io.on('connection', (socket) => {
   // Définition du nom d'utilisateur
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
-socket.emit('room list', Object.keys(messageHistory)); // envoie la liste des salons au nouvel utilisateur
+socket.emit('room list', Object.keys(messageHistory)); // envoie la liste des salons
+
+io.to(currentChannel).emit('chat message', {
+  username: 'Système',
+  message: `${username} a rejoint le salon ${currentChannel}`,
+  channel: currentChannel
+});
+
 
     const usernameIsInvalid = !username || username.length > 16 || /\s/.test(username);
     if (usernameIsInvalid || !age || isNaN(age) || age < 18 || age > 89) {
