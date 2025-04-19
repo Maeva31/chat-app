@@ -20,7 +20,7 @@ main {
 /* === CHANNEL SIDEBAR (LEFT) === */
 #channel-sidebar {
   flex: 1;
-  min-width: 200px;
+  min-width: 200px; 
   background: #222222b8;
   padding: 1em;
   border-right: 2px solid #333;
