@@ -1,16 +1,14 @@
 {
-    "name": "chat-app",
-    "version": "1.0.0",
-    "type": "commonjs"
-    "description": "Application de chat avec Socket.io",
-    "main": "server.js",
-    "scripts": {
-        "start": "node server.js"
-    },
-    "dependencies": {
-        "express": "^4.17.1",
-        "socket.io": "^4.1.3"
-    },
-    "author": "",
-    "license": "ISC"
+  "name": "my-app",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "description": "Application with WebSocket chat",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "socket.io": "^4.0.1"
+  }
 }
