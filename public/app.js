@@ -10,7 +10,6 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // === 📦 UTILS ===
   function getUsernameColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
@@ -27,25 +26,22 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => errorBox.style.display = "none", 4000);
   }
 
-  // === 👥 UTILISATEURS ===
   function updateUserList(users) {
     const userList = document.getElementById('users');
     userList.innerHTML = '';
-    if (!Array.isArray(users)) return console.error("Liste invalide.");
+    if (!Array.isArray(users)) return;
 
-    users.forEach(user => {
-      const username = user?.username || 'Inconnu';
-      const age = user?.age || '?';
-      const gender = user?.gender || 'Non spécifié';
-
-      const li = document.createElement('li');
-      li.classList.add('user-item');
-      li.innerHTML = `
-        <div class="gender-square" style="background-color: ${getGenderColor(gender)}">${age}</div>
-        <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
-      `;
-      userList.appendChild(li);
-    });
+    users
+      .filter(user => user.channel === currentChannel) // 🔥 Affiche uniquement les utilisateurs du salon actif
+      .forEach(user => {
+        const li = document.createElement('li');
+        li.classList.add('user-item');
+        li.innerHTML = `
+          <div class="gender-square" style="background-color: ${getGenderColor(user.gender)}">${user.age}</div>
+          <span class="username-span" style="color: ${getUsernameColor(user.gender)}">${user.username}</span>
+        `;
+        userList.appendChild(li);
+      });
   }
 
   function submitUserInfo() {
@@ -78,7 +74,6 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("myModal").style.display = "none";
   }
 
-  // === 💬 MESSAGES ===
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
     const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -121,6 +116,7 @@ document.addEventListener('DOMContentLoaded', () => {
       timestamp: new Date().toISOString(),
       channel: currentChannel
     });
+
     messageInput.value = "";
   }
 
@@ -128,11 +124,15 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('chat history', (messages) => {
     const chatMessages = document.getElementById("chat-messages");
     chatMessages.innerHTML = '';
-    messages.forEach(msg => addMessageToChat(msg, chatMessages));
+    messages
+      .filter(msg => msg.channel === currentChannel) // 🔥 Affiche uniquement les messages du salon actif
+      .forEach(msg => addMessageToChat(msg, chatMessages));
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
   socket.on('chat message', (msg) => {
+    if (msg.channel !== currentChannel) return; // 🔥 Ignore les messages d'autres salons
+
     const chatMessages = document.getElementById("chat-messages");
     addMessageToChat(msg, chatMessages);
     chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -154,51 +154,45 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById("myModal").style.display = "block";
   });
 
-  // === 📺 GESTION SALONS ===
+  // === 📺 GESTION DES SALONS ===
   document.querySelectorAll('.channel').forEach(channel => {
     channel.addEventListener('click', () => {
-      document.querySelector('#message-input').value = '';
-      selectedUser = null;
-
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      channel.classList.add('selected');
-      currentChannel = channel.textContent.replace('# ', '');
-
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
+      switchToChannel(channel.textContent.replace('# ', ''));
     });
   });
+
+  function switchToChannel(channelName) {
+    document.querySelector('#message-input').value = '';
+    selectedUser = null;
+    currentChannel = channelName;
+
+    document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+    const matching = Array.from(document.querySelectorAll('.channel')).find(c => c.textContent.includes(channelName));
+    if (matching) matching.classList.add('selected');
+
+    socket.emit('joinRoom', currentChannel);
+    document.querySelector('#chat-messages').innerHTML = '';
+  }
 
   socket.on('room created', (newRoom) => {
     const channelList = document.getElementById('channel-list');
     const li = document.createElement('li');
     li.classList.add('channel');
     li.textContent = `# ${newRoom}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
+    li.addEventListener('click', () => switchToChannel(newRoom));
     channelList.appendChild(li);
+
+    switchToChannel(newRoom); // 🔥 Rejoint automatiquement le salon
   });
 
-    // === ➕ CRÉATION DE SALON ===
   const createChannelBtn = document.getElementById("create-channel-button");
   createChannelBtn.addEventListener("click", () => {
     const input = document.getElementById("new-channel-name");
     const newRoomName = input.value.trim();
 
-    if (!newRoomName) {
-      showErrorMessage("❌ Le nom du salon est vide.");
-      return;
-    }
-
-    if (newRoomName.length > 20 || /[^a-zA-Z0-9-_]/.test(newRoomName)) {
-      showErrorMessage("❌ Nom de salon invalide (max 20 caractères, sans caractères spéciaux).");
-      return;
-    }
+    if (!newRoomName) return showErrorMessage("❌ Le nom du salon est vide.");
+    if (newRoomName.length > 20 || /[^a-zA-Z0-9-_]/.test(newRoomName))
+      return showErrorMessage("❌ Nom de salon invalide (max 20 caractères, sans caractères spéciaux).");
 
     socket.emit("createRoom", newRoomName);
     input.value = "";
@@ -208,31 +202,6 @@ document.addEventListener('DOMContentLoaded', () => {
     showErrorMessage(`❌ Le salon "${roomName}" existe déjà.`);
   });
 
-  socket.on('room created', (newRoom) => {
-    const channelList = document.getElementById('channel-list');
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    li.textContent = `# ${newRoom}`;
-
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-
-    channelList.appendChild(li);
-
-    // Rejoindre automatiquement le nouveau salon créé
-    document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-    li.classList.add('selected');
-    currentChannel = newRoom;
-    socket.emit('joinRoom', currentChannel);
-    document.querySelector('#chat-messages').innerHTML = '';
-  });
-
-  
   // === 🚀 INITIALISATION ===
   const savedUsername = localStorage.getItem("username");
   const savedGender = localStorage.getItem("gender");
