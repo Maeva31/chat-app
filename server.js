@@ -43,7 +43,8 @@ io.on('connection', (socket) => {
     const userData = { username, gender, age, id: socket.id };
     users[username] = userData;
 
-    const currentChannel = userChannels[socket.id] || 'Général';
+    // Par défaut, rejoindre le salon Général
+    const currentChannel = 'Général';
     userChannels[socket.id] = currentChannel;
     socket.join(currentChannel);
 
@@ -125,16 +126,19 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Quitter l'ancien salon si ce n'est pas le salon créé
-    if (oldChannel !== channel) {
-      if (roomUsers[oldChannel]) {
-        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-        io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
-      }
-
-      socket.leave(oldChannel);
+    // Si l'utilisateur est déjà dans ce salon, ne rien faire
+    if (oldChannel === channel) {
+      socket.emit('alreadyInRoom', channel);
+      return;
     }
 
+    // Quitter l'ancien salon
+    if (roomUsers[oldChannel]) {
+      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+    }
+
+    socket.leave(oldChannel);
     socket.join(channel);
     userChannels[socket.id] = channel;
 
