@@ -52,6 +52,9 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   });
 
+socket.emit('chat history', { channel, messages: messageHistory[channel] || [] });
+
+  
   // Nouveau message
   socket.on('chat message', function (msg) {
     const chatMessages = document.getElementById("chat-messages");
