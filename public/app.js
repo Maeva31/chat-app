@@ -10,28 +10,64 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
-  // ✅ Version sécurisée et unique de updateUserList
-  function updateUserList(users) {
-    const userList = document.getElementById('users');
-    userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
+  // Liste des utilisateurs par salon
+  let currentUsers = [];
 
-    // Vérifier si les données des utilisateurs sont valides
+  // Lorsqu'un utilisateur rejoint ou quitte un salon, on met à jour la liste des utilisateurs
+  socket.on('user list', (users) => {
+    currentUsers = users;
+    updateUserList(users);  // Mise à jour de la liste des utilisateurs
+  });
+
+  // Fonction pour mettre à jour l'affichage des utilisateurs dans le salon
+  function updateUserList(users) {
+    const userListContainer = document.getElementById('userList');
+    userListContainer.innerHTML = ''; // Vider la liste existante
+
+    // Vérification des utilisateurs reçus
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
       return;
     }
 
     users.forEach(user => {
-      // Vérification de la présence des données utilisateur avec valeurs par défaut
+      const userElement = document.createElement('li');
+      userElement.textContent = `${user.username} (${user.gender}, ${user.age} ans)`;
+      userListContainer.appendChild(userElement);
+    });
+  }
+
+  // Fonction pour rejoindre un salon
+  function joinRoom(room) {
+    socket.emit('joinRoom', room);
+  }
+
+  // Fonction pour envoyer un message
+  function sendMessage(message) {
+    socket.emit('chat message', {
+      message,
+      timestamp: new Date().toISOString()
+    });
+  }
+
+  // ✅ Version sécurisée et unique de updateUserList
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
+
+    if (!Array.isArray(users)) {
+      console.error("La liste des utilisateurs n'est pas un tableau.");
+      return;
+    }
+
+    users.forEach(user => {
       const username = user?.username || 'Inconnu';
       const age = user?.age || '?';
       const gender = user?.gender || 'Non spécifié';
 
-      // Créer un élément de liste pour chaque utilisateur
       const li = document.createElement('li');
       li.classList.add('user-item');  // Ajouter une classe pour un meilleur style CSS
 
-      // Structure de l'élément utilisateur
       li.innerHTML = ` 
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
@@ -39,7 +75,6 @@ document.addEventListener('DOMContentLoaded', function () {
         <span class="username-span" style="color: ${getUsernameColor(gender)}">${username}</span>
       `;
 
-      // Ajouter l'utilisateur à la liste
       userList.appendChild(li);
     });
   }
@@ -194,22 +229,17 @@ document.addEventListener('DOMContentLoaded', function () {
   const channelElements = document.querySelectorAll('.channel');
   channelElements.forEach(channel => {
     channel.addEventListener('click', () => {
-      // Réinitialiser le champ de message
       const messageInput = document.getElementById("message-input");
       messageInput.value = '';  // Effacer le contenu du champ message
 
-      // Réinitialiser le pseudo mentionné
       selectedUser = null;
 
-      // Gérer le changement de salon
       channelElements.forEach(c => c.classList.remove('selected'));
       channel.classList.add('selected');
       currentChannel = channel.textContent.replace('# ', '');
 
-      // Informer le serveur de rejoindre le salon
       socket.emit('joinRoom', currentChannel);
 
-      // Réinitialiser l'affichage des messages
       document.querySelector('#chat-messages').innerHTML = '';
     });
   });
