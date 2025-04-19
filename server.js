@@ -140,7 +140,13 @@ io.on('connection', (socket) => {
         roomUsers[newRoom].push(user);
         io.to(newRoom).emit('user list', roomUsers[newRoom]);
         socket.emit('chat history', messageHistory[newRoom]);
-        socket.emit('joinRoom', newRoom);  // Événement pour le client
+        socket.emit('joinRoom', newRoom);  // Indique au client qu'il a changé de salon
+
+        // Envoi d'un message de bienvenue dans le nouveau salon
+        io.to(newRoom).emit('chat message', {
+            username: 'Système',
+            message: `Bienvenue dans le salon ${newRoom}`,
+        });
     }
 });
 
