@@ -92,27 +92,26 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   socket.on('existing rooms', function (rooms) {
-  const channelList = document.getElementById('channel-list');
+    const channelList = document.getElementById('channel-list');
 
-  rooms.forEach(room => {
-    // Ne pas dupliquer un salon déjà affiché
-    if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
+    rooms.forEach(room => {
+      // Ne pas dupliquer un salon déjà affiché
+      if ([...channelList.children].some(li => li.textContent.trim() === `# ${room}`)) return;
 
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    li.textContent = `# ${room}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = room;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      li.textContent = `# ${room}`;
+      li.addEventListener('click', () => {
+        document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+        li.classList.add('selected');
+        currentChannel = room;
+        socket.emit('joinRoom', currentChannel);
+        document.querySelector('#chat-messages').innerHTML = '';
+      });
+      channelList.appendChild(li);
     });
-    channelList.appendChild(li);
   });
-});
 
-  
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -212,8 +211,13 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // ✅ Version corrigée de cette section
   socket.on('room created', function (newRoom) {
     const channelList = document.getElementById('channel-list');
+    
+    // Vérifie si le salon existe déjà pour éviter les doublons
+    if ([...channelList.children].some(li => li.textContent.trim() === `# ${newRoom}`)) return;
+
     const li = document.createElement('li');
     li.classList.add('channel');
     li.textContent = `# ${newRoom}`;
