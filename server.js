@@ -104,6 +104,7 @@ io.on('connection', (socket) => {
           delete roomUsers[channel];
           delete messageHistory[channel];
           createdRooms = createdRooms.filter(room => room !== channel);
+          io.emit('room deleted', channel); // Notifier les autres clients
         }
       }
 
