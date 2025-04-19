@@ -1,101 +1,93 @@
-// Connexion au serveur Socket.io
+
 const socket = io();
 
-// Variables DOM
-const modal = document.getElementById('myModal');
-const usernameInput = document.getElementById('username-input');
-const genderSelect = document.getElementById('gender-select');
-const ageInput = document.getElementById('age-input');
-const usernameSubmit = document.getElementById('username-submit');
-const channelList = document.getElementById('channel-list');
-const createChannelButton = document.getElementById('create-channel-button');
-const newChannelName = document.getElementById('new-channel-name');
-const messageInput = document.getElementById('message-input');
-const chatMessages = document.getElementById('chat-messages');
-const usersList = document.getElementById('users');
-const modalError = document.getElementById('modal-error');
+let currentChannel = "# 💬 ┊ Général";
+let username = "";
+let gender = "";
+let age = "";
+let role = "user";
+const userList = document.getElementById("users");
+const chatMessages = document.getElementById("chat-messages");
+const messageInput = document.getElementById("message-input");
+const usernameSubmit = document.getElementById("username-submit");
+const modal = document.getElementById("myModal");
+const modalError = document.getElementById("modal-error");
+const channelList = document.getElementById("channel-list");
+const newChannelName = document.getElementById("new-channel-name");
+const createChannelButton = document.getElementById("create-channel-button");
 
-// Variables utilisateur
-let username = '';
-let gender = '';
-let age = '';
+usernameSubmit.addEventListener("click", () => {
+  const usernameInput = document.getElementById("username-input").value.trim();
+  const genderSelect = document.getElementById("gender-select").value;
+  const ageInput = parseInt(document.getElementById("age-input").value);
 
-// Gérer l'inscription de l'utilisateur
-usernameSubmit.addEventListener('click', () => {
-  username = usernameInput.value;
-  gender = genderSelect.value;
-  age = ageInput.value;
-
-  if (!username || !gender || !age) {
-    modalError.textContent = 'Tous les champs sont obligatoires';
-    modalError.style.display = 'block';
+  if (!usernameInput || usernameInput.length > 16 || !genderSelect || isNaN(ageInput) || ageInput < 18 || ageInput > 89) {
+    modalError.style.display = "block";
+    modalError.textContent = "Veuillez remplir correctement tous les champs.";
     return;
   }
 
-  // Fermer la fenêtre modale et envoyer les données au serveur
-  socket.emit('userInfo', { username, gender, age });
-  modal.style.display = 'none';
+  username = usernameInput;
+  gender = genderSelect;
+  age = ageInput;
+  modal.style.display = "none";
+
+  socket.emit("new-user", { username, gender, age, role, channel: currentChannel });
 });
 
-// Gérer la création de salons
-createChannelButton.addEventListener('click', () => {
-  const channelName = newChannelName.value;
-  if (channelName) {
-    socket.emit('createChannel', channelName);
-    newChannelName.value = ''; // Effacer l'input
-  }
-});
-
-// Recevoir la liste des salons disponibles
-socket.on('channelList', (channels) => {
-  channelList.innerHTML = '';
-  channels.forEach(channel => {
-    const channelElement = document.createElement('li');
-    channelElement.classList.add('channel');
-    channelElement.textContent = `# ${channel.name}`;
-    channelElement.addEventListener('click', () => {
-      socket.emit('joinChannel', channel.name);
-      updateChannelSelection(channel.name);
+messageInput.addEventListener("keydown", (e) => {
+  if (e.key === "Enter" && messageInput.value.trim()) {
+    socket.emit("chat-message", {
+      channel: currentChannel,
+      username,
+      gender,
+      age,
+      role,
+      message: messageInput.value.trim()
     });
-    channelList.appendChild(channelElement);
-  });
-});
-
-// Recevoir les messages du salon
-socket.on('message', (message) => {
-  const messageElement = document.createElement('div');
-  messageElement.classList.add('message');
-  messageElement.textContent = `${message.username}: ${message.text}`;
-  chatMessages.appendChild(messageElement);
-  chatMessages.scrollTop = chatMessages.scrollHeight; // Scroll vers le bas
-});
-
-// Envoyer un message
-messageInput.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter' && messageInput.value) {
-    socket.emit('sendMessage', messageInput.value);
-    messageInput.value = ''; // Réinitialiser l'input
+    messageInput.value = "";
   }
 });
 
-// Mettre à jour la sélection du salon
-function updateChannelSelection(channelName) {
-  const channels = document.querySelectorAll('#channel-list .channel');
-  channels.forEach(channel => {
-    if (channel.textContent.includes(channelName)) {
-      channel.classList.add('selected');
-    } else {
-      channel.classList.remove('selected');
-    }
-  });
-}
+createChannelButton.addEventListener("click", () => {
+  const channelName = newChannelName.value.trim();
+  if (channelName) {
+    const formatted = `# ${channelName}`;
+    socket.emit("create-channel", formatted);
+    newChannelName.value = "";
+  }
+});
 
-// Recevoir la liste des utilisateurs dans le salon
-socket.on('userList', (users) => {
-  usersList.innerHTML = '';
+channelList.addEventListener("click", (e) => {
+  if (e.target.classList.contains("channel")) {
+    document.querySelectorAll(".channel").forEach(c => c.classList.remove("selected"));
+    e.target.classList.add("selected");
+    const newChannel = e.target.textContent;
+    socket.emit("switch-channel", { oldChannel: currentChannel, newChannel });
+    currentChannel = newChannel;
+    chatMessages.innerHTML = "";
+  }
+});
+
+socket.on("chat-message", (data) => {
+  const msg = document.createElement("div");
+  msg.innerHTML = `<strong>${data.username}</strong>: ${data.message}`;
+  chatMessages.appendChild(msg);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
+socket.on("user-list", (users) => {
+  userList.innerHTML = "";
   users.forEach(user => {
-    const userElement = document.createElement('li');
-    userElement.textContent = user.username;
-    usersList.appendChild(userElement);
+    const li = document.createElement("li");
+    li.innerHTML = `${user.username} <small>(${user.gender}, ${user.age})</small>`;
+    userList.appendChild(li);
   });
+});
+
+socket.on("channel-created", (channelName) => {
+  const li = document.createElement("li");
+  li.className = "channel";
+  li.textContent = channelName;
+  channelList.appendChild(li);
 });
