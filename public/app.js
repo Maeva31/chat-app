@@ -80,8 +80,8 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
     li.classList.add('selected');
     currentChannel = roomName;
-    socket.emit('joinRoom', currentChannel);
-    document.querySelector('#chat-messages').innerHTML = '';
+    socket.emit('joinRoom', currentChannel); // Emission de l'événement
+    document.querySelector('#chat-messages').innerHTML = ''; // Réinitialisation des messages
   }
 
   function addChannelToList(room) {
