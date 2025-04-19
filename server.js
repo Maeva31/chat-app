@@ -11,7 +11,7 @@ let users = {};            // Stockage des utilisateurs avec leurs infos
 let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs présents par salon
 let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
-let createdRooms = [];     // Salons créés dynamiquement ✅
+let createdRooms = ['Général'];     // Salons créés dynamiquement ✅
 const defaultRooms = ['Général']; // salon de base
 let roomModerators = {};   // Modérateurs par salon
 let roomCreators = {};     // Créateurs des salons
@@ -166,29 +166,31 @@ io.on('connection', (socket) => {
   // Création de salon
   socket.on('createRoom', (newChannel) => {
     // Vérifie que le salon n'existe pas déjà
-    if (!createdRooms.includes(newChannel)) {
-      createdRooms.push(newChannel);
-      messageHistory[newChannel] = [];
-      roomUsers[newChannel] = [];
-      roomCreators[newChannel] = { id: socket.id, username: users[socket.id].username };
-      roomModerators[newChannel] = [];
-
-      socket.emit('room created', newChannel);
-      socket.join(newChannel);
-
-      console.log(`✅ Salon créé : ${newChannel}`);
-      io.emit('room created', newChannel);
-      io.to(newChannel).emit('chat message', {
-        username: 'Système',
-        message: `Le salon ${newChannel} a été créé par ${users[socket.id].username}.`,
-        channel: newChannel
-      });
-
-      // Diriger le créateur dans son nouveau salon
-      socket.emit('joinRoom', newChannel);
-    } else {
+    if (createdRooms.includes(newChannel)) {
       socket.emit('room exists', newChannel);
+      return;
     }
+
+    // Ajouter le salon à la liste
+    createdRooms.push(newChannel);
+    messageHistory[newChannel] = [];
+    roomUsers[newChannel] = [];
+    roomCreators[newChannel] = { id: socket.id, username: users[socket.id].username };
+    roomModerators[newChannel] = [];
+
+    socket.emit('room created', newChannel);
+    socket.join(newChannel);
+
+    console.log(`✅ Salon créé : ${newChannel}`);
+    io.emit('room created', newChannel);
+    io.to(newChannel).emit('chat message', {
+      username: 'Système',
+      message: `Le salon ${newChannel} a été créé par ${users[socket.id].username}.`,
+      channel: newChannel
+    });
+
+    // Diriger le créateur dans son nouveau salon
+    socket.emit('joinRoom', newChannel);
   });
 
   // Ajouter un modérateur
