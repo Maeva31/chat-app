@@ -148,6 +148,16 @@ io.on('connection', (socket) => {
 
         // Rediriger l'utilisateur vers le salon qu'il a créé
         socket.emit('joinRoom', newChannel);
+
+        // Ajouter l'utilisateur au salon créé
+        roomUsers[newChannel].push({
+            id: socket.id,
+            username: users[Object.keys(users).find(user => users[user].id === socket.id)].username,
+            gender: users[Object.keys(users).find(user => users[user].id === socket.id)].gender,
+            age: users[Object.keys(users).find(user => users[user].id === socket.id)].age
+        });
+
+        io.to(newChannel).emit('user list', roomUsers[newChannel]);
     });
 });
 
