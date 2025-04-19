@@ -19,24 +19,6 @@ document.addEventListener('DOMContentLoaded', function () {
     updateUserList(users);  // Mise à jour de la liste des utilisateurs
   });
 
-  // Fonction pour mettre à jour l'affichage des utilisateurs dans le salon
-  function updateUserList(users) {
-    const userListContainer = document.getElementById('userList');
-    userListContainer.innerHTML = ''; // Vider la liste existante
-
-    // Vérification des utilisateurs reçus
-    if (!Array.isArray(users)) {
-      console.error("La liste des utilisateurs n'est pas un tableau.");
-      return;
-    }
-
-    users.forEach(user => {
-      const userElement = document.createElement('li');
-      userElement.textContent = `${user.username} (${user.gender}, ${user.age} ans)`;
-      userListContainer.appendChild(userElement);
-    });
-  }
-
   // Fonction pour rejoindre un salon
   function joinRoom(room) {
     socket.emit('joinRoom', room);
