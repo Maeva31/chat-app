@@ -2,18 +2,18 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Modal d'information utilisateur -->
-  <div id="myModal" class="modal" role="dialog" aria-modal="true">
+  <div id="myModal" class="modal">
     <div class="modal-content">
       <h2>Bienvenue !</h2>
       <p>Veuillez entrer vos informations pour accéder au chat.</p>
 
-      <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" autocomplete="off" />
+      <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" />
 
       <select id="gender-select">
         <option value="">Genre</option>
@@ -22,7 +22,7 @@
         <option value="Autre">Autre</option>
       </select>
 
-      <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" autocomplete="off" />
+      <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" />
 
       <div id="modal-error" class="modal-error" style="display: none;"></div>
 
@@ -39,8 +39,8 @@
       </header>
 
       <div id="create-channel">
-        <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off" />
-        <button id="create-channel-button" role="button">Créer</button>
+        <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" />
+        <button id="create-channel-button">Créer</button>
       </div>
 
       <ul id="channel-list">
@@ -53,9 +53,9 @@
 
     <!-- Zone centrale : chat -->
     <section id="chat-container">
-      <div id="chat-messages" class="chat-messages" aria-live="polite"></div>
+      <div id="chat-messages" class="chat-messages"></div>
       <div id="chat-input">
-        <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" />
+        <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" />
       </div>
     </section>
 
