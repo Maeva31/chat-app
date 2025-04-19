@@ -154,14 +154,15 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (!messageHistory[newChannel]) {
-      messageHistory[newChannel] = [];
-      roomUsers[newChannel] = [];
-      console.log(`✅ Salon créé : ${newChannel}`);
-      io.emit('room created', newChannel);
-    } else {
+    if (messageHistory[newChannel]) {
       socket.emit('room exists', newChannel);
+      return;
     }
+
+    messageHistory[newChannel] = [];
+    roomUsers[newChannel] = [];
+    console.log(`✅ Salon créé : ${newChannel}`);
+    io.emit('room created', newChannel);
   });
 });
 
