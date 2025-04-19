@@ -10,19 +10,33 @@ document.addEventListener('DOMContentLoaded', function () {
     default: '#aaa'
   };
 
+  // Liste des utilisateurs par salon
   let currentUsers = [];
 
+  // Lorsqu'un utilisateur rejoint ou quitte un salon, on met à jour la liste des utilisateurs
   socket.on('user list', (users) => {
     currentUsers = users;
-    updateUserList(users);
+    updateUserList(users);  // Mise à jour de la liste des utilisateurs
   });
 
-  // Fonction pour mettre à jour la liste des utilisateurs
+  // Fonction pour rejoindre un salon
+  function joinRoom(room) {
+    socket.emit('joinRoom', room);
+  }
+
+  // Fonction pour envoyer un message
+  function sendMessage(message) {
+    socket.emit('chat message', {
+      message,
+      timestamp: new Date().toISOString(),
+      channel: currentChannel
+    });
+  }
+
+  // ✅ Version sécurisée et unique de updateUserList
   function updateUserList(users) {
     const userList = document.getElementById('users');
-    if (!userList) return;
-
-    userList.innerHTML = '';
+    userList.innerHTML = '';  // Réinitialiser la liste des utilisateurs avant de la remplir
 
     if (!Array.isArray(users)) {
       console.error("La liste des utilisateurs n'est pas un tableau.");
@@ -35,9 +49,9 @@ document.addEventListener('DOMContentLoaded', function () {
       const gender = user?.gender || 'Non spécifié';
 
       const li = document.createElement('li');
-      li.classList.add('user-item');
+      li.classList.add('user-item');  // Ajouter une classe pour un meilleur style CSS
 
-      li.innerHTML = `
+      li.innerHTML = ` 
         <div class="gender-square" style="background-color: ${getGenderColor(gender)}">
           ${age}
         </div>
@@ -48,7 +62,32 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Fonction pour ajouter un message dans le chat
+  // Historique des messages
+  socket.on('chat history', function (messages) {
+    const chatMessages = document.getElementById("chat-messages");
+    chatMessages.innerHTML = '';
+    messages.forEach(msg => addMessageToChat(msg, chatMessages));
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+
+  // Nouveau message
+  socket.on('chat message', function (msg) {
+    const chatMessages = document.getElementById("chat-messages");
+    addMessageToChat(msg, chatMessages);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+
+  socket.on('user data', (userData) => {
+    const username = userData.username || 'Inconnu';
+    const age = userData.age || 'Inconnu';
+    const gender = userData.gender || 'Non spécifié';
+
+    document.getElementById('username').textContent = username;
+    document.getElementById('age').textContent = age;
+    document.getElementById('gender').textContent = gender;
+  });
+
+  // Ajout de message dans le chat
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
     const date = new Date(msg.timestamp);
@@ -64,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const current = messageInput.value.trim();
       const mention = `@${msg.username} `;
       if (!current.includes(mention)) {
-        messageInput.value = mention + current;
+        messageInput.value = mention + current; // Ajoute l'@pseudo avec un espace
       }
       messageInput.focus();
       selectedUser = msg.username;
@@ -79,7 +118,7 @@ document.addEventListener('DOMContentLoaded', function () {
     chatMessages.appendChild(newMessage);
   }
 
-  // Fonction pour envoyer un message
+  // Envoi de message
   function sendMessage() {
     const messageInput = document.getElementById("message-input");
     const message = messageInput.value.trim();
@@ -106,44 +145,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  // Historique des messages
-  socket.on('chat history', function (messages) {
-    const chatMessages = document.getElementById("chat-messages");
-    if (!chatMessages) return;
-
-    chatMessages.innerHTML = '';
-    messages.forEach(msg => addMessageToChat(msg, chatMessages));
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-
-  // Nouveau message
-  socket.on('chat message', function (msg) {
-    const chatMessages = document.getElementById("chat-messages");
-    if (!chatMessages) return;
-
-    addMessageToChat(msg, chatMessages);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-
-  // Réception des données utilisateur
-  socket.on('user data', (userData) => {
-    document.getElementById('username').textContent = userData.username || 'Inconnu';
-    document.getElementById('age').textContent = userData.age || 'Inconnu';
-    document.getElementById('gender').textContent = userData.gender || 'Non spécifié';
-  });
-
-  // Envoi avec Enter
   document.getElementById("message-input").addEventListener("keypress", function (event) {
     if (event.key === "Enter") sendMessage();
   });
 
-  // Envoi avec le bouton
-  const sendButton = document.getElementById("send-button");
-  if (sendButton) {
-    sendButton.addEventListener("click", sendMessage);
-  }
-
-  // Validation modal
+  // Gestion des infos utilisateur
   function submitUserInfo() {
     const usernameInput = document.getElementById("username-input");
     const genderSelect = document.getElementById("gender-select");
@@ -190,7 +196,7 @@ document.addEventListener('DOMContentLoaded', function () {
     document.getElementById("myModal").style.display = "block";
   });
 
-  // Couleurs par genre
+  // Couleurs selon genre
   function getUsernameColor(gender) {
     return genderColors[gender] || genderColors.default;
   }
@@ -199,66 +205,6 @@ document.addEventListener('DOMContentLoaded', function () {
     return genderColors[gender] || genderColors.default;
   }
 
-  // Sélection des salons
-  const channelElements = document.querySelectorAll('.channel');
-  channelElements.forEach(channel => {
-    channel.addEventListener('click', () => {
-      const messageInput = document.getElementById("message-input");
-      if (messageInput) messageInput.value = '';
+  document.getElementById("submit-user-info").addEventListener("click", submitUserInfo);
 
-      selectedUser = null;
-
-      channelElements.forEach(c => c.classList.remove('selected'));
-      channel.classList.add('selected');
-      currentChannel = channel.textContent.replace('# ', '');
-
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-  });
-
-  // Salon dynamique
-  socket.on('room created', function (newRoom) {
-    const channelList = document.getElementById('channel-list');
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    li.textContent = `# ${newRoom}`;
-    li.addEventListener('click', () => {
-      document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
-      li.classList.add('selected');
-      currentChannel = newRoom;
-      socket.emit('joinRoom', currentChannel);
-      document.querySelector('#chat-messages').innerHTML = '';
-    });
-    channelList.appendChild(li);
-  });
-
-  // Chargement auto des infos
-  const savedUsername = localStorage.getItem("username");
-  const savedGender = localStorage.getItem("gender");
-  const savedAge = localStorage.getItem("age");
-
-  if (savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || "non spécifié",
-      age: savedAge
-    });
-    document.getElementById("myModal").style.display = "none";
-  } else {
-    document.getElementById("myModal").style.display = "block";
-  }
-
-  document.getElementById("username-submit").addEventListener("click", submitUserInfo);
-
-  // Message d'erreur
-  function showErrorMessage(message) {
-    const errorBox = document.getElementById("error-box");
-    if (!errorBox) return;
-    errorBox.textContent = message;
-    errorBox.style.display = "block";
-    setTimeout(() => {
-      errorBox.style.display = "none";
-    }, 4000);
-  }
 });
