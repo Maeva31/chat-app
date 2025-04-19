@@ -187,9 +187,6 @@ io.on('connection', (socket) => {
       socket.join(newChannel);
       userChannels[socket.id] = newChannel;
 
-      // Émission de l'événement 'room created' à tous les clients
-      io.emit('room created', newChannel);
-
       // Ajouter un message système de bienvenue dans le salon créé
       io.to(newChannel).emit('chat message', {
         username: 'Système',
@@ -199,6 +196,7 @@ io.on('connection', (socket) => {
 
       // Rediriger le créateur vers le salon créé
       socket.emit('joinRoom', newChannel); // L'utilisateur rejoint le salon directement après sa création
+      io.emit('room created', newChannel); // Notifier les autres clients que le salon est créé
     } else {
       socket.emit('room exists', newChannel);
     }
