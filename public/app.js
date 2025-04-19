@@ -46,6 +46,19 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
+  socket.on('joinRoom', (room) => {
+    console.log(`Vous avez rejoint le salon : ${room}`);
+    // Mettre à jour l'interface utilisateur en fonction du salon
+    currentRoom = room;
+    updateRoomUI(room); // Par exemple, cette fonction met à jour l'affichage du salon actif
+});
+
+function updateRoomUI(room) {
+    // Mettez à jour l'affichage en fonction du salon, par exemple en changeant le titre
+    document.getElementById('roomTitle').textContent = `Salon : ${room}`;
+}
+
+  
   function addMessageToChat(msg, chatMessages) {
     const newMessage = document.createElement("div");
     const date = new Date(msg.timestamp);
