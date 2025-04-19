@@ -11,7 +11,7 @@ let users = {};            // Stockage des utilisateurs avec leurs infos
 let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs présents par salon
 let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
-let createdRooms = ['Général'];     // Salons créés dynamiquement ✅
+let createdRooms = [];     // Salons créés dynamiquement ✅
 const defaultRooms = ['Général']; // salon de base
 let roomModerators = {};   // Modérateurs par salon
 let roomCreators = {};     // Créateurs des salons
@@ -101,7 +101,10 @@ io.on('connection', (socket) => {
         io.to(channel).emit('user list', roomUsers[channel]);
       }
 
-      // Fermeture du salon si le créateur et tous les modérateurs en sont partis
+      delete users[disconnectedUser.username];
+      delete userChannels[socket.id];
+
+      // Vérifier si un salon est vide ou sans créateur/modérateur
       for (const channel in roomUsers) {
         if (roomUsers[channel].length === 0 || 
             (roomCreators[channel] && !roomUsers[channel].some(user => user.id === roomCreators[channel].id)) ||
@@ -114,9 +117,6 @@ io.on('connection', (socket) => {
           console.log(`❌ Le salon ${channel} a été fermé car il est vide ou sans créateur/modérateur.`);
         }
       }
-
-      delete users[disconnectedUser.username];
-      delete userChannels[socket.id];
     } else {
       console.log(`❌ Déconnexion d'un utilisateur inconnu (ID: ${socket.id})`);
     }
@@ -165,84 +165,52 @@ io.on('connection', (socket) => {
 
   // Création de salon
   socket.on('createRoom', (newChannel) => {
-    // Vérifie que le salon n'existe pas déjà
-    if (createdRooms.includes(newChannel)) {
+    if (!createdRooms.includes(newChannel)) {
+      createdRooms.push(newChannel);
+      messageHistory[newChannel] = [];
+      roomUsers[newChannel] = [];
+      roomCreators[newChannel] = { id: socket.id, username: users[socket.id].username };
+      roomModerators[newChannel] = [];
+
+      console.log(`✅ Salon créé : ${newChannel}`);
+      io.emit('room created', newChannel);
+      
+      // Joindre immédiatement le créateur dans son nouveau salon
+      socket.join(newChannel);
+      userChannels[socket.id] = newChannel;
+      socket.emit('joinRoom', newChannel);
+    } else {
       socket.emit('room exists', newChannel);
-      return;
     }
-
-    // Ajouter le salon à la liste
-    createdRooms.push(newChannel);
-    messageHistory[newChannel] = [];
-    roomUsers[newChannel] = [];
-    roomCreators[newChannel] = { id: socket.id, username: users[socket.id].username };
-    roomModerators[newChannel] = [];
-
-    socket.emit('room created', newChannel);
-    socket.join(newChannel);
-
-    console.log(`✅ Salon créé : ${newChannel}`);
-    io.emit('room created', newChannel);
-    io.to(newChannel).emit('chat message', {
-      username: 'Système',
-      message: `Le salon ${newChannel} a été créé par ${users[socket.id].username}.`,
-      channel: newChannel
-    });
-
-    // Diriger le créateur dans son nouveau salon
-    socket.emit('joinRoom', newChannel);
   });
 
   // Ajouter un modérateur
   socket.on('addModerator', (channel, username) => {
-    if (roomCreators[channel].id === socket.id || roomModerators[channel].some(user => user.id === socket.id)) {
-      const user = Object.values(users).find(u => u.username === username);
-      if (user && !roomModerators[channel].some(u => u.id === user.id)) {
-        roomModerators[channel].push({ id: user.id, username: user.username });
-        io.to(channel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a été ajouté en tant que modérateur.`,
-          channel
-        });
-        console.log(`✅ ${user.username} ajouté en tant que modérateur dans ${channel}`);
+    if (roomCreators[channel] && roomCreators[channel].id === socket.id) {
+      const user = Object.values(users).find(user => user.username === username);
+      if (user) {
+        roomModerators[channel].push(user.id);
+        io.to(channel).emit('moderators list', roomModerators[channel]);
+        console.log(`✅ ${username} a été ajouté comme modérateur dans ${channel}`);
       }
     }
   });
 
-  // Expulser un utilisateur
+  // Expulsion d'un utilisateur
   socket.on('kickUser', (channel, username) => {
-    if (roomCreators[channel].id === socket.id || roomModerators[channel].some(user => user.id === socket.id)) {
-      const user = Object.values(users).find(u => u.username === username);
-      if (user) {
+    if (roomCreators[channel] && roomCreators[channel].id === socket.id) {
+      const userToKick = Object.values(users).find(user => user.username === username);
+      if (userToKick) {
         io.to(channel).emit('chat message', {
           username: 'Système',
-          message: `${user.username} a été expulsé du salon.`,
+          message: `${username} a été expulsé de ${channel}.`,
           channel
         });
-        socket.to(user.id).emit('kicked');
-        socket.leave(channel);
-        roomUsers[channel] = roomUsers[channel].filter(u => u.id !== user.id);
+        socket.to(userToKick.id).emit('chat message', { message: 'Vous avez été expulsé.' });
+        io.sockets.sockets.get(userToKick.id).leave(channel);
+        roomUsers[channel] = roomUsers[channel].filter(user => user.id !== userToKick.id);
         io.to(channel).emit('user list', roomUsers[channel]);
-        console.log(`❌ ${user.username} expulsé du salon ${channel}`);
-      }
-    }
-  });
-
-  // Bannir un utilisateur
-  socket.on('banUser', (channel, username) => {
-    if (roomCreators[channel].id === socket.id || roomModerators[channel].some(user => user.id === socket.id)) {
-      const user = Object.values(users).find(u => u.username === username);
-      if (user) {
-        io.to(channel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a été banni du salon.`,
-          channel
-        });
-        socket.to(user.id).emit('banned');
-        socket.leave(channel);
-        roomUsers[channel] = roomUsers[channel].filter(u => u.id !== user.id);
-        io.to(channel).emit('user list', roomUsers[channel]);
-        console.log(`❌ ${user.username} banni du salon ${channel}`);
+        console.log(`✅ ${username} a été expulsé de ${channel}`);
       }
     }
   });
