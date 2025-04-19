@@ -1,11 +1,10 @@
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat</title>
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <!-- Modal d'information utilisateur -->
@@ -15,26 +14,35 @@
       <p>Veuillez entrer vos informations pour accéder au chat.</p>
 
       <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" />
+
       <select id="gender-select">
         <option value="">Genre</option>
         <option value="Homme">Homme</option>
         <option value="Femme">Femme</option>
         <option value="Autre">Autre</option>
       </select>
+
       <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" />
+
       <div id="modal-error" class="modal-error" style="display: none;"></div>
+
       <button id="username-submit">Valider</button>
     </div>
   </div>
 
   <!-- Wrapper principal -->
   <main>
+    <!-- Sidebar gauche : salons -->
     <aside id="channel-sidebar">
-      <header><h3>Salons</h3></header>
+      <header>
+        <h3>Salons</h3>
+      </header>
+
       <div id="create-channel">
         <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" />
         <button id="create-channel-button">Créer</button>
       </div>
+
       <ul id="channel-list">
         <li class="channel selected"># 💬 ┊ Général</li>
         <li class="channel"># 🎧 ┊ Musique</li>
@@ -43,6 +51,7 @@
       </ul>
     </aside>
 
+    <!-- Zone centrale : chat -->
     <section id="chat-container">
       <div id="chat-messages" class="chat-messages"></div>
       <div id="chat-input">
@@ -50,12 +59,14 @@
       </div>
     </section>
 
+    <!-- Sidebar droite : utilisateurs -->
     <aside id="user-list">
       <h3 style="text-align: center;">Liste du salon</h3>
       <ul id="users"></ul>
     </aside>
   </main>
 
+  <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
