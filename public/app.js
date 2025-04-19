@@ -197,8 +197,9 @@ socket.emit('chat history', { channel, messages: messageHistory[channel] || [] }
   }
 
   function getGenderColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
+  return genderColors[gender] || genderColors.default;
+}
+
 
   // Mise à jour des utilisateurs
   socket.on('user list', updateUserList);
