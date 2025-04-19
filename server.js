@@ -16,9 +16,12 @@ app.use(express.static('public'));
 
 io.on('connection', (socket) => {
     console.log(`🔌 Connexion : ${socket.id}`);
+    
+    // Envoi des salons existants et de l'historique du salon 'Général'
     socket.emit('existing rooms', createdRooms);
     socket.emit('chat history', messageHistory['Général']);
 
+    // Gestion de l'attribution du pseudo
     socket.on('set username', ({ username, gender, age }) => {
         if (!username || users[username]) {
             socket.emit('username exists', username);
@@ -35,6 +38,7 @@ io.on('connection', (socket) => {
         io.to('Général').emit('user list', roomUsers['Général']);
     });
 
+    // Gestion de l'envoi de message
     socket.on('chat message', (data) => {
         const user = Object.values(users).find(u => u.id === socket.id);
         if (!user) return;
@@ -42,7 +46,7 @@ io.on('connection', (socket) => {
         const room = userChannels[socket.id] || 'Général';
         const message = {
             username: user.username,
-            gender: user.gender, // 👈 Ajouté pour la couleur côté client
+            gender: user.gender,
             message: data.message,
             timestamp: new Date()
         };
@@ -54,6 +58,7 @@ io.on('connection', (socket) => {
         io.to(room).emit('chat message', message);
     });
 
+    // Création d'un nouveau salon
     socket.on('createRoom', (newRoom) => {
         if (createdRooms.includes(newRoom)) {
             socket.emit('room exists', newRoom);
@@ -74,11 +79,13 @@ io.on('connection', (socket) => {
         });
     });
 
+    // Joindre un salon existant
     socket.on('joinRoom', (room) => {
         if (!createdRooms.includes(room)) return;
         switchRoom(socket, room);
     });
 
+    // Déconnexion d'un utilisateur
     socket.on('disconnect', () => {
         const user = getUser(socket.id);
         if (!user) return;
@@ -90,10 +97,12 @@ io.on('connection', (socket) => {
         delete userChannels[socket.id];
     });
 
+    // Fonction pour récupérer un utilisateur par socket.id
     function getUser(socketId) {
         return Object.values(users).find(u => u.id === socketId);
     }
 
+    // Fonction pour quitter un salon
     function leaveRoom(socket, room) {
         const user = getUser(socket.id);
         if (!user || !roomUsers[room]) return;
@@ -112,6 +121,7 @@ io.on('connection', (socket) => {
         }
     }
 
+    // Fonction pour changer de salon
     function switchRoom(socket, newRoom) {
         const oldRoom = userChannels[socket.id];
         if (oldRoom === newRoom) return;
@@ -124,13 +134,13 @@ io.on('connection', (socket) => {
         socket.join(newRoom);
         userChannels[socket.id] = newRoom;
 
-        if (!roomUsers[newRoom]) roomUsers[newRoom] = []; // 👈 Ajouté pour sécuriser
-        if (!messageHistory[newRoom]) messageHistory[newRoom] = []; // 👈 Aussi ici
+        if (!roomUsers[newRoom]) roomUsers[newRoom] = [];  // Assure que le salon existe
+        if (!messageHistory[newRoom]) messageHistory[newRoom] = [];  // Assure que l'historique du salon existe
 
         roomUsers[newRoom].push(user);
         io.to(newRoom).emit('user list', roomUsers[newRoom]);
         socket.emit('chat history', messageHistory[newRoom]);
-        socket.emit('joinRoom', newRoom); // 👈 Événement utile pour le client
+        socket.emit('joinRoom', newRoom);  // Événement pour le client
     }
 });
 
