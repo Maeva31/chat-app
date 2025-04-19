@@ -117,17 +117,20 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (roomUsers[oldChannel]) {
-      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+    if (oldChannel !== channel) {
+      // Si l'utilisateur change de salon, quitter l'ancien salon
+      socket.leave(oldChannel);
+
+      if (roomUsers[oldChannel]) {
+        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+        io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+      }
     }
 
-    socket.leave(oldChannel);
     socket.join(channel);
     userChannels[socket.id] = channel;
 
     if (!roomUsers[channel]) roomUsers[channel] = [];
-
     roomUsers[channel].push({
       id: socket.id,
       username: user.username,
