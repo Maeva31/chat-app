@@ -19,6 +19,9 @@ io.on('connection', (socket) => {
 
   // Envoi de l'historique du salon Général par défaut
   socket.emit('chat history', messageHistory['Général'] || []);
+  
+  // Envoi de la liste des utilisateurs pour le salon actuel
+  socket.emit('user list', roomUsers['Général'] || []); // Envoi immédiat des utilisateurs du salon général
 
   // Définition du nom d'utilisateur
   socket.on('set username', (data) => {
