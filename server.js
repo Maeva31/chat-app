@@ -26,15 +26,15 @@ io.on('connection', (socket) => {
 
         users[socket.id] = { pseudo, genre, age, role };
         userSockets[pseudo] = socket;
-        const channel = 'Salon Général';
-        userChannels[socket.id] = channel;
-        socket.join(channel);
+        const defaultChannel = 'Salon Général';
+        userChannels[socket.id] = defaultChannel;
+        socket.join(defaultChannel);
 
-        if (!messageHistory[channel]) messageHistory[channel] = [];
-        socket.emit('history', messageHistory[channel]);
+        if (!messageHistory[defaultChannel]) messageHistory[defaultChannel] = [];
+        socket.emit('history', messageHistory[defaultChannel]);
         updateUserList();
 
-        socket.to(channel).emit('user-joined', pseudo);
+        socket.to(defaultChannel).emit('user-joined', pseudo);
     });
 
     socket.on('send-message', ({ text, font, color }) => {
@@ -42,7 +42,13 @@ io.on('connection', (socket) => {
         if (!user || mutedUsers.has(user.pseudo)) return;
 
         const channel = userChannels[socket.id];
-        const msg = { ...user, text, font, color, time: new Date().toLocaleTimeString() };
+        const msg = {
+            ...user,
+            text,
+            font,
+            color,
+            time: new Date().toLocaleTimeString()
+        };
 
         messageHistory[channel] = messageHistory[channel] || [];
         messageHistory[channel].push(msg);
@@ -66,8 +72,8 @@ io.on('connection', (socket) => {
     socket.on('send-file', ({ type, fileData, fileName }) => {
         const user = users[socket.id];
         if (!user || mutedUsers.has(user.pseudo)) return;
-        const channel = userChannels[socket.id];
 
+        const channel = userChannels[socket.id];
         const fileMsg = {
             ...user,
             fileType: type,
@@ -110,27 +116,28 @@ io.on('connection', (socket) => {
 
     socket.on('kick', (targetPseudo) => {
         const actor = users[socket.id];
-        const targetSocket = Object.entries(users).find(([, u]) => u.pseudo === targetPseudo)?.[0];
-        if (actor?.role === 'admin' && targetSocket) {
-            io.to(targetSocket).emit('kicked');
-            io.sockets.sockets.get(targetSocket)?.disconnect();
+        const targetSocketId = Object.entries(users).find(([, u]) => u.pseudo === targetPseudo)?.[0];
+        if (actor?.role === 'admin' && targetSocketId) {
+            io.to(targetSocketId).emit('kicked');
+            io.sockets.sockets.get(targetSocketId)?.disconnect();
         }
     });
 
     socket.on('ban', (targetPseudo) => {
         const actor = users[socket.id];
-        const targetSocket = Object.entries(users).find(([, u]) => u.pseudo === targetPseudo)?.[0];
-        if (actor?.role === 'admin' && targetSocket) {
+        const targetSocketId = Object.entries(users).find(([, u]) => u.pseudo === targetPseudo)?.[0];
+        if (actor?.role === 'admin' && targetSocketId) {
             bannedUsers.add(targetPseudo);
-            io.to(targetSocket).emit('banned');
-            io.sockets.sockets.get(targetSocket)?.disconnect();
+            io.to(targetSocketId).emit('banned');
+            io.sockets.sockets.get(targetSocketId)?.disconnect();
         }
     });
 
     socket.on('mute', (targetPseudo) => {
         const actor = users[socket.id];
-        if (actor?.role !== 'admin' && actor?.role !== 'modo') return;
-        mutedUsers.add(targetPseudo);
+        if (actor?.role === 'admin' || actor?.role === 'modo') {
+            mutedUsers.add(targetPseudo);
+        }
     });
 
     socket.on('unmute', (targetPseudo) => {
@@ -142,12 +149,12 @@ io.on('connection', (socket) => {
         if (user) {
             const channel = userChannels[socket.id];
             delete users[socket.id];
-            delete userChannels[socket.id];
             delete userSockets[user.pseudo];
+            delete userChannels[socket.id];
 
-            // Supprimer salon si vide et sans modo/admin
+            // Vérifie si le salon est vide ou sans modo/admin
             const stillInRoom = Object.entries(userChannels)
-                .filter(([id, room]) => room === channel)
+                .filter(([, room]) => room === channel)
                 .map(([id]) => users[id]);
 
             const hasModOrAdmin = stillInRoom.some(u => u?.role !== 'user');
@@ -167,7 +174,6 @@ io.on('connection', (socket) => {
             age: u.age,
             role: u.role
         }));
-
         io.emit('user-list', list);
     }
 });
