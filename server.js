@@ -12,7 +12,7 @@ let messageHistory = {};   // Historique des messages par salon
 let roomUsers = {};        // Utilisateurs présents par salon
 let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
 let createdRooms = [];     // Salons créés dynamiquement ✅
-const defaultRooms = ['Général']; // salon de base
+const defaultRooms = ['Général']; // Salon de base
 
 app.use(express.static('public'));
 
