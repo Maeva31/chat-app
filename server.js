@@ -125,13 +125,16 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Quitter l'ancien salon
-    if (roomUsers[oldChannel]) {
-      roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+    // Quitter l'ancien salon si ce n'est pas le salon créé
+    if (oldChannel !== channel) {
+      if (roomUsers[oldChannel]) {
+        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+        io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
+      }
+
+      socket.leave(oldChannel);
     }
 
-    socket.leave(oldChannel);
     socket.join(channel);
     userChannels[socket.id] = channel;
 
