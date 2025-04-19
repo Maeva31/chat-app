@@ -1,93 +1,86 @@
-
 const socket = io();
 
-let currentChannel = "# 💬 ┊ Général";
-let username = "";
-let gender = "";
-let age = "";
-let role = "user";
-const userList = document.getElementById("users");
-const chatMessages = document.getElementById("chat-messages");
-const messageInput = document.getElementById("message-input");
-const usernameSubmit = document.getElementById("username-submit");
-const modal = document.getElementById("myModal");
-const modalError = document.getElementById("modal-error");
-const channelList = document.getElementById("channel-list");
-const newChannelName = document.getElementById("new-channel-name");
-const createChannelButton = document.getElementById("create-channel-button");
+// Variables pour l'interface
+const usernameInput = document.getElementById('username-input');
+const genderSelect = document.getElementById('gender-select');
+const ageInput = document.getElementById('age-input');
+const usernameSubmit = document.getElementById('username-submit');
+const messageInput = document.getElementById('message-input');
+const chatMessages = document.getElementById('chat-messages');
+const usersList = document.getElementById('users');
+const channelList = document.getElementById('channel-list');
+const createChannelButton = document.getElementById('create-channel-button');
+const newChannelName = document.getElementById('new-channel-name');
 
-usernameSubmit.addEventListener("click", () => {
-  const usernameInput = document.getElementById("username-input").value.trim();
-  const genderSelect = document.getElementById("gender-select").value;
-  const ageInput = parseInt(document.getElementById("age-input").value);
+// Variables pour la gestion du salon
+let currentUser = null;
+let currentChannel = '💬 ┊ Général';
 
-  if (!usernameInput || usernameInput.length > 16 || !genderSelect || isNaN(ageInput) || ageInput < 18 || ageInput > 89) {
-    modalError.style.display = "block";
-    modalError.textContent = "Veuillez remplir correctement tous les champs.";
-    return;
-  }
+// Modal d'inscription
+usernameSubmit.addEventListener('click', () => {
+  const username = usernameInput.value.trim();
+  const gender = genderSelect.value;
+  const age = ageInput.value.trim();
 
-  username = usernameInput;
-  gender = genderSelect;
-  age = ageInput;
-  modal.style.display = "none";
-
-  socket.emit("new-user", { username, gender, age, role, channel: currentChannel });
-});
-
-messageInput.addEventListener("keydown", (e) => {
-  if (e.key === "Enter" && messageInput.value.trim()) {
-    socket.emit("chat-message", {
-      channel: currentChannel,
-      username,
-      gender,
-      age,
-      role,
-      message: messageInput.value.trim()
-    });
-    messageInput.value = "";
+  if (username && gender && age >= 18 && age <= 89) {
+    currentUser = { username, gender, age };
+    socket.emit('user-joined', currentUser);
+    document.getElementById('myModal').style.display = 'none';
+  } else {
+    document.getElementById('modal-error').style.display = 'block';
   }
 });
 
-createChannelButton.addEventListener("click", () => {
+// Envoi de message
+messageInput.addEventListener('keyup', (e) => {
+  if (e.key === 'Enter') {
+    socket.emit('send-message', { message: messageInput.value, channel: currentChannel });
+    messageInput.value = '';
+  }
+});
+
+// Changement de salon
+channelList.addEventListener('click', (e) => {
+  if (e.target.classList.contains('channel')) {
+    currentChannel = e.target.innerText;
+    socket.emit('switch-channel', currentChannel);
+  }
+});
+
+// Création de salon
+createChannelButton.addEventListener('click', () => {
   const channelName = newChannelName.value.trim();
   if (channelName) {
-    const formatted = `# ${channelName}`;
-    socket.emit("create-channel", formatted);
-    newChannelName.value = "";
+    socket.emit('create-channel', channelName);
   }
 });
 
-channelList.addEventListener("click", (e) => {
-  if (e.target.classList.contains("channel")) {
-    document.querySelectorAll(".channel").forEach(c => c.classList.remove("selected"));
-    e.target.classList.add("selected");
-    const newChannel = e.target.textContent;
-    socket.emit("switch-channel", { oldChannel: currentChannel, newChannel });
-    currentChannel = newChannel;
-    chatMessages.innerHTML = "";
-  }
-});
-
-socket.on("chat-message", (data) => {
-  const msg = document.createElement("div");
-  msg.innerHTML = `<strong>${data.username}</strong>: ${data.message}`;
-  chatMessages.appendChild(msg);
+// Réception de messages
+socket.on('message', (data) => {
+  const messageElement = document.createElement('div');
+  messageElement.classList.add('message');
+  messageElement.innerHTML = `<strong>${data.username}</strong>: ${data.message}`;
+  chatMessages.appendChild(messageElement);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
-socket.on("user-list", (users) => {
-  userList.innerHTML = "";
+// Affichage des utilisateurs
+socket.on('user-list', (users) => {
+  usersList.innerHTML = '';
   users.forEach(user => {
-    const li = document.createElement("li");
-    li.innerHTML = `${user.username} <small>(${user.gender}, ${user.age})</small>`;
-    userList.appendChild(li);
+    const userElement = document.createElement('li');
+    userElement.innerHTML = `<span class="username-span">${user.username}</span>`;
+    usersList.appendChild(userElement);
   });
 });
 
-socket.on("channel-created", (channelName) => {
-  const li = document.createElement("li");
-  li.className = "channel";
-  li.textContent = channelName;
-  channelList.appendChild(li);
+// Affichage des salons
+socket.on('channel-list', (channels) => {
+  channelList.innerHTML = '';
+  channels.forEach(channel => {
+    const channelElement = document.createElement('li');
+    channelElement.classList.add('channel');
+    channelElement.innerText = `# ${channel}`;
+    channelList.appendChild(channelElement);
+  });
 });
