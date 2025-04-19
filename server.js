@@ -7,11 +7,11 @@ const server = http.createServer(app);
 const io = new Server(server);
 
 // Données en mémoire
-let users = {};            // Stockage des utilisateurs avec leurs infos
-let messageHistory = {};   // Historique des messages par salon
-let roomUsers = {};        // Utilisateurs présents par salon
-let userChannels = {};     // Canal actuel de chaque utilisateur (socket.id)
-let createdRooms = [];     // Salons créés dynamiquement ✅
+let users = {}; // Utilisateurs
+let messageHistory = {}; // Historique des messages par salon
+let roomUsers = {}; // Utilisateurs présents par salon
+let userChannels = {}; // Canal actuel de chaque utilisateur (socket.id)
+let createdRooms = []; // Salons créés dynamiquement
 const defaultRooms = ['Général']; // Salon de base
 
 app.use(express.static('public'));
@@ -22,10 +22,10 @@ io.on('connection', (socket) => {
   // Envoi de la liste des salons existants au nouveau client
   socket.emit('existing rooms', [...defaultRooms, ...createdRooms]);
 
-  // Envoi de l'historique du salon Général par défaut
+  // Envoi de l'historique du salon Général
   socket.emit('chat history', messageHistory['Général'] || []);
 
-  // Définition du nom d'utilisateur
+  // Définir le nom d'utilisateur
   socket.on('set username', (data) => {
     const { username, gender, age } = data;
 
@@ -50,7 +50,7 @@ io.on('connection', (socket) => {
 
     if (!roomUsers[currentChannel]) roomUsers[currentChannel] = [];
 
-    // Évite les doublons
+    // Ajout de l'utilisateur dans la liste du salon
     roomUsers[currentChannel] = roomUsers[currentChannel].filter(u => u.id !== socket.id);
     roomUsers[currentChannel].push(userData);
 
@@ -59,7 +59,7 @@ io.on('connection', (socket) => {
     socket.emit('username accepted', username);
   });
 
-  // Envoi d’un message
+  // Envoi de message
   socket.on('chat message', (msg) => {
     const sender = Object.values(users).find(user => user.id === socket.id);
     const currentChannel = userChannels[socket.id] || 'Général';
@@ -92,22 +92,21 @@ io.on('connection', (socket) => {
 
     if (disconnectedUser) {
       console.log(`❌ Déconnexion : ${disconnectedUser.username}`);
-      io.emit('user disconnect', disconnectedUser.username);
 
       // Retirer l'utilisateur de tous les salons
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
         io.to(channel).emit('user list', roomUsers[channel]);
 
-        // Si le salon est vide, le supprimer et rediriger les utilisateurs vers le salon Général
+        // Si le salon est vide, le supprimer et rediriger vers le salon général
         if (roomUsers[channel].length === 0) {
           console.log(`💀 Le salon ${channel} est maintenant vide et sera supprimé.`);
           delete roomUsers[channel];
           delete messageHistory[channel];
           createdRooms = createdRooms.filter(room => room !== channel);
-          io.emit('room deleted', channel); // Notifier les autres clients
+          io.emit('room deleted', channel);
 
-          // Rediriger tous les utilisateurs dans ce salon vers le salon Général
+          // Rediriger les utilisateurs qui étaient dans ce salon vers le salon général
           Object.keys(userChannels).forEach((socketId) => {
             if (userChannels[socketId] === channel) {
               userChannels[socketId] = 'Général';
@@ -124,7 +123,7 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Changement de salon
+  // Rejoindre un salon
   socket.on('joinRoom', (channel) => {
     const oldChannel = userChannels[socket.id] || 'Général';
     const user = Object.values(users).find(user => user.id === socket.id);
