@@ -100,59 +100,30 @@ io.on('connection', (socket) => {
   });
 
   // 🔄 Changement de salon
-  socket.on('joinRoom', (channel) => {
-    const isValid = channel && channel.length <= 20 && /^[\w\-]+$/.test(channel);
-    if (!isValid) return socket.emit('error', 'Nom de salon invalide.');
-
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return socket.emit('error', 'Utilisateur non défini');
-
-    const oldChannel = userChannels[socket.id] || 'Général';
-
-    if (oldChannel !== channel) {
-      socket.leave(oldChannel);
-      roomUsers[oldChannel] = (roomUsers[oldChannel] || []).filter(u => u.id !== socket.id);
-      io.to(oldChannel).emit('user list', roomUsers[oldChannel]);
-    }
-
-    socket.join(channel);
-    userChannels[socket.id] = channel;
-
-    if (!roomUsers[channel]) roomUsers[channel] = [];
-    roomUsers[channel].push({ ...user });
-
-    console.log(`👥 ${user.username} a rejoint le salon : ${channel}`);
-
-    io.to(channel).emit('chat message', {
+  socket.on('createRoom', (roomName) => {
+    socket.emit('chat message', {
       username: 'Système',
-      message: `${user.username} a rejoint le salon ${channel}`,
-      channel
+      message: `Salon "${roomName}" créé !`,
+      channel: roomName
     });
 
-    socket.emit('chat history', messageHistory[channel] || []);
-    io.to(channel).emit('user list', roomUsers[channel]);
+    socket.join(roomName);
+    userChannels[socket.id] = roomName;
+    if (!roomUsers[roomName]) roomUsers[roomName] = [];
+    roomUsers[roomName].push(users[socket.id]);
+
+    io.emit('user list', roomUsers[roomName]);
   });
 
-  // ➕ Création de salon
-  socket.on('createRoom', (newChannel) => {
-    const isValid = newChannel && newChannel.length <= 20 && /^[\w\-]+$/.test(newChannel);
-    if (!isValid) return socket.emit('error', 'Nom de salon invalide.');
+  socket.on('joinRoom', (roomName) => {
+    socket.join(roomName);
+    userChannels[socket.id] = roomName;
+    roomUsers[roomName].push(users[socket.id]);
 
-    if (messageHistory[newChannel]) {
-      socket.emit('room exists', newChannel);
-      return;
-    }
-
-    messageHistory[newChannel] = [];
-    roomUsers[newChannel] = [];
-
-    console.log(`✅ Salon créé : ${newChannel}`);
-    io.emit('room created', newChannel);
+    io.emit('user list', roomUsers[roomName]);
   });
 });
 
-// 🚀 Démarrage du serveur
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`🚀 Serveur lancé sur http://localhost:${PORT}`);
+server.listen(3000, () => {
+  console.log('🚀 Server started on http://localhost:3000');
 });
