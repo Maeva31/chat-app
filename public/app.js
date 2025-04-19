@@ -132,6 +132,24 @@ document.addEventListener('DOMContentLoaded', function () {
     if (li) handleChannelClick(li, newRoom);
   });
 
+  socket.on('room deleted', function (deletedRoom) {
+    const channelList = document.getElementById('channel-list');
+    const liToRemove = [...channelList.children]
+      .find(el => el.textContent.trim() === `# ${deletedRoom}`);
+    if (liToRemove) liToRemove.remove();
+  });
+
+  socket.on('joinRoom', function (roomName) {
+    currentChannel = roomName;
+    document.querySelectorAll('.channel').forEach(c => {
+      if (c.textContent.trim() === `# ${roomName}`) {
+        c.classList.add('selected');
+      } else {
+        c.classList.remove('selected');
+      }
+    });
+  });
+
   socket.on('username exists', function (username) {
     const modalError = document.getElementById("modal-error");
     modalError.textContent = `Le nom d'utilisateur "${username}" est déjà utilisé. Choisissez-en un autre.`;
@@ -221,7 +239,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   document.getElementById("username-submit").addEventListener("click", submitUserInfo);
 
-  // ✅ Création de salon par bouton
   const createChannelButton = document.getElementById("create-channel-button");
   if (createChannelButton) {
     createChannelButton.addEventListener("click", () => {
