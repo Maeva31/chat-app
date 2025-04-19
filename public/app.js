@@ -24,15 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
     socket.emit('joinRoom', room);
   }
 
-  // Fonction pour envoyer un message
-  function sendMessage(message) {
-    socket.emit('chat message', {
-      message,
-      timestamp: new Date().toISOString(),
-      channel: currentChannel
-    });
-  }
-
   // ✅ Version sécurisée et unique de updateUserList
   function updateUserList(users) {
     const userList = document.getElementById('users');
@@ -206,5 +197,4 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   document.getElementById("submit-user-info").addEventListener("click", submitUserInfo);
-
 });
