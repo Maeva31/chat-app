@@ -165,6 +165,7 @@ io.on('connection', (socket) => {
 
   // Création de salon
   socket.on('createRoom', (newChannel) => {
+    // Vérifie que le salon n'existe pas déjà
     if (!createdRooms.includes(newChannel)) {
       createdRooms.push(newChannel);
       messageHistory[newChannel] = [];
@@ -182,6 +183,9 @@ io.on('connection', (socket) => {
         message: `Le salon ${newChannel} a été créé par ${users[socket.id].username}.`,
         channel: newChannel
       });
+
+      // Diriger le créateur dans son nouveau salon
+      socket.emit('joinRoom', newChannel);
     } else {
       socket.emit('room exists', newChannel);
     }
