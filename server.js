@@ -97,6 +97,14 @@ io.on('connection', (socket) => {
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(user => user.id !== socket.id);
         io.to(channel).emit('user list', roomUsers[channel]);
+
+        // Si le salon est vide, le supprimer
+        if (roomUsers[channel].length === 0) {
+          delete roomUsers[channel];
+          delete messageHistory[channel];
+          createdRooms = createdRooms.filter(room => room !== channel);
+          console.log(`💀 Le salon ${channel} est maintenant vide et a été supprimé.`);
+        }
       }
 
       delete users[disconnectedUser.username];
