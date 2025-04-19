@@ -36,7 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
       .forEach(user => {
         const li = document.createElement('li');
         li.classList.add('user-item');
-        li.innerHTML = `
+        li.innerHTML = `  
           <div class="gender-square" style="background-color: ${getGenderColor(user.gender)}">${user.age}</div>
           <span class="username-span" style="color: ${getUsernameColor(user.gender)}">${user.username}</span>
         `;
@@ -140,18 +140,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   socket.on('user list', updateUserList);
 
-  document.getElementById("send-button").addEventListener("click", sendMessage);
-  document.getElementById("message-input").addEventListener("keypress", (e) => {
+  // Ajout d'écouteurs d'événements sur les boutons
+  const sendButton = document.getElementById("send-button");
+  const messageInput = document.getElementById("message-input");
+  const createRoomButton = document.getElementById("create-room-button");
+  const joinRoomButton = document.getElementById("join-room-button");
+
+  if (sendButton) sendButton.addEventListener("click", sendMessage);
+  if (messageInput) messageInput.addEventListener("keypress", (e) => {
     if (e.key === 'Enter') sendMessage();
   });
 
-  document.getElementById("create-room-button").addEventListener("click", () => {
+  if (createRoomButton) createRoomButton.addEventListener("click", () => {
     const roomName = prompt("Entrez le nom du salon");
     socket.emit('createRoom', roomName);
   });
 
-  document.getElementById("join-room-button").addEventListener("click", () => {
+  if (joinRoomButton) joinRoomButton.addEventListener("click", () => {
     const roomName = prompt("Entrez le nom du salon à rejoindre");
     socket.emit('joinRoom', roomName);
   });
+
 });
