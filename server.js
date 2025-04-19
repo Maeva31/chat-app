@@ -43,8 +43,12 @@ io.on('connection', (socket) => {
     const currentRoom = userChannels[socket.id] || defaultRoom;
     socket.join(currentRoom);
 
+    // Supprimer l'utilisateur de tous les salons avant de l'ajouter
+    Object.keys(roomUsers).forEach(room => {
+      roomUsers[room] = roomUsers[room].filter(u => u.id !== socket.id);
+    });
+
     if (!roomUsers[currentRoom]) roomUsers[currentRoom] = [];
-    roomUsers[currentRoom] = roomUsers[currentRoom].filter(u => u.id !== socket.id);
     roomUsers[currentRoom].push(userData);
 
     socket.emit('username accepted', username);
@@ -68,8 +72,15 @@ io.on('connection', (socket) => {
       io.to(previousRoom).emit('user list', roomUsers[previousRoom]);
     }
 
+    // Supprimer des autres salons au cas où
+    Object.keys(roomUsers).forEach(r => {
+      roomUsers[r] = roomUsers[r].filter(u => u.id !== socket.id);
+    });
+
     if (!roomUsers[room]) roomUsers[room] = [];
-    roomUsers[room].push(user);
+    if (!roomUsers[room].some(u => u.id === socket.id)) {
+      roomUsers[room].push(user);
+    }
 
     socket.emit('chat history', messageHistory[room] || []);
     io.to(room).emit('user list', roomUsers[room]);
