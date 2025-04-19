@@ -118,7 +118,6 @@ io.on('connection', (socket) => {
     }
 
     if (oldChannel !== channel) {
-      // Si l'utilisateur change de salon, quitter l'ancien salon
       socket.leave(oldChannel);
 
       if (roomUsers[oldChannel]) {
