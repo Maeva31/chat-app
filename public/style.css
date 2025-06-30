@@ -268,8 +268,9 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 180px; /* Permet d'afficher 16 caractères */
+  max-width: 200px; /* Suffisant pour 16 caractères */
 }
+
 
 
 
