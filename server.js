@@ -222,6 +222,9 @@ io.on('connection', (socket) => {
           io.sockets.sockets.get(targetUser.id)?.disconnect(true);
           io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
           console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+
+          // *** Ajout redirection kick côté client ***
+          io.to(targetUser.id).emit('redirect', '/kicked.html');
           return;
 
         case '/mute':
