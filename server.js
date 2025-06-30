@@ -26,6 +26,15 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
+// Chargement des mots de passe
+let passwordData = {};
+try {
+  passwordData = JSON.parse(fs.readFileSync('passwords.json', 'utf-8'));
+} catch (e) {
+  console.warn("⚠️ Impossible de charger passwords.json, pas de protection par mot de passe.");
+}
+
+
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
 let savedRooms = [];
 try {
@@ -102,7 +111,8 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
-    const { username, gender, age, invisible } = data;
+    const { username, gender, age, invisible, password } = data;
+
 
     if (!username || username.length > 16 || /\s/.test(username)) {
       return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
@@ -127,6 +137,14 @@ io.on('connection', (socket) => {
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
+
+    const expectedRole = getUserRole(username);
+if ((expectedRole === 'admin' || expectedRole === 'modo') && passwordData[username]) {
+  if (password !== passwordData[username]) {
+    return socket.emit('username error', 'Mot de passe incorrect pour ce rôle.');
+  }
+}
+
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
