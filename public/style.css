@@ -239,6 +239,7 @@ main {
   margin-bottom: 0.5em;
   padding: 4px 6px;
   box-sizing: border-box;
+    max-width: 100%;
 }
 
 .gender-square {
@@ -270,14 +271,13 @@ main {
   color: #000;
   font-weight: bold;
   font-size: 1.1em;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 160px; /* ajusté pour 16 caractères */
+  flex-grow: 1;
 }
+
 
 
 
