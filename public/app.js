@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -6,7 +7,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
 
-  let currentChannel = localStorage.getItem('currentChannel') || 'Général';
+let currentChannel = 'Général';  // Forcer le salon Général au chargement
+
+
+
 
   const genderColors = {
     Homme: '#00f',
@@ -458,9 +462,11 @@ document.addEventListener('DOMContentLoaded', () => {
         age: savedAge,
         invisible: invisibleMode
       });
-      const savedChannel = localStorage.getItem('currentChannel') || 'Général';
-      socket.emit('joinRoom', savedChannel);
-      selectChannelInUI(savedChannel);
+      currentChannel = 'Général';
+localStorage.setItem('currentChannel', currentChannel);
+socket.emit('joinRoom', currentChannel);
+selectChannelInUI(currentChannel);
+
       hasSentUserInfo = true;
       initialLoadComplete = true;
 
