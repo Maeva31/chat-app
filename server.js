@@ -26,6 +26,15 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
+// Chargement des mots de passe des rôles
+let passwordData = {};
+try {
+  const data = fs.readFileSync('passwords.json', 'utf-8');
+  passwordData = JSON.parse(data);
+} catch (e) {
+  console.warn("⚠️ Impossible de charger passwords.json, pas de contrôle de mot de passe.");
+}
+
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
 let savedRooms = [];
 try {
@@ -102,8 +111,7 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
-    const { username, gender, age, invisible } = data;
-
+    const { username, gender, age, invisible, password } = data;
 
     if (!username || username.length > 16 || /\s/.test(username)) {
       return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
@@ -113,6 +121,18 @@ io.on('connection', (socket) => {
     }
     if (!gender) {
       return socket.emit('username error', 'Genre non spécifié');
+    }
+
+    // Vérification mot de passe pour admin/modo
+    if (modData.admins.includes(username)) {
+      if (!password || password !== passwordData.admin) {
+        return socket.emit('username error', 'Mot de passe admin incorrect.');
+      }
+    }
+    if (modData.modos.includes(username)) {
+      if (!password || password !== passwordData.modo) {
+        return socket.emit('username error', 'Mot de passe modo incorrect.');
+      }
     }
 
     if (bannedUsers.has(username)) {
@@ -125,9 +145,7 @@ io.on('connection', (socket) => {
 
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
-const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
-
-
+    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
