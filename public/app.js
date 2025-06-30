@@ -560,4 +560,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // --- Fin ajout mode invisible ---
+
+  socket.on('redirect', (url) => {
+  window.location.href = url;
+});
+
+
 });
