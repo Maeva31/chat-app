@@ -63,14 +63,12 @@
 
       <!-- Bloc contenant champ + emoji picker -->
       <div style="position: relative;">
-        <!-- Champ message avec bouton emoji -->
-        <div id="chat-input" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
-          <button id="emoji-button" title="Insérer un émoji" style="font-size: 22px; background: transparent; border: none; outline: none; cursor: pointer;">😊</button>
-          <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" style="flex: 1;" />
-        </div>
+        <!-- Bouton Emoji -->
+<div style="position: relative;">
+  <input id="message-input" type="text" placeholder="Tapez votre message..." autocomplete="off" />
+  <button id="emoji-button" type="button">😊</button>
 
-        <!-- Emoji Picker positionné correctement -->
-        <div id="emoji-picker" style="display: none; position: absolute; bottom: 45px; left: 0; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 10px; z-index: 1000; max-width: 350px; max-height: 250px; overflow-y: auto; flex-wrap: wrap; gap: 5px; display: flex;">
+  <div id="emoji-picker" style="position: absolute; bottom: 60px; left: 10px; background: #222; border-radius: 8px; padding: 10px; display: none; z-index: 1000; flex-wrap: wrap;">
           <span class="emoji">😀</span>
   <span class="emoji">😁</span>
   <span class="emoji">😂</span>
