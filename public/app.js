@@ -285,17 +285,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
   socket.once('username accepted', ({ username, gender, age }) => {
-    localStorage.setItem('username', username);
-    localStorage.setItem('gender', gender);
-    localStorage.setItem('age', age);
+  localStorage.setItem('username', username);
+  localStorage.setItem('gender', gender);
+  localStorage.setItem('age', age);
 
-    document.getElementById('myModal').style.display = 'none';
-    socket.emit('joinRoom', currentChannel);
-    selectChannelInUI(currentChannel);
+  document.getElementById('myModal').style.display = 'none';
+  document.getElementById('chat-container').style.display = 'block'; // 👈 Ajoute cette ligne
 
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
-  });
+  socket.emit('joinRoom', currentChannel);
+  selectChannelInUI(currentChannel);
+
+  hasSentUserInfo = true;
+  initialLoadComplete = true;
+});
+
 
   // Écouteurs socket divers
   socket.on('username error', msg => showBanner(msg, 'error'));
