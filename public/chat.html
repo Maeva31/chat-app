@@ -1,14 +1,14 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Chat</title>
-  <link rel="stylesheet" href="style.css" />
+  <meta charset="UTF-UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bon Chat 💬</title>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body class="modal-open">
 
-  <!-- Bandeau d'erreur -->
+  <!-- Bannière d'erreur -->
   <div id="error-banner" style="
     display: none;
     position: fixed;
@@ -24,59 +24,44 @@
     <span id="error-banner-text"></span>
   </div>
 
-  <!-- Modal d'information utilisateur -->
-<div id="myModal" class="modal">
-  <div class="modal-content">
-    <h2>Bienvenue !</h2>
-    <p>Veuillez entrer vos informations pour accéder au chat.</p>
+  <!-- Modal de connexion -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <h2>Bienvenue !</h2>
+      <p>Veuillez entrer vos informations pour accéder au chat.</p>
 
-    <label for="username-input">Pseudo (max 16 caractères)</label>
-    <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" autocomplete="off" />
+      <label for="username-input">Pseudo (max 16 caractères)</label>
+      <input id="username-input" type="text" maxlength="16" placeholder="Pseudo" autocomplete="off">
 
-    <label for="gender-select">Genre</label>
-    <select id="gender-select" autocomplete="off">
-      <option value="">Genre</option>
-      <option value="Homme">Homme</option>
-      <option value="Femme">Femme</option>
-      <option value="Autre">Autre</option>
-    </select>
+      <label for="gender-select">Genre</label>
+      <select id="gender-select">
+        <option value="">Genre</option>
+        <option value="Homme">Homme</option>
+        <option value="Femme">Femme</option>
+        <option value="Autre">Autre</option>
+      </select>
 
-    <label for="age-input">Âge (18-89)</label>
-    <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" autocomplete="off" />
+      <label for="age-input">Âge (18-89)</label>
+      <input id="age-input" type="number" min="18" max="89" placeholder="Âge" autocomplete="off">
 
-    <div id="modal-error" class="modal-error" style="display: none; color: red; margin-top: 10px;"></div>
+      <div id="modal-error" class="modal-error" style="display: none; color: red; margin-top: 10px;"></div>
 
-    <button id="username-submit">Valider</button>
+      <button id="username-submit">Valider</button>
+    </div>
   </div>
-</div>
 
-
-  <!-- Tout le contenu du chat masqué au départ -->
+  <!-- Contenu principal masqué jusqu'à validation -->
   <div id="chat-wrapper" style="display: none;">
 
-    <!-- Bande en haut de page -->
-    <div id="top-bar" style="
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding: 4px;
-      background-color: #3333339e;
-      color: white;">
+    <!-- Barre supérieure -->
+    <div id="top-bar">
       <div class="texte-laser"><h2>Bienvenue Bon Chat 💬</h2></div>
-      <button id="toggle-invisible-btn" style="
-        padding: 8px 12px;
-        font-weight: bold;
-        background-color: #f44336;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;">
-        👻 Mode Invisible
-      </button>
+      <button id="toggle-invisible-btn">👻 Mode Invisible</button>
     </div>
 
-    <!-- Wrapper principal -->
+    <!-- Zone principale -->
     <main>
+      
       <!-- Sidebar gauche : salons -->
       <aside id="channel-sidebar">
         <header>
@@ -89,7 +74,7 @@
           <li class="channel"># 🌿 ┊ Détente</li>
         </ul>
         <div id="create-channel">
-          <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off" />
+          <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off">
           <button id="create-channel-button">Créer</button>
         </div>
       </aside>
@@ -97,24 +82,22 @@
       <!-- Zone centrale : chat -->
       <section id="chat-container">
         <div id="chat-messages" class="chat-messages"></div>
-        <div id="chat-input" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
-          <button id="emoji-button" title="Insérer un émoji" style="font-size: 22px; background: transparent; border: none; outline: none; cursor: pointer;">😊</button>
-          <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" style="flex: 1;" />
+        <div id="chat-input">
+          <button id="emoji-button" title="Insérer un émoji">😊</button>
+          <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off">
         </div>
 
         <!-- Emoji Picker -->
-        <div id="emoji-picker" style="display: none; position: absolute; bottom: 70px; left: 10px; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 10px; z-index: 1000; max-width: 350px; max-height: 250px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px;">
-          <!-- emojis ici (inchangé) -->
-        </div>
+        <div id="emoji-picker"></div>
       </section>
 
       <!-- Sidebar droite : utilisateurs -->
       <aside id="user-list">
-        <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
+        <div class="texte-laser"><h3>Liste du salon</h3></div>
         <ul id="users"></ul>
       </aside>
-    </main>
 
+    </main>
   </div>
 
   <!-- Scripts -->
