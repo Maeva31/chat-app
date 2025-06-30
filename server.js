@@ -34,7 +34,6 @@ try {
   console.warn("⚠️ Impossible de charger passwords.json, pas de protection par mot de passe.");
 }
 
-
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
 let savedRooms = [];
 try {
@@ -113,7 +112,6 @@ io.on('connection', (socket) => {
   socket.on('set username', (data) => {
     const { username, gender, age, invisible, password } = data;
 
-
     if (!username || username.length > 16 || /\s/.test(username)) {
       return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
     }
@@ -139,12 +137,11 @@ io.on('connection', (socket) => {
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     const expectedRole = getUserRole(username);
-if ((expectedRole === 'admin' || expectedRole === 'modo') && passwordData[username]) {
-  if (password !== passwordData[username]) {
-    return socket.emit('username error', 'Mot de passe incorrect pour ce rôle.');
-  }
-}
-
+    if ((expectedRole === 'admin' || expectedRole === 'modo') && passwordData[username]) {
+      if (password !== passwordData[username]) {
+        return socket.emit('username error', 'Mot de passe incorrect pour ce rôle.');
+      }
+    }
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
@@ -189,11 +186,10 @@ if ((expectedRole === 'admin' || expectedRole === 'modo') && passwordData[userna
     }
 
     if (mutedUsers.has(user.username)) {
-  socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
-  // suppression de la redirection pour mute
-  return;
-}
-
+      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+      // suppression de la redirection pour mute
+      return;
+    }
 
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
@@ -213,43 +209,41 @@ if ((expectedRole === 'admin' || expectedRole === 'modo') && passwordData[userna
 
       switch (cmd) {
         case '/ban':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-  if (isUserModo && isTargetProtected) {
-    socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
-    return;
-  }
-  bannedUsers.add(targetName);
-  io.to(targetUser.id).emit('banned');
-  io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis sur ban
-  setTimeout(() => {
-    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-  }, 1500);
-  io.emit('server message', `${targetName} a été banni par ${user.username}`);
-  console.log(`⚠️ ${user.username} a banni ${targetName}`);
-  return;
-
+          if (!targetUser) {
+            socket.emit('error message', 'Utilisateur introuvable.');
+            return;
+          }
+          if (isUserModo && isTargetProtected) {
+            socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
+            return;
+          }
+          bannedUsers.add(targetName);
+          io.to(targetUser.id).emit('banned');
+          io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis sur ban
+          setTimeout(() => {
+            io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+          }, 1500);
+          io.emit('server message', `${targetName} a été banni par ${user.username}`);
+          console.log(`⚠️ ${user.username} a banni ${targetName}`);
+          return;
 
         case '/kick':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-  if (isUserModo && isTargetProtected) {
-    socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
-    return;
-  }
-  io.to(targetUser.id).emit('kicked');
-  io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr'); // Redirection kick
-  setTimeout(() => {
-    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-  }, 1500);
-  io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
-  console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
-  return;
-
+          if (!targetUser) {
+            socket.emit('error message', 'Utilisateur introuvable.');
+            return;
+          }
+          if (isUserModo && isTargetProtected) {
+            socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
+            return;
+          }
+          io.to(targetUser.id).emit('kicked');
+          io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr'); // Redirection kick
+          setTimeout(() => {
+            io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+          }, 1500);
+          io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
+          console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+          return;
 
         case '/mute':
           if (!targetUser) {
@@ -416,14 +410,14 @@ if ((expectedRole === 'admin' || expectedRole === 'modo') && passwordData[userna
   });
 
   socket.on('createRoom', (newChannel) => {
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) return;
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
 
-  if (mutedUsers.has(user.username)) {
-    socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
-    // Retiré la ligne de redirection
-    return;
-  }
+    if (mutedUsers.has(user.username)) {
+      socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
+      // Retiré la ligne de redirection
+      return;
+    }
 
     if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
       return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
