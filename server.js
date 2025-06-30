@@ -1,4 +1,3 @@
-
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -105,7 +104,6 @@ io.on('connection', (socket) => {
   socket.on('set username', (data) => {
     const { username, gender, age, invisible } = data;
 
-
     if (!username || username.length > 16 || /\s/.test(username)) {
       return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
     }
@@ -117,7 +115,9 @@ io.on('connection', (socket) => {
     }
 
     if (bannedUsers.has(username)) {
-      return socket.emit('username error', 'Vous êtes banni du serveur.');
+      socket.emit('username error', 'Vous êtes banni du serveur.');
+      socket.emit('redirect', '/banned.html');  // Redirection vers page bannis
+      return;
     }
 
     if (users[username] && users[username].id !== socket.id) {
@@ -126,9 +126,7 @@ io.on('connection', (socket) => {
 
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
-const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
-
-
+    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
@@ -168,11 +166,13 @@ const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     if (bannedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes banni du serveur.');
+      socket.emit('redirect', '/banned.html');  // Redirection bannis si tente envoyer message
       return;
     }
 
     if (mutedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+      socket.emit('redirect', '/muted.html');  // Redirection mutés
       return;
     }
 
@@ -254,48 +254,61 @@ const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
           }
           return;
 
-        case '/invisible':
-  if (user.role !== 'admin') {
-    socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
-    return;
-  }
-  if (args.length < 2) {
-    socket.emit('error message', 'Usage : /invisible on | off');
-    return;
-  }
-  const param = args[1].toLowerCase();
-  const channel = userChannels[socket.id];
-  if (param === 'on') {
-    user.invisible = true;
-    if (roomUsers[channel]) {
-      const u = roomUsers[channel].find(u => u.id === socket.id);
-      if (u) u.invisible = true;
-    }
-    socket.emit('server message', 'Mode invisible activé.');
-    console.log(`🔍 ${user.username} a activé le mode invisible.`);
-    emitUserList(channel);
-    updateRoomUserCounts();
-  } else if (param === 'off') {
-    user.invisible = false;
-    if (roomUsers[channel]) {
-      const u = roomUsers[channel].find(u => u.id === socket.id);
-      if (u) u.invisible = false;
-    }
-    socket.emit('server message', 'Mode invisible désactivé.');
-    console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
-    emitUserList(channel);
-    updateRoomUserCounts();
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${user.username} est maintenant visible.`,
-      timestamp: new Date().toISOString(),
-      channel
-    });
-  } else {
-    socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
-  }
-  return;
+        case '/unban':
+          if (!targetUser) {
+            socket.emit('error message', 'Utilisateur introuvable.');
+            return;
+          }
+          if (bannedUsers.has(targetName)) {
+            bannedUsers.delete(targetName);
+            io.emit('server message', `${targetName} a été débanni par ${user.username}`);
+            console.log(`⚠️ ${user.username} a débanni ${targetName}`);
+          } else {
+            socket.emit('error message', `${targetName} n'est pas banni.`);
+          }
+          return;
 
+        case '/invisible':
+          if (user.role !== 'admin') {
+            socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
+            return;
+          }
+          if (args.length < 2) {
+            socket.emit('error message', 'Usage : /invisible on | off');
+            return;
+          }
+          const param = args[1].toLowerCase();
+          const channel = userChannels[socket.id];
+          if (param === 'on') {
+            user.invisible = true;
+            if (roomUsers[channel]) {
+              const u = roomUsers[channel].find(u => u.id === socket.id);
+              if (u) u.invisible = true;
+            }
+            socket.emit('server message', 'Mode invisible activé.');
+            console.log(`🔍 ${user.username} a activé le mode invisible.`);
+            emitUserList(channel);
+            updateRoomUserCounts();
+          } else if (param === 'off') {
+            user.invisible = false;
+            if (roomUsers[channel]) {
+              const u = roomUsers[channel].find(u => u.id === socket.id);
+              if (u) u.invisible = false;
+            }
+            socket.emit('server message', 'Mode invisible désactivé.');
+            console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
+            emitUserList(channel);
+            updateRoomUserCounts();
+            io.to(channel).emit('chat message', {
+              username: 'Système',
+              message: `${user.username} est maintenant visible.`,
+              timestamp: new Date().toISOString(),
+              channel
+            });
+          } else {
+            socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
+          }
+          return;
 
         default:
           socket.emit('error message', 'Commande inconnue.');
@@ -376,6 +389,15 @@ const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
   });
 
   socket.on('createRoom', (newChannel) => {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
+
+    if (mutedUsers.has(user.username)) {
+      socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
+      socket.emit('redirect', '/muted.html');
+      return;
+    }
+
     if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
       return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
     }
@@ -395,9 +417,6 @@ const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
     console.log(`🆕 Salon créé : ${newChannel}`);
-
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
 
     const oldChannel = userChannels[socket.id];
     if (oldChannel && oldChannel !== newChannel) {
