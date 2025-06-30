@@ -273,21 +273,6 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
   // Soumission du formulaire de pseudo
   function submitUserInfo() {
     const usernameInput = document.getElementById('username-input');
-    const passwordInput = document.getElementById('password-input');
-const passwordField = document.getElementById('password-field');
-
-if (usernameInput && passwordField) {
-  usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.trim().toLowerCase();
-    if (val.startsWith('admin') || val.startsWith('modo') || val === 'maeva') {
-      passwordField.style.display = 'block';
-    } else {
-      passwordField.style.display = 'none';
-    }
-  });
-}
-
-
     const genderSelect = document.getElementById('gender-select');
     const ageInput = document.getElementById('age-input');
     const modalError = document.getElementById('modal-error');
@@ -315,15 +300,7 @@ if (usernameInput && passwordField) {
     }
 
     modalError.style.display = 'none';
-    const password = passwordInput ? passwordInput.value.trim() : '';
-const data = { username, gender, age, invisible: invisibleMode };
-
-if (username.toLowerCase().startsWith('admin') || username.toLowerCase().startsWith('modo')) {
-  data.password = password;
-}
-
-socket.emit('set username', data);
-
+    socket.emit('set username', { username, gender, age, invisible: invisibleMode });
   }
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
