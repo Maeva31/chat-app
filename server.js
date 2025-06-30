@@ -197,6 +197,12 @@ io.on('connection', (socket) => {
       // Protection rôles des cibles
       const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
 
+      // Interdire auto ban/mute/kick
+      if (targetName === user.username && ['/ban', '/mute', '/kick'].includes(cmd)) {
+        socket.emit('error message', `Vous ne pouvez pas vous ${cmd.slice(1)} vous-même.`);
+        return;
+      }
+
       switch (cmd) {
         case '/ban':
         case '/kick':
@@ -213,13 +219,7 @@ io.on('connection', (socket) => {
           }
 
           // Proprio ne peut modérer que dans son salon
-          if (isOwner && (cmd !== '/kick' && cmd !== '/ban' && cmd !== '/mute' && cmd !== '/unmute')) {
-            // Ne devrait jamais arriver vu le case, mais sécurité
-            socket.emit('no permission');
-            return;
-          }
-
-          if (isOwner && currentRoom !== userChannels[targetUser?.id] && currentRoom !== undefined) {
+          if (isOwner && currentRoom !== userChannels[targetUser?.id]) {
             socket.emit('error message', "Vous ne pouvez modérer que dans votre salon.");
             return;
           }
@@ -298,6 +298,35 @@ io.on('connection', (socket) => {
           } else {
             socket.emit('error message', `${targetName} n'est pas banni.`);
           }
+          return;
+
+        // Nouvelle commande /addmodo uniquement admin
+        case '/addmodo':
+          if (!isAdmin) {
+            socket.emit('error message', 'Seuls les administrateurs peuvent ajouter des modérateurs.');
+            return;
+          }
+          if (!targetUser) {
+            socket.emit('error message', 'Utilisateur introuvable.');
+            return;
+          }
+          if (modData.modos.includes(targetName)) {
+            socket.emit('error message', `${targetName} est déjà modérateur.`);
+            return;
+          }
+          if (modData.admins.includes(targetName)) {
+            socket.emit('error message', `${targetName} est administrateur et ne peut pas être promu modo.`);
+            return;
+          }
+          modData.modos.push(targetName);
+          fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+          // Mise à jour rôle dans users
+          if (users[targetName]) {
+            users[targetName].role = 'modo';
+            io.to(users[targetName].id).emit('server message', 'Vous avez été promu modérateur.');
+          }
+          io.emit('server message', `${targetName} a été promu modérateur par ${user.username}`);
+          console.log(`⚠️ ${user.username} a promu ${targetName} en modérateur`);
           return;
 
         case '/invisible':
