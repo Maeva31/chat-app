@@ -135,64 +135,80 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Ajoute un message dans la zone de chat
   function addMessageToChat(msg) {
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-
-    const newMessage = document.createElement('div');
-
-    const date = new Date(msg.timestamp);
-    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    const usernameSpan = document.createElement('span');
-
-    if (msg.username === 'Système') {
-      usernameSpan.textContent = msg.username;
-      usernameSpan.style.color = '#888';
-      usernameSpan.style.fontWeight = 'bold';
-    } else {
-      const color = (msg.role === 'admin') ? 'red' : (msg.role === 'modo' ? 'green' : getUsernameColor(msg.gender));
-      usernameSpan.classList.add('clickable-username');
-      usernameSpan.style.color = color;
-
-      usernameSpan.textContent = msg.username;
-      usernameSpan.title = (msg.role === 'admin') ? 'Admin' : (msg.role === 'modo' ? 'Modérateur' : '');
-
-      if (msg.role === 'admin') {
-        const icon = document.createElement('img');
-        icon.src = '/favicon.ico';
-        icon.alt = 'Admin';
-        icon.title = 'Admin';
-        icon.style.width = '16px';
-        icon.style.height = '16px';
-        icon.style.marginLeft = '4px';
-        icon.style.verticalAlign = 'middle';
-        usernameSpan.appendChild(icon);
-      } else if (msg.role === 'modo') {
-        const icon = document.createElement('span');
-        icon.textContent = '🛡️';
-        icon.title = 'Modérateur';
-        icon.style.marginLeft = '4px';
-        icon.style.verticalAlign = 'middle';
-        usernameSpan.appendChild(icon);
+  // Si c'est un message système, vérifier qu'il concerne bien le salon courant
+  if (msg.username === 'Système') {
+    // Supposons que le message contient forcément le nom du salon à la fin (ex: "MaEvA a rejoint le salon Général")
+    // On va chercher le nom du salon dans le message, en extrayant après "salon "
+    const salonRegex = /salon\s+(.+)$/i;
+    const match = salonRegex.exec(msg.message);
+    if (match && match[1]) {
+      const salonDuMessage = match[1].trim();
+      if (salonDuMessage !== currentChannel) {
+        // Ce message système ne concerne pas le salon courant => on ne l'affiche pas
+        return;
       }
+    }
+  }
 
-      usernameSpan.addEventListener('click', () => {
-        const input = document.getElementById('message-input');
-        const mention = `@${msg.username} `;
-        if (!input.value.includes(mention)) input.value = mention + input.value;
-        input.focus();
-      });
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
+
+  const newMessage = document.createElement('div');
+
+  const date = new Date(msg.timestamp);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const usernameSpan = document.createElement('span');
+
+  if (msg.username === 'Système') {
+    usernameSpan.textContent = msg.username;
+    usernameSpan.style.color = '#888';
+    usernameSpan.style.fontWeight = 'bold';
+  } else {
+    const color = (msg.role === 'admin') ? 'red' : (msg.role === 'modo' ? 'green' : getUsernameColor(msg.gender));
+    usernameSpan.classList.add('clickable-username');
+    usernameSpan.style.color = color;
+
+    usernameSpan.textContent = msg.username;
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' : (msg.role === 'modo' ? 'Modérateur' : '');
+
+    if (msg.role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
+      icon.style.marginLeft = '4px';
+      icon.style.verticalAlign = 'middle';
+      usernameSpan.appendChild(icon);
+    } else if (msg.role === 'modo') {
+      const icon = document.createElement('span');
+      icon.textContent = '🛡️';
+      icon.title = 'Modérateur';
+      icon.style.marginLeft = '4px';
+      icon.style.verticalAlign = 'middle';
+      usernameSpan.appendChild(icon);
     }
 
-    newMessage.innerHTML = `[${timeString}] `;
-    newMessage.appendChild(usernameSpan);
-    newMessage.append(`: ${msg.message}`);
-    newMessage.classList.add('message');
-    newMessage.dataset.username = msg.username;
-
-    chatMessages.appendChild(newMessage);
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
   }
+
+  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.appendChild(usernameSpan);
+  newMessage.append(`: ${msg.message}`);
+  newMessage.classList.add('message');
+  newMessage.dataset.username = msg.username;
+
+  chatMessages.appendChild(newMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 
   // Sélectionne visuellement un salon dans la liste
   function selectChannelInUI(channelName) {
