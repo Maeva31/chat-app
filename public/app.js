@@ -314,7 +314,27 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   socket.on('chat message', addMessageToChat);
-  socket.on('user list', updateUserList);
+  socket.on('user list', (users) => {
+    updateUserList(users);
+
+    // Mise à jour bouton mode invisible selon rôle
+    const username = localStorage.getItem('username');
+    const me = users.find(u => u.username === username);
+    if (me && me.role === 'admin') {
+      if (!isAdmin) isAdmin = true;
+      if (invisibleBtn) {
+        invisibleBtn.style.display = 'inline-block';
+        updateInvisibleButton();
+      }
+    } else {
+      if (isAdmin) {
+        isAdmin = false;
+        if (!invisibleMode && invisibleBtn) {
+          invisibleBtn.style.display = 'none';
+        }
+      }
+    }
+  });
 
   socket.on('room created', (newChannel) => {
     const channelList = document.getElementById('channel-list');
@@ -451,6 +471,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Bouton validation pseudo
+  // (On garde celui déjà déclaré dans submitUserInfo pour validation avancée)
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
 
   // Emoji Picker
@@ -535,25 +556,19 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Mise à jour bouton mode invisible selon rôle
-  socket.on('user list', (users) => {
-    const username = localStorage.getItem('username');
-    const me = users.find(u => u.username === username);
-    if (me && me.role === 'admin') {
-      if (!isAdmin) isAdmin = true;
-      if (invisibleBtn) {
-        invisibleBtn.style.display = 'inline-block';
-        updateInvisibleButton();
-      }
-    } else {
-      if (isAdmin) {
-        isAdmin = false;
-        if (!invisibleMode && invisibleBtn) {
-          invisibleBtn.style.display = 'none';
-        }
-      }
-    }
-  });
-
   // --- Fin ajout mode invisible ---
 });
+
+// Variables hors DOMContentLoaded car utilisés globalement
+const appContainer = document.getElementById('app-container');
+const myModal = document.getElementById('myModal');
+
+// Exemple de fonction appelée quand l’utilisateur valide le formulaire avec un pseudo correct
+function onUserConnected() {
+  myModal.style.display = 'none';    // Cache la modal
+  appContainer.classList.remove('hidden'); // Affiche le chat
+}
+
+// Gestion du bouton "Valider" dans la modal
+// ** Supprimé car doublon avec submitUserInfo et déjà géré dans DOMContentLoaded **
+// (Si tu souhaites garder ce simple alert au lieu de la validation avancée, remplace l'écouteur plus haut)
