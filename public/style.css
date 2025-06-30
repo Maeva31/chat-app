@@ -541,3 +541,16 @@ button:focus {
   }
 }
 
+#user-list {
+  display: flex;
+  flex-direction: column;
+}
+
+#user-list .texte-laser {
+  flex: 0 0 auto;       /* Empêche que le titre se rétrécisse ou s’étire */
+  margin-bottom: 15px;  /* Un peu d’espace sous le titre */
+  text-align: center;   /* Centre horizontalement */
+  white-space: nowrap;  /* Empêche le retour à la ligne et le saut */
+  width: 100%;          /* Prend toute la largeur disponible */
+  user-select: none;    /* Optionnel : empêche la sélection du texte */
+}
