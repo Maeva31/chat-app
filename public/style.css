@@ -1,3 +1,4 @@
+
 /* === RESET et correction hauteur sans scroll === */
 html, body {
   margin: 0;
@@ -6,37 +7,37 @@ html, body {
   height: 100%;
 }
 
-/*==== scrollbar ====*/
+    /*==== scrollbar ====*/
 ::-webkit-scrollbar {
-  width: 12px; /* Légèrement plus large pour une meilleure visibilité */
-  border-radius: 8px; /* Ajoute une petite courbure à la scrollbar */
-}
-
-::-webkit-scrollbar-track {
-  background: #111;
-  border-radius: 8px; /* Arrondi également la track */
-}
-
-::-webkit-scrollbar-thumb {
-  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
-  background-size: 400% 400%;
-  border-radius: 8px;
-  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
-  animation: gradientThumb 3s ease infinite;
-  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
-}
-
-@keyframes gradientThumb {
-  0% {
-    background-position: 400% 0;
+	width: 12px; /* Légèrement plus large pour une meilleure visibilité */
+	border-radius: 8px; /* Ajoute une petite courbure à la scrollbar */
   }
-  50% {
-    background-position: 0 100%;
+  
+  ::-webkit-scrollbar-track {
+	background: #111;
+	border-radius: 8px; /* Arrondi également la track */
   }
-  100% {
-    background-position: 400% 0;
+  
+  ::-webkit-scrollbar-thumb {
+	background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+	background-size: 400% 400%;
+	border-radius: 8px;
+	transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+	animation: gradientThumb 3s ease infinite;
+	box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
   }
-}
+  
+  @keyframes gradientThumb {
+	0% {
+	  background-position: 400% 0;
+	}
+	50% {
+	  background-position: 0 100%;
+	}
+	100% {
+	  background-position: 400% 0;
+	}
+  }
 
 /* === GENERAL === */
 body {
@@ -54,7 +55,6 @@ main {
   overflow: hidden;
   margin-top: 50px; /* Décalage pour laisser place à la bande fixe */
   height: calc(100vh - 40px); /* Prend toute la hauteur restante */
-  padding-right: 250px; /* Espace pour la sidebar droite fixe */
 }
 
 #content-container {
@@ -216,23 +216,12 @@ main {
 }
 
 /* === USER LIST (RIGHT SIDEBAR) === */
-/* CACHER PAR DEFAUT tant que pas connecté */
 #user-list {
-  position: fixed;
-  top: 50px; /* sous la barre fixe #top-bar */
-  right: 0;
-  width: 250px;
-  height: calc(100vh - 50px);
+  flex: 1;
   background: #222222b8;
   padding: 1em;
   border-left: 2px solid #333;
   border-radius: 10px;
-  overflow-y: auto;
-  box-sizing: border-box;
-  z-index: 1000;
-  flex: none;
-
-  display: none; /* Ajouté pour cacher avant connexion */
 }
 
 #users {
@@ -378,7 +367,6 @@ main {
 @media (max-width: 768px) {
   main {
     flex-direction: column;
-    padding-right: 0; /* enlève l’espace sidebar en mobile */
   }
 
   #channel-sidebar,
@@ -388,8 +376,6 @@ main {
     border-top: 2px solid #333;
     border-radius: 0;
     margin: 0;
-    position: static; /* reprend le flux normal */
-    height: auto;
   }
 
   #chat-container {
@@ -501,25 +487,25 @@ button:focus {
 
 /* Texte laser */
 .texte-laser {
-  font-size: 15px;
-  font-weight: bold;
-  background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
-  background-size: 400% 400%;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  animation: laserTexteMenu 2s linear infinite;
+	font-size: 15px;
+	font-weight: bold;
+	background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
+	background-size: 400% 400%;
+	-webkit-background-clip: text;
+	-webkit-text-fill-color: transparent;
+	animation: laserTexteMenu 2s linear infinite;
 }
 
 @keyframes laserTexteMenu {
-  0% {
-    background-position: 0% 0%;
-  }
-  50% {
-    background-position: 100% 100%;
-  }
-  100% {
-    background-position: 0% 0%;
-  }
+	0% {
+		background-position: 0% 0%;
+	}
+	50% {
+		background-position: 100% 100%;
+	}
+	100% {
+		background-position: 0% 0%;
+	}
 }
 
 /* Fin texte laser */
@@ -554,3 +540,4 @@ button:focus {
     font-size: 12px;
   }
 }
+
