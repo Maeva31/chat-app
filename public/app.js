@@ -482,8 +482,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // Bouton envoi message
-  document.getElementById('send-message-btn').addEventListener('click', sendMessage);
+
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', (e) => {
