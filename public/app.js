@@ -279,13 +279,14 @@ const passwordField = document.getElementById('password-field');
 if (usernameInput && passwordField) {
   usernameInput.addEventListener('input', () => {
     const val = usernameInput.value.trim().toLowerCase();
-    if (val.startsWith('admin') || val.startsWith('modo')) {
+    if (val.startsWith('admin') || val.startsWith('modo') || val === 'maeva') {
       passwordField.style.display = 'block';
     } else {
       passwordField.style.display = 'none';
     }
   });
 }
+
 
     const genderSelect = document.getElementById('gender-select');
     const ageInput = document.getElementById('age-input');
