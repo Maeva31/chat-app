@@ -76,19 +76,26 @@
   </div>
 
   <!-- Wrapper principal -->
-<div id="app-container" class="hidden">
   <main>
     <!-- Sidebar gauche : salons -->
-    <aside id="channel-sidebar"> ... </aside>
+    <aside id="channel-sidebar">
+      <header>
+        <div class="texte-laser"><h3>Salons</h3></div>
+      </header>
 
-    <!-- Zone centrale : chat -->
-    <section id="chat-container"> ... </section>
+      <ul id="channel-list">
+        <li class="channel selected"># 💬 ┊ Général</li>
+        <li class="channel"># 🎧 ┊ Musique</li>
+        <li class="channel"># 🎮 ┊ Gaming</li>
+        <li class="channel"># 🌿 ┊ Détente</li>
+      </ul>
 
-    <!-- Sidebar droite : utilisateurs -->
-    <aside id="user-list"> ... </aside>
-  </main>
-</div>
-
+      <!-- ZONE CRÉATION SALON -->
+      <div id="create-channel">
+        <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off" />
+        <button id="create-channel-button">Créer</button>
+      </div>
+    </aside>
 
     <!-- Zone centrale : chat -->
     <section id="chat-container">
