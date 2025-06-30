@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
 
     if (bannedUsers.has(username)) {
       socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', '/banned.html');  // Redirection vers page bannis
+      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
       return;
     }
 
@@ -166,7 +166,7 @@ io.on('connection', (socket) => {
 
     if (bannedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', '/banned.html');  // Redirection bannis si tente envoyer message
+      socket.emit('redirect', 'https://banned.maevakonnect.fr');  // Redirection bannis si tente envoyer message
       return;
     }
 
@@ -204,6 +204,7 @@ io.on('connection', (socket) => {
           }
           bannedUsers.add(targetName);
           io.to(targetUser.id).emit('banned');
+          io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis sur ban
           io.sockets.sockets.get(targetUser.id)?.disconnect(true);
           io.emit('server message', `${targetName} a été banni par ${user.username}`);
           console.log(`⚠️ ${user.username} a banni ${targetName}`);
@@ -219,12 +220,10 @@ io.on('connection', (socket) => {
             return;
           }
           io.to(targetUser.id).emit('kicked');
+          io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr'); // Redirection kick
           io.sockets.sockets.get(targetUser.id)?.disconnect(true);
           io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
           console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
-
-          // *** Ajout redirection kick côté client ***
-          io.to(targetUser.id).emit('redirect', '/kicked.html');
           return;
 
         case '/mute':
