@@ -249,5 +249,36 @@
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const emojiButton = document.getElementById('emoji-button');
+    const emojiPicker = document.getElementById('emoji-picker');
+    const messageInput = document.getElementById('message-input');
+
+    // Afficher / masquer le sélecteur
+    emojiButton.addEventListener('click', (e) => {
+      e.stopPropagation(); // Pour empêcher le clic global de fermer instantanément
+      emojiPicker.style.display = emojiPicker.style.display === 'none' || emojiPicker.style.display === '' ? 'flex' : 'none';
+    });
+
+    // Clic sur un émoji → insère et ferme
+    emojiPicker.addEventListener('click', (e) => {
+      if (e.target.classList.contains('emoji')) {
+        messageInput.value += e.target.textContent;
+        emojiPicker.style.display = 'none';
+        messageInput.focus();
+      }
+    });
+
+    // Clic hors picker → le fermer
+    document.addEventListener('click', (e) => {
+      if (!emojiPicker.contains(e.target) && e.target !== emojiButton) {
+        emojiPicker.style.display = 'none';
+      }
+    });
+  });
+</script>
+
 </body>
 </html>
