@@ -278,7 +278,6 @@ main {
 }
 
 /* === MODAL === */
-/* === MODAL === */
 .modal {
   position: fixed;
   top: 0;
@@ -308,6 +307,7 @@ main {
   border: 2px solid #444;
   animation: popIn 0.4s ease;
 }
+
 
 .modal-content h2 {
   margin-bottom: 1em;
