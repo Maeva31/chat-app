@@ -250,12 +250,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Soumission du formulaire de pseudo (CORRECTION ICI)
+  // Soumission du formulaire de pseudo
   function submitUserInfo() {
     const usernameInput = document.getElementById('username-input');
     const genderSelect = document.getElementById('gender-select');
     const ageInput = document.getElementById('age-input');
-    const passwordInput = document.getElementById('password-input');  // nouveau
     const modalError = document.getElementById('modal-error');
 
     if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
@@ -263,7 +262,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = usernameInput.value.trim();
     const gender = genderSelect.value;
     const age = parseInt(ageInput.value.trim(), 10);
-    const password = passwordInput ? passwordInput.value : '';  // nouveau
 
     if (!username || username.includes(' ') || username.length > 16) {
       modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
@@ -282,17 +280,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     modalError.style.display = 'none';
-
-    let passwordToSend = password;
-
-    // Demander mot de passe si admin/modo et pas déjà fourni
-    if ((modData?.admins?.includes(username) || modData?.modos?.includes(username)) && !password) {
-      passwordToSend = prompt("Entrez votre mot de passe pour " + username) || '';
-    }
-
-    socket.emit('set username', { username, gender, age, invisible: invisibleMode, password: passwordToSend });
+    socket.emit('set username', { username, gender, age, invisible: invisibleMode });
   }
-
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
   socket.once('username accepted', ({ username, gender, age }) => {
@@ -429,96 +418,142 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Envoi message avec touche Entrée
-  document.getElementById('message-input').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
+  document.getElementById('message-input').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
       e.preventDefault();
       sendMessage();
     }
   });
 
-  // Bouton envoyer message
-  document.getElementById('send-button').addEventListener('click', () => {
-    sendMessage();
-  });
+  // À la connexion socket, on renvoie infos utilisateur + joinRoom
+  socket.on('connect', () => {
+    const savedUsername = localStorage.getItem('username');
+    const savedGender = localStorage.getItem('gender');
+    const savedAge = localStorage.getItem('age');
 
-  // Envoi modal pseudo (bouton)
-  document.getElementById('submit-username').addEventListener('click', () => {
-    submitUserInfo();
-  });
-
-  // Envoi modal pseudo (Entrée)
-  ['username-input', 'gender-select', 'age-input'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) {
-      el.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          submitUserInfo();
-        }
+    if (!hasSentUserInfo && savedUsername && savedAge) {
+      socket.emit('set username', {
+        username: savedUsername,
+        gender: savedGender || 'non spécifié',
+        age: savedAge,
+        invisible: invisibleMode
       });
+      const savedChannel = localStorage.getItem('currentChannel') || 'Général';
+      socket.emit('joinRoom', savedChannel);
+      selectChannelInUI(savedChannel);
+      hasSentUserInfo = true;
+      initialLoadComplete = true;
+
+      if (invisibleMode) {
+        showBanner('Mode invisible activé (auto)', 'success');
+      }
     }
   });
 
-  // Récupérer données depuis localStorage et auto connecter si déjà défini
-  const savedGender = localStorage.getItem('gender');
-  const savedAge = localStorage.getItem('age');
-  const invisibleSaved = localStorage.getItem('invisibleMode') === 'true';
+  // Bouton validation pseudo
+  document.getElementById('username-submit').addEventListener('click', submitUserInfo);
 
-  if (savedUsername && savedGender && savedAge) {
-    let password = '';
-    if (modData?.admins?.includes(savedUsername) || modData?.modos?.includes(savedUsername)) {
-      // Demander mot de passe admin/modo au chargement (temporaire prompt)
-      password = prompt("Entrez votre mot de passe pour " + savedUsername) || '';
-    }
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender,
-      age: Number(savedAge),
-      invisible: invisibleSaved,
-      password
+  // Emoji Picker
+  const emojiButton = document.getElementById('emoji-button');
+  const emojiPicker = document.getElementById('emoji-picker');
+  const messageInput = document.getElementById('message-input');
+
+  if (emojiPicker && emojiButton && messageInput) {
+    emojiPicker.style.display = 'none';
+
+    emojiButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
     });
-    hasSentUserInfo = true;
-    socket.emit('joinRoom', currentChannel);
+
+    emojiPicker.querySelectorAll('.emoji').forEach(emoji => {
+      emoji.style.cursor = 'pointer';
+      emoji.style.fontSize = '22px';
+      emoji.style.margin = '5px';
+      emoji.addEventListener('click', () => {
+        messageInput.value += emoji.textContent;
+        messageInput.focus();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      emojiPicker.style.display = 'none';
+    });
+
+    emojiPicker.addEventListener('click', e => {
+      e.stopPropagation();
+    });
   }
 
-  // Bouton mode invisible (visible uniquement si admin)
+  // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
+  socket.on('banned', () => {
+    showBanner('🚫 Vous avez été banni du serveur.', 'error');
+    socket.disconnect();
+  });
+
+  socket.on('kicked', () => {
+    showBanner('👢 Vous avez été expulsé du serveur.', 'error');
+    socket.disconnect();
+  });
+
+  socket.on('muted', () => {
+    showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
+  });
+
+  socket.on('unmuted', () => {
+    showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
+  });
+
+  socket.on('error message', (msg) => {
+    showBanner(`❗ ${msg}`, 'error');
+  });
+
+  socket.on('no permission', () => {
+    showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
+  });
+
+  // --- Début ajout mode invisible ---
+
   if (invisibleBtn) {
     invisibleBtn.addEventListener('click', () => {
-      if (!hasSentUserInfo) return;
-
-      if (!isAdmin) {
-        showBanner('Mode invisible réservé aux administrateurs.', 'error');
-        return;
-      }
-
       invisibleMode = !invisibleMode;
-      localStorage.setItem('invisibleMode', invisibleMode);
       updateInvisibleButton();
+
+      localStorage.setItem('invisibleMode', invisibleMode ? 'true' : 'false');
 
       if (invisibleMode) {
         socket.emit('chat message', { message: '/invisible on' });
+        showBanner('Mode invisible activé', 'success');
+        invisibleBtn.style.display = 'inline-block';
       } else {
         socket.emit('chat message', { message: '/invisible off' });
+        showBanner('Mode invisible désactivé', 'success');
+        if (!isAdmin) {
+          invisibleBtn.style.display = 'none';
+        }
       }
     });
   }
 
-  // Gestion erreurs serveur
-  socket.on('error message', (msg) => showBanner(msg, 'error'));
-  socket.on('server message', (msg) => showBanner(msg, 'success'));
-  socket.on('no permission', () => showBanner('Permission refusée.', 'error'));
-
-  // Affiche le bouton invisible seulement si admin (reçoit info via un message serveur ici)
+  // Mise à jour bouton mode invisible selon rôle
   socket.on('user list', (users) => {
-    const me = users.find(u => u.id === socket.id);
+    const username = localStorage.getItem('username');
+    const me = users.find(u => u.username === username);
     if (me && me.role === 'admin') {
-      isAdmin = true;
-      if (invisibleBtn) invisibleBtn.style.display = 'inline-block';
-      updateInvisibleButton();
+      if (!isAdmin) isAdmin = true;
+      if (invisibleBtn) {
+        invisibleBtn.style.display = 'inline-block';
+        updateInvisibleButton();
+      }
     } else {
-      isAdmin = false;
-      if (invisibleBtn) invisibleBtn.style.display = 'none';
+      if (isAdmin) {
+        isAdmin = false;
+        if (!invisibleMode && invisibleBtn) {
+          invisibleBtn.style.display = 'none';
+        }
+      }
     }
   });
 
+  // --- Fin ajout mode invisible ---
 });
