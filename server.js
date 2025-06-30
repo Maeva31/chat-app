@@ -10,20 +10,17 @@ const io = new Server(server);
 const MAX_HISTORY = 10;
 const MAX_ROOMS = 50;
 
-// Structure des utilisateurs connectés
-// { username: { id, username, gender, age, role, banned, muted, invisible } }
-let users = {};
-
-let messageHistory = {};  // { roomName: [messages] }
-let roomUsers = {};       // { roomName: [users] }
-let userChannels = {};    // { socket.id: roomName }
+let users = {};           // { username: { id, username, gender, age, role, banned, muted, invisible } }
+let messageHistory = {};
+let roomUsers = {};
+let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis
 let mutedUsers = new Set();    // pseudos mutés
 
 // Propriétaires des salons créés (salon => username)
 let roomOwners = {};
 
-// Chargement des modérateurs depuis fichier JSON
+// Chargement des modérateurs
 let modData = { admins: [], modos: [] };
 try {
   const data = fs.readFileSync('moderators.json', 'utf-8');
@@ -32,7 +29,6 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
-// Salons par défaut
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
 let savedRooms = [];
 try {
@@ -42,7 +38,6 @@ try {
   savedRooms = [...defaultRooms];
 }
 
-// Fusion des salons et initialisation des historiques et listes utilisateurs
 savedRooms = [...new Set([...defaultRooms, ...savedRooms])];
 savedRooms.forEach(room => {
   if (!messageHistory[room]) messageHistory[room] = [];
@@ -55,14 +50,12 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
-// Récupérer rôle utilisateur selon modérateurs chargés
 function getUserRole(username) {
   if (modData.admins.includes(username)) return 'admin';
   if (modData.modos.includes(username)) return 'modo';
   return 'user';
 }
 
-// Sauvegarder modérateurs dans le fichier
 function saveModerators() {
   try {
     fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
@@ -71,7 +64,6 @@ function saveModerators() {
   }
 }
 
-// Met à jour les compteurs utilisateurs visibles par salon
 function updateRoomUserCounts() {
   const counts = {};
   for (const [channel, list] of Object.entries(roomUsers)) {
@@ -80,14 +72,13 @@ function updateRoomUserCounts() {
   io.emit('roomUserCounts', counts);
 }
 
-// Envoie la liste des utilisateurs d'un salon en excluant les invisibles
+// Envoie la liste des utilisateurs en excluant les invisibles
 function emitUserList(channel) {
   if (!roomUsers[channel]) return;
   const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
   io.to(channel).emit('user list', visibleUsers);
 }
 
-// Supprime les salons dynamiques vides pour ne pas surcharger
 function cleanupEmptyDynamicRooms() {
   for (const room of savedRooms) {
     if (!defaultRooms.includes(room)) {
@@ -95,6 +86,7 @@ function cleanupEmptyDynamicRooms() {
         delete messageHistory[room];
         delete roomUsers[room];
         savedRooms = savedRooms.filter(r => r !== room);
+        // Supprimer propriétaire du salon
         delete roomOwners[room];
         fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
         console.log(`❌ Salon supprimé (vide) : ${room}`);
@@ -105,12 +97,14 @@ function cleanupEmptyDynamicRooms() {
   updateRoomUserCounts();
 }
 
-// Fonction utilitaire pour retirer un modo (rétrogradation)
+// Fonction utilitaire pour retirer un modo
 function demoteModo(username) {
   if (!users[username]) return false;
 
+  // Remettre rôle user en mémoire serveur
   users[username].role = 'user';
 
+  // Retirer de la liste modos JSON
   const index = modData.modos.indexOf(username);
   if (index !== -1) {
     modData.modos.splice(index, 1);
@@ -208,21 +202,27 @@ io.on('connection', (socket) => {
     }
 
     if (msg.message.startsWith('/')) {
-      // Gestion commandes
+      // Gestion commandes avec vérification des droits propriétaires/modo/admin
 
       const args = msg.message.trim().split(/\s+/);
       const cmd = args[0].toLowerCase();
       const targetName = args[1];
       const targetUser = Object.values(users).find(u => u.username === targetName);
 
+      // Utilisateur est admin ou modo
       const isAdmin = user.role === 'admin';
       const isModo = user.role === 'modo';
 
+      // Salle actuelle
       const currentRoom = userChannels[socket.id];
+
+      // Vérifier si user est proprio du salon (salon dynamique uniquement)
       const isOwner = roomOwners[currentRoom] === user.username;
 
+      // Protection rôles des cibles
       const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
 
+      // Interdire auto ban/mute/kick
       if (targetName === user.username && ['/ban', '/mute', '/kick'].includes(cmd)) {
         socket.emit('error message', `Vous ne pouvez pas vous ${cmd.slice(1)} vous-même.`);
         return;
@@ -233,12 +233,17 @@ io.on('connection', (socket) => {
         case '/kick':
         case '/mute':
         case '/unmute':
+          // Vérification permissions :
+          // Admin peut partout
+          // Modo peut partout sauf contre admin/modo
+          // Proprio salon peut dans son salon seulement et pas sur admin/modo
 
           if (!isAdmin && !isModo && !isOwner) {
             socket.emit('no permission');
             return;
           }
 
+          // Proprio ne peut modérer que dans son salon
           if (isOwner && currentRoom !== userChannels[targetUser?.id]) {
             socket.emit('error message', "Vous ne pouvez modérer que dans votre salon.");
             return;
@@ -320,6 +325,7 @@ io.on('connection', (socket) => {
           }
           return;
 
+        // Nouvelle commande /addmodo uniquement admin
         case '/addmodo':
           if (!isAdmin) {
             socket.emit('error message', 'Seuls les administrateurs peuvent ajouter des modérateurs.');
@@ -339,6 +345,7 @@ io.on('connection', (socket) => {
           }
           modData.modos.push(targetName);
           saveModerators();
+          // Mise à jour rôle dans users
           if (users[targetName]) {
             users[targetName].role = 'modo';
             io.to(users[targetName].id).emit('server message', 'Vous avez été promu modérateur.');
@@ -347,6 +354,7 @@ io.on('connection', (socket) => {
           console.log(`⚠️ ${user.username} a promu ${targetName} en modérateur`);
           return;
 
+        // Nouvelle commande /removemodo uniquement admin
         case '/removemodo':
           if (!isAdmin) {
             socket.emit('error message', 'Seuls les administrateurs peuvent retirer des modérateurs.');
@@ -503,10 +511,6 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = roomUsers[newChannel].filter(u => u.id !== socket.id);
       roomUsers[newChannel].push(user);
 
-      socket.emit('chat history', messageHistory[newChannel]);
-      emitUserList(newChannel);
-      updateRoomUserCounts();
-
       if (!user.invisible) {
         io.to(newChannel).emit('chat message', {
           username: 'Système',
@@ -514,6 +518,7 @@ io.on('connection', (socket) => {
           timestamp: new Date().toISOString(),
           channel: newChannel
         });
+
         io.to(oldChannel).emit('chat message', {
           username: 'Système',
           message: `${user.username} a quitté le salon ${oldChannel}`,
@@ -521,70 +526,131 @@ io.on('connection', (socket) => {
           channel: oldChannel
         });
       }
-    }
-  });
-
-  socket.on('createRoom', (roomName) => {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
-
-    if (!roomName || typeof roomName !== 'string' || roomName.length > 20 || /\s/.test(roomName)) {
-      socket.emit('error message', 'Nom de salon invalide (max 20 caractères, pas d’espaces).');
-      return;
-    }
-
-    if (savedRooms.includes(roomName)) {
-      socket.emit('error message', 'Ce salon existe déjà.');
-      return;
-    }
-
-    if (savedRooms.length >= MAX_ROOMS) {
-      socket.emit('error message', 'Nombre maximum de salons atteint.');
-      return;
-    }
-
-    savedRooms.push(roomName);
-    messageHistory[roomName] = [];
-    roomUsers[roomName] = [];
-    roomOwners[roomName] = user.username;
-    fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
-
-    io.emit('room list', savedRooms);
-    io.emit('server message', `Le salon ${roomName} a été créé par ${user.username}`);
-    console.log(`🆕 Salon créé : ${roomName} par ${user.username}`);
-  });
-
-  socket.on('disconnect', () => {
-    // Nettoyage à la déconnexion
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
-
-    const channel = userChannels[socket.id];
-    if (channel && roomUsers[channel]) {
-      roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
-      emitUserList(channel);
-
-      if (!user.invisible) {
-        io.to(channel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a quitté le salon ${channel}`,
-          timestamp: new Date().toISOString(),
-          channel
-        });
+    } else {
+      if (!roomUsers[newChannel].some(u => u.id === socket.id)) {
+        roomUsers[newChannel].push(user);
       }
     }
 
-    delete users[user.username];
-    delete userChannels[socket.id];
-
+    socket.emit('chat history', messageHistory[newChannel]);
+    emitUserList(newChannel);
+    socket.emit('joinedRoom', newChannel);
+    updateRoomUserCounts();
     cleanupEmptyDynamicRooms();
+  });
+
+  socket.on('createRoom', (newChannel) => {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
+
+    if (mutedUsers.has(user.username)) {
+      socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
+      return;
+    }
+
+    if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
+      return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
+    }
+
+    if (savedRooms.includes(newChannel)) {
+      return socket.emit('room exists', newChannel);
+    }
+
+    if (savedRooms.length >= MAX_ROOMS) {
+      return socket.emit('error', 'Nombre maximum de salons atteint.');
+    }
+
+    messageHistory[newChannel] = [];
+    roomUsers[newChannel] = [];
+    savedRooms.push(newChannel);
+    savedRooms = [...new Set(savedRooms)];
+
+    // Assignation du propriétaire
+    roomOwners[newChannel] = user.username;
+
+    fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
+    console.log(`🆕 Salon créé : ${newChannel} par ${user.username}`);
+
+    const oldChannel = userChannels[socket.id];
+    if (oldChannel && oldChannel !== newChannel) {
+      socket.leave(oldChannel);
+      if (roomUsers[oldChannel]) {
+        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+        emitUserList(oldChannel);
+      }
+
+      io.to(oldChannel).emit('chat message', {
+        username: 'Système',
+        message: `${user.username} a quitté le salon ${oldChannel}`,
+        timestamp: new Date().toISOString(),
+        channel: oldChannel
+      });
+    }
+
+    userChannels[socket.id] = newChannel;
+    socket.join(newChannel);
+    roomUsers[newChannel].push(user);
+    console.log(`${user.username} a rejoint le salon ${newChannel}`);
+
+    socket.emit('room created', newChannel);
+    io.emit('room list', savedRooms);
     updateRoomUserCounts();
 
-    console.log(`❌ Déconnexion : ${user.username} (${socket.id})`);
+    socket.emit('chat history', messageHistory[newChannel]);
+
+    io.to(newChannel).emit('chat message', {
+      username: 'Système',
+      message: `Bienvenue dans le salon ${newChannel} créé par ${user.username}!`,
+      timestamp: new Date().toISOString(),
+      channel: newChannel
+    });
+
+    emitUserList(newChannel);
+
+    socket.emit('joinedRoom', newChannel);
+    cleanupEmptyDynamicRooms();
   });
+
+  socket.on('request history', (roomName) => {
+    if (roomName && messageHistory[roomName]) {
+      socket.emit('chat history', messageHistory[roomName]);
+    }
+  });
+
+  socket.on('disconnect', () => {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (user) {
+      console.log(`❌ Déconnexion : ${user.username}`);
+
+      const room = userChannels[socket.id];
+      if (room) {
+        if (!user.invisible) {
+          io.to(room).emit('chat message', {
+            username: 'Système',
+            message: `${user.username} a quitté le serveur`,
+            timestamp: new Date().toISOString(),
+            channel: room
+          });
+        }
+      }
+
+      for (const channel in roomUsers) {
+        roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+        emitUserList(channel);
+      }
+
+      delete users[user.username];
+      delete userChannels[socket.id];
+
+      cleanupEmptyDynamicRooms();
+    } else {
+      console.log(`❌ Déconnexion inconnue : ${socket.id}`);
+    }
+  });
+
 });
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(`Serveur lancé sur le port ${PORT}`);
+  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
 });
