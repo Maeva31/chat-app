@@ -554,3 +554,6 @@ button:focus {
   width: 100%;          /* Prend toute la largeur disponible */
   user-select: none;    /* Optionnel : empêche la sélection du texte */
 }
+#chat-container {
+  display: none;
+}
