@@ -23,24 +23,6 @@ document.addEventListener('DOMContentLoaded', () => {
     "Détente": "🌿"
   };
 
-  // === AJOUT DYNAMIQUE CHAMP MOT DE PASSE ===
-  const usernameInput = document.getElementById('username-input');
-  const passwordInput = document.getElementById('role-password');
-  const passwordLabel = document.getElementById('password-label');
-
-  usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.toLowerCase();
-    if (val.includes('admin') || val.includes('modo')) {
-      passwordInput.style.display = 'block';
-      passwordLabel.style.display = 'block';
-    } else {
-      passwordInput.style.display = 'none';
-      passwordLabel.style.display = 'none';
-      passwordInput.value = '';
-    }
-  });
-  // === FIN AJOUT ===
-
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
   if (!savedUsername) {
@@ -273,50 +255,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const usernameInput = document.getElementById('username-input');
     const genderSelect = document.getElementById('gender-select');
     const ageInput = document.getElementById('age-input');
-    const passwordInput = document.getElementById('role-password'); // Champ mot de passe
     const modalError = document.getElementById('modal-error');
 
-    if (!usernameInput || !genderSelect || !ageInput || !modalError || !passwordInput) return;
+    if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
 
     const username = usernameInput.value.trim();
     const gender = genderSelect.value;
     const age = parseInt(ageInput.value.trim(), 10);
-    const password = passwordInput.value.trim();
 
     if (!username || username.includes(' ') || username.length > 16) {
       modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
       modalError.style.display = 'block';
       return;
     }
-
     if (isNaN(age) || age < 18 || age > 89) {
       modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
       modalError.style.display = 'block';
       return;
     }
-
     if (!gender) {
       modalError.textContent = "Veuillez sélectionner un genre.";
       modalError.style.display = 'block';
       return;
     }
 
-    // Vérifie mot de passe si pseudo contient admin ou modo (insensible à la casse)
-    if (/admin|modo/i.test(username) && !password) {
-      modalError.textContent = "Mot de passe requis pour ce pseudo.";
-      modalError.style.display = 'block';
-      return;
-    }
-
     modalError.style.display = 'none';
-
-    socket.emit('set username', {
-      username,
-      gender,
-      age,
-      invisible: invisibleMode,
-      password: password || null // envoie le mot de passe uniquement si rempli
-    });
+    socket.emit('set username', { username, gender, age, invisible: invisibleMode });
   }
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
@@ -479,27 +443,117 @@ document.addEventListener('DOMContentLoaded', () => {
       selectChannelInUI(savedChannel);
       hasSentUserInfo = true;
       initialLoadComplete = true;
+
+      if (invisibleMode) {
+        showBanner('Mode invisible activé (auto)', 'success');
+      }
     }
   });
 
-
-
-
   // Bouton validation pseudo
-  document.getElementById('username-submit').addEventListener('click', (e) => {
-    e.preventDefault();
-    submitUserInfo();
-  });
+  document.getElementById('username-submit').addEventListener('click', submitUserInfo);
 
-  // Bouton toggle invisible (visible que si admin)
-  if (invisibleBtn) {
-    invisibleBtn.addEventListener('click', () => {
-      invisibleMode = !invisibleMode;
-      localStorage.setItem('invisibleMode', invisibleMode);
-      updateInvisibleButton();
-      socket.emit('set invisible', invisibleMode);
-      showBanner(`Mode invisible ${invisibleMode ? 'activé' : 'désactivé'}`, 'success');
+  // Emoji Picker
+  const emojiButton = document.getElementById('emoji-button');
+  const emojiPicker = document.getElementById('emoji-picker');
+  const messageInput = document.getElementById('message-input');
+
+  if (emojiPicker && emojiButton && messageInput) {
+    emojiPicker.style.display = 'none';
+
+    emojiButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+    });
+
+    emojiPicker.querySelectorAll('.emoji').forEach(emoji => {
+      emoji.style.cursor = 'pointer';
+      emoji.style.fontSize = '22px';
+      emoji.style.margin = '5px';
+      emoji.addEventListener('click', () => {
+        messageInput.value += emoji.textContent;
+        messageInput.focus();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      emojiPicker.style.display = 'none';
+    });
+
+    emojiPicker.addEventListener('click', e => {
+      e.stopPropagation();
     });
   }
 
+  // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
+  socket.on('banned', () => {
+    showBanner('🚫 Vous avez été banni du serveur.', 'error');
+    socket.disconnect();
+  });
+
+  socket.on('kicked', () => {
+    showBanner('👢 Vous avez été expulsé du serveur.', 'error');
+    socket.disconnect();
+  });
+
+  socket.on('muted', () => {
+    showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
+  });
+
+  socket.on('unmuted', () => {
+    showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
+  });
+
+  socket.on('error message', (msg) => {
+    showBanner(`❗ ${msg}`, 'error');
+  });
+
+  socket.on('no permission', () => {
+    showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
+  });
+
+  // --- Début ajout mode invisible ---
+
+  if (invisibleBtn) {
+    invisibleBtn.addEventListener('click', () => {
+      invisibleMode = !invisibleMode;
+      updateInvisibleButton();
+
+      localStorage.setItem('invisibleMode', invisibleMode ? 'true' : 'false');
+
+      if (invisibleMode) {
+        socket.emit('chat message', { message: '/invisible on' });
+        showBanner('Mode invisible activé', 'success');
+        invisibleBtn.style.display = 'inline-block';
+      } else {
+        socket.emit('chat message', { message: '/invisible off' });
+        showBanner('Mode invisible désactivé', 'success');
+        if (!isAdmin) {
+          invisibleBtn.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  // Mise à jour bouton mode invisible selon rôle
+  socket.on('user list', (users) => {
+    const username = localStorage.getItem('username');
+    const me = users.find(u => u.username === username);
+    if (me && me.role === 'admin') {
+      if (!isAdmin) isAdmin = true;
+      if (invisibleBtn) {
+        invisibleBtn.style.display = 'inline-block';
+        updateInvisibleButton();
+      }
+    } else {
+      if (isAdmin) {
+        isAdmin = false;
+        if (!invisibleMode && invisibleBtn) {
+          invisibleBtn.style.display = 'none';
+        }
+      }
+    }
+  });
+
+  // --- Fin ajout mode invisible ---
 });
