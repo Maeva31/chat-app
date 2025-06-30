@@ -14,9 +14,8 @@ let users = {};           // { username: { id, username, gender, age, role, bann
 let messageHistory = {};
 let roomUsers = {};
 let userChannels = {};
-let bannedUsersPerRoom = {};   // { roomName: Set(username) }
-let mutedUsersPerRoom = {};    // { roomName: Set(username) }
-
+let bannedUsers = new Set();   // pseudos bannis
+let mutedUsers = new Set();    // pseudos mutés
 
 // Propriétaires des salons créés (salon => username)
 let roomOwners = {};
@@ -654,4 +653,4 @@ io.on('connection', (socket) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(🚀 Serveur démarré sur http://localhost:${PORT});
-});
+}); 
