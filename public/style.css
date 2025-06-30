@@ -548,7 +548,7 @@ button:focus {
 
 #user-list .texte-laser {
   flex: 0 0 auto;
-  margin-bottom: 5px; /* ou 0 */
+  margin-bottom: 0px; /* ou 0 */
   text-align: center;
   white-space: nowrap;
   width: 100%;
