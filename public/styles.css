@@ -1,0 +1,388 @@
+/* === BARRE SUPÉRIEURE === */
+#top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: #111;
+  color: #00ffff;
+  text-align: center;
+  line-height: 40px;
+  font-weight: bold;
+  font-size: 1em;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
+  z-index: 1001;
+}
+
+/* === GENERAL === */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  padding-top: 40px; /* pour laisser la place à #top-bar */
+}
+
+/* === LAYOUT === */
+main {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 40px);
+}
+
+#content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* === CHANNEL SIDEBAR (LEFT) === */
+#channel-sidebar {
+  flex: 1;
+  min-width: 200px;
+  background: #222222b8;
+  padding: 1em;
+  border-right: 2px solid #333;
+  border-radius: 10px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+}
+
+#channel-sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  text-align: center;
+  color: #00ffff;
+}
+
+#channel-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1em 0;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 70px;
+}
+
+#channel-list .channel {
+  padding: 0.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  transition: 0.2s ease;
+}
+
+#channel-list .channel:hover {
+  background-color: #444;
+}
+
+#channel-list .channel.selected {
+  background-color: #00ffff;
+  color: black;
+  font-weight: bold;
+}
+
+/* === CRÉATION SALON === */
+#create-channel {
+  position: absolute;
+  bottom: 60px;
+  left: 1em;
+  right: 1em;
+  display: flex;
+  gap: 5px;
+  border-top: 1px solid #444;
+  background: #222222b8;
+  padding-top: 10px;
+  flex-wrap: nowrap;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+#create-channel input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5em;
+  border: none;
+  border-radius: 6px;
+  background-color: #121212;
+  color: white;
+  font-size: 1em;
+  box-sizing: border-box;
+  outline: none;
+}
+
+#create-channel button {
+  flex-shrink: 0;
+  padding: 0.5em 0.8em;
+  border: none;
+  border-radius: 6px;
+  background-color: #00ffff;
+  color: #000;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+/* === CHAT CONTAINER (CENTER) === */
+#chat-container {
+  flex: 6;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  background: #222222b8;
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.chat-messages .message {
+  margin-bottom: 1em;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.4;
+  word-break: break-word;
+  animation: fadeInUp 0.3s ease;
+}
+
+#chat-input {
+  display: flex;
+  gap: 10px;
+}
+
+#message-input {
+  flex: 1;
+  padding: 1em;
+  font-size: 1em;
+  border-radius: 5px;
+  border: none;
+  background-color: #121212;
+  color: white;
+  outline: none;
+}
+
+/* === ENVOI MESSAGE === */
+#send-button {
+  padding: 0.5em 1em;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+}
+
+/* === USER LIST (RIGHT SIDEBAR) === */
+#user-list {
+  flex: 1;
+  background: #222222b8;
+  padding: 1em;
+  border-left: 2px solid #333;
+  border-radius: 10px;
+}
+
+#users {
+  list-style: none;
+  padding: 0;
+}
+
+#users li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 0.5em;
+}
+
+.gender-square {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+  background-color: #aaa;
+}
+
+.age-span {
+  color: #000;
+}
+
+.username-span {
+  color: #000;
+  font-weight: bold;
+  font-size: 1.1em;
+}
+
+#users li.selected {
+  background-color: #333;
+  border-left: 4px solid #00ffff;
+  padding-left: 6px;
+  border-radius: 5px;
+}
+
+.clickable-username {
+  color: #00ffff;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.clickable-username:hover {
+  text-decoration: none;
+  color: #ff00ff;
+}
+
+/* === MODAL === */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000000;
+  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+.modal-content {
+  background: #1e1e1e;
+  padding: 2.5em;
+  border-radius: 15px;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  border: 2px solid #444;
+  animation: popIn 0.4s ease;
+}
+
+.modal-content h2 {
+  margin-bottom: 1em;
+  font-size: 1.8em;
+  color: #00ffff;
+}
+
+.modal-content label {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 0.2em;
+  font-size: 1em;
+  color: #ccc;
+  text-align: left;
+}
+
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 0.8em;
+  margin-bottom: 1em;
+  border: none;
+  border-radius: 8px;
+  background-color: #2c2c2c;
+  color: white;
+  font-size: 1em;
+  transition: 0.3s ease;
+  outline: none;
+}
+
+.modal-content input:focus,
+.modal-content select:focus {
+  box-shadow: 0 0 10px #00ffff;
+  background-color: #353535;
+}
+
+.modal-content button {
+  background: linear-gradient(to right, #00ffff, #ff00ff);
+  color: white;
+  border: none;
+  padding: 0.8em;
+  font-size: 1.1em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.modal-content button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #00ffff;
+}
+
+#modal-error {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: #ff4d4d;
+  display: none;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+  }
+
+  #channel-sidebar,
+  #user-list {
+    width: 100%;
+    border: none;
+    border-top: 2px solid #333;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  #chat-container {
+    padding: 0.5em;
+  }
+
+  #create-channel {
+    position: static;
+    margin-top: 1em;
+    background: none;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #create-channel button {
+    width: 100%;
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
