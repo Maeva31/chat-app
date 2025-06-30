@@ -457,16 +457,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const invisibleSaved = localStorage.getItem('invisibleMode') === 'true';
 
   if (savedUsername && savedGender && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender,
-      age: Number(savedAge),
-      invisible: invisibleSaved,
-      password: '' // Pas stocké, à demander à chaque connexion admin/mode
-    });
-    hasSentUserInfo = true;
-    socket.emit('joinRoom', currentChannel);
+  let password = '';
+  if (modData.admins.includes(savedUsername) || modData.modos.includes(savedUsername)) {
+    // Impossible côté client sans données, il faut demander le mot de passe ici
+    // Par exemple prompt (temporaire) :
+    password = prompt("Entrez votre mot de passe pour " + savedUsername) || '';
   }
+  socket.emit('set username', {
+    username: savedUsername,
+    gender: savedGender,
+    age: Number(savedAge),
+    invisible: invisibleSaved,
+    password
+  });
+  hasSentUserInfo = true;
+  socket.emit('joinRoom', currentChannel);
+}
+
 
   // Bouton mode invisible (visible uniquement si admin)
   if (invisibleBtn) {
