@@ -397,14 +397,14 @@ io.on('connection', (socket) => {
   });
 
   socket.on('createRoom', (newChannel) => {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
+  const user = Object.values(users).find(u => u.id === socket.id);
+  if (!user) return;
 
-    if (mutedUsers.has(user.username)) {
-      socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
-      socket.emit('redirect', '/muted.html');
-      return;
-    }
+  if (mutedUsers.has(user.username)) {
+    socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
+    // Retiré la ligne de redirection
+    return;
+  }
 
     if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
       return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
