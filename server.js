@@ -56,6 +56,14 @@ function getUserRole(username) {
   return 'user';
 }
 
+function saveModerators() {
+  try {
+    fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+  } catch (e) {
+    console.error('Erreur lors de la sauvegarde de moderators.json :', e);
+  }
+}
+
 function updateRoomUserCounts() {
   const counts = {};
   for (const [channel, list] of Object.entries(roomUsers)) {
@@ -87,6 +95,23 @@ function cleanupEmptyDynamicRooms() {
     }
   }
   updateRoomUserCounts();
+}
+
+// Fonction utilitaire pour retirer un modo
+function demoteModo(username) {
+  if (!users[username]) return false;
+
+  // Remettre rôle user en mémoire serveur
+  users[username].role = 'user';
+
+  // Retirer de la liste modos JSON
+  const index = modData.modos.indexOf(username);
+  if (index !== -1) {
+    modData.modos.splice(index, 1);
+    saveModerators();
+    return true;
+  }
+  return false;
 }
 
 io.on('connection', (socket) => {
@@ -319,7 +344,7 @@ io.on('connection', (socket) => {
             return;
           }
           modData.modos.push(targetName);
-          fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+          saveModerators();
           // Mise à jour rôle dans users
           if (users[targetName]) {
             users[targetName].role = 'modo';
@@ -327,6 +352,34 @@ io.on('connection', (socket) => {
           }
           io.emit('server message', `${targetName} a été promu modérateur par ${user.username}`);
           console.log(`⚠️ ${user.username} a promu ${targetName} en modérateur`);
+          return;
+
+        // Nouvelle commande /removemodo uniquement admin
+        case '/removemodo':
+          if (!isAdmin) {
+            socket.emit('error message', 'Seuls les administrateurs peuvent retirer des modérateurs.');
+            return;
+          }
+          if (!targetName) {
+            socket.emit('error message', 'Usage : /removemodo <pseudo>');
+            return;
+          }
+          if (!targetUser) {
+            socket.emit('error message', `L'utilisateur ${targetName} n'existe pas.`);
+            return;
+          }
+          if (!modData.modos.includes(targetName)) {
+            socket.emit('error message', `L'utilisateur ${targetName} n'est pas modérateur.`);
+            return;
+          }
+          const success = demoteModo(targetName);
+          if (success) {
+            io.emit('server message', `${targetName} n'est plus modérateur.`);
+            io.emit('user list', Object.values(users));
+            console.log(`⚠️ ${user.username} a retiré ${targetName} du statut modérateur`);
+          } else {
+            socket.emit('error message', 'Impossible de retirer ce modérateur.');
+          }
           return;
 
         case '/invisible':
@@ -339,32 +392,31 @@ io.on('connection', (socket) => {
             return;
           }
           const param = args[1].toLowerCase();
-          const channel = userChannels[socket.id];
           if (param === 'on') {
             user.invisible = true;
-            if (roomUsers[channel]) {
-              const u = roomUsers[channel].find(u => u.id === socket.id);
+            if (roomUsers[currentRoom]) {
+              const u = roomUsers[currentRoom].find(u => u.id === socket.id);
               if (u) u.invisible = true;
             }
             socket.emit('server message', 'Mode invisible activé.');
             console.log(`🔍 ${user.username} a activé le mode invisible.`);
-            emitUserList(channel);
+            emitUserList(currentRoom);
             updateRoomUserCounts();
           } else if (param === 'off') {
             user.invisible = false;
-            if (roomUsers[channel]) {
-              const u = roomUsers[channel].find(u => u.id === socket.id);
+            if (roomUsers[currentRoom]) {
+              const u = roomUsers[currentRoom].find(u => u.id === socket.id);
               if (u) u.invisible = false;
             }
             socket.emit('server message', 'Mode invisible désactivé.');
             console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
-            emitUserList(channel);
+            emitUserList(currentRoom);
             updateRoomUserCounts();
-            io.to(channel).emit('chat message', {
+            io.to(currentRoom).emit('chat message', {
               username: 'Système',
               message: `${user.username} est maintenant visible.`,
               timestamp: new Date().toISOString(),
-              channel
+              channel: currentRoom
             });
           } else {
             socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
@@ -372,7 +424,6 @@ io.on('connection', (socket) => {
           return;
 
         case '/closeRoom':
-          // Nouveau : suppression salon par le proprio
           if (!roomOwners[currentRoom]) {
             socket.emit('error message', 'Ce salon ne peut pas être fermé.');
             return;
@@ -386,7 +437,6 @@ io.on('connection', (socket) => {
             return;
           }
 
-          // Déconnecter tous les utilisateurs de ce salon vers "Général"
           const usersToMove = roomUsers[currentRoom] || [];
           for (const u of usersToMove) {
             userChannels[u.id] = 'Général';
