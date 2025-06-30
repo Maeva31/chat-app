@@ -274,16 +274,15 @@ main {
   color: #000;
   font-weight: bold;
   font-size: 1.1em;
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex: 1; /* occupe tout l'espace restant */
+  overflow: visible;
+  text-overflow: initial;
+  flex: 1;
+  min-width: 0;
 }
-
-
-
-
 
 
 
