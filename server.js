@@ -1,4 +1,3 @@
-
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -126,7 +125,7 @@ io.on('connection', (socket) => {
 
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
-const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
+    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
 
 
@@ -255,46 +254,46 @@ const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
           return;
 
         case '/invisible':
-  if (user.role !== 'admin') {
-    socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
-    return;
-  }
-  if (args.length < 2) {
-    socket.emit('error message', 'Usage : /invisible on | off');
-    return;
-  }
-  const param = args[1].toLowerCase();
-  const channel = userChannels[socket.id];
-  if (param === 'on') {
-    user.invisible = true;
-    if (roomUsers[channel]) {
-      const u = roomUsers[channel].find(u => u.id === socket.id);
-      if (u) u.invisible = true;
-    }
-    socket.emit('server message', 'Mode invisible activé.');
-    console.log(`🔍 ${user.username} a activé le mode invisible.`);
-    emitUserList(channel);
-    updateRoomUserCounts();
-  } else if (param === 'off') {
-    user.invisible = false;
-    if (roomUsers[channel]) {
-      const u = roomUsers[channel].find(u => u.id === socket.id);
-      if (u) u.invisible = false;
-    }
-    socket.emit('server message', 'Mode invisible désactivé.');
-    console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
-    emitUserList(channel);
-    updateRoomUserCounts();
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${user.username} est maintenant visible.`,
-      timestamp: new Date().toISOString(),
-      channel
-    });
-  } else {
-    socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
-  }
-  return;
+          if (user.role !== 'admin') {
+            socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
+            return;
+          }
+          if (args.length < 2) {
+            socket.emit('error message', 'Usage : /invisible on | off');
+            return;
+          }
+          const param = args[1].toLowerCase();
+          const channel = userChannels[socket.id];
+          if (param === 'on') {
+            user.invisible = true;
+            if (roomUsers[channel]) {
+              const u = roomUsers[channel].find(u => u.id === socket.id);
+              if (u) u.invisible = true;
+            }
+            socket.emit('server message', 'Mode invisible activé.');
+            console.log(`🔍 ${user.username} a activé le mode invisible.`);
+            emitUserList(channel);
+            updateRoomUserCounts();
+          } else if (param === 'off') {
+            user.invisible = false;
+            if (roomUsers[channel]) {
+              const u = roomUsers[channel].find(u => u.id === socket.id);
+              if (u) u.invisible = false;
+            }
+            socket.emit('server message', 'Mode invisible désactivé.');
+            console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
+            emitUserList(channel);
+            updateRoomUserCounts();
+            io.to(channel).emit('chat message', {
+              username: 'Système',
+              message: `${user.username} est maintenant visible.`,
+              timestamp: new Date().toISOString(),
+              channel
+            });
+          } else {
+            socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
+          }
+          return;
 
 
         default:
