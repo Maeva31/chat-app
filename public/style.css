@@ -232,28 +232,31 @@ main {
 }
 
 #users li {
-  width: 100%;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
   gap: 10px;
-  margin-bottom: 0.5em;
   padding: 4px 6px;
   box-sizing: border-box;
-    max-width: 100%;
+  width: 100%;
+  max-width: 100%;
 }
 
+
 .gender-square {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0; /* empêche de rétrécir */
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 22px;
   border-radius: 6px;
   color: #000;
   font-weight: bold;
   font-size: 1em;
   background-color: #aaa;
 }
+
 
 .age-span {
   color: #000;
@@ -275,8 +278,9 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex-grow: 1;
+  flex: 1; /* occupe tout l'espace restant */
 }
+
 
 
 
