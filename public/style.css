@@ -1,4 +1,3 @@
-
 /* === RESET et correction hauteur sans scroll === */
 html, body {
   margin: 0;
@@ -7,48 +6,47 @@ html, body {
   height: 100%;
 }
 
-    /*==== scrollbar ====*/
-::-webkit-scrollbar {
-	width: 12px; /* Légèrement plus large pour une meilleure visibilité */
-	border-radius: 8px; /* Ajoute une petite courbure à la scrollbar */
-  }
-  
-  ::-webkit-scrollbar-track {
-	background: #111;
-	border-radius: 8px; /* Arrondi également la track */
-  }
-  
-  ::-webkit-scrollbar-thumb {
-	background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
-	background-size: 400% 400%;
-	border-radius: 8px;
-	transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
-	animation: gradientThumb 3s ease infinite;
-	box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
-  }
-  
-  @keyframes gradientThumb {
-	0% {
-	  background-position: 400% 0;
-	}
-	50% {
-	  background-position: 0 100%;
-	}
-	100% {
-	  background-position: 400% 0;
-	}
-  }
-
-/* === GENERAL === */
 body {
-  font-family: Arial, sans-serif;
+  font-family: Arial, "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif;
   background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
   color: #fff;
   display: flex;
   flex-direction: column;
 }
 
-/* === LAYOUT === */
+/*==== scrollbar ====*/
+::-webkit-scrollbar {
+  width: 12px; /* Légèrement plus large pour une meilleure visibilité */
+  border-radius: 8px; /* Ajoute une petite courbure à la scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 8px; /* Arrondi également la track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 3s ease infinite;
+  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
+}
+
+@keyframes gradientThumb {
+  0% {
+    background-position: 400% 0;
+  }
+  50% {
+    background-position: 0 100%;
+  }
+  100% {
+    background-position: 400% 0;
+  }
+}
+
+/* === GENERAL === */
 main {
   display: flex;
   flex: 1;
@@ -487,25 +485,25 @@ button:focus {
 
 /* Texte laser */
 .texte-laser {
-	font-size: 15px;
-	font-weight: bold;
-	background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
-	background-size: 400% 400%;
-	-webkit-background-clip: text;
-	-webkit-text-fill-color: transparent;
-	animation: laserTexteMenu 2s linear infinite;
+  font-size: 15px;
+  font-weight: bold;
+  background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: laserTexteMenu 2s linear infinite;
 }
 
 @keyframes laserTexteMenu {
-	0% {
-		background-position: 0% 0%;
-	}
-	50% {
-		background-position: 100% 100%;
-	}
-	100% {
-		background-position: 0% 0%;
-	}
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
+  }
 }
 
 /* Fin texte laser */
@@ -554,4 +552,3 @@ button:focus {
   width: 100%;
   user-select: none;
 }
-
