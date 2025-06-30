@@ -244,10 +244,22 @@ io.on('connection', (socket) => {
           }
 
           // Proprio ne peut modérer que dans son salon
-          if (isOwner && currentRoom !== userChannels[targetUser?.id]) {
-            socket.emit('error message', "Vous ne pouvez modérer que dans votre salon.");
-            return;
-          }
+          // Proprio ne peut modérer que dans son salon propriétaire
+if (isOwner) {
+  // Le proprio modère uniquement dans son salon
+  // On vérifie que la commande s'applique dans le salon qu'il possède (currentRoom)
+  // ET que la cible est aussi dans ce salon
+  const targetChannel = userChannels[targetUser?.id];
+  if (currentRoom !== Object.keys(roomOwners).find(room => roomOwners[room] === user.username)) {
+    socket.emit('error message', "Vous ne pouvez modérer que dans votre salon propriétaire.");
+    return;
+  }
+  if (targetChannel !== currentRoom) {
+    socket.emit('error message', "Vous ne pouvez modérer que les utilisateurs présents dans votre salon.");
+    return;
+  }
+}
+
 
           if (!targetUser) {
             socket.emit('error message', 'Utilisateur introuvable.');
