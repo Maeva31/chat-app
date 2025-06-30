@@ -15,7 +15,7 @@ let users = {};           // { username: { id, username, gender, age, role, bann
 let messageHistory = {};
 let roomUsers = {};
 let userChannels = {};
-let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
+let bannedUsers = new Set();   // pseudos bannis
 let mutedUsers = new Set();    // pseudos mutés
 
 // Chargement des modérateurs
@@ -74,7 +74,6 @@ function updateRoomUserCounts() {
 // Envoie la liste des utilisateurs en excluant les invisibles
 function emitUserList(channel) {
   if (!roomUsers[channel]) return;
-  // Exclure les users invisibles
   const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
   io.to(channel).emit('user list', visibleUsers);
 }
@@ -111,7 +110,7 @@ io.on('connection', (socket) => {
   socket.emit('room list', savedRooms);
   updateRoomUserCounts();
 
-  socket.on('set username', async (data) => {  // <= async ici
+  socket.on('set username', async (data) => {
     const { username, gender, age, invisible, password } = data;
 
     if (!username || username.length > 16 || /\s/.test(username)) {
@@ -124,7 +123,6 @@ io.on('connection', (socket) => {
       return socket.emit('username error', 'Genre non spécifié');
     }
 
-    // Vérification mot de passe pour admin/modo avec bcrypt
     if (modData.admins.includes(username)) {
       if (!password || !(await bcrypt.compare(password, passwordData.admin))) {
         return socket.emit('username error', 'Mot de passe admin incorrect.');
@@ -144,12 +142,10 @@ io.on('connection', (socket) => {
       return socket.emit('username exists', username);
     }
 
-    // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     const role = getUserRole(username);
-    // Par défaut invisible = false, sauf si récupéré
     const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
 
@@ -167,7 +163,6 @@ io.on('connection', (socket) => {
     socket.emit('chat history', messageHistory[channel]);
     updateRoomUserCounts();
 
-    // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
     if (!userData.invisible) {
       io.to(channel).emit('chat message', {
         username: 'Système',
@@ -194,7 +189,6 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
       if (user.role !== 'admin' && user.role !== 'modo') {
         socket.emit('no permission');
@@ -206,7 +200,6 @@ io.on('connection', (socket) => {
       const targetName = args[1];
       const targetUser = Object.values(users).find(u => u.username === targetName);
 
-      // Protection rôles
       const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
       const isUserModo = user.role === 'modo';
 
@@ -363,7 +356,6 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = roomUsers[newChannel].filter(u => u.id !== socket.id);
       roomUsers[newChannel].push(user);
 
-      // Message système uniquement si non invisible
       if (!user.invisible) {
         io.to(newChannel).emit('chat message', {
           username: 'Système',
