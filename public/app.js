@@ -290,7 +290,8 @@ document.addEventListener('DOMContentLoaded', () => {
   localStorage.setItem('age', age);
 
   document.getElementById('myModal').style.display = 'none';
-  document.getElementById('chat-container').style.display = 'block'; // 👈 Ajoute cette ligne
+  document.getElementById('chat-wrapper').style.display = 'block';
+
 
   socket.emit('joinRoom', currentChannel);
   selectChannelInUI(currentChannel);
