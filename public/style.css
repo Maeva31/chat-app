@@ -258,6 +258,14 @@ main {
   color: #000;
 }
 
+/* Même largeur pour les deux sidebars */
+#channel-sidebar,
+#user-list {
+  flex: 0 0 240px; /* même largeur fixe */
+  max-width: 240px;
+}
+
+/* Ajustement du pseudo pour qu'il accepte 16 caractères sans couper */
 .username-span {
   color: #000;
   font-weight: bold;
@@ -268,8 +276,9 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 200px; /* Suffisant pour 16 caractères */
+  max-width: 160px; /* ajusté pour 16 caractères */
 }
+
 
 
 
