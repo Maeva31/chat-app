@@ -338,6 +338,15 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
   });
 
   socket.on('chat message', addMessageToChat);
+  socket.on('server message', (msg) => {
+  const message = {
+    username: 'Système',
+    message: msg,
+    timestamp: new Date().toISOString()
+  };
+  addMessageToChat(message);
+});
+
   socket.on('user list', updateUserList);
 
   socket.on('room created', (newChannel) => {
