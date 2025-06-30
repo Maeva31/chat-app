@@ -14,7 +14,7 @@ let users = {};           // { username: { id, username, gender, age, role, bann
 let messageHistory = {};
 let roomUsers = {};
 let userChannels = {};
-let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
+let bannedUsers = new Set();   // pseudos bannis
 let mutedUsers = new Set();    // pseudos mutés
 
 // Chargement des modérateurs
@@ -72,7 +72,6 @@ function updateRoomUserCounts() {
 // Envoie la liste des utilisateurs en excluant les invisibles
 function emitUserList(channel) {
   if (!roomUsers[channel]) return;
-  // Exclure les users invisibles
   const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
   io.to(channel).emit('user list', visibleUsers);
 }
@@ -124,7 +123,7 @@ io.on('connection', (socket) => {
 
     if (bannedUsers.has(username)) {
       socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis
       return;
     }
 
@@ -132,7 +131,6 @@ io.on('connection', (socket) => {
       return socket.emit('username exists', username);
     }
 
-    // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
@@ -144,7 +142,6 @@ io.on('connection', (socket) => {
     }
 
     const role = getUserRole(username);
-    // Par défaut invisible = false, sauf si récupéré
     const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
 
@@ -162,7 +159,6 @@ io.on('connection', (socket) => {
     socket.emit('chat history', messageHistory[channel]);
     updateRoomUserCounts();
 
-    // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
     if (!userData.invisible) {
       io.to(channel).emit('chat message', {
         username: 'Système',
@@ -181,17 +177,15 @@ io.on('connection', (socket) => {
 
     if (bannedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr');  // Redirection bannis si tente envoyer message
+      socket.emit('redirect', 'https://banned.maevakonnect.fr');
       return;
     }
 
     if (mutedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
-      // suppression de la redirection pour mute
       return;
     }
 
-    // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
       if (user.role !== 'admin' && user.role !== 'modo') {
         socket.emit('no permission');
@@ -203,7 +197,6 @@ io.on('connection', (socket) => {
       const targetName = args[1];
       const targetUser = Object.values(users).find(u => u.username === targetName);
 
-      // Protection rôles
       const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
       const isUserModo = user.role === 'modo';
 
@@ -219,7 +212,7 @@ io.on('connection', (socket) => {
           }
           bannedUsers.add(targetName);
           io.to(targetUser.id).emit('banned');
-          io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis sur ban
+          io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
           setTimeout(() => {
             io.sockets.sockets.get(targetUser.id)?.disconnect(true);
           }, 1500);
@@ -237,7 +230,7 @@ io.on('connection', (socket) => {
             return;
           }
           io.to(targetUser.id).emit('kicked');
-          io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr'); // Redirection kick
+          io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
           setTimeout(() => {
             io.sockets.sockets.get(targetUser.id)?.disconnect(true);
           }, 1500);
@@ -380,7 +373,6 @@ io.on('connection', (socket) => {
       roomUsers[newChannel] = roomUsers[newChannel].filter(u => u.id !== socket.id);
       roomUsers[newChannel].push(user);
 
-      // Message système uniquement si non invisible
       if (!user.invisible) {
         io.to(newChannel).emit('chat message', {
           username: 'Système',
@@ -415,7 +407,6 @@ io.on('connection', (socket) => {
 
     if (mutedUsers.has(user.username)) {
       socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
-      // Retiré la ligne de redirection
       return;
     }
 
@@ -491,15 +482,13 @@ io.on('connection', (socket) => {
       console.log(`❌ Déconnexion : ${user.username}`);
 
       const room = userChannels[socket.id];
-      if (room) {
-        if (!user.invisible) {
-          io.to(room).emit('chat message', {
-            username: 'Système',
-            message: `${user.username} a quitté le serveur`,
-            timestamp: new Date().toISOString(),
-            channel: room
-          });
-        }
+      if (room && !user.invisible) {
+        io.to(room).emit('chat message', {
+          username: 'Système',
+          message: `${user.username} a quitté le serveur`,
+          timestamp: new Date().toISOString(),
+          channel: room
+        });
       }
 
       for (const channel in roomUsers) {
@@ -515,7 +504,6 @@ io.on('connection', (socket) => {
       console.log(`❌ Déconnexion inconnue : ${socket.id}`);
     }
   });
-
 });
 
 const PORT = process.env.PORT || 3000;
