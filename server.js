@@ -10,38 +10,43 @@ const io = new Server(server);
 const MAX_HISTORY = 10;
 const MAX_ROOMS = 50;
 
-let users = {};           // { username: { id, username, gender, age, role, banned, muted, invisible } }
-let messageHistory = {};
-let roomUsers = {};
-let userChannels = {};
-let bannedUsers = new Set();   // pseudos bannis
-let mutedUsers = new Set();    // pseudos mutés
-
-// Propriétaires des salons créés (salon => username)
-let roomOwners = {};
-
-// Chargement des modérateurs
+let users = {};           // { username: { id, username, gender, age, role, invisible } }
+let messageHistory = {};  // { roomName: [messages...] }
+let roomUsers = {};       // { roomName: [{username, id, gender, age, role, invisible}] }
+let userChannels = {};    // { socket.id: roomName }
+let roomOwners = {};      // { roomName: username propriétaire }
 let modData = { admins: [], modos: [] };
+let bannedByRoom = {};    // { roomName: Set(pseudos) }
+let mutedByRoom = {};     // { roomName: Set(pseudos) }
+
+const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
+let savedRooms = [];
+
+// --- Chargement des modérateurs ---
 try {
-  const data = fs.readFileSync('moderators.json', 'utf-8');
+  const data = fs.readFileSync('moderators.json', 'utf8');
   modData = JSON.parse(data);
 } catch (e) {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
-const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
-let savedRooms = [];
+// --- Chargement des salons enregistrés ---
 try {
-  const data = fs.readFileSync('rooms.json', 'utf-8');
+  const data = fs.readFileSync('rooms.json', 'utf8');
   savedRooms = JSON.parse(data);
 } catch {
   savedRooms = [...defaultRooms];
 }
 
+// S'assurer d'avoir les salons par défaut toujours présents
 savedRooms = [...new Set([...defaultRooms, ...savedRooms])];
+
+// Initialiser les structures pour chaque salon
 savedRooms.forEach(room => {
   if (!messageHistory[room]) messageHistory[room] = [];
   if (!roomUsers[room]) roomUsers[room] = [];
+  if (!bannedByRoom[room]) bannedByRoom[room] = new Set();
+  if (!mutedByRoom[room]) mutedByRoom[room] = new Set();
 });
 
 app.use(express.static('public'));
@@ -50,42 +55,49 @@ app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
 
+// Helper pour récupérer rôle
 function getUserRole(username) {
   if (modData.admins.includes(username)) return 'admin';
   if (modData.modos.includes(username)) return 'modo';
   return 'user';
 }
 
+// Sauvegarder les modos/admins
 function saveModerators() {
   try {
     fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
   } catch (e) {
-    console.error('Erreur lors de la sauvegarde de moderators.json :', e);
+    console.error('Erreur sauvegarde moderators.json:', e);
   }
 }
 
+// Émettre la liste des utilisateurs visibles dans un salon
+function emitUserList(room) {
+  if (!roomUsers[room]) return;
+  const visibleUsers = roomUsers[room].filter(u => !u.invisible);
+  io.to(room).emit('user list', visibleUsers);
+}
+
+// Met à jour le nombre d'utilisateurs visibles par salon
 function updateRoomUserCounts() {
   const counts = {};
-  for (const [channel, list] of Object.entries(roomUsers)) {
-    counts[channel] = list.filter(u => !u.invisible).length;
+  for (const room of savedRooms) {
+    counts[room] = (roomUsers[room]?.filter(u => !u.invisible).length) || 0;
   }
   io.emit('roomUserCounts', counts);
 }
 
-function emitUserList(channel) {
-  if (!roomUsers[channel]) return;
-  const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
-  io.to(channel).emit('user list', visibleUsers);
-}
-
+// Supprime les salons dynamiques vides
 function cleanupEmptyDynamicRooms() {
   for (const room of savedRooms) {
     if (!defaultRooms.includes(room)) {
-      if (roomUsers[room] && roomUsers[room].length === 0) {
+      if (!roomUsers[room] || roomUsers[room].length === 0) {
         delete messageHistory[room];
         delete roomUsers[room];
-        savedRooms = savedRooms.filter(r => r !== room);
+        delete bannedByRoom[room];
+        delete mutedByRoom[room];
         delete roomOwners[room];
+        savedRooms = savedRooms.filter(r => r !== room);
         fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
         console.log(`❌ Salon supprimé (vide) : ${room}`);
         io.emit('room list', savedRooms);
@@ -95,9 +107,9 @@ function cleanupEmptyDynamicRooms() {
   updateRoomUserCounts();
 }
 
+// Démotion d'un modo
 function demoteModo(username) {
   if (!users[username]) return false;
-
   users[username].role = 'user';
 
   const index = modData.modos.indexOf(username);
@@ -110,11 +122,7 @@ function demoteModo(username) {
 }
 
 io.on('connection', (socket) => {
-  console.log(`✅ Connexion : ${socket.id}`);
-
-  socket.on('ping', () => {
-    socket.emit('pong');
-  });
+  console.log(`✅ Nouvelle connexion : ${socket.id}`);
 
   const defaultChannel = 'Général';
   userChannels[socket.id] = defaultChannel;
@@ -129,43 +137,43 @@ io.on('connection', (socket) => {
     const { username, gender, age, invisible } = data;
 
     if (!username || username.length > 16 || /\s/.test(username)) {
-      return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
+      return socket.emit('username error', 'Pseudo invalide (pas d\'espaces, max 16 caractères)');
     }
     if (isNaN(age) || age < 18 || age > 89) {
-      return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
+      return socket.emit('username error', 'Âge invalide (entre 18 et 89 ans)');
     }
     if (!gender) {
       return socket.emit('username error', 'Genre non spécifié');
     }
 
-    if (bannedUsers.has(username)) {
-      socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr');
-      return;
+    // Vérifier bannissements dans tous les salons où l'utilisateur est
+    for (const room of savedRooms) {
+      if (bannedByRoom[room].has(username)) {
+        socket.emit('username error', 'Vous êtes banni dans au moins un salon.');
+        socket.emit('redirect', 'https://banned.maevakonnect.fr');
+        return;
+      }
     }
 
     if (users[username] && users[username].id !== socket.id) {
       return socket.emit('username exists', username);
     }
 
-    const invisibleFromClient = invisible === true;
-    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
-
     const role = getUserRole(username);
-    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
+    const userData = { username, gender, age, id: socket.id, role, invisible: !!invisible };
     users[username] = userData;
 
-    let channel = userChannels[socket.id] || defaultChannel;
+    const channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
 
     if (!roomUsers[channel]) roomUsers[channel] = [];
     roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
     roomUsers[channel].push(userData);
 
-    console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
+    console.log(`👤 Utilisateur connecté : ${username} (${gender}, ${age} ans) dans #${channel}, rôle=${role}, invisible=${userData.invisible}`);
 
     emitUserList(channel);
-    socket.emit('username accepted', { username, gender, age });
+    socket.emit('username accepted', { username, gender, age, role });
     socket.emit('chat history', messageHistory[channel]);
     updateRoomUserCounts();
 
@@ -185,14 +193,15 @@ io.on('connection', (socket) => {
 
     const channel = userChannels[socket.id] || defaultChannel;
 
-    if (bannedUsers.has(user.username)) {
-      socket.emit('error message', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr');
+    // Vérifie si utilisateur banni dans CE salon
+    if (bannedByRoom[channel].has(user.username)) {
+      socket.emit('error message', 'Vous êtes banni de ce salon.');
       return;
     }
 
-    if (mutedUsers.has(user.username)) {
-      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+    // Vérifie si muté dans CE salon
+    if (mutedByRoom[channel].has(user.username)) {
+      socket.emit('error message', 'Vous êtes muté dans ce salon et ne pouvez pas envoyer de messages.');
       return;
     }
 
@@ -219,21 +228,15 @@ io.on('connection', (socket) => {
         case '/mute':
         case '/unmute':
 
-          if (!isAdmin && !isModo && !isOwner) {
+          // Propriétaire modère que son salon, modos/admins partout
+          if (!(isAdmin || isModo || isOwner)) {
             socket.emit('no permission');
             return;
           }
 
-          if (isOwner) {
-            const targetChannel = userChannels[targetUser?.id];
-            if (currentRoom !== Object.keys(roomOwners).find(room => roomOwners[room] === user.username)) {
-              socket.emit('error message', "Vous ne pouvez modérer que dans votre salon propriétaire.");
-              return;
-            }
-            if (targetChannel !== currentRoom) {
-              socket.emit('error message', "Vous ne pouvez modérer que les utilisateurs présents dans votre salon.");
-              return;
-            }
+          if (isOwner && currentRoom !== userChannels[targetUser?.id]) {
+            socket.emit('error message', "Vous ne pouvez modérer que dans votre salon propriétaire.");
+            return;
           }
 
           if (!targetUser) {
@@ -241,74 +244,86 @@ io.on('connection', (socket) => {
             return;
           }
 
-          if (isModo && isTargetProtected) {
+          // Interdiction modos ou propriétaires de modérer admins/modos
+          if ((isModo || isOwner) && isTargetProtected) {
             socket.emit('error message', 'Vous ne pouvez pas modérer cet utilisateur.');
-            return;
-          }
-          if (isOwner && isTargetProtected) {
-            socket.emit('error message', 'Vous ne pouvez pas modérer un admin ou modo.');
             return;
           }
 
           if (cmd === '/ban') {
-            bannedUsers.add(targetName);
-            io.to(targetUser.id).emit('banned');
-            io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
-            setTimeout(() => {
-              io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-            }, 1500);
-            io.emit('server message', `${targetName} a été banni par ${user.username}`);
-            console.log(`⚠️ ${user.username} a banni ${targetName}`);
+            bannedByRoom[currentRoom].add(targetName);
+
+            // Kick forcé vers Général (déplacement)
+            if (userChannels[targetUser.id] === currentRoom) {
+              userChannels[targetUser.id] = 'Général';
+              const s = io.sockets.sockets.get(targetUser.id);
+              if (s) {
+                s.leave(currentRoom);
+                s.join('Général');
+                s.emit('chat history', messageHistory['Général']);
+                s.emit('joinedRoom', 'Général');
+                s.emit('server message', `Vous avez été banni du salon ${currentRoom} et déplacé dans Général.`);
+              }
+            }
+
+            io.to(currentRoom).emit('server message', `${targetName} a été banni du salon par ${user.username}`);
+            console.log(`⚠️ ${user.username} a banni ${targetName} dans ${currentRoom}`);
             return;
           }
 
           if (cmd === '/kick') {
-            io.to(targetUser.id).emit('kicked');
-            io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
-            setTimeout(() => {
-              io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-            }, 1500);
-            io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
-            console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+            // Kick forcé vers Général
+            if (userChannels[targetUser.id] === currentRoom) {
+              userChannels[targetUser.id] = 'Général';
+              const s = io.sockets.sockets.get(targetUser.id);
+              if (s) {
+                s.leave(currentRoom);
+                s.join('Général');
+                s.emit('chat history', messageHistory['Général']);
+                s.emit('joinedRoom', 'Général');
+                s.emit('server message', `Vous avez été expulsé du salon ${currentRoom} et déplacé dans Général.`);
+              }
+            }
+
+            io.to(currentRoom).emit('server message', `${targetName} a été expulsé du salon par ${user.username}`);
+            console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${currentRoom}`);
             return;
           }
 
           if (cmd === '/mute') {
-            mutedUsers.add(targetName);
-            io.to(targetUser.id).emit('muted');
-            io.emit('server message', `${targetName} a été muté par ${user.username}`);
-            console.log(`⚠️ ${user.username} a muté ${targetName}`);
+            mutedByRoom[currentRoom].add(targetName);
+            io.to(currentRoom).emit('server message', `${targetName} a été muté dans ce salon par ${user.username}`);
+            console.log(`⚠️ ${user.username} a muté ${targetName} dans ${currentRoom}`);
             return;
           }
 
           if (cmd === '/unmute') {
-            if (mutedUsers.has(targetName)) {
-              mutedUsers.delete(targetName);
-              io.to(targetUser.id).emit('unmuted');
-              io.emit('server message', `${targetName} a été unmuté par ${user.username}`);
-              console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
+            if (mutedByRoom[currentRoom].has(targetName)) {
+              mutedByRoom[currentRoom].delete(targetName);
+              io.to(currentRoom).emit('server message', `${targetName} a été unmuté dans ce salon par ${user.username}`);
+              console.log(`⚠️ ${user.username} a unmuté ${targetName} dans ${currentRoom}`);
             } else {
-              socket.emit('error message', `${targetName} n'est pas muté.`);
+              socket.emit('error message', `${targetName} n'est pas muté dans ce salon.`);
             }
             return;
           }
           return;
 
         case '/unban':
-          if (!isAdmin && !isModo) {
+          if (!(isAdmin || isModo)) {
             socket.emit('no permission');
             return;
           }
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
+          if (!targetName) {
+            socket.emit('error message', 'Usage : /unban <pseudo>');
             return;
           }
-          if (bannedUsers.has(targetName)) {
-            bannedUsers.delete(targetName);
-            io.emit('server message', `${targetName} a été débanni par ${user.username}`);
-            console.log(`⚠️ ${user.username} a débanni ${targetName}`);
+          if (bannedByRoom[currentRoom].has(targetName)) {
+            bannedByRoom[currentRoom].delete(targetName);
+            io.to(currentRoom).emit('server message', `${targetName} a été débanni du salon par ${user.username}`);
+            console.log(`⚠️ ${user.username} a débanni ${targetName} dans ${currentRoom}`);
           } else {
-            socket.emit('error message', `${targetName} n'est pas banni.`);
+            socket.emit('error message', `${targetName} n'est pas banni dans ce salon.`);
           }
           return;
 
@@ -435,86 +450,89 @@ io.on('connection', (socket) => {
 
           delete messageHistory[currentRoom];
           delete roomUsers[currentRoom];
+          delete bannedByRoom[currentRoom];
+          delete mutedByRoom[currentRoom];
           savedRooms = savedRooms.filter(r => r !== currentRoom);
           delete roomOwners[currentRoom];
           fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
-
           io.emit('room list', savedRooms);
-          updateRoomUserCounts();
           io.emit('server message', `Le salon ${currentRoom} a été fermé par ${user.username}`);
-          console.log(`❌ Salon fermé par ${user.username} : ${currentRoom}`);
+          console.log(`❌ Salon fermé : ${currentRoom} par ${user.username}`);
+          updateRoomUserCounts();
           return;
 
         default:
-          socket.emit('error message', 'Commande inconnue.');
+          socket.emit('error message', `Commande inconnue : ${cmd}`);
           return;
       }
     }
 
-    // Message classique
-    const message = {
+    // Message normal, on stocke dans l'historique
+    const messageEntry = {
       username: user.username,
-      gender: user.gender,
+      message: msg.message,
+      timestamp: new Date().toISOString(),
+      channel: channel,
       role: user.role,
-      message: msg.message || '',
-      timestamp: msg.timestamp || new Date().toISOString(),
-      channel
     };
 
     if (!messageHistory[channel]) messageHistory[channel] = [];
-    messageHistory[channel].push(message);
-    if (messageHistory[channel].length > MAX_HISTORY) {
-      messageHistory[channel].shift();
-    }
+    messageHistory[channel].push(messageEntry);
+    if (messageHistory[channel].length > MAX_HISTORY) messageHistory[channel].shift();
 
-    io.to(channel).emit('chat message', message);
+    io.to(channel).emit('chat message', messageEntry);
   });
 
   socket.on('joinRoom', (newChannel) => {
-    if (typeof newChannel !== 'string' || !newChannel.trim()) {
-      return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
-    }
-
-    const oldChannel = userChannels[socket.id] || defaultChannel;
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
 
-    if (!messageHistory[newChannel]) messageHistory[newChannel] = [];
+    if (!savedRooms.includes(newChannel)) {
+      socket.emit('error message', 'Le salon demandé n\'existe pas.');
+      return;
+    }
+
+    const oldChannel = userChannels[socket.id] || defaultChannel;
+
+    // Vérifier si banni dans le nouveau salon
+    if (bannedByRoom[newChannel].has(user.username)) {
+      socket.emit('error message', 'Vous êtes banni de ce salon.');
+      return;
+    }
+
+    socket.leave(oldChannel);
+    socket.join(newChannel);
+
+    userChannels[socket.id] = newChannel;
+
+    if (!roomUsers[oldChannel]) roomUsers[oldChannel] = [];
     if (!roomUsers[newChannel]) roomUsers[newChannel] = [];
 
-    if (oldChannel !== newChannel) {
-      socket.leave(oldChannel);
-      if (roomUsers[oldChannel]) {
-        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
-        emitUserList(oldChannel);
-      }
+    // Retirer user de l'ancien salon
+    roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
 
-      userChannels[socket.id] = newChannel;
-      socket.join(newChannel);
+    // Ajouter user au nouveau salon
+    roomUsers[newChannel].push(user);
 
-      roomUsers[newChannel] = roomUsers[newChannel].filter(u => u.id !== socket.id);
-      roomUsers[newChannel].push(user);
-
-      if (!user.invisible) {
-        io.to(newChannel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a rejoint le salon ${newChannel}`,
-          timestamp: new Date().toISOString(),
-          channel: newChannel
-        });
-        io.to(oldChannel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a quitté le salon ${oldChannel}`,
-          timestamp: new Date().toISOString(),
-          channel: oldChannel
-        });
-      }
-
-      socket.emit('chat history', messageHistory[newChannel]);
-      emitUserList(newChannel);
-      emitUserList(oldChannel);
-      updateRoomUserCounts();
+    if (!user.invisible) {
+      io.to(newChannel).emit('chat message', {
+        username: 'Système',
+        message: `${user.username} a rejoint le salon ${newChannel}`,
+        timestamp: new Date().toISOString(),
+        channel: newChannel
+      });
+      io.to(oldChannel).emit('chat message', {
+        username: 'Système',
+        message: `${user.username} a quitté le salon ${oldChannel}`,
+        timestamp: new Date().toISOString(),
+        channel: oldChannel
+      });
     }
+
+    socket.emit('chat history', messageHistory[newChannel]);
+    emitUserList(newChannel);
+    emitUserList(oldChannel);
+    updateRoomUserCounts();
   });
 
   socket.on('createRoom', (roomName) => {
@@ -540,7 +558,12 @@ io.on('connection', (socket) => {
     savedRooms.push(roomName);
     messageHistory[roomName] = [];
     roomUsers[roomName] = [];
-    roomOwners[roomName] = Object.values(users).find(u => u.id === socket.id)?.username || '';
+    bannedByRoom[roomName] = new Set();
+    mutedByRoom[roomName] = new Set();
+
+    // Le créateur du salon est propriétaire
+    const owner = Object.values(users).find(u => u.id === socket.id);
+    roomOwners[roomName] = owner ? owner.username : '';
 
     fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
     io.emit('room list', savedRooms);
