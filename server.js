@@ -2,6 +2,7 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
+import bcrypt from 'bcrypt';
 
 const app = express();
 const server = http.createServer(app);
@@ -24,6 +25,25 @@ try {
   modData = JSON.parse(data);
 } catch (e) {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
+}
+
+// Chargement des mots de passe hashés
+let passData = { admins: {}, modos: {} };
+try {
+  const data = fs.readFileSync('passwords.json', 'utf-8');
+  passData = JSON.parse(data);
+} catch (e) {
+  console.warn("⚠️ Impossible de charger passwords.json, protection désactivée.");
+}
+
+// Fonction de vérification de mot de passe (bcrypt)
+async function verifyPassword(role, username, password) {
+  if (!passData[role] || !passData[role][username]) return false;
+  try {
+    return await bcrypt.compare(password, passData[role][username]);
+  } catch {
+    return false;
+  }
 }
 
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
@@ -101,9 +121,8 @@ io.on('connection', (socket) => {
   socket.emit('room list', savedRooms);
   updateRoomUserCounts();
 
-  socket.on('set username', (data) => {
-    const { username, gender, age, invisible } = data;
-
+  socket.on('set username', async (data) => {
+    const { username, gender, age, invisible, password } = data;
 
     if (!username || username.length > 16 || /\s/.test(username)) {
       return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
@@ -123,13 +142,34 @@ io.on('connection', (socket) => {
       return socket.emit('username exists', username);
     }
 
+    // Vérification mot de passe pour admin/modo
+    let role = 'user';
+    if (modData.admins.includes(username)) {
+      if (!password) {
+        return socket.emit('username error', 'Mot de passe requis pour admin.');
+      }
+      const valid = await verifyPassword('admins', username, password);
+      if (!valid) {
+        return socket.emit('username error', 'Mot de passe admin incorrect.');
+      }
+      role = 'admin';
+    } else if (modData.modos.includes(username)) {
+      if (!password) {
+        return socket.emit('username error', 'Mot de passe requis pour modo.');
+      }
+      const valid = await verifyPassword('modos', username, password);
+      if (!valid) {
+        return socket.emit('username error', 'Mot de passe modo incorrect.');
+      }
+      role = 'modo';
+    } else {
+      role = getUserRole(username);
+    }
+
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
-
-
-    const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
     const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
@@ -294,7 +334,6 @@ io.on('connection', (socket) => {
             socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
           }
           return;
-
 
         default:
           socket.emit('error message', 'Commande inconnue.');
