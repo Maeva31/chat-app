@@ -561,9 +561,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Fin ajout mode invisible ---
 
-  socket.on('redirect', (url) => {
-  window.location.href = url;
+ socket.on('redirect', (url) => {
+  console.log('Redirect demandé vers:', url);
+  if (typeof url === 'string' && url.length > 0) {
+    window.location.href = url;
+  }
 });
+
 
 
 });
