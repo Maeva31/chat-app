@@ -89,7 +89,7 @@ function cleanupEmptyDynamicRooms() {
         // Supprimer propriétaire du salon
         delete roomOwners[room];
         fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
-        console.log(❌ Salon supprimé (vide) : ${room});
+        console.log(`❌ Salon supprimé (vide) : ${room}`);
         io.emit('room list', savedRooms);
       }
     }
@@ -115,7 +115,7 @@ function demoteModo(username) {
 }
 
 io.on('connection', (socket) => {
-  console.log(✅ Connexion : ${socket.id});
+  console.log(`✅ Connexion : ${socket.id}`);
 
   socket.on('ping', () => {
     socket.emit('pong');
@@ -167,7 +167,7 @@ io.on('connection', (socket) => {
     roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
     roomUsers[channel].push(userData);
 
-    console.log(👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible});
+    console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
 
     emitUserList(channel);
     socket.emit('username accepted', { username, gender, age });
@@ -177,7 +177,7 @@ io.on('connection', (socket) => {
     if (!userData.invisible) {
       io.to(channel).emit('chat message', {
         username: 'Système',
-        message: ${username} a rejoint le salon ${channel},
+        message: `${username} a rejoint le salon ${channel}`,
         timestamp: new Date().toISOString(),
         channel
       });
@@ -224,7 +224,7 @@ io.on('connection', (socket) => {
 
       // Interdire auto ban/mute/kick
       if (targetName === user.username && ['/ban', '/mute', '/kick'].includes(cmd)) {
-        socket.emit('error message', Vous ne pouvez pas vous ${cmd.slice(1)} vous-même.);
+        socket.emit('error message', `Vous ne pouvez pas vous ${cmd.slice(1)} vous-même.`);
         return;
       }
 
@@ -270,8 +270,8 @@ io.on('connection', (socket) => {
             setTimeout(() => {
               io.sockets.sockets.get(targetUser.id)?.disconnect(true);
             }, 1500);
-            io.emit('server message', ${targetName} a été banni par ${user.username});
-            console.log(⚠️ ${user.username} a banni ${targetName});
+            io.emit('server message', `${targetName} a été banni par ${user.username}`);
+            console.log(`⚠️ ${user.username} a banni ${targetName}`);
             return;
           }
 
@@ -281,16 +281,16 @@ io.on('connection', (socket) => {
             setTimeout(() => {
               io.sockets.sockets.get(targetUser.id)?.disconnect(true);
             }, 1500);
-            io.emit('server message', ${targetName} a été expulsé par ${user.username});
-            console.log(⚠️ ${user.username} a expulsé ${targetName});
+            io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
+            console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
             return;
           }
 
           if (cmd === '/mute') {
             mutedUsers.add(targetName);
             io.to(targetUser.id).emit('muted');
-            io.emit('server message', ${targetName} a été muté par ${user.username});
-            console.log(⚠️ ${user.username} a muté ${targetName});
+            io.emit('server message', `${targetName} a été muté par ${user.username}`);
+            console.log(`⚠️ ${user.username} a muté ${targetName}`);
             return;
           }
 
@@ -298,10 +298,10 @@ io.on('connection', (socket) => {
             if (mutedUsers.has(targetName)) {
               mutedUsers.delete(targetName);
               io.to(targetUser.id).emit('unmuted');
-              io.emit('server message', ${targetName} a été unmuté par ${user.username});
-              console.log(⚠️ ${user.username} a unmuté ${targetName});
+              io.emit('server message', `${targetName} a été unmuté par ${user.username}`);
+              console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
             } else {
-              socket.emit('error message', ${targetName} n'est pas muté.);
+              socket.emit('error message', `${targetName} n'est pas muté.`);
             }
             return;
           }
@@ -318,10 +318,10 @@ io.on('connection', (socket) => {
           }
           if (bannedUsers.has(targetName)) {
             bannedUsers.delete(targetName);
-            io.emit('server message', ${targetName} a été débanni par ${user.username});
-            console.log(⚠️ ${user.username} a débanni ${targetName});
+            io.emit('server message', `${targetName} a été débanni par ${user.username}`);
+            console.log(`⚠️ ${user.username} a débanni ${targetName}`);
           } else {
-            socket.emit('error message', ${targetName} n'est pas banni.);
+            socket.emit('error message', `${targetName} n'est pas banni.`);
           }
           return;
 
@@ -336,11 +336,11 @@ io.on('connection', (socket) => {
             return;
           }
           if (modData.modos.includes(targetName)) {
-            socket.emit('error message', ${targetName} est déjà modérateur.);
+            socket.emit('error message', `${targetName} est déjà modérateur.`);
             return;
           }
           if (modData.admins.includes(targetName)) {
-            socket.emit('error message', ${targetName} est administrateur et ne peut pas être promu modo.);
+            socket.emit('error message', `${targetName} est administrateur et ne peut pas être promu modo.`);
             return;
           }
           modData.modos.push(targetName);
@@ -350,8 +350,8 @@ io.on('connection', (socket) => {
             users[targetName].role = 'modo';
             io.to(users[targetName].id).emit('server message', 'Vous avez été promu modérateur.');
           }
-          io.emit('server message', ${targetName} a été promu modérateur par ${user.username});
-          console.log(⚠️ ${user.username} a promu ${targetName} en modérateur);
+          io.emit('server message', `${targetName} a été promu modérateur par ${user.username}`);
+          console.log(`⚠️ ${user.username} a promu ${targetName} en modérateur`);
           return;
 
         // Nouvelle commande /removemodo uniquement admin
@@ -365,18 +365,18 @@ io.on('connection', (socket) => {
             return;
           }
           if (!targetUser) {
-            socket.emit('error message', L'utilisateur ${targetName} n'existe pas.);
+            socket.emit('error message', `L'utilisateur ${targetName} n'existe pas.`);
             return;
           }
           if (!modData.modos.includes(targetName)) {
-            socket.emit('error message', L'utilisateur ${targetName} n'est pas modérateur.);
+            socket.emit('error message', `L'utilisateur ${targetName} n'est pas modérateur.`);
             return;
           }
           const success = demoteModo(targetName);
           if (success) {
-            io.emit('server message', ${targetName} n'est plus modérateur.);
+            io.emit('server message', `${targetName} n'est plus modérateur.`);
             io.emit('user list', Object.values(users));
-            console.log(⚠️ ${user.username} a retiré ${targetName} du statut modérateur);
+            console.log(`⚠️ ${user.username} a retiré ${targetName} du statut modérateur`);
           } else {
             socket.emit('error message', 'Impossible de retirer ce modérateur.');
           }
@@ -399,7 +399,7 @@ io.on('connection', (socket) => {
               if (u) u.invisible = true;
             }
             socket.emit('server message', 'Mode invisible activé.');
-            console.log(🔍 ${user.username} a activé le mode invisible.);
+            console.log(`🔍 ${user.username} a activé le mode invisible.`);
             emitUserList(currentRoom);
             updateRoomUserCounts();
           } else if (param === 'off') {
@@ -409,12 +409,12 @@ io.on('connection', (socket) => {
               if (u) u.invisible = false;
             }
             socket.emit('server message', 'Mode invisible désactivé.');
-            console.log(🔍 ${user.username} a désactivé le mode invisible.);
+            console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
             emitUserList(currentRoom);
             updateRoomUserCounts();
             io.to(currentRoom).emit('chat message', {
               username: 'Système',
-              message: ${user.username} est maintenant visible.,
+              message: `${user.username} est maintenant visible.`,
               timestamp: new Date().toISOString(),
               channel: currentRoom
             });
@@ -457,8 +457,8 @@ io.on('connection', (socket) => {
 
           io.emit('room list', savedRooms);
           updateRoomUserCounts();
-          io.emit('server message', Le salon ${currentRoom} a été fermé par ${user.username});
-          console.log(❌ Salon fermé par ${user.username} : ${currentRoom});
+          io.emit('server message', `Le salon ${currentRoom} a été fermé par ${user.username}`);
+          console.log(`❌ Salon fermé par ${user.username} : ${currentRoom}`);
           return;
 
         default:
@@ -514,14 +514,14 @@ io.on('connection', (socket) => {
       if (!user.invisible) {
         io.to(newChannel).emit('chat message', {
           username: 'Système',
-          message: ${user.username} a rejoint le salon ${newChannel},
+          message: `${user.username} a rejoint le salon ${newChannel}`,
           timestamp: new Date().toISOString(),
           channel: newChannel
         });
 
         io.to(oldChannel).emit('chat message', {
           username: 'Système',
-          message: ${user.username} a quitté le salon ${oldChannel},
+          message: `${user.username} a quitté le salon ${oldChannel}`,
           timestamp: new Date().toISOString(),
           channel: oldChannel
         });
@@ -569,7 +569,7 @@ io.on('connection', (socket) => {
     roomOwners[newChannel] = user.username;
 
     fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
-    console.log(🆕 Salon créé : ${newChannel} par ${user.username});
+    console.log(`🆕 Salon créé : ${newChannel} par ${user.username}`);
 
     const oldChannel = userChannels[socket.id];
     if (oldChannel && oldChannel !== newChannel) {
@@ -581,7 +581,7 @@ io.on('connection', (socket) => {
 
       io.to(oldChannel).emit('chat message', {
         username: 'Système',
-        message: ${user.username} a quitté le salon ${oldChannel},
+        message: `${user.username} a quitté le salon ${oldChannel}`,
         timestamp: new Date().toISOString(),
         channel: oldChannel
       });
@@ -590,7 +590,7 @@ io.on('connection', (socket) => {
     userChannels[socket.id] = newChannel;
     socket.join(newChannel);
     roomUsers[newChannel].push(user);
-    console.log(${user.username} a rejoint le salon ${newChannel});
+    console.log(`${user.username} a rejoint le salon ${newChannel}`);
 
     socket.emit('room created', newChannel);
     io.emit('room list', savedRooms);
@@ -600,7 +600,7 @@ io.on('connection', (socket) => {
 
     io.to(newChannel).emit('chat message', {
       username: 'Système',
-      message: Bienvenue dans le salon ${newChannel} créé par ${user.username}!,
+      message: `Bienvenue dans le salon ${newChannel} créé par ${user.username}!`,
       timestamp: new Date().toISOString(),
       channel: newChannel
     });
@@ -620,14 +620,14 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     const user = Object.values(users).find(u => u.id === socket.id);
     if (user) {
-      console.log(❌ Déconnexion : ${user.username});
+      console.log(`❌ Déconnexion : ${user.username}`);
 
       const room = userChannels[socket.id];
       if (room) {
         if (!user.invisible) {
           io.to(room).emit('chat message', {
             username: 'Système',
-            message: ${user.username} a quitté le serveur,
+            message: `${user.username} a quitté le serveur`,
             timestamp: new Date().toISOString(),
             channel: room
           });
@@ -644,7 +644,7 @@ io.on('connection', (socket) => {
 
       cleanupEmptyDynamicRooms();
     } else {
-      console.log(❌ Déconnexion inconnue : ${socket.id});
+      console.log(`❌ Déconnexion inconnue : ${socket.id}`);
     }
   });
 
@@ -652,5 +652,5 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
-  console.log(🚀 Serveur démarré sur http://localhost:${PORT});
-}); 
+  console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
+});
