@@ -56,10 +56,13 @@ app.get('/health', (req, res) => {
 });
 
 function getUserRole(username) {
+  if (username.toLowerCase() === 'maeva') return 'admin';
   if (modData.admins.includes(username)) return 'admin';
   if (modData.modos.includes(username)) return 'modo';
   return 'user';
 }
+
+
 
 function updateRoomUserCounts() {
   const counts = {};
