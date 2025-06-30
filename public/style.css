@@ -216,6 +216,7 @@ main {
 }
 
 /* === USER LIST (RIGHT SIDEBAR) === */
+/* CACHER PAR DEFAUT tant que pas connecté */
 #user-list {
   position: fixed;
   top: 50px; /* sous la barre fixe #top-bar */
@@ -230,6 +231,8 @@ main {
   box-sizing: border-box;
   z-index: 1000;
   flex: none;
+
+  display: none; /* Ajouté pour cacher avant connexion */
 }
 
 #users {
