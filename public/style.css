@@ -279,35 +279,31 @@ main {
 
 /* === MODAL === */
 .modal {
-  position: fixed;
+  position: fixed;       /* Fixée sur l'écran */
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: #000000;
-  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
-  background-size: cover;
-  background-position: center;
-  display: flex;               /* indispensable pour centrer */
-  justify-content: center;     /* centre horizontalement */
-  align-items: center;         /* centre verticalement */
-  z-index: 1000;
-  animation: fadeIn 0.5s ease-in-out;
-  backdrop-filter: blur(5px);
+  width: 100vw;          /* Prend toute la largeur de la fenêtre */
+  height: 100vh;         /* Prend toute la hauteur de la fenêtre */
+  background: rgba(0,0,0,0.6); /* Fond semi-transparent pour l’effet modal */
+  display: flex;         /* Flexbox pour centrer */
+  justify-content: center; /* Centre horizontalement */
+  align-items: center;     /* Centre verticalement */
+  z-index: 1000;         /* Au-dessus du reste */
 }
+
 
 
 .modal-content {
   background: #1e1e1e;
-  padding: 2.5em;
+  padding: 2em;
   border-radius: 15px;
-  text-align: center;
+  color: white;
   width: 90%;
   max-width: 400px;
-  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
-  border: 2px solid #444;
-  animation: popIn 0.4s ease;
+  box-sizing: border-box;
+  text-align: center;
 }
+
 
 
 .modal-content h2 {
