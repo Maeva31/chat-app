@@ -555,6 +555,6 @@ button:focus {
   user-select: none;    /* Optionnel : empêche la sélection du texte */
 }
 /* Cache tout le chat tant que pas connecté */
-#app-container:not(.connected) {
-  display: none;
+.hidden {
+  display: none !important;
 }
