@@ -418,142 +418,91 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Envoi message avec touche Entrée
-  document.getElementById('message-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
+  document.getElementById('message-input').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       sendMessage();
     }
   });
 
-  // À la connexion socket, on renvoie infos utilisateur + joinRoom
-  socket.on('connect', () => {
-    const savedUsername = localStorage.getItem('username');
-    const savedGender = localStorage.getItem('gender');
-    const savedAge = localStorage.getItem('age');
+  // Bouton envoyer message
+  document.getElementById('send-button').addEventListener('click', () => {
+    sendMessage();
+  });
 
-    if (!hasSentUserInfo && savedUsername && savedAge) {
-      socket.emit('set username', {
-        username: savedUsername,
-        gender: savedGender || 'non spécifié',
-        age: savedAge,
-        invisible: invisibleMode
+  // Envoi modal pseudo (bouton)
+  document.getElementById('submit-username').addEventListener('click', () => {
+    submitUserInfo();
+  });
+
+  // Envoi modal pseudo (Entrée)
+  ['username-input', 'gender-select', 'age-input'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          submitUserInfo();
+        }
       });
-      const savedChannel = localStorage.getItem('currentChannel') || 'Général';
-      socket.emit('joinRoom', savedChannel);
-      selectChannelInUI(savedChannel);
-      hasSentUserInfo = true;
-      initialLoadComplete = true;
-
-      if (invisibleMode) {
-        showBanner('Mode invisible activé (auto)', 'success');
-      }
     }
   });
 
-  // Bouton validation pseudo
-  document.getElementById('username-submit').addEventListener('click', submitUserInfo);
+  // Récupérer données depuis localStorage et auto connecter si déjà défini
+  const savedGender = localStorage.getItem('gender');
+  const savedAge = localStorage.getItem('age');
+  const invisibleSaved = localStorage.getItem('invisibleMode') === 'true';
 
-  // Emoji Picker
-  const emojiButton = document.getElementById('emoji-button');
-  const emojiPicker = document.getElementById('emoji-picker');
-  const messageInput = document.getElementById('message-input');
-
-  if (emojiPicker && emojiButton && messageInput) {
-    emojiPicker.style.display = 'none';
-
-    emojiButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+  if (savedUsername && savedGender && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender,
+      age: Number(savedAge),
+      invisible: invisibleSaved,
+      password: '' // Pas stocké, à demander à chaque connexion admin/mode
     });
-
-    emojiPicker.querySelectorAll('.emoji').forEach(emoji => {
-      emoji.style.cursor = 'pointer';
-      emoji.style.fontSize = '22px';
-      emoji.style.margin = '5px';
-      emoji.addEventListener('click', () => {
-        messageInput.value += emoji.textContent;
-        messageInput.focus();
-      });
-    });
-
-    document.addEventListener('click', () => {
-      emojiPicker.style.display = 'none';
-    });
-
-    emojiPicker.addEventListener('click', e => {
-      e.stopPropagation();
-    });
+    hasSentUserInfo = true;
+    socket.emit('joinRoom', currentChannel);
   }
 
-  // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
-  socket.on('banned', () => {
-    showBanner('🚫 Vous avez été banni du serveur.', 'error');
-    socket.disconnect();
-  });
-
-  socket.on('kicked', () => {
-    showBanner('👢 Vous avez été expulsé du serveur.', 'error');
-    socket.disconnect();
-  });
-
-  socket.on('muted', () => {
-    showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
-  });
-
-  socket.on('unmuted', () => {
-    showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
-  });
-
-  socket.on('error message', (msg) => {
-    showBanner(`❗ ${msg}`, 'error');
-  });
-
-  socket.on('no permission', () => {
-    showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
-  });
-
-  // --- Début ajout mode invisible ---
-
+  // Bouton mode invisible (visible uniquement si admin)
   if (invisibleBtn) {
     invisibleBtn.addEventListener('click', () => {
-      invisibleMode = !invisibleMode;
-      updateInvisibleButton();
+      if (!hasSentUserInfo) return;
 
-      localStorage.setItem('invisibleMode', invisibleMode ? 'true' : 'false');
+      if (!isAdmin) {
+        showBanner('Mode invisible réservé aux administrateurs.', 'error');
+        return;
+      }
+
+      invisibleMode = !invisibleMode;
+      localStorage.setItem('invisibleMode', invisibleMode);
+      updateInvisibleButton();
 
       if (invisibleMode) {
         socket.emit('chat message', { message: '/invisible on' });
-        showBanner('Mode invisible activé', 'success');
-        invisibleBtn.style.display = 'inline-block';
       } else {
         socket.emit('chat message', { message: '/invisible off' });
-        showBanner('Mode invisible désactivé', 'success');
-        if (!isAdmin) {
-          invisibleBtn.style.display = 'none';
-        }
       }
     });
   }
 
-  // Mise à jour bouton mode invisible selon rôle
+  // Gestion erreurs serveur
+  socket.on('error message', (msg) => showBanner(msg, 'error'));
+  socket.on('server message', (msg) => showBanner(msg, 'success'));
+  socket.on('no permission', () => showBanner('Permission refusée.', 'error'));
+
+  // Affiche le bouton invisible seulement si admin (reçoit info via un message serveur ici)
   socket.on('user list', (users) => {
-    const username = localStorage.getItem('username');
-    const me = users.find(u => u.username === username);
+    const me = users.find(u => u.id === socket.id);
     if (me && me.role === 'admin') {
-      if (!isAdmin) isAdmin = true;
-      if (invisibleBtn) {
-        invisibleBtn.style.display = 'inline-block';
-        updateInvisibleButton();
-      }
+      isAdmin = true;
+      if (invisibleBtn) invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
     } else {
-      if (isAdmin) {
-        isAdmin = false;
-        if (!invisibleMode && invisibleBtn) {
-          invisibleBtn.style.display = 'none';
-        }
-      }
+      isAdmin = false;
+      if (invisibleBtn) invisibleBtn.style.display = 'none';
     }
   });
 
-  // --- Fin ajout mode invisible ---
 });
