@@ -171,10 +171,11 @@ io.on('connection', (socket) => {
     }
 
     if (mutedUsers.has(user.username)) {
-      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
-      socket.emit('redirect', '/muted.html');  // Redirection mutés
-      return;
-    }
+  socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+  // suppression de la redirection pour mute
+  return;
+}
+
 
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
