@@ -268,8 +268,9 @@ main {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 100px; /* tu peux ajuster selon ce que tu préfères */
+  max-width: 160px; /* Permet d'afficher 16 caractères */
 }
+
 
 
 #users li.selected {
