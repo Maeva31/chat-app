@@ -1,9 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
- const adminUsernames = ['MaEvA'];
-const modoUsernames = ['DarkGirL'];
-
+  const adminUsernames = ['MaEvA'];
+  const modoUsernames = ['DarkGirL'];
 
   let selectedUser = null;
   let hasSentUserInfo = false;
@@ -12,27 +11,41 @@ const modoUsernames = ['DarkGirL'];
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
-const usernameInput = document.getElementById('username-input');
-const passwordInput = document.getElementById('password-input');
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
 
+  // --- Gestion affichage top-bar selon état connexion ---
+  function updateTopBarVisibility() {
+    const topBar = document.getElementById('top-bar');
+    const savedUsername = localStorage.getItem('username');
+    if (!topBar) return;
 
-if (usernameInput && passwordInput) {
-  usernameInput.addEventListener('input', () => {
-  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
-  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-    passwordInput.style.display = 'block'; // afficher le mot de passe
-  } else {
-    passwordInput.style.display = 'none';  // cacher sinon
-    passwordInput.value = '';              // vider le mot de passe
+    if (savedUsername) {
+      topBar.style.display = 'block';  // Affiche la barre quand connecté
+    } else {
+      topBar.style.display = 'none';   // Cache sinon
+    }
   }
-});
 
- const initialUsername = usernameInput.value.trim();
-  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
-    passwordInput.style.display = 'block';
+  // Appel initial au chargement
+  updateTopBarVisibility();
+
+  if (usernameInput && passwordInput) {
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim();
+      if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+        passwordInput.style.display = 'block';
+      } else {
+        passwordInput.style.display = 'none';
+        passwordInput.value = '';
+      }
+    });
+
+    const initialUsername = usernameInput.value.trim();
+    if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
+      passwordInput.style.display = 'block';
+    }
   }
-}
-
 
   const genderColors = {
     Homme: '#00f',
@@ -159,55 +172,86 @@ if (usernameInput && passwordInput) {
     });
   }
 
- const logoutButton = document.getElementById('logoutButton');
+  const logoutButton = document.getElementById('logoutButton');
+  const logoutModal = document.getElementById('logoutModal');
+  const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
+  const logoutCancelBtn = document.getElementById('logoutCancelBtn');
 
-const logoutModal = document.getElementById('logoutModal');
-const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
-const logoutCancelBtn = document.getElementById('logoutCancelBtn');
-
-function openLogoutModal() {
-  if (logoutModal) {
-    logoutModal.style.display = 'flex';
-  }
-}
-
-function closeLogoutModal() {
-  if (logoutModal) {
-    logoutModal.style.display = 'none';
-  }
-}
-
-function performLogout() {
-  socket.emit('logout');
-  ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
-    localStorage.removeItem(key);
-  });
-  location.reload();
-}
-
-if (logoutButton) {
-  logoutButton.addEventListener('click', openLogoutModal);
-}
-
-if (logoutConfirmBtn) {
-  logoutConfirmBtn.addEventListener('click', () => {
-    closeLogoutModal();
-    performLogout();
-  });
-}
-
-if (logoutCancelBtn) {
-  logoutCancelBtn.addEventListener('click', closeLogoutModal);
-}
-
-// Pour fermer la modal si clic en dehors de la boîte blanche
-if (logoutModal) {
-  logoutModal.addEventListener('click', e => {
-    if (e.target === logoutModal) {
-      closeLogoutModal();
+  function openLogoutModal() {
+    if (logoutModal) {
+      logoutModal.style.display = 'flex';
     }
-  });
-}
+  }
+
+  function closeLogoutModal() {
+    if (logoutModal) {
+      logoutModal.style.display = 'none';
+    }
+  }
+
+  function performLogout() {
+    socket.emit('logout');
+    ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    const topBar = document.getElementById('top-bar');
+    if (topBar) {
+      topBar.style.display = 'none'; // cache la barre au logout
+    }
+
+    location.reload();
+  }
+
+  if (logoutButton) {
+    logoutButton.addEventListener('click', openLogoutModal);
+  }
+
+  if (logoutConfirmBtn) {
+    logoutConfirmBtn.addEventListener('click', () => {
+      closeLogoutModal();
+      performLogout();
+    });
+  }
+
+  if (logoutCancelBtn) {
+    logoutCancelBtn.addEventListener('click', closeLogoutModal);
+  }
+
+  if (logoutModal) {
+    logoutModal.addEventListener('click', e => {
+      if (e.target === logoutModal) {
+        closeLogoutModal();
+      }
+    });
+  }
+
+  // --- Exemple d’intégration de la connexion utilisateur ---
+  // À adapter selon ton formulaire/modal login réel
+  const loginForm = document.getElementById('loginForm'); // Remplace par ton vrai ID
+  if (loginForm) {
+    loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+      const username = usernameInput.value.trim();
+      if (!username) {
+        showBanner("Veuillez entrer un pseudo valide.", "error");
+        return;
+      }
+      // Ici tu peux ajouter validation mot de passe, etc.
+
+      // Stocke le pseudo et ferme la modal
+      localStorage.setItem('username', username);
+      const myModal = document.getElementById('myModal');
+      if (myModal) myModal.style.display = 'none';
+
+      updateTopBarVisibility();
+      
+      // Ici envoie au serveur, initialisations, etc.
+      socket.emit('set username', { username });
+    });
+  }
+
+});
 
 
 
