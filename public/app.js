@@ -1,96 +1,193 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  const logoutButton = document.getElementById('logoutButton');
-  const logoutModal = document.getElementById('logoutModal');
-  const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
-  const logoutCancelBtn = document.getElementById('logoutCancelBtn');
+ const adminUsernames = ['MaEvA'];
+const modoUsernames = ['DarkGirL'];
 
-  // Cacher le bouton logout par défaut
-  if (logoutButton) {
-    logoutButton.style.display = 'none';
+
+  let selectedUser = null;
+  let hasSentUserInfo = false;
+  let initialLoadComplete = false;
+  let bannerTimeoutId = null;
+
+  let currentChannel = 'Général';  // Forcer le salon Général au chargement
+
+const usernameInput = document.getElementById('username-input');
+const passwordInput = document.getElementById('password-input');
+
+
+if (usernameInput && passwordInput) {
+  usernameInput.addEventListener('input', () => {
+  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
+  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+    passwordInput.style.display = 'block'; // afficher le mot de passe
+  } else {
+    passwordInput.style.display = 'none';  // cacher sinon
+    passwordInput.value = '';              // vider le mot de passe
+  }
+});
+
+ const initialUsername = usernameInput.value.trim();
+  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
+    passwordInput.style.display = 'block';
+  }
+}
+
+
+  const genderColors = {
+    Homme: '#00f',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
+
+  const channelEmojis = {
+    "Général": "💬",
+    "Musique": "🎧",
+    "Gaming": "🎮",
+    "Détente": "🌿"
+  };
+
+  // Affiche la modal si pas de pseudo
+  const savedUsername = localStorage.getItem('username');
+  if (!savedUsername) {
+    document.getElementById('myModal').style.display = 'block';
   }
 
-  function openLogoutModal() {
-    if (logoutModal) logoutModal.style.display = 'block';
-  }
-  function closeLogoutModal() {
-    if (logoutModal) logoutModal.style.display = 'none';
+  // Variables pour mode invisible
+  const invisibleBtn = document.getElementById('toggle-invisible-btn');
+  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+  let isAdmin = false;
+
+  // Mets à jour le bouton (texte + couleur)
+  function updateInvisibleButton() {
+    if (!invisibleBtn) return;
+    invisibleBtn.textContent = `👻 Mode Invisible`;
+    invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
   }
 
-  if (logoutButton) {
-    logoutButton.addEventListener('click', openLogoutModal);
+  if (invisibleBtn) {
+    if (invisibleMode) {
+      invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
+    } else {
+      invisibleBtn.style.display = 'none';
+    }
   }
-  if (logoutConfirmBtn) {
-    logoutConfirmBtn.addEventListener('click', () => {
-      closeLogoutModal();
-      performLogout();
-    });
+
+  // Affiche une bannière temporaire (type = 'error' ou 'success')
+  function showBanner(message, type = 'error') {
+    if (!initialLoadComplete) return;
+    const banner = document.getElementById('error-banner');
+    const text = document.getElementById('error-banner-text');
+    if (!banner || !text) return;
+
+    const prefix = type === 'success' ? '✅' : '❌';
+    text.textContent = `${prefix} ${message}`;
+    banner.style.display = 'flex';
+    banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+
+    if (bannerTimeoutId) clearTimeout(bannerTimeoutId);
+    bannerTimeoutId = setTimeout(() => {
+      banner.style.display = 'none';
+      bannerTimeoutId = null;
+    }, 5000);
   }
-  if (logoutCancelBtn) {
-    logoutCancelBtn.addEventListener('click', closeLogoutModal);
+
+  // Couleur selon genre
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
   }
-  if (logoutModal) {
-    logoutModal.addEventListener('click', e => {
-      if (e.target === logoutModal) {
-        closeLogoutModal();
+
+  // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
+  function extractChannelName(text) {
+    text = text.replace(/\s*\(\d+\)$/, '').trim();
+    const parts = text.split('┊');
+    if (parts.length > 1) return parts[1].trim();
+    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+  }
+
+  // Met à jour la liste des utilisateurs affichée
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    if (!userList) return;
+    userList.innerHTML = '';
+    if (!Array.isArray(users)) return;
+
+    users.forEach(user => {
+      const username = user?.username || 'Inconnu';
+      const age = user?.age || '?';
+      const gender = user?.gender || 'non spécifié';
+      const role = user?.role || 'user';
+
+      const li = document.createElement('li');
+      li.classList.add('user-item');
+
+      const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+        <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+      `;
+
+      const usernameSpan = li.querySelector('.username-span');
+      if (role === 'admin') {
+        const icon = document.createElement('img');
+        icon.src = '/favicon.ico';
+        icon.alt = 'Admin';
+        icon.title = 'Admin';
+        icon.classList.add('admin-icon');
+        usernameSpan.appendChild(icon);
+      } else if (role === 'modo') {
+        const icon = document.createElement('span');
+        icon.textContent = '🛡️';
+        icon.title = 'Modérateur';
+        icon.classList.add('modo-icon');
+        usernameSpan.appendChild(icon);
       }
+
+      usernameSpan.addEventListener('click', () => {
+        const input = document.getElementById('message-input');
+        const mention = `@${username} `;
+        if (!input.value.includes(mention)) input.value = mention + input.value;
+        input.focus();
+        selectedUser = username;
+      });
+
+      userList.appendChild(li);
     });
   }
 
-  // Quand le pseudo est accepté par le serveur => afficher le bouton logout
-  socket.once('username accepted', ({ username, gender, age }) => {
-    localStorage.setItem('username', username);
-    localStorage.setItem('gender', gender);
-    localStorage.setItem('age', age);
+ const logoutButton = document.getElementById('logoutButton');
 
-    document.getElementById('myModal').style.display = 'none';
-    document.getElementById('chat-wrapper').style.display = 'block';
+const logoutModal = document.getElementById('logoutModal');
+const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
+const logoutCancelBtn = document.getElementById('logoutCancelBtn');
 
-    socket.emit('joinRoom', currentChannel);
-    selectChannelInUI(currentChannel);
-
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
-
-    showLogoutButton();
-  });
-
-  // Cacher le bouton logout lors de la déconnexion socket
-  socket.on('disconnect', () => {
-    hideLogoutButton();
-  });
-
-  // Dans la fonction de logout, cacher aussi le bouton
-  function performLogout() {
-    socket.emit('logout');
-    ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
-      localStorage.removeItem(key);
-    });
-    hideLogoutButton();
-    location.reload();
-  }
-
-  
-
-  // Ton écouteur logout existant reste le même :
-  function openLogoutModal() {
-  const logoutModal = document.getElementById('logoutModal'); // Note le M majuscule ici, comme dans ton HTML
+function openLogoutModal() {
   if (logoutModal) {
-    logoutModal.style.display = 'block';
+    logoutModal.style.display = 'flex';
   }
 }
 
 function closeLogoutModal() {
-  const logoutModal = document.getElementById('logoutModal');
   if (logoutModal) {
     logoutModal.style.display = 'none';
   }
 }
 
-  if (logoutButton) {
-    logoutButton.addEventListener('click', openLogoutModal);
-  }
+function performLogout() {
+  socket.emit('logout');
+  ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
+    localStorage.removeItem(key);
+  });
+  location.reload();
+}
+
+if (logoutButton) {
+  logoutButton.addEventListener('click', openLogoutModal);
+}
 
 if (logoutConfirmBtn) {
   logoutConfirmBtn.addEventListener('click', () => {
