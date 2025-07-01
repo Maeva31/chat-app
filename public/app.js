@@ -1,26 +1,41 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  // --- Bouton logout ---
   const logoutButton = document.getElementById('logoutButton');
+  const logoutModal = document.getElementById('logoutModal');
+  const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
+  const logoutCancelBtn = document.getElementById('logoutCancelBtn');
 
   // Cacher le bouton logout par défaut
   if (logoutButton) {
     logoutButton.style.display = 'none';
   }
 
-  // Fonction pour afficher le bouton logout
-  function showLogoutButton() {
-    if (logoutButton) {
-      logoutButton.style.display = 'inline-block'; // ou 'block' selon style CSS
-    }
+  function openLogoutModal() {
+    if (logoutModal) logoutModal.style.display = 'block';
+  }
+  function closeLogoutModal() {
+    if (logoutModal) logoutModal.style.display = 'none';
   }
 
-  // Fonction pour cacher le bouton logout
-  function hideLogoutButton() {
-    if (logoutButton) {
-      logoutButton.style.display = 'none';
-    }
+  if (logoutButton) {
+    logoutButton.addEventListener('click', openLogoutModal);
+  }
+  if (logoutConfirmBtn) {
+    logoutConfirmBtn.addEventListener('click', () => {
+      closeLogoutModal();
+      performLogout();
+    });
+  }
+  if (logoutCancelBtn) {
+    logoutCancelBtn.addEventListener('click', closeLogoutModal);
+  }
+  if (logoutModal) {
+    logoutModal.addEventListener('click', e => {
+      if (e.target === logoutModal) {
+        closeLogoutModal();
+      }
+    });
   }
 
   // Quand le pseudo est accepté par le serveur => afficher le bouton logout
@@ -56,7 +71,23 @@ document.addEventListener('DOMContentLoaded', () => {
     location.reload();
   }
 
+  
+
   // Ton écouteur logout existant reste le même :
+  function openLogoutModal() {
+  const logoutModal = document.getElementById('logoutModal'); // Note le M majuscule ici, comme dans ton HTML
+  if (logoutModal) {
+    logoutModal.style.display = 'block';
+  }
+}
+
+function closeLogoutModal() {
+  const logoutModal = document.getElementById('logoutModal');
+  if (logoutModal) {
+    logoutModal.style.display = 'none';
+  }
+}
+
   if (logoutButton) {
     logoutButton.addEventListener('click', openLogoutModal);
   }
