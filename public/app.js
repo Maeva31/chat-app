@@ -276,6 +276,7 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
     const genderSelect = document.getElementById('gender-select');
     const ageInput = document.getElementById('age-input');
     const modalError = document.getElementById('modal-error');
+    const password = passwordInput?.value.trim() || '';
 
      const passwordInput = document.getElementById('password-input');
     const specialRoles = ['admin', 'modo', 'MaEvA'];
@@ -319,7 +320,14 @@ if (usernameInput && passwordInput) {
 
     modalError.style.display = 'none';
     const password = passwordInput?.value?.trim() || '';
-   socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
+   socket.emit('set username', {
+  username,
+  gender,
+  age,
+  invisible: invisibleMode,
+  password
+});
+
   }
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
