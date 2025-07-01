@@ -401,24 +401,33 @@ function submitUserInfo() {
   });
 
   socket.on('roomUserCounts', (counts) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
+  const channelList = document.getElementById('channel-list');
+  if (!channelList) return;
 
-    [...channelList.children].forEach(li => {
-      const name = extractChannelName(li.textContent);
-      if (name && counts[name] !== undefined) {
-        li.textContent = li.textContent.replace(/\s*\(\d+\)$/, '').trim();
-        const emoji = channelEmojis[name] || "💬";
+  [...channelList.children].forEach(li => {
+    const name = extractChannelName(li.textContent);
+    if (name && counts[name] !== undefined) {
+      const emoji = channelEmojis[name] || "💬";
 
-        // Ne pas afficher le nombre si mode invisible est activé et c'est le salon courant
-        if (invisibleMode && name === currentChannel) {
-          li.textContent = `# ${emoji} ┊ ${name}`;
-        } else {
-          li.textContent = `# ${emoji} ┊ ${name} (${counts[name]})`;
-        }
+      // Au lieu de modifier textContent qui supprime les enfants, on met à jour un span dédié (à créer si absent)
+      let countSpan = li.querySelector('.user-count');
+      if (!countSpan) {
+        countSpan = document.createElement('span');
+        countSpan.classList.add('user-count');
+        li.appendChild(countSpan);
       }
-    });
+
+      if (invisibleMode && name === currentChannel) {
+        countSpan.textContent = '';  // Pas de nombre si invisible
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+      } else {
+        countSpan.textContent = ` (${counts[name]})`;
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+      }
+    }
   });
+});
+
 
   socket.on('room list', (rooms) => {
     const channelList = document.getElementById('channel-list');
