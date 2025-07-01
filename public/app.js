@@ -492,13 +492,17 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       }
 
       if (invisibleMode && name === currentChannel) {
-        countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      }
-    }
+  countSpan.textContent = '';  // Pas de nombre si invisible
+  if (li.firstChild) {
+    li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+  }
+} else {
+  countSpan.textContent = ` (${counts[name]})`;
+  if (li.firstChild) {
+    li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+  }
+}
+
   });
 });
 
