@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -488,32 +489,34 @@ if (usernameInput && passwordInput) {
   });
 
   // À la connexion socket, on renvoie infos utilisateur + joinRoom
-  socket.on('connect', () => {
-    const savedUsername = localStorage.getItem('username');
-    const savedGender = localStorage.getItem('gender');
-    const savedAge = localStorage.getItem('age');
+socket.on('connect', () => {
+  const savedUsername = localStorage.getItem('username');
+  const savedGender = localStorage.getItem('gender');
+  const savedAge = localStorage.getItem('age');
+  const savedPassword = localStorage.getItem('password') || '';
 
-    if (!hasSentUserInfo && savedUsername && savedAge) {
-      socket.emit('set username', {
-        username: savedUsername,
-        gender: savedGender || 'non spécifié',
-        age: savedAge,
-        invisible: invisibleMode,
+  if (!hasSentUserInfo && savedUsername && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || 'non spécifié',
+      age: savedAge,
+      invisible: invisibleMode,
+      password: savedPassword
+    });
+    currentChannel = 'Général';
+    localStorage.setItem('currentChannel', currentChannel);
+    socket.emit('joinRoom', currentChannel);
+    selectChannelInUI(currentChannel);
 
-      });
-      currentChannel = 'Général';
-localStorage.setItem('currentChannel', currentChannel);
-socket.emit('joinRoom', currentChannel);
-selectChannelInUI(currentChannel);
+    hasSentUserInfo = true;
+    initialLoadComplete = true;
 
-      hasSentUserInfo = true;
-      initialLoadComplete = true;
-
-      if (invisibleMode) {
-        showBanner('Mode invisible activé (auto)', 'success');
-      }
+    if (invisibleMode) {
+      showBanner('Mode invisible activé (auto)', 'success');
     }
-  });
+  }
+});
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
