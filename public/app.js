@@ -383,17 +383,9 @@ document.addEventListener('DOMContentLoaded', () => {
  
 
 
-  if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
+  
 
-  const username = usernameInput.value.trim();
-  const gender = genderSelect.value;
-  const age = parseInt(ageInput.value.trim(), 10);
 
-  if (!username || username.includes(' ') || username.length > 16) {
-    modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
-    modalError.style.display = 'block';
-    return;
-  }
   if (isNaN(age) || age < 18 || age > 89) {
     modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
     modalError.style.display = 'block';
