@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -5,13 +6,12 @@ document.addEventListener('DOMContentLoaded', () => {
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
-  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
-  let isAdmin = false;
-  let currentChannel = localStorage.getItem('currentChannel') || 'Général';
 
-  const usernameInput = document.getElementById('username-input');
-  const passwordInput = document.getElementById('password-input');
-  const invisibleBtn = document.getElementById('toggle-invisible-btn');
+let currentChannel = 'Général';  // Forcer le salon Général au chargement
+
+
+
+
   const genderColors = {
     Homme: '#00f',
     Femme: '#f0f',
@@ -19,125 +19,13 @@ document.addEventListener('DOMContentLoaded', () => {
     'non spécifié': '#aaa',
     default: '#aaa'
   };
+
   const channelEmojis = {
     "Général": "💬",
     "Musique": "🎧",
     "Gaming": "🎮",
     "Détente": "🌿"
   };
-
-  // --- Ici tout le reste de ton code fusionné ---
-
-  // Gestion champ mot de passe affichage
-  if (usernameInput && passwordInput) {
-    usernameInput.addEventListener('input', () => {
-      const val = usernameInput.value.trim();
-      if (['admin', 'modo', 'MaEvA'].includes(val)) {
-        passwordInput.style.display = 'block';
-      } else {
-        passwordInput.style.display = 'none';
-        passwordInput.value = '';
-      }
-    });
-  }
-
-  // ... Ton code d'UI, emojis, boutons, etc ...
-
-  // Affiche la modal si pas de pseudo
-  const savedUsername = localStorage.getItem('username');
-  if (!savedUsername) {
-    document.getElementById('myModal').style.display = 'block';
-  } else {
-    document.getElementById('chat-wrapper').style.display = 'block';
-  }
-
-  // À la connexion socket, on renvoie infos utilisateur + joinRoom
-  socket.on('connect', () => {
-    const savedUsername = localStorage.getItem('username');
-    const savedGender = localStorage.getItem('gender');
-    const savedAge = localStorage.getItem('age');
-    const savedPassword = localStorage.getItem('password') || '';
-
-    if (!hasSentUserInfo && savedUsername && savedAge) {
-      socket.emit('set username', {
-        username: savedUsername,
-        gender: savedGender || 'non spécifié',
-        age: savedAge,
-        invisible: invisibleMode,
-        password: savedPassword
-      });
-      socket.emit('joinRoom', currentChannel);
-      selectChannelInUI(currentChannel);
-
-      hasSentUserInfo = true;
-      initialLoadComplete = true;
-
-      if (invisibleMode) showBanner('Mode invisible activé (auto)', 'success');
-    }
-  });
-
-  // Soumission du pseudo
-  function submitUserInfo() {
-  const usernameInput = document.getElementById('username-input');
-  const genderSelect = document.getElementById('gender-select');
-  const ageInput = document.getElementById('age-input');
-  const modalError = document.getElementById('modal-error');
-  const passwordInput = document.getElementById('password-input');
-  const password = passwordInput?.value?.trim() || '';
-
-  if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
-
-  const username = usernameInput.value.trim();
-  const gender = genderSelect.value;
-  const age = parseInt(ageInput.value.trim(), 10);
-
-  if (!username || username.includes(' ') || username.length > 16) {
-    modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (isNaN(age) || age < 18 || age > 89) {
-    modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (!gender) {
-    modalError.textContent = "Veuillez sélectionner un genre.";
-    modalError.style.display = 'block';
-    return;
-  }
-
-  modalError.style.display = 'none';
-
-  socket.emit('set username', {
-    username,
-    gender,
-    age,
-    invisible: invisibleMode,
-    password
-  });
-
-  localStorage.setItem('username', username);
-  localStorage.setItem('gender', gender);
-  localStorage.setItem('age', age.toString());
-  localStorage.setItem('password', password);
-}
-
-
-  socket.once('username accepted', ({ username, gender, age }) => {
-    document.getElementById('myModal').style.display = 'none';
-    document.getElementById('chat-wrapper').style.display = 'block';
-
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
-
-    currentChannel = localStorage.getItem('currentChannel') || 'Général';
-    socket.emit('joinRoom', currentChannel);
-    selectChannelInUI(currentChannel);
-  });
-
-});
-
 
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
@@ -382,6 +270,55 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // Soumission du formulaire de pseudo
+  function submitUserInfo() {
+    const usernameInput = document.getElementById('username-input');
+    const genderSelect = document.getElementById('gender-select');
+    const ageInput = document.getElementById('age-input');
+    const modalError = document.getElementById('modal-error');
+
+    if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
+
+    const username = usernameInput.value.trim();
+    const gender = genderSelect.value;
+    const age = parseInt(ageInput.value.trim(), 10);
+
+    if (!username || username.includes(' ') || username.length > 16) {
+      modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+      modalError.style.display = 'block';
+      return;
+    }
+    if (isNaN(age) || age < 18 || age > 89) {
+      modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
+      modalError.style.display = 'block';
+      return;
+    }
+    if (!gender) {
+      modalError.textContent = "Veuillez sélectionner un genre.";
+      modalError.style.display = 'block';
+      return;
+    }
+
+    modalError.style.display = 'none';
+    socket.emit('set username', { username, gender, age, invisible: invisibleMode });
+  }
+
+  // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
+  socket.once('username accepted', ({ username, gender, age }) => {
+  localStorage.setItem('username', username);
+  localStorage.setItem('gender', gender);
+  localStorage.setItem('age', age);
+
+  document.getElementById('myModal').style.display = 'none';
+  document.getElementById('chat-wrapper').style.display = 'block';
+
+
+  socket.emit('joinRoom', currentChannel);
+  selectChannelInUI(currentChannel);
+
+  hasSentUserInfo = true;
+  initialLoadComplete = true;
+});
 
 
   // Écouteurs socket divers
@@ -412,38 +349,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   socket.on('user list', updateUserList);
 
- socket.on('room created', (newChannel) => {
-  if (!channelList) return;
+  socket.on('room created', (newChannel) => {
+    const channelList = document.getElementById('channel-list');
+    if (!channelList) return;
 
-  if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    const emoji = channelEmojis[newChannel] || "🆕";
-    li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
-    li.addEventListener('click', () => {
-      const clickedRoom = extractChannelName(li.textContent);
-      if (clickedRoom === currentChannel) return;
-      currentChannel = clickedRoom;
-      localStorage.setItem('currentChannel', currentChannel);
-      const chatMessages = document.getElementById('chat-messages');
-      if (chatMessages) chatMessages.innerHTML = '';
-      selectChannelInUI(currentChannel);
-      socket.emit('joinRoom', currentChannel);
-    });
-    channelList.appendChild(li);
-  }
-
-  // *** Ajout ici : rejoindre le nouveau salon automatiquement ***
-  currentChannel = newChannel;
-  localStorage.setItem('currentChannel', currentChannel);
-  socket.emit('joinRoom', currentChannel);
-  const chatMessages = document.getElementById('chat-messages');
-  if (chatMessages) chatMessages.innerHTML = '';
-  selectChannelInUI(currentChannel);
-
-  showBanner(`Salon "${newChannel}" créé et rejoint avec succès !`, 'success');
-});
-
+    if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      const emoji = channelEmojis[newChannel] || "🆕";
+      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
+      li.addEventListener('click', () => {
+        const clickedRoom = extractChannelName(li.textContent);
+        if (clickedRoom === currentChannel) return;
+        currentChannel = clickedRoom;
+        localStorage.setItem('currentChannel', currentChannel);
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) chatMessages.innerHTML = '';
+        selectChannelInUI(currentChannel);
+        socket.emit('joinRoom', currentChannel);
+      });
+      channelList.appendChild(li);
+    }
+    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
+  });
 
   socket.on('roomUserCounts', (counts) => {
     const channelList = document.getElementById('channel-list');
@@ -531,40 +459,31 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // À la connexion socket, on renvoie infos utilisateur + joinRoom
-socket.on('connect', () => {
-  const savedUsername = localStorage.getItem('username');
-  const savedGender = localStorage.getItem('gender');
-  const savedAge = localStorage.getItem('age');
-  const savedPassword = localStorage.getItem('password') || '';
+  socket.on('connect', () => {
+    const savedUsername = localStorage.getItem('username');
+    const savedGender = localStorage.getItem('gender');
+    const savedAge = localStorage.getItem('age');
 
-  if (!hasSentUserInfo && savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || 'non spécifié',
-      age: savedAge,
-      invisible: invisibleMode,
-      password: savedPassword
-    });
+    if (!hasSentUserInfo && savedUsername && savedAge) {
+      socket.emit('set username', {
+        username: savedUsername,
+        gender: savedGender || 'non spécifié',
+        age: savedAge,
+        invisible: invisibleMode
+      });
+      currentChannel = 'Général';
+localStorage.setItem('currentChannel', currentChannel);
+socket.emit('joinRoom', currentChannel);
+selectChannelInUI(currentChannel);
 
-    // Ne pas écraser currentChannel si déjà défini
-    if (!currentChannel) {
-      currentChannel = localStorage.getItem('currentChannel') || 'Général';
-      localStorage.setItem('currentChannel', currentChannel);
+      hasSentUserInfo = true;
+      initialLoadComplete = true;
+
+      if (invisibleMode) {
+        showBanner('Mode invisible activé (auto)', 'success');
+      }
     }
-
-    socket.emit('joinRoom', currentChannel);
-    selectChannelInUI(currentChannel);
-
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
-
-    if (invisibleMode) {
-      showBanner('Mode invisible activé (auto)', 'success');
-    }
-  }
-});
-
-
+  });
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
