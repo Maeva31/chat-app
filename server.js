@@ -53,9 +53,14 @@ savedRooms.forEach(room => {
 
 app.use(express.static('public'));
 
+app.get('/', (req, res) => {
+  res.redirect('/chat.html');
+});
+
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
 });
+
 
 function getUserRole(username) {
   if (modData.admins.includes(username)) return 'admin';
