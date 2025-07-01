@@ -1,39 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  const adminUsernames = ['MaEvA'];
-  const modoUsernames = ['DarkGirL'];
+  const adminUsernames = ['maeva'];
+  const modoUsernames = ['darkgirl'];
 
-  let selectedUser = null;
-  let hasSentUserInfo = false;
-  let initialLoadComplete = false;
-  let bannerTimeoutId = null;
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
 
-  let currentChannel = 'Général';  // Forcer le salon Général au chargement
-
-const usernameInput = document.getElementById('username-input');
-const passwordInput = document.getElementById('password-input');
-
-
-if (usernameInput && passwordInput) {
-  // Cacher le champ mot de passe au chargement si pseudo non correspondant
-  const initialVal = usernameInput.value.trim();
-  if (initialVal === 'MaEvA' || initialVal === 'DarkGirL') {
-    passwordInput.style.display = 'block';
-  } else {
-    passwordInput.style.display = 'none';
+  // Fonction pour savoir si le pseudo nécessite le mot de passe
+  function needsPassword(username) {
+    if (!username) return false;
+    const lower = username.toLowerCase();
+    return adminUsernames.includes(lower) || modoUsernames.includes(lower);
   }
 
-  usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.trim();
-    if (val === 'MaEvA' || val === 'DarkGirL') {
-      passwordInput.style.display = 'block'; // afficher mot de passe
+  if (usernameInput && passwordInput) {
+    // Au chargement, afficher ou cacher le champ mot de passe
+    if (needsPassword(usernameInput.value.trim())) {
+      passwordInput.style.display = 'block';
     } else {
-      passwordInput.style.display = 'none';  // cacher sinon
-      passwordInput.value = '';               // vider
+      passwordInput.style.display = 'none';
+      passwordInput.value = '';
     }
-  });
-}
+
+    // Sur saisie dans le champ pseudo, mettre à jour l'affichage du mot de passe
+    usernameInput.addEventListener('input', () => {
+      if (needsPassword(usernameInput.value.trim())) {
+        passwordInput.style.display = 'block';
+      } else {
+        passwordInput.style.display = 'none';
+        passwordInput.value = '';
+      }
+    });
+  }
+});
+
 
 
 
