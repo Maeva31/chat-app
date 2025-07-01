@@ -1,17 +1,21 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  let selectedUser = null;
-  let hasSentUserInfo = false;
-  let initialLoadComplete = false;
-  let bannerTimeoutId = null;
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
+  const specialRoles = ['admin', 'modo', 'MaEvA'];
 
-let currentChannel = 'Général';  // Forcer le salon Général au chargement
-
-
-
-
+  if (usernameInput && passwordInput) {
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim();
+      if (specialRoles.includes(val)) {
+        passwordInput.style.display = 'block';
+      } else {
+        passwordInput.style.display = 'none';
+        passwordInput.value = '';
+      }
+    });
+  }
   const genderColors = {
     Homme: '#00f',
     Femme: '#f0f',
