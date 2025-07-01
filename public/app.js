@@ -181,6 +181,24 @@ if (logoutButton) {
   });
 }
 
+function logout() {
+  if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
+    socket.emit('logout');
+
+    ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
+      localStorage.removeItem(key);
+    });
+
+    location.reload();
+  }
+}
+
+// Puis associer cette fonction au bouton logout :
+const logoutButton = document.getElementById('logoutButton');
+if (logoutButton) {
+  logoutButton.addEventListener('click', logout);
+}
+
 
   // Ajoute un message dans la zone de chat
   function addMessageToChat(msg) {
