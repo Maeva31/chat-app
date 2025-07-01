@@ -26,7 +26,11 @@ if (usernameInput && passwordInput) {
   }
 });
 
-
+ const initialUsername = usernameInput.value.trim();
+  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
+    passwordInput.style.display = 'block';
+  }
+}
 
 
   const genderColors = {
