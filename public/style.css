@@ -582,3 +582,17 @@ button:focus {
   width: 100%;
   user-select: none;
 }
+
+.control-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.control-button:hover {
+  background-color: #666;
+}
