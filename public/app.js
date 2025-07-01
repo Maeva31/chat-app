@@ -640,34 +640,26 @@ function submitUserInfo() {
   }
 
   // Mise à jour bouton mode invisible selon rôle
-  socket.on('user list', (users) => {
-    const username = localStorage.getItem('username');
-    const me = users.find(u => u.username === username);
-    if (me && me.role === 'admin') {
-      if (!isAdmin) isAdmin = true;
+socket.on('user list', (users) => {
+  const username = localStorage.getItem('username');
+  const me = users.find(u => u.username === username);
+
+  if (me && me.role === 'admin') {
+    if (!isAdmin) isAdmin = true;
+    if (invisibleBtn) {
+      invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
+    }
+    // Garde invisibleMode tel quel pour admin (ne change rien)
+  } else {
+    // Pas admin => forcer invisibleMode à false
+    if (isAdmin || invisibleMode) {
+      isAdmin = false;
+      invisibleMode = false;
+      localStorage.setItem('invisibleMode', 'false');
       if (invisibleBtn) {
-        invisibleBtn.style.display = 'inline-block';
-        updateInvisibleButton();
-      }
-    } else {
-      if (isAdmin) {
-        isAdmin = false;
-        if (!invisibleMode && invisibleBtn) {
-          invisibleBtn.style.display = 'none';
-        }
+        invisibleBtn.style.display = 'none';
       }
     }
-  });
-
-  // --- Fin ajout mode invisible ---
-
- socket.on('redirect', (url) => {
-  console.log('Redirect demandé vers:', url);
-  if (typeof url === 'string' && url.length > 0) {
-    window.location.href = url;
   }
-});
-
-
-
 });
