@@ -397,26 +397,27 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  modalError.style.display = 'none';
+ modalError.style.display = 'none';
 
-  socket.emit('set username', {
-    username,
-    gender,
-    age,
-    invisible: invisibleMode,
-    password
-  });
-}
+socket.emit('set username', {
+  username,
+  gender,
+  age,
+  invisible: invisibleMode,
+  password
+});
+} // <-- Cette accolade ferme la fonction submitUserInfo
 
-
-  // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
-  socket.once('username accepted', ({ username, gender, age }) => {
+// On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
+socket.once('username accepted', ({ username, gender, age }) => {
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
   localStorage.setItem('age', age);
 
   document.getElementById('myModal').style.display = 'none';
   document.getElementById('chat-wrapper').style.display = 'block';
+}); 
+
 
 
   socket.emit('joinRoom', currentChannel);
