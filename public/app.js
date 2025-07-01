@@ -502,7 +502,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
     li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
   }
 }
-
+    }
   });
 });
 
