@@ -206,13 +206,6 @@ function closeLogoutModal() {
   }
 }
 
-function performLogout() {
-  socket.emit('logout');
-  ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
-    localStorage.removeItem(key);
-  });
-  location.reload();
-}
 
 if (logoutButton) {
   logoutButton.addEventListener('click', openLogoutModal);
