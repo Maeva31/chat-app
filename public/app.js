@@ -9,6 +9,23 @@ document.addEventListener('DOMContentLoaded', () => {
 
 let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
+const usernameInput = document.getElementById('username-input');
+const passwordInput = document.getElementById('password-input');
+
+const adminUsernames = ['admin', 'maeva'];
+const modoUsernames = ['modo'];
+
+if (usernameInput && passwordInput) {
+  usernameInput.addEventListener('input', () => {
+    const val = usernameInput.value.trim().toLowerCase();
+    if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+      passwordInput.style.display = 'block'; // afficher le mot de passe
+    } else {
+      passwordInput.style.display = 'none';  // cacher sinon
+      passwordInput.value = '';               // vider le mot de passe
+    }
+  });
+}
 
 
 
