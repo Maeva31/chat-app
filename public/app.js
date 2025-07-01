@@ -1,8 +1,8 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  const adminUsernames = ['admin', 'maeva'];
-  const modoUsernames = ['modo'];
+  const adminUsernames = ['maeva'];
+  const modoUsernames = ['DarkGirL'];
 
   let selectedUser = null;
   let hasSentUserInfo = false;
