@@ -1,3 +1,94 @@
+document.addEventListener('DOMContentLoaded', () => {
+  const socket = io();
+
+  let currentChannel = localStorage.getItem('currentChannel') || 'Général';
+  let hasSentUserInfo = false;
+  let initialLoadComplete = false;
+  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+
+  // ... Ton code d'UI, emojis, boutons, etc ...
+
+  // Affiche la modal si pas de pseudo
+  const savedUsername = localStorage.getItem('username');
+  if (!savedUsername) {
+    document.getElementById('myModal').style.display = 'block';
+  } else {
+    document.getElementById('chat-wrapper').style.display = 'block';
+  }
+
+  // À la connexion socket, on renvoie infos utilisateur + joinRoom
+  socket.on('connect', () => {
+    const savedUsername = localStorage.getItem('username');
+    const savedGender = localStorage.getItem('gender');
+    const savedAge = localStorage.getItem('age');
+    const savedPassword = localStorage.getItem('password') || '';
+
+    if (!hasSentUserInfo && savedUsername && savedAge) {
+      socket.emit('set username', {
+        username: savedUsername,
+        gender: savedGender || 'non spécifié',
+        age: savedAge,
+        invisible: invisibleMode,
+        password: savedPassword
+      });
+      socket.emit('joinRoom', currentChannel);
+      selectChannelInUI(currentChannel);
+
+      hasSentUserInfo = true;
+      initialLoadComplete = true;
+
+      if (invisibleMode) showBanner('Mode invisible activé (auto)', 'success');
+    }
+  });
+
+  // Soumission du pseudo
+  function submitUserInfo() {
+    const usernameInput = document.getElementById('username-input');
+    const genderSelect = document.getElementById('gender-select');
+    const ageInput = document.getElementById('age-input');
+    const modalError = document.getElementById('modal-error');
+    const passwordInput = document.getElementById('password-input');
+    const password = passwordInput?.value?.trim() || '';
+
+    if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
+
+    const username = usernameInput.value.trim();
+    const gender = genderSelect.value;
+    const age = parseInt(ageInput.value.trim(), 10);
+
+    // validations...
+
+    modalError.style.display = 'none';
+
+    socket.emit('set username', {
+      username,
+      gender,
+      age,
+      invisible: invisibleMode,
+      password
+    });
+
+    // STOCKAGE localStorage
+    localStorage.setItem('username', username);
+    localStorage.setItem('gender', gender);
+    localStorage.setItem('age', age.toString());
+    localStorage.setItem('password', password);
+  }
+
+  socket.once('username accepted', ({ username, gender, age }) => {
+    document.getElementById('myModal').style.display = 'none';
+    document.getElementById('chat-wrapper').style.display = 'block';
+
+    hasSentUserInfo = true;
+    initialLoadComplete = true;
+
+    currentChannel = localStorage.getItem('currentChannel') || 'Général';
+    socket.emit('joinRoom', currentChannel);
+    selectChannelInUI(currentChannel);
+  });
+
+  // Reste de ton code...
+});
 
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
@@ -283,6 +374,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const modalError = document.getElementById('modal-error');
   const passwordInput = document.getElementById('password-input');  // <-- avant password
   const password = passwordInput?.value?.trim() || '';
+localStorage.setItem('username', username);
+localStorage.setItem('gender', gender);
+localStorage.setItem('age', age.toString());
+localStorage.setItem('password', password);
 
   const specialRoles = ['admin', 'modo', 'MaEvA'];
 
