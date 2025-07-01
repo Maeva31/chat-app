@@ -24,7 +24,7 @@
     <span id="error-banner-text"></span>
   </div>
 
-  <!-- Bande en haut de page -->
+ <!-- Bande en haut de page -->
 <div id="top-bar" style="
     display: flex;
     justify-content: space-between;
@@ -33,24 +33,30 @@
     background-color: #3333339e;
     color: white;
 ">
-  <div class="texte-laser"><h2>Bienvenue Bon Chat 💬</h2></div>
- <button id="toggle-invisible-btn" style="
-  padding: 8px 12px;
-  font-weight: bold;
-  background-color: #f44336;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  display: none;  /* caché par défaut */
-">
-  👻 Mode Invisible
-</button>
+  <div class="texte-laser">
+    <h2>Bienvenue Bon Chat 💬</h2>
+  </div>
 
-  <!-- Bouton déconnexion -->
-<button id="logoutButton" class="control-button">🚪</button>
-  
+  <!-- Conteneur des boutons à droite -->
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <button id="toggle-invisible-btn" style="
+      padding: 8px 12px;
+      font-weight: bold;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none; /* caché par défaut */
+    ">
+      👻 Mode Invisible
+    </button>
+
+    <!-- Bouton déconnexion -->
+    <button id="logoutButton" title="Déconnexion" class="control-button">🚪</button>
+  </div>
 </div>
+
 
 
   
