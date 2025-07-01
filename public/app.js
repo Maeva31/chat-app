@@ -27,11 +27,11 @@ if (usernameInput && passwordInput) {
   }
 });
 
-const initialUsername = usernameInput.value.trim().toLowerCase();
-if (adminUsernames.map(u => u.toLowerCase()).includes(initialUsername) || modoUsernames.map(u => u.toLowerCase()).includes(initialUsername)) {
-  passwordInput.style.display = 'block';
+ const initialUsername = usernameInput.value.trim();
+  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
+    passwordInput.style.display = 'block';
+  }
 }
-
 
 
   const genderColors = {
@@ -658,49 +658,6 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   }
 });
 
-// Ajout bouton déconnexion à droite du bouton mode invisible
-const invisibleBtn = document.getElementById('toggle-invisible-btn');
-
-if (invisibleBtn) {
-  // Crée le bouton déconnexion
-  const logoutBtn = document.createElement('button');
-  logoutBtn.id = 'logout-btn';
-  logoutBtn.textContent = 'Déconnexion';
-  logoutBtn.style.marginLeft = '10px';
-  logoutBtn.style.padding = '5px 10px';
-  logoutBtn.style.cursor = 'pointer';
-
-  // Insère le bouton juste après invisibleBtn
-  invisibleBtn.insertAdjacentElement('afterend', logoutBtn);
-
-  logoutBtn.addEventListener('click', () => {
-    // Efface les infos utilisateur
-    localStorage.removeItem('username');
-    localStorage.removeItem('gender');
-    localStorage.removeItem('age');
-    localStorage.removeItem('password');
-    localStorage.removeItem('invisibleMode');
-
-    // Affiche la modal de connexion
-    const modal = document.getElementById('myModal');
-    if (modal) modal.style.display = 'block';
-
-    // Cache la zone chat
-    const chatWrapper = document.getElementById('chat-wrapper');
-    if (chatWrapper) chatWrapper.style.display = 'none';
-
-    // Optionnel : déconnecter le socket et forcer reconnexion plus tard
-    if (socket && socket.connected) {
-      socket.disconnect();
-    }
-
-    // Réinitialiser les flags
-    hasSentUserInfo = false;
-    initialLoadComplete = false;
-
-    showBanner('Vous êtes déconnecté.', 'success');
-  });
-}
 
 
 });
