@@ -26,6 +26,9 @@ import {
 import { handleCommand } from './moderation.js';
 import { handleMessage } from './messageHandling.js';
 
+// --- IMPORT AJOUTÉ ICI ---
+import fs from 'fs';
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
@@ -53,7 +56,7 @@ io.on('connection', (socket) => {
 
   socket.emit('chat history', getMessageHistory(defaultChannel));
   emitUserList(io, defaultChannel);
-  io.emit('room list', joinRoom.getRooms ? joinRoom.getRooms() : []); // Optionnel : si exportée dans roomManagement
+  io.emit('room list', joinRoom.getRooms ? joinRoom.getRooms() : []);
   updateRoomUserCounts(io);
 
   socket.on('set username', (data) => {
@@ -98,7 +101,6 @@ io.on('connection', (socket) => {
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
 
-    // Met à jour la liste des users dans la room
     if (!emitUserList.roomUsers) emitUserList.roomUsers = {};
     if (!emitUserList.roomUsers[channel]) emitUserList.roomUsers[channel] = [];
     emitUserList.roomUsers[channel] = emitUserList.roomUsers[channel].filter(u => u.id !== socket.id);
@@ -126,10 +128,8 @@ io.on('connection', (socket) => {
     if (!user) return;
 
     if (msg.message.startsWith('/')) {
-      // Gestion des commandes
       handleCommand(io, socket, msg, userChannels);
     } else {
-      // Message normal
       handleMessage(io, socket, msg, userChannels, bannedUsers, mutedUsers);
     }
   });
@@ -180,7 +180,6 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Fonction logout (aussi appelé manuellement)
   function logout(socket) {
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) {
