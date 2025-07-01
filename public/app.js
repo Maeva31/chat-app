@@ -1,10 +1,45 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  let currentChannel = localStorage.getItem('currentChannel') || 'Général';
+  let selectedUser = null;
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
+  let bannerTimeoutId = null;
   let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+  let isAdmin = false;
+  let currentChannel = localStorage.getItem('currentChannel') || 'Général';
+
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
+  const invisibleBtn = document.getElementById('toggle-invisible-btn');
+  const genderColors = {
+    Homme: '#00f',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
+  const channelEmojis = {
+    "Général": "💬",
+    "Musique": "🎧",
+    "Gaming": "🎮",
+    "Détente": "🌿"
+  };
+
+  // --- Ici tout le reste de ton code fusionné ---
+
+  // Gestion champ mot de passe affichage
+  if (usernameInput && passwordInput) {
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim();
+      if (['admin', 'modo', 'MaEvA'].includes(val)) {
+        passwordInput.style.display = 'block';
+      } else {
+        passwordInput.style.display = 'none';
+        passwordInput.value = '';
+      }
+    });
+  }
 
   // ... Ton code d'UI, emojis, boutons, etc ...
 
@@ -103,38 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-document.addEventListener('DOMContentLoaded', () => {
-  const socket = io();
-
-  const usernameInput = document.getElementById('username-input');
-  const passwordInput = document.getElementById('password-input');
-  const specialRoles = ['admin', 'modo', 'MaEvA'];
-
-  if (usernameInput && passwordInput) {
-    usernameInput.addEventListener('input', () => {
-      const val = usernameInput.value.trim();
-      if (specialRoles.includes(val)) {
-        passwordInput.style.display = 'block';
-      } else {
-        passwordInput.style.display = 'none';
-        passwordInput.value = '';
-      }
-    });
-  }
-  const genderColors = {
-    Homme: '#00f',
-    Femme: '#f0f',
-    Autre: '#0ff',
-    'non spécifié': '#aaa',
-    default: '#aaa'
-  };
-
-  const channelEmojis = {
-    "Général": "💬",
-    "Musique": "🎧",
-    "Gaming": "🎮",
-    "Détente": "🌿"
-  };
 
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
