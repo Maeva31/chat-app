@@ -1,31 +1,42 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  const adminUsernames = ['admin', 'maeva'];
-  const modoUsernames = ['modo'];
+  const adminUsernames = ['maeva'];
+  const modoUsernames = ['darkgirl'];
 
-  let selectedUser = null;
-  let hasSentUserInfo = false;
-  let initialLoadComplete = false;
-  let bannerTimeoutId = null;
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
 
-  let currentChannel = 'Général';  // Forcer le salon Général au chargement
+  // Fonction pour savoir si le pseudo nécessite le mot de passe
+  function needsPassword(username) {
+    if (!username) return false;
+    const lower = username.toLowerCase();
+    return adminUsernames.includes(lower) || modoUsernames.includes(lower);
+  }
 
-const usernameInput = document.getElementById('username-input');
-const passwordInput = document.getElementById('password-input');
-
-
-if (usernameInput && passwordInput) {
-  usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.trim().toLowerCase();
-    if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-      passwordInput.style.display = 'block'; // afficher le mot de passe
+  if (usernameInput && passwordInput) {
+    // Au chargement, afficher ou cacher le champ mot de passe
+    if (needsPassword(usernameInput.value.trim())) {
+      passwordInput.style.display = 'block';
     } else {
-      passwordInput.style.display = 'none';  // cacher sinon
-      passwordInput.value = '';               // vider le mot de passe
+      passwordInput.style.display = 'none';
+      passwordInput.value = '';
     }
-  });
-}
+
+    // Sur saisie dans le champ pseudo, mettre à jour l'affichage du mot de passe
+    usernameInput.addEventListener('input', () => {
+      if (needsPassword(usernameInput.value.trim())) {
+        passwordInput.style.display = 'block';
+      } else {
+        passwordInput.style.display = 'none';
+        passwordInput.value = '';
+      }
+    });
+  }
+});
+
+
+
 
 
 
@@ -503,10 +514,12 @@ function submitUserInfo() {
   });
 
   socket.on('connect', () => {
+  hasSentUserInfo = false;  // Remettre à false à chaque reconnexion
+
   const savedUsername = localStorage.getItem('username');
   const savedGender = localStorage.getItem('gender');
   const savedAge = localStorage.getItem('age');
-  const savedPassword = localStorage.getItem('password'); // <-- ajout
+  const savedPassword = localStorage.getItem('password');
 
   if (!hasSentUserInfo && savedUsername && savedAge) {
     socket.emit('set username', {
@@ -514,21 +527,33 @@ function submitUserInfo() {
       gender: savedGender || 'non spécifié',
       age: savedAge,
       invisible: invisibleMode,
-      password: savedPassword || ''  // <-- ajout
+      password: savedPassword || ''
     });
+
     currentChannel = 'Général';
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
     selectChannelInUI(currentChannel);
 
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
+    // Important : installer l'écouteur ici, pour chaque reconnexion
+    socket.once('username accepted', ({ username, gender, age }) => {
+      localStorage.setItem('username', username);
+      localStorage.setItem('gender', gender);
+      localStorage.setItem('age', age);
 
-    if (invisibleMode) {
-      showBanner('Mode invisible activé (auto)', 'success');
-    }
+      document.getElementById('myModal').style.display = 'none';
+      document.getElementById('chat-wrapper').style.display = 'block';
+
+      hasSentUserInfo = true;
+      initialLoadComplete = true;
+
+      if (invisibleMode) {
+        showBanner('Mode invisible activé (auto)', 'success');
+      }
+    });
   }
 });
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
@@ -616,34 +641,27 @@ function submitUserInfo() {
   }
 
   // Mise à jour bouton mode invisible selon rôle
-  socket.on('user list', (users) => {
-    const username = localStorage.getItem('username');
-    const me = users.find(u => u.username === username);
-    if (me && me.role === 'admin') {
-      if (!isAdmin) isAdmin = true;
+socket.on('user list', (users) => {
+  const username = localStorage.getItem('username');
+  const me = users.find(u => u.username === username);
+
+  if (me && me.role === 'admin') {
+    if (!isAdmin) isAdmin = true;
+    if (invisibleBtn) {
+      invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
+    }
+    // Garde invisibleMode tel quel pour admin (ne change rien)
+  } else {
+    // Pas admin => forcer invisibleMode à false
+    if (isAdmin || invisibleMode) {
+      isAdmin = false;
+      invisibleMode = false;
+      localStorage.setItem('invisibleMode', 'false');
       if (invisibleBtn) {
-        invisibleBtn.style.display = 'inline-block';
-        updateInvisibleButton();
-      }
-    } else {
-      if (isAdmin) {
-        isAdmin = false;
-        if (!invisibleMode && invisibleBtn) {
-          invisibleBtn.style.display = 'none';
-        }
+        invisibleBtn.style.display = 'none';
       }
     }
-  });
-
-  // --- Fin ajout mode invisible ---
-
- socket.on('redirect', (url) => {
-  console.log('Redirect demandé vers:', url);
-  if (typeof url === 'string' && url.length > 0) {
-    window.location.href = url;
   }
 });
-
-
-
 });
