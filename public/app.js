@@ -1,8 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  const adminUsernames = ['MaevA'];
-  const modoUsernames = ['DarkGirL'];
+ const adminUsernames = ['MaEvA'];
+const modoUsernames = ['DarkGirL'];
+
 
   let selectedUser = null;
   let hasSentUserInfo = false;
@@ -322,19 +323,28 @@ function submitUserInfo() {
     return;
   }
 
-  const usernameLower = username.toLowerCase();
-  if ((adminUsernames.includes(username) || modoUsernames.includes(username)) && password.length === 0) {
-    modalError.textContent = "Le mot de passe est obligatoire pour ce pseudo.";
-    modalError.style.display = 'block';
-    return;
-  }
+ if ((adminUsernames.includes(username) || modoUsernames.includes(username)) && password.length === 0) {
+  modalError.textContent = "Le mot de passe est obligatoire pour ce pseudo.";
+  modalError.style.display = 'block';
+  return;
+}
 
+
+
+
+
+  
   // --- Ajout stockage mot de passe ---
-  if (adminUsernames.includes(usernameLower) || modoUsernames.includes(usernameLower)) {
-    localStorage.setItem('password', password);
-  } else {
-    localStorage.removeItem('password');
-  }
+  const usernameLower = username.toLowerCase();
+const adminUsernamesLower = adminUsernames.map(u => u.toLowerCase());
+const modoUsernamesLower = modoUsernames.map(u => u.toLowerCase());
+
+if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(usernameLower)) {
+  localStorage.setItem('password', password);
+} else {
+  localStorage.removeItem('password');
+}
+
   // --- fin ajout ---
 
   modalError.style.display = 'none';
