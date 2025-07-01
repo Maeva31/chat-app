@@ -12,7 +12,7 @@ import {
   users,
   bannedUsers,
   mutedUsers
-} from './userManagement.js';
+} from './server_modules/userManagement.js';
 
 import {
   joinRoom,
@@ -21,10 +21,11 @@ import {
   emitUserList,
   updateRoomUserCounts,
   getMessageHistory
-} from './roomManagement.js';
+} from './server_modules/roomManagement.js';
 
-import { handleCommand } from './moderation.js';
-import { handleMessage } from './messageHandling.js';
+import { handleCommand } from './server_modules/moderation.js';
+import { handleMessage } from './server_modules/messageHandling.js';
+
 
 // --- IMPORT AJOUTÉ ICI ---
 import fs from 'fs';
