@@ -283,6 +283,23 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
     const gender = genderSelect.value;
     const age = parseInt(ageInput.value.trim(), 10);
 
+    const passwordInput = document.getElementById('password-input');
+const specialRoles = ['admin', 'modo', 'MaEvA'];
+
+if (usernameInput && passwordInput) {
+  usernameInput.addEventListener('input', () => {
+    const val = usernameInput.value.trim();
+    if (specialRoles.includes(val)) {
+      passwordInput.style.display = 'block';
+    } else {
+      passwordInput.style.display = 'none';
+      passwordInput.value = '';
+    }
+  });
+}
+
+
+
     if (!username || username.includes(' ') || username.length > 16) {
       modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
       modalError.style.display = 'block';
@@ -300,7 +317,8 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
     }
 
     modalError.style.display = 'none';
-    socket.emit('set username', { username, gender, age, invisible: invisibleMode });
+    const password = passwordInput?.value?.trim() || '';
+   socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
   }
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
@@ -469,7 +487,8 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
         username: savedUsername,
         gender: savedGender || 'non spécifié',
         age: savedAge,
-        invisible: invisibleMode
+        invisible: invisibleMode,
+
       });
       currentChannel = 'Général';
 localStorage.setItem('currentChannel', currentChannel);
