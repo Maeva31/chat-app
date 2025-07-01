@@ -109,6 +109,48 @@ function cleanupEmptyDynamicRooms() {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
+  function logout(socket) {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) {
+      console.log(`Logout : utilisateur non trouvé pour socket ${socket.id}`);
+      return;
+    }
+
+    const room = userChannels[socket.id];
+    if (room) {
+      if (!user.invisible) {
+        io.to(room).emit('chat message', {
+          username: 'Système',
+          message: `${user.username} a quitté le serveur (logout)`,
+          timestamp: new Date().toISOString(),
+          channel: room
+        });
+      }
+
+      // Retirer l'utilisateur de la liste des utilisateurs dans la salle
+      if (roomUsers[room]) {
+        roomUsers[room] = roomUsers[room].filter(u => u.id !== socket.id);
+        emitUserList(room);
+      }
+    }
+
+    // Supprimer l'utilisateur et ses infos
+    delete users[user.username];
+    delete userChannels[socket.id];
+
+    // Déconnecter le socket proprement
+    socket.disconnect(true);
+
+    // Nettoyer les salons dynamiques vides si besoin
+    cleanupEmptyDynamicRooms();
+
+    console.log(`🔒 Logout : ${user.username} déconnecté.`);
+  }
+
+   socket.on('logout', () => {
+    logout(socket);
+  });
+
   socket.on('ping', () => {
     socket.emit('pong');
   });
@@ -532,6 +574,7 @@ io.on('connection', (socket) => {
       console.log(`❌ Déconnexion inconnue : ${socket.id}`);
     }
   });
+  
 
 });
 
