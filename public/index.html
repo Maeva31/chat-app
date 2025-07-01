@@ -25,7 +25,7 @@
     <span id="error-banner-text"></span>
   </div>
 
- <!-- Bande en haut de page -->
+ <!-- ... Partie de ta barre du haut ... -->
 <div id="top-bar" style="
     display: flex;
     justify-content: space-between;
@@ -53,10 +53,24 @@
       👻 Mode Invisible
     </button>
 
-    <!-- Bouton déconnexion -->
+    <!-- BOUTON DÉCONNEXION AJOUTÉ -->
     <button id="logoutButton" title="Déconnexion" class="control-button">🚪</button>
+
+  </div>
+
+  <!-- Modal de confirmation déconnexion -->
+  <div id="logoutModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Confirmer la déconnexion</h3>
+      <p>Voulez-vous vraiment vous déconnecter ?</p>
+      <button id="logoutConfirmBtn">Oui</button>
+      <button id="logoutCancelBtn">Non</button>
+    </div>
   </div>
 </div>
+<!-- ... suite de ton code ... -->
+
+
 
 
 
