@@ -325,6 +325,14 @@ function submitUserInfo() {
     return;
   }
 
+  // --- Ajout stockage mot de passe ---
+  if (adminUsernames.includes(usernameLower) || modoUsernames.includes(usernameLower)) {
+    localStorage.setItem('password', password);
+  } else {
+    localStorage.removeItem('password');
+  }
+  // --- fin ajout ---
+
   modalError.style.display = 'none';
   socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
 }
@@ -494,32 +502,33 @@ function submitUserInfo() {
     }
   });
 
-  // À la connexion socket, on renvoie infos utilisateur + joinRoom
   socket.on('connect', () => {
-    const savedUsername = localStorage.getItem('username');
-    const savedGender = localStorage.getItem('gender');
-    const savedAge = localStorage.getItem('age');
+  const savedUsername = localStorage.getItem('username');
+  const savedGender = localStorage.getItem('gender');
+  const savedAge = localStorage.getItem('age');
+  const savedPassword = localStorage.getItem('password'); // <-- ajout
 
-    if (!hasSentUserInfo && savedUsername && savedAge) {
-      socket.emit('set username', {
-        username: savedUsername,
-        gender: savedGender || 'non spécifié',
-        age: savedAge,
-        invisible: invisibleMode
-      });
-      currentChannel = 'Général';
-localStorage.setItem('currentChannel', currentChannel);
-socket.emit('joinRoom', currentChannel);
-selectChannelInUI(currentChannel);
+  if (!hasSentUserInfo && savedUsername && savedAge) {
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || 'non spécifié',
+      age: savedAge,
+      invisible: invisibleMode,
+      password: savedPassword || ''  // <-- ajout
+    });
+    currentChannel = 'Général';
+    localStorage.setItem('currentChannel', currentChannel);
+    socket.emit('joinRoom', currentChannel);
+    selectChannelInUI(currentChannel);
 
-      hasSentUserInfo = true;
-      initialLoadComplete = true;
+    hasSentUserInfo = true;
+    initialLoadComplete = true;
 
-      if (invisibleMode) {
-        showBanner('Mode invisible activé (auto)', 'success');
-      }
+    if (invisibleMode) {
+      showBanner('Mode invisible activé (auto)', 'success');
     }
-  });
+  }
+});
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
