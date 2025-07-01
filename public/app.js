@@ -405,7 +405,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
- socket.once('username accepted', ({ username, gender, age }) => {
+socket.once('username accepted', ({ username, gender, age }) => {
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
   localStorage.setItem('age', age);
@@ -420,21 +420,21 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   initialLoadComplete = true;
 
   // Afficher le bouton invisible si admin
- if (adminUsernames.includes(username)) {
-  isAdmin = true;
-  if (invisibleBtn) {
-    invisibleBtn.style.display = 'inline-block';
-    updateInvisibleButton();
+  if (adminUsernames.includes(username)) {
+    isAdmin = true;
+    invisibleMode = localStorage.getItem('invisibleMode') === 'true';
+    if (invisibleBtn) {
+      invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
+    }
+  } else {
+    isAdmin = false;
+    if (!invisibleMode && invisibleBtn) {
+      invisibleBtn.style.display = 'none';
+    }
   }
-} else {
-  // Cas où ce n’est pas un admin (sécurité supplémentaire)
-  isAdmin = false;
-  if (!invisibleMode && invisibleBtn) {
-    invisibleBtn.style.display = 'none';
-  }
-}
-
 });
+
 
 
 
