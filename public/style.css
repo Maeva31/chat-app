@@ -596,3 +596,54 @@ button:focus {
 .control-button:hover {
   background-color: #666;
 }
+
+/* CSS Modal */
+.modal {
+  display: none; /* Masqué par défaut */
+  position: fixed;
+  z-index: 1000;
+  left: 0; top: 0;
+  width: 100%; height: 100%;
+  background-color: rgba(0,0,0,0.5); /* fond semi-transparent */
+  
+  display: flex;
+  justify-content: center; /* centre horizontal */
+  align-items: center;     /* centre vertical */
+}
+
+.modal-content {
+  background-color: #fff;
+  padding: 20px 30px;
+  border-radius: 8px;
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.3);
+  font-size: 18px;
+}
+
+.modal-buttons {
+  margin-top: 20px;
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+}
+
+.modal-buttons button {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+#confirmLogout {
+  background-color: #4CAF50;
+  color: white;
+}
+
+#cancelLogout {
+  background-color: #f44336;
+  color: white;
+}
+
