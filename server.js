@@ -2,14 +2,10 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
-import setupWebcam from './webcamManager.js';
-
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
-setupWebcam(io);
-
 
 const MAX_HISTORY = 10;
 const MAX_ROOMS = 50;
@@ -579,26 +575,6 @@ io.on('connection', (socket) => {
     }
   });
   
-  // Ajouter un champ webcamOn à l'utilisateur à la connexion, par défaut false
-// Mettre à jour ce statut via un event spécifique
-socket.on('set webcam status', (status) => {
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) return;
-
-  user.webcamOn = !!status;
-
-  // Mettre à jour dans la liste de la room
-  const channel = userChannels[socket.id];
-  if (channel && roomUsers[channel]) {
-    const userInRoom = roomUsers[channel].find(u => u.id === socket.id);
-    if (userInRoom) {
-      userInRoom.webcamOn = user.webcamOn;
-    }
-    // Émettre la liste mise à jour avec webcamOn
-    emitUserList(channel);
-  }
-});
-
 
 });
 
