@@ -16,16 +16,26 @@ const passwordInput = document.getElementById('password-input');
 
 
 if (usernameInput && passwordInput) {
+  // Cacher le champ mot de passe au chargement si pseudo non correspondant
+  const initialVal = usernameInput.value.trim();
+  if (initialVal === 'MaEvA' || initialVal === 'DarkGirL') {
+    passwordInput.style.display = 'block';
+  } else {
+    passwordInput.style.display = 'none';
+  }
+
   usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.trim().toLowerCase();
-    if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-      passwordInput.style.display = 'block'; // afficher le mot de passe
+    const val = usernameInput.value.trim();
+    if (val === 'MaEvA' || val === 'DarkGirL') {
+      passwordInput.style.display = 'block'; // afficher mot de passe
     } else {
       passwordInput.style.display = 'none';  // cacher sinon
-      passwordInput.value = '';               // vider le mot de passe
+      passwordInput.value = '';               // vider
     }
   });
 }
+
+
 
 
 
