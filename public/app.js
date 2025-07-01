@@ -664,3 +664,118 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
+
+  // Emoji Picker
+  const emojiButton = document.getElementById('emoji-button');
+  const emojiPicker = document.getElementById('emoji-picker');
+  const messageInput = document.getElementById('message-input');
+
+  if (emojiPicker && emojiButton && messageInput) {
+    emojiPicker.style.display = 'none';
+
+    emojiButton.addEventListener('click', (e) => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+    });
+
+    emojiPicker.querySelectorAll('.emoji').forEach(emoji => {
+      emoji.style.cursor = 'pointer';
+      emoji.style.fontSize = '22px';
+      emoji.style.margin = '5px';
+      emoji.addEventListener('click', () => {
+        messageInput.value += emoji.textContent;
+        messageInput.focus();
+      });
+    });
+
+    document.addEventListener('click', () => {
+      emojiPicker.style.display = 'none';
+    });
+
+    emojiPicker.addEventListener('click', e => {
+      e.stopPropagation();
+    });
+  }
+
+  // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
+  socket.on('banned', () => {
+    showBanner('🚫 Vous avez été banni du serveur.', 'error');
+    socket.disconnect();
+  });
+
+  socket.on('kicked', () => {
+    showBanner('👢 Vous avez été expulsé du serveur.', 'error');
+    socket.disconnect();
+  });
+
+  socket.on('muted', () => {
+    showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
+  });
+
+  socket.on('unmuted', () => {
+    showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
+  });
+
+  socket.on('error message', (msg) => {
+    showBanner(`❗ ${msg}`, 'error');
+  });
+
+  socket.on('no permission', () => {
+    showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
+  });
+
+  // --- Début ajout mode invisible ---
+
+  if (invisibleBtn) {
+    invisibleBtn.addEventListener('click', () => {
+      invisibleMode = !invisibleMode;
+      updateInvisibleButton();
+
+      localStorage.setItem('invisibleMode', invisibleMode ? 'true' : 'false');
+
+      if (invisibleMode) {
+        socket.emit('chat message', { message: '/invisible on' });
+        showBanner('Mode invisible activé', 'success');
+        invisibleBtn.style.display = 'inline-block';
+      } else {
+        socket.emit('chat message', { message: '/invisible off' });
+        showBanner('Mode invisible désactivé', 'success');
+        if (!isAdmin) {
+          invisibleBtn.style.display = 'none';
+        }
+      }
+    });
+  }
+
+  // Mise à jour bouton mode invisible selon rôle
+  socket.on('user list', (users) => {
+    const username = localStorage.getItem('username');
+    const me = users.find(u => u.username === username);
+    if (me && me.role === 'admin') {
+      if (!isAdmin) isAdmin = true;
+      if (invisibleBtn) {
+        invisibleBtn.style.display = 'inline-block';
+        updateInvisibleButton();
+      }
+    } else {
+      if (isAdmin) {
+        isAdmin = false;
+        if (!invisibleMode && invisibleBtn) {
+          invisibleBtn.style.display = 'none';
+        }
+      }
+    }
+  });
+
+  // --- Fin ajout mode invisible ---
+
+ socket.on('redirect', (url) => {
+  console.log('Redirect demandé vers:', url);
+  if (typeof url === 'string' && url.length > 0) {
+    window.location.href = url;
+  }
+});
+
+
+
+});
