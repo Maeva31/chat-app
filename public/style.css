@@ -613,3 +613,24 @@ button:focus {
   box-shadow: 0 2px 5px rgba(0,0,0,0.4);
   z-index: 1001;
 }
+.user-entry {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.webcam-icon {
+  font-size: 16px;
+  color: #4caf50; /* Vert webcam active */
+}
+
+.user-age {
+  width: 30px;
+  height: 30px;
+  background: #ddd;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
