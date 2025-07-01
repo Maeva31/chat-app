@@ -1,8 +1,9 @@
-import { adminUsernames, modoUsernames, handlePasswordFieldDisplay, submitUserInfo } from './userManagement.js';
-import { addMessageToChat, updateUserList, showBanner, getUsernameColor } from './chatUI.js';
-import { extractChannelName, channelEmojis } from './channels.js';
-import { updateInvisibleButton, setupInvisibleToggle } from './invisibleMode.js';
-import { setupLogout } from './logout.js';
+import { adminUsernames, modoUsernames, handlePasswordFieldDisplay, submitUserInfo } from './js/userManagement.js';
+import { addMessageToChat, updateUserList, showBanner, getUsernameColor } from './js/chatUI.js';
+import { extractChannelName, channelEmojis } from './js/channels.js';
+import { updateInvisibleButton, setupInvisibleToggle } from './js/invisibleMode.js';
+import { setupLogout } from './js/logout.js';
+
 
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
