@@ -83,12 +83,6 @@ document.addEventListener('DOMContentLoaded', () => {
   if (!savedUsername) {
     document.getElementById('myModal').style.display = 'block';
   }
-const savedUsername = localStorage.getItem('username');
-if (savedUsername) {
-  if (topBar) topBar.style.display = 'flex';
-  document.getElementById('myModal').style.display = 'none';
-  document.getElementById('chat-wrapper').style.display = 'block';
-}
 
   // Variables pour mode invisible
   const invisibleBtn = document.getElementById('toggle-invisible-btn');
