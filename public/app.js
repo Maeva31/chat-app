@@ -281,17 +281,18 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
   const specialRoles = ['admin', 'modo', 'MaEvA'];
 
-  if (usernameInput && passwordInput) {
-    usernameInput.addEventListener('input', () => {
-      const val = usernameInput.value.trim();
-      if (specialRoles.includes(val)) {
-        passwordInput.style.display = 'block';
-      } else {
-        passwordInput.style.display = 'none';
-        passwordInput.value = '';
-      }
-    });
-  }
+if (usernameInput && passwordInput) {
+  usernameInput.addEventListener('input', () => {
+    const val = usernameInput.value.trim();
+    if (specialRoles.includes(val)) {
+      passwordInput.style.display = 'block';
+    } else {
+      passwordInput.style.display = 'none';
+      passwordInput.value = '';
+    }
+  });
+}
+
 
   if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
 
