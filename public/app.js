@@ -160,7 +160,6 @@ if (usernameInput && passwordInput) {
   }
 
   // Déconnexion : gestion du bouton 🚪
-const logoutButton = document.getElementById('logoutButton');
 if (logoutButton) {
   logoutButton.addEventListener('click', () => {
     if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
@@ -193,11 +192,12 @@ function logout() {
   }
 }
 
-// Puis associer cette fonction au bouton logout :
 const logoutButton = document.getElementById('logoutButton');
 if (logoutButton) {
   logoutButton.addEventListener('click', logout);
 }
+
+
 
 
   // Ajoute un message dans la zone de chat
