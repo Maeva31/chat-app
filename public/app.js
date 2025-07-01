@@ -49,6 +49,13 @@ if (usernameInput && passwordInput) {
     "Détente": "🌿"
   };
 
+  // Écouteur pour connexion dupliquée
+  socket.on('duplicate login', (message) => {
+    alert(message || 'Votre session a été déconnectée car ce pseudo est utilisé ailleurs.');
+    // Recharge la page pour forcer reconnexion propre
+    window.location.reload();
+  });
+
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
   if (!savedUsername) {
@@ -661,3 +668,4 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
 
 });
+
