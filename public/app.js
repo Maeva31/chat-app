@@ -41,6 +41,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+ // Gestion palette emoji
+  const emojiBtn = document.getElementById('emoji-button');
+  const emojiPicker = document.getElementById('emoji-picker');
+  const messageInput = document.getElementById('message-input');
+
+  if (emojiBtn && emojiPicker && messageInput) {
+    emojiPicker.style.display = 'none';
+
+    emojiBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+    });
+
+    emojiPicker.querySelectorAll('.emoji').forEach(emojiSpan => {
+      emojiSpan.style.cursor = 'pointer';
+      emojiSpan.addEventListener('click', () => {
+        messageInput.value += emojiSpan.textContent;
+        messageInput.focus();
+        emojiPicker.style.display = 'none';
+      });
+    });
+
+    document.addEventListener('click', () => {
+      emojiPicker.style.display = 'none';
+    });
+
+    emojiPicker.addEventListener('click', e => e.stopPropagation());
+  }
+});
+
   // --- Affichage modal connexion si pas de pseudo enregistré ---
   const savedUsername = localStorage.getItem('username');
   if (!savedUsername) {
@@ -567,3 +597,5 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+
