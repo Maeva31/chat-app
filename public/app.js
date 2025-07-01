@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
- // Gestion palette emoji
+  // --- Gestion palette emoji ---
   const emojiBtn = document.getElementById('emoji-button');
   const emojiPicker = document.getElementById('emoji-picker');
   const messageInput = document.getElementById('message-input');
@@ -69,7 +69,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
   }
-});
 
   // --- Affichage modal connexion si pas de pseudo enregistré ---
   const savedUsername = localStorage.getItem('username');
@@ -497,67 +496,16 @@ document.addEventListener('DOMContentLoaded', () => {
       channelList.appendChild(li);
     });
 
-    if (!rooms.includes(previousChannel)) {
-      currentChannel = 'Général';
-      localStorage.setItem('currentChannel', currentChannel);
-      socket.emit('joinRoom', currentChannel);
-      const chatMessages = document.getElementById('chat-messages');
-      if (chatMessages) chatMessages.innerHTML = '';
-    }
-
-    selectChannelInUI(currentChannel);
+    selectChannelInUI(previousChannel);
   });
 
-  // --- Ping périodique pour keep-alive ---
-  setInterval(() => {
-    socket.emit('ping');
-  }, 10000);
-
-  // --- Création nouveau salon ---
-  const createChannelBtn = document.getElementById('create-channel-button');
-  if (createChannelBtn) {
-    createChannelBtn.addEventListener('click', () => {
-      const input = document.getElementById('new-channel-name');
-      if (!input) return;
-      const newRoom = input.value.trim();
-      if (!newRoom) return showBanner('Le nom du salon ne peut pas être vide.', 'error');
-      if (newRoom.length > 30) return showBanner('Le nom du salon est trop long.', 'error');
-
-      socket.emit('createRoom', newRoom);
-      input.value = '';
-    });
+  // --- Bouton envoyer message ---
+  const sendBtn = document.getElementById('send-button');
+  if (sendBtn) {
+    sendBtn.addEventListener('click', sendMessage);
   }
 
-  // --- Bouton toggle mode invisible ---
-  if (invisibleBtn) {
-    invisibleBtn.addEventListener('click', () => {
-      invisibleMode = !invisibleMode;
-      localStorage.setItem('invisibleMode', invisibleMode.toString());
-      socket.emit('toggle invisible', invisibleMode);
-      updateInvisibleButton();
-      if (invisibleMode) {
-        showBanner('Mode invisible activé', 'success');
-      } else {
-        showBanner('Mode invisible désactivé', 'success');
-      }
-    });
-  }
-
-  // --- Soumission formulaire de connexion ---
-  const userInfoForm = document.getElementById('user-info-form');
-  if (userInfoForm) {
-    userInfoForm.addEventListener('submit', e => {
-      e.preventDefault();
-      submitUserInfo();
-    });
-  }
-
-  // --- Soumission message (via bouton ou touche Entrée) ---
-  const sendMessageBtn = document.getElementById('send-message-btn');
-  if (sendMessageBtn) {
-    sendMessageBtn.addEventListener('click', sendMessage);
-  }
-  const messageInput = document.getElementById('message-input');
+  // --- Appui sur entrée dans input message ---
   if (messageInput) {
     messageInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
@@ -567,35 +515,36 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Gestion de la reconnexion automatique ---
-  socket.on('disconnect', () => {
-    showBanner('Déconnecté du serveur, tentative de reconnexion...', 'error');
-  });
-  socket.on('connect', () => {
-    showBanner('Connecté au serveur.', 'success');
-    // Ré-envoi infos si besoin
-    if (!hasSentUserInfo) {
-      const savedUsername = localStorage.getItem('username');
-      const savedGender = localStorage.getItem('gender');
-      const savedAge = localStorage.getItem('age');
-      const savedPassword = localStorage.getItem('password') || '';
-      if (savedUsername && savedAge) {
-        socket.emit('set username', {
-          username: savedUsername,
-          gender: savedGender || 'non spécifié',
-          age: savedAge,
-          invisible: invisibleMode,
-          password: savedPassword
-        });
-        socket.emit('joinRoom', currentChannel);
-        selectChannelInUI(currentChannel);
-        hasSentUserInfo = true;
-        initialLoadComplete = true;
+  // --- Bouton toggle mode invisible ---
+  if (invisibleBtn) {
+    invisibleBtn.addEventListener('click', () => {
+      if (!isAdmin) {
+        showBanner("Seuls les administrateurs peuvent activer le mode invisible.", 'error');
+        return;
       }
-    } else {
+      invisibleMode = !invisibleMode;
+      localStorage.setItem('invisibleMode', invisibleMode ? 'true' : 'false');
+      updateInvisibleButton();
+      socket.emit('toggle invisible', invisibleMode);
+    });
+  }
+
+  // --- Bouton modal envoyer ---
+  const modalSubmit = document.getElementById('modal-submit');
+  if (modalSubmit) {
+    modalSubmit.addEventListener('click', submitUserInfo);
+  }
+
+  // --- Gestion de reconnexion automatique ---
+  socket.on('connect', () => {
+    if (hasSentUserInfo) {
+      const username = localStorage.getItem('username');
+      const gender = localStorage.getItem('gender');
+      const age = localStorage.getItem('age');
+      const password = localStorage.getItem('password');
+      socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
       socket.emit('joinRoom', currentChannel);
     }
   });
+
 });
-
-
