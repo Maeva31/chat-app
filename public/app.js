@@ -69,7 +69,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
-    invisibleBtn.textContent = `👻 Mode Invisible`;
+    invisibleBtn.textContent = 👻 Mode Invisible;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
   }
 
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!banner || !text) return;
 
     const prefix = type === 'success' ? '✅' : '❌';
-    text.textContent = `${prefix} ${message}`;
+    text.textContent = ${prefix} ${message};
     banner.style.display = 'flex';
     banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
 
@@ -132,10 +132,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-      li.innerHTML = `
+      li.innerHTML = 
         <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
         <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-      `;
+      ;
 
       const usernameSpan = li.querySelector('.username-span');
       if (role === 'admin') {
@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       usernameSpan.addEventListener('click', () => {
         const input = document.getElementById('message-input');
-        const mention = `@${username} `;
+        const mention = @${username} ;
         if (!input.value.includes(mention)) input.value = mention + input.value;
         input.focus();
         selectedUser = username;
@@ -225,15 +225,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
+      const mention = @${msg.username} ;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
   }
 
-  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.innerHTML = [${timeString}] ;
   newMessage.appendChild(usernameSpan);
-  newMessage.append(`: ${msg.message}`);
+  newMessage.append(: ${msg.message});
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
@@ -372,7 +372,7 @@ function submitUserInfo() {
   socket.on('username exists', (username) => {
     const modalError = document.getElementById('modal-error');
     if (!modalError) return;
-    modalError.textContent = `❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.`;
+    modalError.textContent = ❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.;
     modalError.style.display = 'block';
   });
 
@@ -403,7 +403,7 @@ function submitUserInfo() {
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
+      li.textContent = # ${emoji} ┊ ${newChannel} (0);
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
         if (clickedRoom === currentChannel) return;
@@ -416,7 +416,7 @@ function submitUserInfo() {
       });
       channelList.appendChild(li);
     }
-    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
+    showBanner(Salon "${newChannel}" créé avec succès !, 'success');
   });
 
   socket.on('roomUserCounts', (counts) => {
@@ -438,10 +438,10 @@ function submitUserInfo() {
 
       if (invisibleMode && name === currentChannel) {
         countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+        li.firstChild.textContent = # ${emoji} ┊ ${name} ;
       } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+        countSpan.textContent =  (${counts[name]});
+        li.firstChild.textContent = # ${emoji} ┊ ${name} ;
       }
     }
   });
@@ -459,7 +459,7 @@ function submitUserInfo() {
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+      li.textContent = # ${emoji} ┊ ${channelName} (0);
 
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
@@ -610,7 +610,7 @@ function submitUserInfo() {
   });
 
   socket.on('error message', (msg) => {
-    showBanner(`❗ ${msg}`, 'error');
+    showBanner(❗ ${msg}, 'error');
   });
 
   socket.on('no permission', () => {
