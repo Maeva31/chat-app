@@ -57,20 +57,35 @@
   </div>
 </div>
 
-<!-- Exemple de modal ou formulaire -->
-<div id="myModal" style="display:none;">
-  <label for="username-input">Pseudo :</label>
-  <input type="text" id="username-input" maxlength="16" autocomplete="off" />
-  
-  <label for="password-input" style="display:none;" id="password-label">Mot de passe :</label>
-  <input type="password" id="password-input" style="display:none;" autocomplete="off" />
-  
-  <!-- autres champs comme genre, âge, etc. -->
-  
-  <button id="username-submit">Valider</button>
-  <div id="modal-error" style="color:red; display:none;"></div>
-</div>
 
+
+  
+  <!-- Modal d'information utilisateur -->
+  <div id="myModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h2>Bienvenue !</h2>
+      <p>Veuillez entrer vos informations pour accéder au chat.</p>
+
+      <label for="username-input">Pseudo (max 16 caractères)</label>
+      <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" autocomplete="off" />
+      <input type="password" id="password-input" placeholder="Mot de passe" style="display:none; margin-top:8px;" />
+
+      <label for="gender-select">Genre</label>
+      <select id="gender-select" autocomplete="off">
+        <option value="">Genre</option>
+        <option value="Homme">Homme</option>
+        <option value="Femme">Femme</option>
+        <option value="Autre">Autre</option>
+      </select>
+
+      <label for="age-input">Âge (18-89)</label>
+      <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" autocomplete="off" />
+
+      <div id="modal-error" class="modal-error" style="display: none; color: red; margin-top: 10px;"></div>
+
+      <button id="username-submit">Valider</button>
+    </div>
+  </div>
 
   <!-- Wrapper principal -->
   <main>
