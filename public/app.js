@@ -1,9 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
- const adminUsernames = ['MaEvA'];
-const modoUsernames = ['DarkGirL'];
+  const adminUsernames = ['MaEvA'];
+  const modoUsernames = ['DarkGirL'];
+  const topBar = document.getElementById('top-bar');
 
+  // Au départ, cacher la top-bar car on n'est pas encore connecté
+  if (topBar) topBar.style.display = 'none';
 
   let selectedUser = null;
   let hasSentUserInfo = false;
@@ -12,27 +15,53 @@ const modoUsernames = ['DarkGirL'];
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
-const usernameInput = document.getElementById('username-input');
-const passwordInput = document.getElementById('password-input');
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
 
+  if (usernameInput && passwordInput) {
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
+      if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+        passwordInput.style.display = 'block'; // afficher le mot de passe
+      } else {
+        passwordInput.style.display = 'none';  // cacher sinon
+        passwordInput.value = '';              // vider le mot de passe
+      }
+    });
 
-if (usernameInput && passwordInput) {
-  usernameInput.addEventListener('input', () => {
-  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
-  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-    passwordInput.style.display = 'block'; // afficher le mot de passe
-  } else {
-    passwordInput.style.display = 'none';  // cacher sinon
-    passwordInput.value = '';              // vider le mot de passe
+    const initialUsername = usernameInput.value.trim();
+    if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
+      passwordInput.style.display = 'block';
+    }
   }
-});
 
- const initialUsername = usernameInput.value.trim();
-  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
-    passwordInput.style.display = 'block';
+   socket.once('username accepted', ({ username, gender, age }) => {
+    localStorage.setItem('username', username);
+    localStorage.setItem('gender', gender);
+    localStorage.setItem('age', age);
+
+    document.getElementById('myModal').style.display = 'none';
+    document.getElementById('chat-wrapper').style.display = 'block';
+
+    // Afficher la top-bar quand connecté
+    if (topBar) topBar.style.display = 'flex';
+
+    socket.emit('joinRoom', currentChannel);
+    selectChannelInUI(currentChannel);
+
+    hasSentUserInfo = true;
+    initialLoadComplete = true;
+  });
+
+  function performLogout() {
+    socket.emit('logout');
+    ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
+      localStorage.removeItem(key);
+    });
+    // Cacher la top-bar à la déconnexion (reload fera aussi l'effet)
+    if (topBar) topBar.style.display = 'none';
+    location.reload();
   }
-}
-
 
   const genderColors = {
     Homme: '#00f',
@@ -177,13 +206,6 @@ function closeLogoutModal() {
   }
 }
 
-function performLogout() {
-  socket.emit('logout');
-  ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
-    localStorage.removeItem(key);
-  });
-  location.reload();
-}
 
 if (logoutButton) {
   logoutButton.addEventListener('click', openLogoutModal);
@@ -582,6 +604,9 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       invisible: invisibleMode,
       password: savedPassword || ''  // <-- ajout
     });
+
+    if (topBar) topBar.style.display = 'flex';  // <-- affichage ici
+
     currentChannel = 'Général';
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
@@ -595,6 +620,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
     }
   }
 });
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
