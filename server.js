@@ -123,46 +123,38 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
-  const { username, gender, age, invisible, password } = data;
+    const { username, gender, age, invisible, password } = data;
 
-  if (!username || username.length > 16 || /\s/.test(username)) {
-    return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
-  }
-  if (isNaN(age) || age < 18 || age > 89) {
-    return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
-  }
-  if (!gender) {
-    return socket.emit('username error', 'Genre non spécifié');
-  }
-
-  if (bannedUsers.has(username)) {
-    socket.emit('username error', 'Vous êtes banni du serveur.');
-    socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis
-    return;
-  }
-
-  // Si pseudo déjà connecté ailleurs, déconnecter l'ancienne session
-  if (users[username] && users[username].id !== socket.id) {
-    const oldSocketId = users[username].id;
-    const oldSocket = io.sockets.sockets.get(oldSocketId);
-    if (oldSocket) {
-      oldSocket.emit('duplicate login', 'Vous avez été déconnecté car ce pseudo est utilisé ailleurs.');
-      setTimeout(() => {
-        oldSocket.disconnect(true);
-      }, 500);
+    if (!username || username.length > 16 || /\s/.test(username)) {
+      return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
     }
-  }
+    if (isNaN(age) || age < 18 || age > 89) {
+      return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
+    }
+    if (!gender) {
+      return socket.emit('username error', 'Genre non spécifié');
+    }
 
-  // VÉRIFICATION : Mot de passe pour les rôles privilégiés
-  if (requiresPassword(username)) {
-    if (!password) {
-      return socket.emit('password required', username);
+    if (bannedUsers.has(username)) {
+      socket.emit('username error', 'Vous êtes banni du serveur.');
+      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+      return;
     }
-    if (passwords[username] !== password) {
-      return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
+
+    if (users[username] && users[username].id !== socket.id) {
+      return socket.emit('username exists', username);
     }
-    console.log(`🔐 Authentification réussie pour ${username}`);
-  }
+
+    // VÉRIFICATION : Mot de passe pour les rôles privilégiés
+    if (requiresPassword(username)) {
+      if (!password) {
+        return socket.emit('password required', username);
+      }
+      if (passwords[username] !== password) {
+        return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
+      }
+      console.log(`🔐 Authentification réussie pour ${username}`);
+    }
 
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
