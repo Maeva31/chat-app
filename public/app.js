@@ -1,19 +1,19 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
+
+  const adminUsernames = ['admin', 'maeva'];
+  const modoUsernames = ['modo'];
 
   let selectedUser = null;
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
 
-let currentChannel = 'Général';  // Forcer le salon Général au chargement
+  let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
 
-const adminUsernames = ['admin', 'maeva'];
-const modoUsernames = ['modo'];
 
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
