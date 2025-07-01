@@ -53,8 +53,17 @@
     </button>
 
     <!-- BOUTON DÉCONNEXION AJOUTÉ -->
-    <button id="logoutButton" title="Déconnexion" class="control-button">🚪</button>
-
+    <button id="logoutButton" style="
+      padding: 8px 12px;
+      font-weight: bold;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    ">
+      Déconnexion
+    </button>
   </div>
 
   <!-- Modal de confirmation déconnexion -->
@@ -274,8 +283,6 @@
 
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
-  <script type="module" src="app.js"></script>
-
-
+  <script src="app.js"></script>
 </body>
 </html>
