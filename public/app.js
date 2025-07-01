@@ -49,17 +49,6 @@ if (usernameInput && passwordInput) {
     "Détente": "🌿"
   };
 
-  // Écouteur pour connexion dupliquée
-  socket.on('duplicate login', (message) => {
-  const currentPath = window.location.pathname;
-  // N'affiche l'alerte QUE sur la page déconnecter (adapter selon ton chemin exact)
-  if (currentPath === '/deconnecter' || currentPath === '/disconnected') {
-    alert(message || 'Votre session a été déconnectée car ce pseudo est utilisé ailleurs.');
-  }
-  window.location.reload();
-});
-
-
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
   if (!savedUsername) {
