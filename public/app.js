@@ -159,6 +159,29 @@ if (usernameInput && passwordInput) {
     });
   }
 
+  // Déconnexion : gestion du bouton 🚪
+const logoutButton = document.getElementById('logoutButton');
+if (logoutButton) {
+  logoutButton.addEventListener('click', () => {
+    if (confirm("Voulez-vous vraiment vous déconnecter ?")) {
+      // Informer le serveur
+      socket.emit('logout');
+
+      // Nettoyer le stockage local
+      localStorage.removeItem('username');
+      localStorage.removeItem('gender');
+      localStorage.removeItem('age');
+      localStorage.removeItem('password');
+      localStorage.removeItem('invisibleMode');
+      localStorage.removeItem('currentChannel');
+
+      // Recharger la page pour forcer un retour au formulaire
+      location.reload();
+    }
+  });
+}
+
+
   // Ajoute un message dans la zone de chat
   function addMessageToChat(msg) {
   // Si c'est un message système, vérifier qu'il concerne bien le salon courant
