@@ -178,6 +178,38 @@ if (logoutButton) {
   logoutButton.addEventListener('click', logout);
 }
 
+const logoutModal = document.getElementById('logoutModal');
+const confirmLogoutBtn = document.getElementById('confirmLogout');
+const cancelLogoutBtn = document.getElementById('cancelLogout');
+
+function showLogoutModal() {
+  logoutModal.style.display = 'flex'; // affiche la modal (flex pour centrage)
+}
+
+function hideLogoutModal() {
+  logoutModal.style.display = 'none';
+}
+
+// Quand l'utilisateur clique sur "Oui"
+confirmLogoutBtn.addEventListener('click', () => {
+  // Exemple : déconnexion
+  socket.emit('logout');
+  // Nettoyage localStorage etc.
+  ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
+    localStorage.removeItem(key);
+  });
+  location.reload();
+});
+
+// Quand l'utilisateur clique sur "Non"
+cancelLogoutBtn.addEventListener('click', () => {
+  hideLogoutModal();
+});
+
+// Pour ouvrir la modal, par ex. quand clique sur bouton logout
+document.getElementById('logoutButton').addEventListener('click', () => {
+  showLogoutModal();
+});
 
 
 
