@@ -405,7 +405,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
-  socket.once('username accepted', ({ username, gender, age }) => {
+ socket.once('username accepted', ({ username, gender, age }) => {
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
   localStorage.setItem('age', age);
@@ -413,13 +413,22 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   document.getElementById('myModal').style.display = 'none';
   document.getElementById('chat-wrapper').style.display = 'block';
 
-
   socket.emit('joinRoom', currentChannel);
   selectChannelInUI(currentChannel);
 
   hasSentUserInfo = true;
   initialLoadComplete = true;
+
+  // Afficher le bouton invisible si admin
+  if (adminUsernames.includes(username)) {
+    isAdmin = true;
+    if (invisibleBtn) {
+      invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
+    }
+  }
 });
+
 
 
   // Écouteurs socket divers
