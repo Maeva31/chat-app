@@ -277,14 +277,8 @@ let currentChannel = 'Général';  // Forcer le salon Général au chargement
     const ageInput = document.getElementById('age-input');
     const modalError = document.getElementById('modal-error');
 
-    if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
-
-    const username = usernameInput.value.trim();
-    const gender = genderSelect.value;
-    const age = parseInt(ageInput.value.trim(), 10);
-
-    const passwordInput = document.getElementById('password-input');
-const specialRoles = ['admin', 'modo', 'MaEvA'];
+     const passwordInput = document.getElementById('password-input');
+    const specialRoles = ['admin', 'modo', 'MaEvA'];
 
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
@@ -297,6 +291,13 @@ if (usernameInput && passwordInput) {
     }
   });
 }
+
+
+    if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
+
+    const username = usernameInput.value.trim();
+    const gender = genderSelect.value;
+    const age = parseInt(ageInput.value.trim(), 10);
 
 
 
