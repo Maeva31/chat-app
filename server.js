@@ -101,8 +101,8 @@ io.on('connection', (socket) => {
   socket.emit('room list', savedRooms);
   updateRoomUserCounts();
 
-  socket.on('set username', (data) => {
-    const { username, gender, age, invisible } = data;
+    socket.on('set username', (data) => {
+    const { username, gender, age, invisible, password } = data;
 
     if (!username || username.length > 16 || /\s/.test(username)) {
       return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
@@ -116,7 +116,7 @@ io.on('connection', (socket) => {
 
     if (bannedUsers.has(username)) {
       socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+      socket.emit('redirect', 'https://banned.maevakonnect.fr');
       return;
     }
 
@@ -124,13 +124,39 @@ io.on('connection', (socket) => {
       return socket.emit('username exists', username);
     }
 
-    // Récupérer invisible si l'utilisateur existait déjà
+    // Chargement du rôle
+    const role = getUserRole(username);
+
+    // Chargement des mots de passe
+    let passwords = {};
+    try {
+      passwords = JSON.parse(fs.readFileSync('passwords.json', 'utf-8'));
+    } catch (e) {
+      console.warn("⚠️ Impossible de charger passwords.json.");
+    }
+
+    // Vérification mot de passe si nécessaire
+    if ((role === 'admin' || role === 'modo') && passwords[username]) {
+      if (password !== passwords[username]) {
+        socket.emit('username error', 'Mot de passe incorrect pour ce rôle.');
+        return;
+      }
+    }
+
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
-    const role = getUserRole(username);
-    // Par défaut invisible = false, sauf si récupéré
-    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
+    const userData = {
+      username,
+      gender,
+      age,
+      id: socket.id,
+      role,
+      banned: false,
+      muted: false,
+      invisible: prevInvisible
+    };
+
     users[username] = userData;
 
     let channel = userChannels[socket.id] || defaultChannel;
@@ -147,7 +173,6 @@ io.on('connection', (socket) => {
     socket.emit('chat history', messageHistory[channel]);
     updateRoomUserCounts();
 
-    // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
     if (!userData.invisible) {
       io.to(channel).emit('chat message', {
         username: 'Système',
@@ -157,6 +182,7 @@ io.on('connection', (socket) => {
       });
     }
   });
+
 
   socket.on('chat message', (msg) => {
     const user = Object.values(users).find(u => u.id === socket.id);
