@@ -101,7 +101,6 @@ document.addEventListener('DOMContentLoaded', () => {
     selectChannelInUI(currentChannel);
   });
 
-  // Reste de ton code...
 });
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -380,52 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
- 
-
-
-  
-
-
-  if (isNaN(age) || age < 18 || age > 89) {
-    modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (!gender) {
-    modalError.textContent = "Veuillez sélectionner un genre.";
-    modalError.style.display = 'block';
-    return;
-  }
-
- modalError.style.display = 'none';
-
-socket.emit('set username', {
-  username,
-  gender,
-  age,
-  invisible: invisibleMode,
-  password
-});
-} // <-- Cette accolade ferme la fonction submitUserInfo
-
-// On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
-socket.once('username accepted', ({ username, gender, age }) => {
-  localStorage.setItem('username', username);
-  localStorage.setItem('gender', gender);
-  localStorage.setItem('age', age);
-
-  document.getElementById('myModal').style.display = 'none';
-  document.getElementById('chat-wrapper').style.display = 'block';
-}); 
-
-
-
-  socket.emit('joinRoom', currentChannel);
-  selectChannelInUI(currentChannel);
-
-  hasSentUserInfo = true;
-  initialLoadComplete = true;
-});
 
 
   // Écouteurs socket divers
