@@ -420,13 +420,20 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   initialLoadComplete = true;
 
   // Afficher le bouton invisible si admin
-  if (adminUsernames.includes(username)) {
-    isAdmin = true;
-    if (invisibleBtn) {
-      invisibleBtn.style.display = 'inline-block';
-      updateInvisibleButton();
-    }
+ if (adminUsernames.includes(username)) {
+  isAdmin = true;
+  if (invisibleBtn) {
+    invisibleBtn.style.display = 'inline-block';
+    updateInvisibleButton();
   }
+} else {
+  // Cas où ce n’est pas un admin (sécurité supplémentaire)
+  isAdmin = false;
+  if (!invisibleMode && invisibleBtn) {
+    invisibleBtn.style.display = 'none';
+  }
+}
+
 });
 
 
