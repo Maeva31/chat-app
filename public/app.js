@@ -287,8 +287,6 @@ if (usernameInput && passwordInput) {
     }
   }
 
- const adminUsernames = ['admin', 'maeva'];
-const modoUsernames = ['modo'];
 
 function submitUserInfo() {
   const usernameInput = document.getElementById('username-input');
