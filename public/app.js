@@ -17,15 +17,15 @@ const passwordInput = document.getElementById('password-input');
 
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.trim().toLowerCase();
-    if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-      passwordInput.style.display = 'block'; // afficher le mot de passe
-    } else {
-      passwordInput.style.display = 'none';  // cacher sinon
-      passwordInput.value = '';               // vider le mot de passe
-    }
-  });
-}
+  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
+  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+    passwordInput.style.display = 'block'; // afficher le mot de passe
+  } else {
+    passwordInput.style.display = 'none';  // cacher sinon
+    passwordInput.value = '';              // vider le mot de passe
+  }
+});
+
 
 
 
@@ -319,7 +319,7 @@ function submitUserInfo() {
   }
 
   const usernameLower = username.toLowerCase();
-  if ((adminUsernames.includes(usernameLower) || modoUsernames.includes(usernameLower)) && password.length === 0) {
+  if ((adminUsernames.includes(username) || modoUsernames.includes(username)) && password.length === 0) {
     modalError.textContent = "Le mot de passe est obligatoire pour ce pseudo.";
     modalError.style.display = 'block';
     return;
