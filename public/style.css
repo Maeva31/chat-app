@@ -596,3 +596,20 @@ button:focus {
 .control-button:hover {
   background-color: #666;
 }
+
+#top-bar {
+  display: none; /* par défaut on masque la barre */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: #111;
+  color: #00ffff;
+  text-align: center;
+  line-height: 40px;
+  font-weight: bold;
+  font-size: 1em;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  z-index: 1001;
+}
