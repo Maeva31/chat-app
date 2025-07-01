@@ -43,37 +43,51 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Soumission du pseudo
   function submitUserInfo() {
-    const usernameInput = document.getElementById('username-input');
-    const genderSelect = document.getElementById('gender-select');
-    const ageInput = document.getElementById('age-input');
-    const modalError = document.getElementById('modal-error');
-    const passwordInput = document.getElementById('password-input');
-    const password = passwordInput?.value?.trim() || '';
+  const usernameInput = document.getElementById('username-input');
+  const genderSelect = document.getElementById('gender-select');
+  const ageInput = document.getElementById('age-input');
+  const modalError = document.getElementById('modal-error');
+  const passwordInput = document.getElementById('password-input');
+  const password = passwordInput?.value?.trim() || '';
 
-    if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
+  if (!usernameInput || !genderSelect || !ageInput || !modalError) return;
 
-    const username = usernameInput.value.trim();
-    const gender = genderSelect.value;
-    const age = parseInt(ageInput.value.trim(), 10);
+  const username = usernameInput.value.trim();
+  const gender = genderSelect.value;
+  const age = parseInt(ageInput.value.trim(), 10);
 
-    // validations...
-
-    modalError.style.display = 'none';
-
-    socket.emit('set username', {
-      username,
-      gender,
-      age,
-      invisible: invisibleMode,
-      password
-    });
-
-    // STOCKAGE localStorage
-    localStorage.setItem('username', username);
-    localStorage.setItem('gender', gender);
-    localStorage.setItem('age', age.toString());
-    localStorage.setItem('password', password);
+  if (!username || username.includes(' ') || username.length > 16) {
+    modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+    modalError.style.display = 'block';
+    return;
   }
+  if (isNaN(age) || age < 18 || age > 89) {
+    modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
+    modalError.style.display = 'block';
+    return;
+  }
+  if (!gender) {
+    modalError.textContent = "Veuillez sélectionner un genre.";
+    modalError.style.display = 'block';
+    return;
+  }
+
+  modalError.style.display = 'none';
+
+  socket.emit('set username', {
+    username,
+    gender,
+    age,
+    invisible: invisibleMode,
+    password
+  });
+
+  localStorage.setItem('username', username);
+  localStorage.setItem('gender', gender);
+  localStorage.setItem('age', age.toString());
+  localStorage.setItem('password', password);
+}
+
 
   socket.once('username accepted', ({ username, gender, age }) => {
     document.getElementById('myModal').style.display = 'none';
