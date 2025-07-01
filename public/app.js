@@ -99,11 +99,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
   function extractChannelName(text) {
-    text = text.replace(/\s*\(\d+\)$/, '').trim();
-    const parts = text.split('┊');
-    if (parts.length > 1) return parts[1].trim();
-    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-  }
+  if (typeof text !== 'string' || text.length === 0) return '';
+
+  text = text.replace(/\s*\(\d+\)$/, '').trim();
+  const parts = text.split('┊');
+  if (parts.length > 1) return parts[1].trim();
+  return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+}
+
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
