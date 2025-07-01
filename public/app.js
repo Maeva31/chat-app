@@ -49,6 +49,32 @@ if (usernameInput && passwordInput) {
     "Détente": "🌿"
   };
 
+  const logoutButton = document.getElementById('logoutButton');
+
+logoutButton.addEventListener('click', () => {
+  // Déconnexion manuelle : supprimer pseudo et données utilisateur
+  if (socket && socket.connected) {
+    socket.disconnect();  // Déconnecte le socket actuel
+  }
+
+  // Réinitialise les champs si tu veux
+  document.getElementById('usernameInput').value = '';
+  document.getElementById('ageInput').value = '';
+  document.getElementById('genderSelect').value = '';
+  document.getElementById('passwordInput').value = '';
+  document.getElementById('passwordContainer').style.display = 'none';
+
+  // Affiche la modal d'identification
+  const modal = document.getElementById('loginModal');
+  if (modal) modal.style.display = 'flex';
+
+  // Reconnexion propre
+  setTimeout(() => {
+    window.location.reload(); // Recharge pour recréer un nouveau socket
+  }, 500);
+});
+
+
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
   if (!savedUsername) {
