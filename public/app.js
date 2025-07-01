@@ -513,10 +513,12 @@ function submitUserInfo() {
   });
 
   socket.on('connect', () => {
+  hasSentUserInfo = false;  // Remettre à false à chaque reconnexion
+
   const savedUsername = localStorage.getItem('username');
   const savedGender = localStorage.getItem('gender');
   const savedAge = localStorage.getItem('age');
-  const savedPassword = localStorage.getItem('password'); // <-- ajout
+  const savedPassword = localStorage.getItem('password');
 
   if (!hasSentUserInfo && savedUsername && savedAge) {
     socket.emit('set username', {
@@ -524,21 +526,33 @@ function submitUserInfo() {
       gender: savedGender || 'non spécifié',
       age: savedAge,
       invisible: invisibleMode,
-      password: savedPassword || ''  // <-- ajout
+      password: savedPassword || ''
     });
+
     currentChannel = 'Général';
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
     selectChannelInUI(currentChannel);
 
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
+    // Important : installer l'écouteur ici, pour chaque reconnexion
+    socket.once('username accepted', ({ username, gender, age }) => {
+      localStorage.setItem('username', username);
+      localStorage.setItem('gender', gender);
+      localStorage.setItem('age', age);
 
-    if (invisibleMode) {
-      showBanner('Mode invisible activé (auto)', 'success');
-    }
+      document.getElementById('myModal').style.display = 'none';
+      document.getElementById('chat-wrapper').style.display = 'block';
+
+      hasSentUserInfo = true;
+      initialLoadComplete = true;
+
+      if (invisibleMode) {
+        showBanner('Mode invisible activé (auto)', 'success');
+      }
+    });
   }
 });
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
