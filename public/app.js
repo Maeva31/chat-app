@@ -339,28 +339,33 @@ newMessage.appendChild(messageSpan);
   });
 
   // Envoi message
-  function sendMessage() {
-    const input = document.getElementById('message-input');
-    if (!input) return;
-    const message = input.value.trim();
-    const username = localStorage.getItem('username');
-    if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
-    if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
+function sendMessage() {
+  const input = document.getElementById('message-input');
+  if (!input) return;
+  const message = input.value.trim();
+  const username = localStorage.getItem('username');
+  if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
+  if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
 
-    if (username) {
-     socket.emit('chat message', {
-  message: inputMessage,
-  fontColor: selectedColor,
-  fontFamily: selectedFont,
-  isBold: isBold,
-  isItalic: isItalic,
-  timestamp: new Date().toISOString()
-});
+  if (username) {
+    const selectedFont = fontSelect ? fontSelect.value : 'Arial';
+    const selectedColor = colorPicker ? colorPicker.value : '#000000';
+    const isBold = boldToggle ? boldToggle.checked : false;
+    const isItalic = italicToggle ? italicToggle.checked : false;
 
+    socket.emit('chat message', {
+      message: message,
+      font: selectedFont,
+      color: selectedColor,
+      bold: isBold,
+      italic: isItalic,
+      timestamp: new Date().toISOString()
+    });
 
-      input.value = '';
-    }
+    input.value = '';
   }
+}
+
 
 
 function submitUserInfo() {
