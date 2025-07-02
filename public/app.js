@@ -215,16 +215,11 @@ if (logoutModal) {
   function addMessageToChat(msg) {
   // Si c'est un message système, vérifier qu'il concerne bien le salon courant
   if (msg.username === 'Système') {
-    // Supposons que le message contient forcément le nom du salon à la fin (ex: "MaEvA a rejoint le salon Général")
-    // On va chercher le nom du salon dans le message, en extrayant après "salon "
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
     if (match && match[1]) {
       const salonDuMessage = match[1].trim();
-      if (salonDuMessage !== currentChannel) {
-        // Ce message système ne concerne pas le salon courant => on ne l'affiche pas
-        return;
-      }
+      if (salonDuMessage !== currentChannel) return;
     }
   }
 
@@ -232,24 +227,26 @@ if (logoutModal) {
   if (!chatMessages) return;
 
   const newMessage = document.createElement('div');
-
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
   const usernameSpan = document.createElement('span');
+  const color = (msg.role === 'admin') ? 'red' :
+                (msg.role === 'modo') ? 'green' :
+                getUsernameColor(msg.gender);
 
   if (msg.username === 'Système') {
     usernameSpan.textContent = msg.username;
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
-    const color = (msg.role === 'admin') ? 'red' : (msg.role === 'modo' ? 'green' : getUsernameColor(msg.gender));
     usernameSpan.classList.add('clickable-username');
     usernameSpan.style.color = color;
-
     usernameSpan.textContent = msg.username;
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' : (msg.role === 'modo' ? 'Modérateur' : '');
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
 
+    // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/favicon.ico';
@@ -269,6 +266,7 @@ if (logoutModal) {
       usernameSpan.appendChild(icon);
     }
 
+    // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${msg.username} `;
@@ -277,15 +275,26 @@ if (logoutModal) {
     });
   }
 
+  // Style du message
+  const messageText = document.createElement('span');
+  messageText.textContent = `: ${msg.message}`;
+  const style = msg.style || {};
+  messageText.style.color = style.color || '#fff';
+  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = style.font || 'Arial';
+
+  // Assemblage
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
-  newMessage.append(`: ${msg.message}`);
+  newMessage.appendChild(messageText);
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
   // Sélectionne visuellement un salon dans la liste
@@ -339,6 +348,7 @@ if (logoutModal) {
       socket.emit('chat message', {
         message,
         timestamp: new Date().toISOString(),
+        style: loadSavedStyle() 
       });
       input.value = '';
     }
@@ -711,6 +721,70 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   }
 });
 
+const colorTextBtn = document.getElementById('color-text');
+const styleMenu = document.getElementById('style-menu');
+const styleColor = document.getElementById('style-color');
+const styleBold = document.getElementById('style-bold');
+const styleItalic = document.getElementById('style-italic');
+const styleFont = document.getElementById('style-font');
+
+const defaultStyle = {
+  color: '#ffffff',
+  bold: false,
+  italic: false,
+  font: 'Arial'
+};
+
+function loadSavedStyle() {
+  const saved = localStorage.getItem('chatStyle');
+  return saved ? JSON.parse(saved) : defaultStyle;
+}
+
+function saveStyle(style) {
+  localStorage.setItem('chatStyle', JSON.stringify(style));
+}
+
+function applyStyleToInput(style) {
+  const input = document.getElementById('message-input');
+  if (!input) return;
+  input.style.color = style.color;
+  input.style.fontWeight = style.bold ? 'bold' : 'normal';
+  input.style.fontStyle = style.italic ? 'italic' : 'normal';
+  input.style.fontFamily = style.font;
+}
+
+const currentStyle = loadSavedStyle();
+styleColor.value = currentStyle.color;
+styleBold.checked = currentStyle.bold;
+styleItalic.checked = currentStyle.italic;
+styleFont.value = currentStyle.font;
+applyStyleToInput(currentStyle);
+
+// 🎨 toggle menu
+colorTextBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  styleMenu.style.display = styleMenu.style.display === 'none' ? 'block' : 'none';
+});
+
+document.addEventListener('click', () => {
+  styleMenu.style.display = 'none';
+});
+
+styleMenu.addEventListener('click', e => e.stopPropagation());
+
+// Mise à jour et sauvegarde des styles
+[styleColor, styleBold, styleItalic, styleFont].forEach(el => {
+  el.addEventListener('input', () => {
+    const newStyle = {
+      color: styleColor.value,
+      bold: styleBold.checked,
+      italic: styleItalic.checked,
+      font: styleFont.value
+    };
+    saveStyle(newStyle);
+    applyStyleToInput(newStyle);
+  });
+});
 
 
 });
