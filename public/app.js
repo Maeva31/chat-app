@@ -238,7 +238,7 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       const iframe = document.createElement('iframe');
       iframe.width = '320';
       iframe.height = '180';
-      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+      iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
