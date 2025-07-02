@@ -227,31 +227,38 @@ function getYouTubeThumbnail(url) {
 
 
 // Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
-function addYouTubeThumbnailIfAny(messageElement, messageText) {
+function addYouTubeVideoIfAny(messageElement, messageText) {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const urls = messageText.match(urlRegex);
   if (!urls) return;
 
   urls.forEach(url => {
-    const thumbUrl = getYouTubeThumbnail(url);
-    if (thumbUrl) {
-      const img = document.createElement('img');
-      img.src = thumbUrl;
-      img.alt = 'Miniature YouTube';
-      img.style.maxWidth = '200px';
-      img.style.marginLeft = '10px';
-      img.style.borderRadius = '6px';
-      img.style.cursor = 'pointer';
+    const videoId = getYouTubeVideoId(url);
+    if (videoId) {
+      const iframe = document.createElement('iframe');
+      iframe.width = '320';
+      iframe.height = '180';
+      iframe.src = `https://www.youtube.com/embed/${videoId}`;
+      iframe.frameBorder = '0';
+      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+      iframe.style.marginLeft = '10px';
+      iframe.style.borderRadius = '6px';
+      iframe.style.display = 'block';
+      iframe.style.marginTop = '5px';
 
-      // Ouvre la vidéo dans un nouvel onglet au clic
-      img.addEventListener('click', () => {
-        window.open(url, '_blank');
-      });
-
-      messageElement.appendChild(img);
+      messageElement.appendChild(iframe);
     }
   });
 }
+
+// Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
+function getYouTubeVideoId(url) {
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regExp);
+  return match ? match[1] : null;
+}
+
 
 
   // Ajoute un message dans la zone de chat
@@ -337,7 +344,7 @@ if (msg.role === 'admin') {
   newMessage.dataset.username = msg.username;
 
      // Ajout des miniatures YouTube si liens détectés
-  addYouTubeThumbnailIfAny(newMessage, msg.message);
+addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
