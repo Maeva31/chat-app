@@ -396,12 +396,14 @@ main {
 
 .modal-image {
   display: block;
-  max-width: 100%;
-  height: auto;
-  margin: 0 auto 20px auto; /* Centré horizontalement + marge en bas */
-  border-radius: 10px;      /* optionnel : coins arrondis */
-  box-shadow: 0 0 15px #00ffff88; /* optionnel : halo lumineux */
+  width: 50px;
+  height: 50px;
+  object-fit: cover; /* ou contain selon le rendu voulu */
+  margin: 0 auto 20px auto;
+  border-radius: 10px;
+  box-shadow: 0 0 15px #00ffff88;
 }
+
 
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
