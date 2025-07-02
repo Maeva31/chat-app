@@ -242,7 +242,7 @@ if (logoutModal) {
 
 
   // Ajoute un message dans la zone de chat
-  function addMessageToChat(msg) {
+ function addMessageToChat(msg) {
   // Si c'est un message système, vérifier qu'il concerne bien le salon courant
   if (msg.username === 'Système') {
     const salonRegex = /salon\s+(.+)$/i;
@@ -266,12 +266,11 @@ if (logoutModal) {
                 getUsernameColor(msg.gender);
 
   if (msg.username === 'Système') {
-    usernameSpan.textContent = displayedUsername;
-
     let displayedUsername = msg.username;
-if (msg.role === 'admin' || msg.role === 'modo') {
-  displayedUsername += '⁹';
-}
+    if (msg.role === 'admin' || msg.role === 'modo') {
+      displayedUsername += '⁹';
+    }
+    usernameSpan.textContent = displayedUsername;
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
@@ -329,6 +328,7 @@ if (msg.role === 'admin' || msg.role === 'modo') {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
 
