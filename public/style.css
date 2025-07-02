@@ -101,30 +101,12 @@ main {
 }
 
 #channel-list .channel:hover {
-   background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
-  background-size: 400% 400%;
-  border-radius: 8px;
-  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
-  animation: gradientThumb 10s ease infinite;
-  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
+  background-color: #444;
 }
-
-@keyframes gradientThumb {
-  0% {
-    background-position: 400% 0;
-  }
-  50% {
-    background-position: 0 100%;
-  }
-  100% {
-    background-position: 400% 0;
-  }
-}
-
 
 #channel-list .channel.selected {
-  background-color: #444;
-  color: white;
+  background-color: #00ffff;
+  color: black;
   font-weight: bold;
 }
 
@@ -613,65 +595,4 @@ button:focus {
 
 .control-button:hover {
   background-color: #666;
-}
-
-#top-bar {
-  display: none; /* par défaut on masque la barre */
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 40px;
-  background: #111;
-  color: #00ffff;
-  text-align: center;
-  line-height: 40px;
-  font-weight: bold;
-  font-size: 1em;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
-  z-index: 1001;
-}
-.user-entry {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.webcam-icon {
-  font-size: 16px;
-  color: #4caf50; /* Vert webcam active */
-}
-
-.user-age {
-  width: 30px;
-  height: 30px;
-  background: #ddd;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-}
-#style-menu {
-  position: absolute;
-  bottom: 60px;
-  left: 100px;
-  background: white;
-  border: 1px solid #ccc;
-  padding: 8px;
-  display: none;
-  z-index: 10;
-  box-shadow: 0 0 10px rgba(0,0,0,0.2);
-  font-size: 14px;
-}
-
-#style-menu label {
-  display: block;
-  margin: 5px 0;
-}
-
-#style-button {
-  margin-left: 5px;
-  font-size: 20px;
-  cursor: pointer;
 }
