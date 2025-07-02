@@ -652,3 +652,26 @@ button:focus {
   justify-content: center;
   font-weight: bold;
 }
+#style-menu {
+  position: absolute;
+  bottom: 60px;
+  left: 100px;
+  background: white;
+  border: 1px solid #ccc;
+  padding: 8px;
+  display: none;
+  z-index: 10;
+  box-shadow: 0 0 10px rgba(0,0,0,0.2);
+  font-size: 14px;
+}
+
+#style-menu label {
+  display: block;
+  margin: 5px 0;
+}
+
+#style-button {
+  margin-left: 5px;
+  font-size: 20px;
+  cursor: pointer;
+}
