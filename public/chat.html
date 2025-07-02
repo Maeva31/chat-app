@@ -297,6 +297,21 @@
   </main>
 
   <!-- Scripts -->
+  <script>
+  const modal = document.getElementById('myModal');
+const topBar = document.getElementById('top-bar');
+
+const observer = new MutationObserver(() => {
+  if (modal.style.display === 'flex') {
+    topBar.style.display = 'none';
+  } else {
+    topBar.style.display = 'flex';
+  }
+});
+
+observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+
+  </script>
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
