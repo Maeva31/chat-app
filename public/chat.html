@@ -298,20 +298,27 @@
 
   <!-- Scripts -->
   <script>
-  const modal = document.getElementById('myModal');
-const topBar = document.getElementById('top-bar');
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('myModal');
+    const topBar = document.getElementById('top-bar');
 
-const observer = new MutationObserver(() => {
-  if (modal.style.display === 'flex') {
-    topBar.style.display = 'none';
-  } else {
-    topBar.style.display = 'flex';
-  }
-});
+    // Appliquer l'état initial
+    if (getComputedStyle(modal).display !== 'none') {
+      topBar.style.display = 'none';
+    } else {
+      topBar.style.display = 'flex';
+    }
 
-observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+    // Observer les changements de style de la modal
+    const observer = new MutationObserver(() => {
+      const isModalVisible = getComputedStyle(modal).display !== 'none';
+      topBar.style.display = isModalVisible ? 'none' : 'flex';
+    });
 
-  </script>
+    observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+  });
+</script>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
