@@ -696,6 +696,8 @@ if (styleButton && styleMenu && messageInput) {
   });
 }
 
+applyStyle();
+
 
   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
   socket.on('banned', () => {
