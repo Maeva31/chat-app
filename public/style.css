@@ -4,6 +4,8 @@ html, body {
   padding: 0;
   overflow: hidden; /* Empêche tout scroll vertical */
   height: 100%;
+  max-width: 100vw;   /* Empêche la largeur > fenêtre */
+  overflow-x: hidden; /* Empêche le scroll horizontal */
 }
 
 body {
@@ -53,18 +55,21 @@ main {
   overflow: hidden;
   margin-top: 50px; /* Décalage pour laisser place à la bande fixe */
   height: calc(100vh - 40px); /* Prend toute la hauteur restante */
+  min-width: 0; /* Pour permettre le shrink */
 }
 
 #content-container {
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-width: 0;
 }
 
 /* === CHANNEL SIDEBAR (LEFT) === */
 #channel-sidebar {
-  flex: 1;
-  min-width: 200px;
+  flex: 0 0 240px;
+  min-width: 180px; /* Ajouté pour flexibilité */
+  max-width: 240px;
   background: #222222b8;
   padding: 1em;
   border-right: 2px solid #333;
@@ -74,6 +79,7 @@ main {
   flex-direction: column;
   height: 100vh;
   position: relative;
+  min-width: 0;
 }
 
 #channel-sidebar h3 {
@@ -90,6 +96,7 @@ main {
   flex-grow: 1;
   overflow-y: auto;
   padding-bottom: 70px;
+  min-width: 0;
 }
 
 #channel-list .channel {
@@ -108,19 +115,6 @@ main {
   animation: gradientThumb 10s ease infinite;
   box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
 }
-
-@keyframes gradientThumb {
-  0% {
-    background-position: 400% 0;
-  }
-  50% {
-    background-position: 0 100%;
-  }
-  100% {
-    background-position: 400% 0;
-  }
-}
-
 
 #channel-list .channel.selected {
   background-color: #444;
@@ -184,14 +178,16 @@ main {
 
 /* === CHAT CONTAINER (CENTER) === */
 #chat-container {
-  flex: 6;
+  flex: 6 1 auto;
   display: flex;
   flex-direction: column;
   padding: 1em;
+  min-width: 0;
 }
 
 .chat-messages {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0; /* Important pour éviter le dépassement */
   overflow-y: auto;
   background: #222222b8;
   padding: 1em;
@@ -233,16 +229,17 @@ main {
 
 /* === USER LIST (RIGHT SIDEBAR) === */
 #user-list {
-  flex: 1;
-  min-width: 200px;
+  flex: 0 0 240px;
+  min-width: 180px; /* Ajouté */
+  max-width: 240px;
   background: #222222b8;
   padding: 1em;
   border-left: 2px solid #333;
   border-radius: 10px;
   display: flex;
   flex-direction: column;
+  min-width: 0;
 }
-
 
 #users {
   list-style: none;
@@ -260,7 +257,6 @@ main {
   max-width: 100%;
 }
 
-
 .gender-square {
   width: 22px;
   height: 22px;
@@ -275,16 +271,8 @@ main {
   background-color: #aaa;
 }
 
-
 .age-span {
   color: #000;
-}
-
-/* Même largeur pour les deux sidebars */
-#channel-sidebar,
-#user-list {
-  flex: 0 0 240px; /* même largeur fixe */
-  max-width: 240px;
 }
 
 /* Ajustement du pseudo pour qu'il accepte 16 caractères sans couper */
@@ -302,15 +290,12 @@ main {
   min-width: 0;
 }
 
-
-
 #users li.selected {
   background-color: #333;
   border-left: 4px solid #00ffff;
   padding-left: 6px;
   border-radius: 5px;
 }
-
 
 .clickable-username {
   color: #00ffff;
@@ -413,11 +398,14 @@ main {
 @media (max-width: 768px) {
   main {
     flex-direction: column;
+    height: auto;
   }
 
   #channel-sidebar,
   #user-list {
     width: 100%;
+    max-width: none;
+    min-width: 0;
     border: none;
     border-top: 2px solid #333;
     border-radius: 0;
@@ -425,6 +413,8 @@ main {
   }
 
   #chat-container {
+    flex: none;
+    width: 100%;
     padding: 0.5em;
   }
 
@@ -614,7 +604,6 @@ button:focus {
 .control-button:hover {
   background-color: #666;
 }
-
 
 #emoji-picker {
   display: none; /* caché par défaut */
