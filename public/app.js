@@ -304,25 +304,24 @@ function getYouTubeVideoId(url) {
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
     // Icônes selon rôle
-if (msg.role === 'admin') {
-  const icon = document.createElement('img');
-  icon.src = '/favicon.ico';
-  icon.alt = 'Admin';
-  icon.title = 'Admin';
-  icon.style.width = '18px';
-  icon.style.height = '18px';
-  icon.style.marginRight = '4px';  // espace à droite de l'icône
-  icon.style.verticalAlign = '-4px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-} else if (msg.role === 'modo') {
-  const icon = document.createElement('span');
-  icon.textContent = '🛡️';
-  icon.title = 'Modérateur';
-  icon.style.marginRight = '1px';  // espace à droite de l'icône
-  icon.style.verticalAlign = '0px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-}
-
+    if (msg.role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.style.width = '18px';
+      icon.style.height = '18px';
+      icon.style.marginRight = '4px';
+      icon.style.verticalAlign = '-4px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    } else if (msg.role === 'modo') {
+      const icon = document.createElement('span');
+      icon.textContent = '🛡️';
+      icon.title = 'Modérateur';
+      icon.style.marginRight = '1px';
+      icon.style.verticalAlign = '0px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    }
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
@@ -333,15 +332,17 @@ if (msg.role === 'admin') {
     });
   }
 
-  // Style du message
+  // Supprimer les URLs du texte affiché (masquer les liens)
+  const messageSansUrl = msg.message.replace(/https?:\/\/[^\s]+/g, '').trim();
+
+  // Style du message (sans les liens)
   const messageText = document.createElement('span');
-  messageText.textContent = `: ${msg.message}`;
+  messageText.textContent = messageSansUrl ? `: ${messageSansUrl}` : '';
   const style = msg.style || {};
   messageText.style.color = style.color || '#fff';
   messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
-
 
   // Assemblage
   newMessage.innerHTML = `[${timeString}] `;
@@ -350,8 +351,8 @@ if (msg.role === 'admin') {
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
-     // Ajout des miniatures YouTube si liens détectés
-addYouTubeVideoIfAny(newMessage, msg.message);
+  // Ajout des vidéos YouTube intégrées
+  addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
