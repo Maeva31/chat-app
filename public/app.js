@@ -879,4 +879,4 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
 });
 
 
-}); ajouter si je clique sur le carré age d'un utilisateur un menu qui s'ouvre avec les boutons mute, kick, ban ce menu ne doit pas s'appliquer pour les admin/modo 
+}); 
