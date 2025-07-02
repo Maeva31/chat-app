@@ -237,14 +237,13 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
     if (videoId) {
       const wrapper = document.createElement('div');
 
-      // Wrapper responsive avec max-width 640px
-      wrapper.style.maxWidth = '640px';
-      wrapper.style.width = '100%';           // prend toute la largeur dispo (max 640px)
+      // Moins grand (max 480x270) et toujours responsive
+      wrapper.style.maxWidth = '480px';
+      wrapper.style.width = '100%';
       wrapper.style.position = 'relative';
-      wrapper.style.paddingTop = '56.25%';    // 16:9 ratio (360/640 = 0.5625 = 56.25%)
+      wrapper.style.paddingTop = '56.25%';  // 16:9 ratio
       wrapper.style.marginLeft = '10px';
       wrapper.style.marginTop = '5px';
-
       wrapper.style.border = '3px solid #888';
       wrapper.style.borderRadius = '6px';
       wrapper.style.backgroundColor = '#222';
@@ -255,12 +254,11 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
 
-      // Positionnement absolu pour le responsive
       iframe.style.position = 'absolute';
       iframe.style.top = '0';
       iframe.style.left = '0';
-      iframe.style.width = '100%';     // prend 100% largeur du wrapper
-      iframe.style.height = '100%';    // prend 100% hauteur du wrapper
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
       iframe.style.borderRadius = '6px';
 
       wrapper.appendChild(iframe);
@@ -268,9 +266,6 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
     }
   });
 }
-
-
-
 
 
 
