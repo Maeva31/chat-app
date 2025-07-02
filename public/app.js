@@ -253,24 +253,25 @@ if (logoutModal) {
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
     // Icônes selon rôle
-    if (msg.role === 'admin') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Admin';
-      icon.title = 'Admin';
-      icon.style.width = '20px';
-      icon.style.height = '20px';
-      icon.style.marginLeft = '1px';
-      icon.style.verticalAlign = '-4px';
-      usernameSpan.appendChild(icon);
-    } else if (msg.role === 'modo') {
-      const icon = document.createElement('span');
-      icon.textContent = '🛡️';
-      icon.title = 'Modérateur';
-      icon.style.marginLeft = '4px';
-      icon.style.verticalAlign = '-4px';
-      usernameSpan.appendChild(icon);
-    }
+if (msg.role === 'admin') {
+  const icon = document.createElement('img');
+  icon.src = '/favicon.ico';
+  icon.alt = 'Admin';
+  icon.title = 'Admin';
+  icon.style.width = '20px';
+  icon.style.height = '20px';
+  icon.style.marginRight = '4px';  // espace à droite de l'icône
+  icon.style.verticalAlign = '-4px';
+  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+} else if (msg.role === 'modo') {
+  const icon = document.createElement('span');
+  icon.textContent = '🛡️';
+  icon.title = 'Modérateur';
+  icon.style.marginRight = '4px';  // espace à droite de l'icône
+  icon.style.verticalAlign = '-4px';
+  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+}
+
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
