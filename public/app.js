@@ -1,6 +1,40 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
+  const emojiPicker = document.getElementById('emoji-picker');
+  const messageInput = document.getElementById('message-input');
+  const emojiButton = document.getElementById('emoji-button');
+
+  // Toggle affichage palette au clic sur le bouton emoji
+  emojiButton.addEventListener('click', () => {
+    if (emojiPicker.style.display === 'flex') {
+      emojiPicker.style.display = 'none';
+    } else {
+      emojiPicker.style.display = 'flex';
+    }
+  });
+
+  // Ajouter un écouteur click à chaque emoji
+  emojiPicker.querySelectorAll('.emoji').forEach(emojiEl => {
+    emojiEl.addEventListener('click', () => {
+      const emoji = emojiEl.textContent;
+      // Ajouter l’emoji à la fin du message
+      messageInput.value += emoji;
+      // Fermer la palette
+      emojiPicker.style.display = 'none';
+      // Remettre le focus dans le champ message
+      messageInput.focus();
+    });
+  });
+
+  // Optionnel : fermer la palette si clic en dehors
+  document.addEventListener('click', (e) => {
+    if (!emojiPicker.contains(e.target) && e.target !== emojiButton) {
+      emojiPicker.style.display = 'none';
+    }
+  });
+});
+  
  const adminUsernames = ['MaEvA'];
 const modoUsernames = ['DarkGirL'];
 
@@ -619,6 +653,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       emoji.addEventListener('click', () => {
         messageInput.value += emoji.textContent;
         messageInput.focus();
+        emojiPicker.style.display = 'none';
       });
     });
 
