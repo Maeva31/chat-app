@@ -63,7 +63,7 @@ if (usernameInput && passwordInput) {
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
-    invisibleBtn.textContent = `👻 Mode Invisible`;
+    invisibleBtn.textContent = 👻 Mode Invisible;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
   }
 
@@ -84,7 +84,7 @@ if (usernameInput && passwordInput) {
     if (!banner || !text) return;
 
     const prefix = type === 'success' ? '✅' : '❌';
-    text.textContent = `${prefix} ${message}`;
+    text.textContent = ${prefix} ${message};
     banner.style.display = 'flex';
     banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
 
@@ -109,55 +109,125 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
-    const userList = document.getElementById('users');
-    if (!userList) return;
-    userList.innerHTML = '';
-    if (!Array.isArray(users)) return;
+ function updateUserList(users) {
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
 
-    users.forEach(user => {
-      const username = user?.username || 'Inconnu';
-      const age = user?.age || '?';
-      const gender = user?.gender || 'non spécifié';
-      const role = user?.role || 'user';
+  // Supprimer ancien menu d'actions utilisateur s'il existe
+  const existingMenu = document.getElementById('user-action-menu');
+  if (existingMenu) existingMenu.remove();
 
-      const li = document.createElement('li');
-      li.classList.add('user-item');
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
 
-      const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+    const li = document.createElement('li');
+    li.classList.add('user-item');
 
-      li.innerHTML = `
-        <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-        <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-      `;
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-      const usernameSpan = li.querySelector('.username-span');
-      if (role === 'admin') {
-        const icon = document.createElement('img');
-        icon.src = '/favicon.ico';
-        icon.alt = 'Admin';
-        icon.title = 'Admin';
-        icon.classList.add('admin-icon');
-        usernameSpan.appendChild(icon);
-      } else if (role === 'modo') {
-        const icon = document.createElement('span');
-        icon.textContent = '🛡️';
-        icon.title = 'Modérateur';
-        icon.classList.add('modo-icon');
-        usernameSpan.appendChild(icon);
-      }
+    li.innerHTML = `
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+    `;
 
-      usernameSpan.addEventListener('click', () => {
-        const input = document.getElementById('message-input');
-        const mention = `@${username} `;
-        if (!input.value.includes(mention)) input.value = mention + input.value;
-        input.focus();
-        selectedUser = username;
-      });
+    const usernameSpan = li.querySelector('.username-span');
 
-      userList.appendChild(li);
+    // Ajout des icônes admin/modo
+    if (role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.classList.add('admin-icon');
+      usernameSpan.appendChild(icon);
+    } else if (role === 'modo') {
+      const icon = document.createElement('span');
+      icon.textContent = '🛡️';
+      icon.title = 'Modérateur';
+      icon.classList.add('modo-icon');
+      usernameSpan.appendChild(icon);
+    }
+
+    // Mention au clic sur pseudo
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
     });
-  }
+
+    // Ajout menu d'actions uniquement pour user "normal"
+    const ageSquare = li.querySelector('.gender-square');
+    if (role !== 'admin' && role !== 'modo') {
+      ageSquare.style.cursor = 'pointer';
+      ageSquare.addEventListener('click', (e) => {
+        e.stopPropagation();
+
+        // Supprime un menu existant
+        const existingMenu = document.getElementById('user-action-menu');
+        if (existingMenu) existingMenu.remove();
+
+        // Crée le menu
+        const menu = document.createElement('div');
+        menu.id = 'user-action-menu';
+        menu.style.position = 'absolute';
+        menu.style.backgroundColor = '#222';
+        menu.style.border = '1px solid #555';
+        menu.style.borderRadius = '6px';
+        menu.style.padding = '6px';
+        menu.style.display = 'flex';
+        menu.style.gap = '6px';
+        menu.style.zIndex = 1000;
+        menu.style.color = '#fff';
+        menu.style.userSelect = 'none';
+
+        // Positionne le menu près du carré âge
+        const rect = ageSquare.getBoundingClientRect();
+        menu.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        menu.style.left = (rect.left + window.scrollX) + 'px';
+
+        // Crée les boutons
+        ['Mute', 'Kick', 'Ban'].forEach(action => {
+          const btn = document.createElement('button');
+          btn.textContent = action;
+          btn.style.cursor = 'pointer';
+          btn.style.padding = '4px 8px';
+          btn.style.border = 'none';
+          btn.style.borderRadius = '4px';
+          btn.style.backgroundColor = '#444';
+          btn.style.color = '#fff';
+          btn.addEventListener('mouseenter', () => btn.style.backgroundColor = '#666');
+          btn.addEventListener('mouseleave', () => btn.style.backgroundColor = '#444');
+          btn.addEventListener('click', () => {
+            socket.emit(action.toLowerCase(), username);
+            menu.remove();
+            showBanner(`${action} demandé pour ${username}`, 'success');
+          });
+          menu.appendChild(btn);
+        });
+
+        document.body.appendChild(menu);
+
+        // Ferme le menu si clic en dehors
+        function onClickOutside(event) {
+          if (!menu.contains(event.target)) {
+            menu.remove();
+            document.removeEventListener('click', onClickOutside);
+          }
+        }
+        document.addEventListener('click', onClickOutside);
+      });
+    }
+
+    userList.appendChild(li);
+  });
+}
+
 
  const logoutButton = document.getElementById('logoutButton');
 
@@ -269,7 +339,7 @@ if (logoutModal) {
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
+      const mention = @${msg.username} ;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
@@ -277,7 +347,7 @@ if (logoutModal) {
 
   // Style du message
   const messageText = document.createElement('span');
-  messageText.textContent = `: ${msg.message}`;
+  messageText.textContent = : ${msg.message};
   const style = msg.style || {};
   messageText.style.color = style.color || '#fff';
   messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
@@ -285,7 +355,7 @@ if (logoutModal) {
   messageText.style.fontFamily = style.font || 'Arial';
 
   // Assemblage
-  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.innerHTML = [${timeString}] ;
   newMessage.appendChild(usernameSpan);
   newMessage.appendChild(messageText);
   newMessage.classList.add('message');
@@ -437,7 +507,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   socket.on('username exists', (username) => {
     const modalError = document.getElementById('modal-error');
     if (!modalError) return;
-    modalError.textContent = `❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.`;
+    modalError.textContent = ❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.;
     modalError.style.display = 'block';
   });
 
@@ -468,7 +538,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
+      li.textContent = # ${emoji} ┊ ${newChannel} (0);
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
         if (clickedRoom === currentChannel) return;
@@ -481,7 +551,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       });
       channelList.appendChild(li);
     }
-    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
+    showBanner(Salon "${newChannel}" créé avec succès !, 'success');
   });
 
   socket.on('roomUserCounts', (counts) => {
@@ -503,10 +573,10 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
       if (invisibleMode && name === currentChannel) {
         countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+        li.firstChild.textContent = # ${emoji} ┊ ${name} ;
       } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+        countSpan.textContent =  (${counts[name]});
+        li.firstChild.textContent = # ${emoji} ┊ ${name} ;
       }
     }
   });
@@ -524,7 +594,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+      li.textContent = # ${emoji} ┊ ${channelName} (0);
 
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
@@ -662,7 +732,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   });
 
   socket.on('error message', (msg) => {
-    showBanner(`❗ ${msg}`, 'error');
+    showBanner(❗ ${msg}, 'error');
   });
 
   socket.on('no permission', () => {
@@ -787,4 +857,4 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
 });
 
 
-});
+}); ajouter si je clique sur le carré age d'un utilisateur un menu qui s'ouvre avec les boutons mute, kick, ban ce menu ne doit pas s'appliquer pour les admin/modo 
