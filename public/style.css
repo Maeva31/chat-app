@@ -583,6 +583,59 @@ button:focus {
     user-select: none;
 }
 
+/* Conteneur utilisateur */
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Optionnel pour que le texte ne dépasse pas */
+  min-width: 0;
+}
+
+/* Zone icône rôle (admin/modo), largeur fixe */
+.user-item .role-icon {
+  width: 24px;  /* largeur fixe, à ajuster */
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Icône admin/mode centrée dans le conteneur */
+.user-item .role-icon img,
+.user-item .role-icon svg {
+  max-width: 20px;
+  max-height: 20px;
+  display: block;
+}
+
+/* Carré âge, largeur fixe */
+.user-item .age-square {
+  width: 22px;  /* même largeur que ton .gender-square ? */
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  background-color: #aaa;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+}
+
+/* Pseudo, commence toujours après âge */
+.user-item .username-span {
+  flex: 1;
+  min-width: 0; /* Permet de shrink */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000;
+  font-weight: bold;
+}
+
+
 /* Texte laser */
 .texte-laser {
   font-size: 15px;
