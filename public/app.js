@@ -236,8 +236,8 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
       const iframe = document.createElement('iframe');
-      iframe.width = '320';
-      iframe.height = '180';
+      iframe.width = '640';
+      iframe.height = '360';
       iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
