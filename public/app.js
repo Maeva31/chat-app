@@ -275,6 +275,41 @@ if (logoutModal) {
     });
   }
 
+  // Récupérer pseudo local (celui qui reçoit le message)
+  const myUsername = localStorage.getItem('username');
+  // Vérifier si le message mentionne mon pseudo (regex avec \b pour éviter faux positifs)
+  const mentionRegex = new RegExp(`@${myUsername}\\b`, 'i');
+  const isMentioned = mentionRegex.test(msg.message);
+  const isAuthor = msg.username === myUsername;
+
+  // Créer l'élément texte du message
+  const messageText = document.createElement('span');
+  messageText.textContent = `: ${msg.message}`;
+
+  // Appliquer style gras uniquement si auteur ou mentionné
+  if (isAuthor || isMentioned) {
+    messageText.style.fontWeight = 'bold';
+  } else {
+    // Sinon on applique le style reçu s'il y en a
+    messageText.style.fontWeight = msg.style?.bold ? 'bold' : 'normal';
+  }
+
+  messageText.style.color = msg.style?.color || '#fff';
+  messageText.style.fontStyle = msg.style?.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = msg.style?.font || 'Arial';
+
+  // Assemblage final
+  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.appendChild(usernameSpan);
+  newMessage.appendChild(messageText);
+  newMessage.classList.add('message');
+  newMessage.dataset.username = msg.username;
+
+  chatMessages.appendChild(newMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+
   // Style du message
   const messageText = document.createElement('span');
   messageText.textContent = `: ${msg.message}`;
