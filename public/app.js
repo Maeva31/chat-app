@@ -101,32 +101,37 @@ if (usernameInput && passwordInput) {
   }
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
+  function extractChannelName(text) {
+    text = text.replace(/\s*\(\d+\)$/, '').trim();
+    const parts = text.split('┊');
+    if (parts.length > 1) return parts[1].trim();
+    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+  }
+
+  // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
+    const userList = document.getElementById('users');
+    if (!userList) return;
+    userList.innerHTML = '';
+    if (!Array.isArray(users)) return;
 
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+    users.forEach(user => {
+  const username = user?.username || 'Inconnu';
+  const age = user?.age || '?';
+  const gender = user?.gender || 'non spécifié';
+  const role = user?.role || 'user';
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+  const li = document.createElement('li');
+  li.classList.add('user-item');
 
-    // Ajout du ⁹ à l'affichage si admin ou modo
-    const displayUsername = (role === 'admin' || role === 'modo') ? username + '⁹' : username;
+  const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-    const li = document.createElement('li');
-    li.classList.add('user-item');
-
-    // On construit le contenu en injectant displayUsername
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${displayUsername}</span>
-    `;
+  // On vide le li et on construit le contenu manuellement
+  li.innerHTML = `
+    <span class="role-icon"></span> 
+    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+  `;
 
   // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
@@ -149,7 +154,7 @@ if (usernameInput && passwordInput) {
   const usernameSpan = li.querySelector('.username-span');
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
-    const mention = (role === 'admin' || role === 'modo') ? `@${username}⁹ ` : `@${username} `;
+    const mention = `@${username} `;
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
     selectedUser = username;
@@ -241,13 +246,11 @@ if (logoutModal) {
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
-  usernameSpan.classList.add('clickable-username');
-  usernameSpan.style.color = color;
-  const displayUsername = (msg.role === 'admin' || msg.role === 'modo') ? msg.username + '⁹' : msg.username;
-  usernameSpan.textContent = displayUsername;
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
-
+    usernameSpan.classList.add('clickable-username');
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = msg.username;
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
@@ -272,7 +275,7 @@ if (logoutModal) {
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = (msg.role === 'admin' || msg.role === 'modo') ? `@${msg.username}⁹ ` : `@${msg.username} `;
+      const mention = `@${msg.username} `;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
@@ -467,117 +470,92 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
     const channelList = document.getElementById('channel-list');
     if (!channelList) return;
 
-   if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
-  const li = document.createElement('li');
-  li.classList.add('channel');
-
-  const emoji = channelEmojis[newChannel] || "🆕";
-
-  const textSpan = document.createElement('span');
-  textSpan.classList.add('channel-name');
-  textSpan.textContent = `# ${emoji} ┊ ${newChannel} `;
-
-  const countSpan = document.createElement('span');
-  countSpan.classList.add('user-count');
-  countSpan.textContent = ' (0)';
-
-  li.appendChild(textSpan);
-  li.appendChild(countSpan);
-
-  li.addEventListener('click', () => {
-    // Utiliser textSpan.textContent pour extraire le nom
-    const clickedRoom = extractChannelName(textSpan.textContent);
-    if (clickedRoom === currentChannel) return;
-    currentChannel = clickedRoom;
-    localStorage.setItem('currentChannel', currentChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-    selectChannelInUI(currentChannel);
-    socket.emit('joinRoom', currentChannel);
-  });
-
-  channelList.appendChild(li);
-}
-showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
-
+    if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      const emoji = channelEmojis[newChannel] || "🆕";
+      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
+      li.addEventListener('click', () => {
+        const clickedRoom = extractChannelName(li.textContent);
+        if (clickedRoom === currentChannel) return;
+        currentChannel = clickedRoom;
+        localStorage.setItem('currentChannel', currentChannel);
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) chatMessages.innerHTML = '';
+        selectChannelInUI(currentChannel);
+        socket.emit('joinRoom', currentChannel);
+      });
+      channelList.appendChild(li);
+    }
+    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
   });
 
   socket.on('roomUserCounts', (counts) => {
   const channelList = document.getElementById('channel-list');
   if (!channelList) return;
 
-[...channelList.children].forEach(li => {
-  const textSpan = li.querySelector('.channel-name');
-  const countSpan = li.querySelector('.user-count');
-  if (!textSpan || !countSpan) return;
+  [...channelList.children].forEach(li => {
+    const name = extractChannelName(li.textContent);
+    if (name && counts[name] !== undefined) {
+      const emoji = channelEmojis[name] || "💬";
 
-  const name = extractChannelName(textSpan.textContent);
-  if (name && counts[name] !== undefined) {
-    const emoji = channelEmojis[name] || "💬";
+      // Au lieu de modifier textContent qui supprime les enfants, on met à jour un span dédié (à créer si absent)
+      let countSpan = li.querySelector('.user-count');
+      if (!countSpan) {
+        countSpan = document.createElement('span');
+        countSpan.classList.add('user-count');
+        li.appendChild(countSpan);
+      }
 
-    textSpan.textContent = `# ${emoji} ┊ ${name} `;
-
-    if (invisibleMode && name === currentChannel) {
-      countSpan.textContent = '';  // Pas de nombre si invisible
-    } else {
-      countSpan.textContent = ` (${counts[name]})`;
+      if (invisibleMode && name === currentChannel) {
+        countSpan.textContent = '';  // Pas de nombre si invisible
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+      } else {
+        countSpan.textContent = ` (${counts[name]})`;
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+      }
     }
-  }
-});
-
+  });
 });
 
 
   socket.on('room list', (rooms) => {
-  const channelList = document.getElementById('channel-list');
-  if (!channelList) return;
-  const previousChannel = currentChannel;
+    const channelList = document.getElementById('channel-list');
+    if (!channelList) return;
+    const previousChannel = currentChannel;
 
-  channelList.innerHTML = '';
+    channelList.innerHTML = '';
 
-  rooms.forEach(channelName => {
-    const li = document.createElement('li');
-    li.classList.add('channel');
+    rooms.forEach(channelName => {
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      const emoji = channelEmojis[channelName] || "💬";
+      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
 
-    const emoji = channelEmojis[channelName] || "💬";
+      li.addEventListener('click', () => {
+        const clickedRoom = extractChannelName(li.textContent);
+        if (clickedRoom === currentChannel) return;
+        currentChannel = clickedRoom;
+        localStorage.setItem('currentChannel', currentChannel);
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) chatMessages.innerHTML = '';
+        selectChannelInUI(currentChannel);
+        socket.emit('joinRoom', currentChannel);
+      });
 
-    // Crée deux spans enfants pour nom + compteur
-    const textSpan = document.createElement('span');
-    textSpan.classList.add('channel-name');
-    textSpan.textContent = `# ${emoji} ┊ ${channelName} `;
-
-    const countSpan = document.createElement('span');
-    countSpan.classList.add('user-count');
-    countSpan.textContent = ' (0)';
-
-    li.appendChild(textSpan);
-    li.appendChild(countSpan);
-
-    li.addEventListener('click', () => {
-      const clickedRoom = extractChannelName(textSpan.textContent);
-      if (clickedRoom === currentChannel) return;
-      currentChannel = clickedRoom;
-      localStorage.setItem('currentChannel', currentChannel);
-      const chatMessages = document.getElementById('chat-messages');
-      if (chatMessages) chatMessages.innerHTML = '';
-      selectChannelInUI(currentChannel);
-      socket.emit('joinRoom', currentChannel);
+      channelList.appendChild(li);
     });
 
-    channelList.appendChild(li);
+    if (!rooms.includes(previousChannel)) {
+      currentChannel = 'Général';
+      localStorage.setItem('currentChannel', currentChannel);
+      socket.emit('joinRoom', currentChannel);
+      const chatMessages = document.getElementById('chat-messages');
+      if (chatMessages) chatMessages.innerHTML = '';
+    }
+
+    selectChannelInUI(currentChannel);
   });
-
-  if (!rooms.includes(previousChannel)) {
-    currentChannel = 'Général';
-    localStorage.setItem('currentChannel', currentChannel);
-    socket.emit('joinRoom', currentChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-  }
-
-  selectChannelInUI(currentChannel);
-});
-
 
   // Ping périodique
   setInterval(() => {
