@@ -217,10 +217,14 @@ if (logoutModal) {
 
 // Extrait l'ID vidéo YouTube depuis une URL et retourne l'URL de la miniature
 function getYouTubeThumbnail(url) {
-  const regExp = /^.*(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/))([^#&?]*).*/;
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
   const match = url.match(regExp);
-  return (match && match[1].length === 11) ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+  if (match) {
+    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  }
+  return null;
 }
+
 
 // Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
 function addYouTubeThumbnailIfAny(messageElement, messageText) {
@@ -324,8 +328,6 @@ if (msg.role === 'admin') {
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
 
-    // Ajout des miniatures YouTube si liens détectés
-  addYouTubeThumbnailIfAny(newMessage, msg.message);
 
   // Assemblage
   newMessage.innerHTML = `[${timeString}] `;
@@ -334,10 +336,12 @@ if (msg.role === 'admin') {
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
+     // Ajout des miniatures YouTube si liens détectés
+  addYouTubeThumbnailIfAny(newMessage, msg.message);
+
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 
 
   // Sélectionne visuellement un salon dans la liste
