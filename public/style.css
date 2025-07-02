@@ -572,10 +572,10 @@ button:focus {
 .user-item .gender-square {
     display: inline-block;
     width: 20px;
-    height: 19px;
-    line-height: 20px;
+    height: 18px;
+    line-height: 19px;
     text-align: center;
-    border-radius: 3px;
+    border-radius: 4px;
     color: white;
     font-weight: bold;
     margin-right: 8px;
