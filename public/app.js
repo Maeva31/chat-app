@@ -360,6 +360,14 @@ function sendMessage() {
     const isBold = boldToggle ? boldToggle.checked : false;
     const isItalic = italicToggle ? italicToggle.checked : false;
 
+console.log('Envoi style:', {
+  font: selectedFont,
+  color: selectedColor,
+  bold: isBold,
+  italic: isItalic,
+});
+
+
     socket.emit('chat message', {
       message: message,
       style: {
