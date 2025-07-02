@@ -135,6 +135,8 @@
         <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" style="flex: 1;" />
       </div>
 
+      <button id="style-button" title="Style de texte" style="font-size: 22px; background: transparent; border: none; cursor: pointer;">🎨</button>
+
       <!-- Emoji Picker -->
 <div id="emoji-picker" style="display: none; position: absolute; bottom: 70px; left: 10px; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 10px; z-index: 1000; max-width: 350px; max-height: 250px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px;">
   <span class="emoji">😀</span>
@@ -264,6 +266,29 @@
   <span class="emoji">🚀</span>
 </div>
 
+<div id="style-picker" style="display: none; position: absolute; bottom: 70px; left: 50px; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 10px; z-index: 1001; width: 300px; font-family: sans-serif;">
+  <label><strong>Police :</strong></label>
+  <select id="font-select" style="width: 100%; margin-bottom: 8px;">
+    <option value="Arial">Arial</option>
+    <option value="Helvetica">Helvetica</option>
+    <option value="'Times New Roman'">Times New Roman</option>
+    <option value="'Courier New'">Courier New</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Palatino">Palatino</option>
+    <option value="Garamond">Garamond</option>
+    <option value="Bookman">Bookman</option>
+    <option value="'Comic Sans MS'">Comic Sans MS</option>
+    <option value="'Trebuchet MS'">Trebuchet MS</option>
+    <option value="'Arial Black'">Arial Black</option>
+  </select>
+
+  <label><strong>Couleur :</strong></label>
+  <input type="color" id="color-picker" style="width: 100%; margin-bottom: 8px;" />
+
+  <label><input type="checkbox" id="bold-toggle" /> Gras</label><br />
+  <label><input type="checkbox" id="italic-toggle" /> Italique</label>
+</div>
 
     </section>
 
@@ -277,5 +302,45 @@
   <!-- Scripts -->
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
+  <script>const styleButton = document.getElementById('style-button');
+const stylePicker = document.getElementById('style-picker');
+const messageInput = document.getElementById('message-input');
+
+let selectedFont = 'Arial';
+let selectedColor = '#000000';
+let isBold = false;
+let isItalic = false;
+
+styleButton.addEventListener('click', () => {
+  stylePicker.style.display = stylePicker.style.display === 'none' ? 'block' : 'none';
+});
+
+document.getElementById('font-select').addEventListener('change', (e) => {
+  selectedFont = e.target.value;
+  applyTextStyle();
+});
+
+document.getElementById('color-picker').addEventListener('input', (e) => {
+  selectedColor = e.target.value;
+  applyTextStyle();
+});
+
+document.getElementById('bold-toggle').addEventListener('change', (e) => {
+  isBold = e.target.checked;
+  applyTextStyle();
+});
+
+document.getElementById('italic-toggle').addEventListener('change', (e) => {
+  isItalic = e.target.checked;
+  applyTextStyle();
+});
+
+function applyTextStyle() {
+  messageInput.style.fontFamily = selectedFont;
+  messageInput.style.color = selectedColor;
+  messageInput.style.fontWeight = isBold ? 'bold' : 'normal';
+  messageInput.style.fontStyle = isItalic ? 'italic' : 'normal';
+}
+</script>
 </body>
 </html>
