@@ -235,32 +235,24 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
   urls.forEach(url => {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
-      const container = document.createElement('div');
-      container.style.width = '480px';
-      container.style.height = '270px';
-      container.style.overflow = 'hidden';
-      container.style.marginLeft = '10px';
-      container.style.marginTop = '5px';
-      container.style.border = '3px solid #888';
-      container.style.borderRadius = '6px';
-      container.style.backgroundColor = '#222';
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('youtube-wrapper');
 
       const iframe = document.createElement('iframe');
       iframe.width = '480';
       iframe.height = '270';
       iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
-      iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allow =
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
-      iframe.style.border = 'none';
-      iframe.style.borderRadius = '6px';
-      iframe.style.display = 'block';
 
-      container.appendChild(iframe);
-      messageElement.appendChild(container);
+      wrapper.appendChild(iframe);
+      messageElement.appendChild(wrapper);
     }
   });
 }
+
 
 
 
