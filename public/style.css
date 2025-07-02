@@ -161,8 +161,8 @@ main {
   padding: 0.5em 0.8em;
   border: none;
   border-radius: 6px;
-  background-color: #00ffff;
-  color: #000;
+  background-color: #444;
+  color: #fff;
   cursor: pointer;
   font-weight: bold;
   font-size: 1em;
