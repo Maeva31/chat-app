@@ -270,7 +270,6 @@ function getYouTubeVideoId(url) {
 
   // Ajoute un message dans la zone de chat
   function addMessageToChat(msg) {
-  // Si c'est un message système, vérifier qu'il concerne bien le salon courant
   if (msg.username === 'Système') {
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
@@ -332,15 +331,12 @@ function getYouTubeVideoId(url) {
     });
   }
 
-  // Fonction pour détecter si une URL est YouTube
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
   }
 
-  // Parse le message en morceaux (texte et URLs)
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-  // Créer un conteneur pour le texte avec URLs cliquables (sauf YouTube)
   const messageText = document.createElement('span');
   const style = msg.style || {};
   messageText.style.color = style.color || '#fff';
@@ -348,46 +344,41 @@ function getYouTubeVideoId(url) {
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
 
-  // Construire le contenu avec liens cliquables sauf pour les URLs YouTube (qui seront ignorées dans le texte)
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
-      // C'est une URL
       if (isYouTubeUrl(part)) {
-        // Ne rien afficher dans le texte (la vidéo sera intégrée ailleurs)
-        return;
+        return; // ignore dans texte, vidéo intégrée ailleurs
       } else {
-        // URL non YouTube => créer un lien cliquable
         const a = document.createElement('a');
         a.href = part;
         a.textContent = part;
         a.target = '_blank';
         a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff'; // couleur lien personnalisable
+        a.style.color = style.color || '#00aaff';
         a.style.textDecoration = 'underline';
         messageText.appendChild(a);
       }
     } else {
-      // C'est du texte normal
       if (part.trim() !== '') {
         messageText.appendChild(document.createTextNode(part));
       }
     }
   });
 
+  // Assemblage avec pseudo + ":" + espace + message
+  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.appendChild(usernameSpan);
+
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide
   if (messageText.textContent.trim() !== '') {
-    // Ajouter ": " seulement s'il y a du texte après le pseudo
-    const prefix = document.createTextNode(': ');
-    newMessage.appendChild(prefix);
+    const separator = document.createTextNode(': ');
+    newMessage.appendChild(separator);
     newMessage.appendChild(messageText);
   }
 
-  // Assemblage
-  newMessage.innerHTML = `[${timeString}] ` + newMessage.innerHTML;
-  newMessage.insertBefore(usernameSpan, newMessage.childNodes[1]); // juste après le timestamp
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
-  // Ajout des vidéos YouTube intégrées (iframe)
   addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
