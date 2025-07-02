@@ -359,18 +359,6 @@ main {
   color: #ff00ff;
 }
 
-#users .user-item {
-  user-select: none; /* interdit la sélection sur toute la ligne */
-}
-
-#users .user-item .username-span {
-  user-select: text; /* permet la sélection uniquement sur le pseudo */
-  cursor: pointer;   /* rend le pseudo cliquable avec un curseur pointer */
-}
-
-
-
-
 /* === MODAL === */
 .modal {
   position: fixed;
