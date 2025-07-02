@@ -467,92 +467,117 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
     const channelList = document.getElementById('channel-list');
     if (!channelList) return;
 
-    if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
-      li.addEventListener('click', () => {
-        const clickedRoom = extractChannelName(li.textContent);
-        if (clickedRoom === currentChannel) return;
-        currentChannel = clickedRoom;
-        localStorage.setItem('currentChannel', currentChannel);
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        selectChannelInUI(currentChannel);
-        socket.emit('joinRoom', currentChannel);
-      });
-      channelList.appendChild(li);
-    }
-    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
+   if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
+  const li = document.createElement('li');
+  li.classList.add('channel');
+
+  const emoji = channelEmojis[newChannel] || "🆕";
+
+  const textSpan = document.createElement('span');
+  textSpan.classList.add('channel-name');
+  textSpan.textContent = `# ${emoji} ┊ ${newChannel} `;
+
+  const countSpan = document.createElement('span');
+  countSpan.classList.add('user-count');
+  countSpan.textContent = ' (0)';
+
+  li.appendChild(textSpan);
+  li.appendChild(countSpan);
+
+  li.addEventListener('click', () => {
+    // Utiliser textSpan.textContent pour extraire le nom
+    const clickedRoom = extractChannelName(textSpan.textContent);
+    if (clickedRoom === currentChannel) return;
+    currentChannel = clickedRoom;
+    localStorage.setItem('currentChannel', currentChannel);
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) chatMessages.innerHTML = '';
+    selectChannelInUI(currentChannel);
+    socket.emit('joinRoom', currentChannel);
+  });
+
+  channelList.appendChild(li);
+}
+showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
+
   });
 
   socket.on('roomUserCounts', (counts) => {
   const channelList = document.getElementById('channel-list');
   if (!channelList) return;
 
-  [...channelList.children].forEach(li => {
-    const name = extractChannelName(li.textContent);
-    if (name && counts[name] !== undefined) {
-      const emoji = channelEmojis[name] || "💬";
+[...channelList.children].forEach(li => {
+  const textSpan = li.querySelector('.channel-name');
+  const countSpan = li.querySelector('.user-count');
+  if (!textSpan || !countSpan) return;
 
-      // Au lieu de modifier textContent qui supprime les enfants, on met à jour un span dédié (à créer si absent)
-      let countSpan = li.querySelector('.user-count');
-      if (!countSpan) {
-        countSpan = document.createElement('span');
-        countSpan.classList.add('user-count');
-        li.appendChild(countSpan);
-      }
+  const name = extractChannelName(textSpan.textContent);
+  if (name && counts[name] !== undefined) {
+    const emoji = channelEmojis[name] || "💬";
 
-      if (invisibleMode && name === currentChannel) {
-        countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      }
+    textSpan.textContent = `# ${emoji} ┊ ${name} `;
+
+    if (invisibleMode && name === currentChannel) {
+      countSpan.textContent = '';  // Pas de nombre si invisible
+    } else {
+      countSpan.textContent = ` (${counts[name]})`;
     }
-  });
+  }
+});
+
 });
 
 
   socket.on('room list', (rooms) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
-    const previousChannel = currentChannel;
+  const channelList = document.getElementById('channel-list');
+  if (!channelList) return;
+  const previousChannel = currentChannel;
 
-    channelList.innerHTML = '';
+  channelList.innerHTML = '';
 
-    rooms.forEach(channelName => {
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+  rooms.forEach(channelName => {
+    const li = document.createElement('li');
+    li.classList.add('channel');
 
-      li.addEventListener('click', () => {
-        const clickedRoom = extractChannelName(li.textContent);
-        if (clickedRoom === currentChannel) return;
-        currentChannel = clickedRoom;
-        localStorage.setItem('currentChannel', currentChannel);
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        selectChannelInUI(currentChannel);
-        socket.emit('joinRoom', currentChannel);
-      });
+    const emoji = channelEmojis[channelName] || "💬";
 
-      channelList.appendChild(li);
-    });
+    // Crée deux spans enfants pour nom + compteur
+    const textSpan = document.createElement('span');
+    textSpan.classList.add('channel-name');
+    textSpan.textContent = `# ${emoji} ┊ ${channelName} `;
 
-    if (!rooms.includes(previousChannel)) {
-      currentChannel = 'Général';
+    const countSpan = document.createElement('span');
+    countSpan.classList.add('user-count');
+    countSpan.textContent = ' (0)';
+
+    li.appendChild(textSpan);
+    li.appendChild(countSpan);
+
+    li.addEventListener('click', () => {
+      const clickedRoom = extractChannelName(textSpan.textContent);
+      if (clickedRoom === currentChannel) return;
+      currentChannel = clickedRoom;
       localStorage.setItem('currentChannel', currentChannel);
-      socket.emit('joinRoom', currentChannel);
       const chatMessages = document.getElementById('chat-messages');
       if (chatMessages) chatMessages.innerHTML = '';
-    }
+      selectChannelInUI(currentChannel);
+      socket.emit('joinRoom', currentChannel);
+    });
 
-    selectChannelInUI(currentChannel);
+    channelList.appendChild(li);
   });
+
+  if (!rooms.includes(previousChannel)) {
+    currentChannel = 'Général';
+    localStorage.setItem('currentChannel', currentChannel);
+    socket.emit('joinRoom', currentChannel);
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) chatMessages.innerHTML = '';
+  }
+
+  selectChannelInUI(currentChannel);
+});
+
 
   // Ping périodique
   setInterval(() => {
