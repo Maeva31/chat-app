@@ -251,8 +251,6 @@ if (logoutModal) {
     usernameSpan.textContent = msg.username;
     usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                          (msg.role === 'modo') ? 'Modérateur' : '';
-                         usernameSpan.innerHTML = `${username}⁹ <span style="color:${role === 'admin' ? 'red' : 'blue'}">♥</span>`;
-
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
