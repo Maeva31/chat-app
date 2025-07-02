@@ -397,13 +397,18 @@ io.on('connection', (socket) => {
     }
 
     const message = {
-      username: user.username,
-      gender: user.gender,
-      role: user.role,
-      message: msg.message || '',
-      timestamp: msg.timestamp || new Date().toISOString(),
-      channel
-    };
+  username: user.username,
+  gender: user.gender,
+  role: user.role,
+  message: msg.message || '',
+  timestamp: msg.timestamp || new Date().toISOString(),
+  channel,
+  fontFamily: msg.fontFamily || 'inherit',
+  fontColor: msg.fontColor || '#000000',
+  isBold: msg.isBold || false,
+  isItalic: msg.isItalic || false
+};
+
 
     if (!messageHistory[channel]) messageHistory[channel] = [];
     messageHistory[channel].push(message);
