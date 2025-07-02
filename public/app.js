@@ -116,10 +116,7 @@ if (usernameInput && passwordInput) {
     if (!Array.isArray(users)) return;
 
     users.forEach(user => {
-  const usernameRaw = user?.username || 'Inconnu';
-const isSpecial = (user?.role === 'admin' || user?.role === 'modo');
-const username = isSpecial ? `${usernameRaw}⁹` : usernameRaw;
-
+  const username = user?.username || 'Inconnu';
   const age = user?.age || '?';
   const gender = user?.gender || 'non spécifié';
   const role = user?.role || 'user';
@@ -127,20 +124,14 @@ const username = isSpecial ? `${usernameRaw}⁹` : usernameRaw;
   const li = document.createElement('li');
   li.classList.add('user-item');
 
-  
+  const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
- const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
-const heart = role === 'admin' ? '❤️' :
-              role === 'modo' ? '💙' :
-              '';
-li.innerHTML = `
-  <span class="role-icon"></span> 
-  <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-  <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">
-    ${username}${heart}
-  </span>
-`;
-
+  // On vide le li et on construit le contenu manuellement
+  li.innerHTML = `
+    <span class="role-icon"></span> 
+    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+  `;
 
   // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
@@ -251,21 +242,15 @@ if (logoutModal) {
                 getUsernameColor(msg.gender);
 
   if (msg.username === 'Système') {
-  usernameSpan.textContent = msg.username;
-  usernameSpan.style.color = '#888';
-  usernameSpan.style.fontWeight = 'bold';
-} else {
-  usernameSpan.classList.add('clickable-username');
-
-  const isSpecial = (msg.role === 'admin' || msg.role === 'modo');
-  const usernameWithSup = isSpecial ? `${msg.username}⁹` : msg.username;
-
-  usernameSpan.style.color = color;
-  usernameSpan.textContent = usernameWithSup;
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
-}
-
+    usernameSpan.textContent = msg.username;
+    usernameSpan.style.color = '#888';
+    usernameSpan.style.fontWeight = 'bold';
+  } else {
+    usernameSpan.classList.add('clickable-username');
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = msg.username;
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
