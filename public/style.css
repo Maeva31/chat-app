@@ -672,7 +672,7 @@ button:focus {
 /* Icône admin */
 .admin-icon {
   width: 20px;
-  height: px;
+  height: 20px;
   vertical-align: middle;
   flex-shrink: 0;
 }
