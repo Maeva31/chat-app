@@ -235,28 +235,36 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
   urls.forEach(url => {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
+      const wrapper = document.createElement('div');
+      wrapper.style.position = 'relative';
+      wrapper.style.width = '100%';
+      wrapper.style.maxWidth = '640px';
+      wrapper.style.paddingTop = '56.25%'; // ratio 16:9
+      wrapper.style.marginLeft = '10px';
+      wrapper.style.marginTop = '5px';
+      wrapper.style.border = '3px solid #888';       
+      wrapper.style.borderRadius = '6px';
+      wrapper.style.backgroundColor = '#222';
+
       const iframe = document.createElement('iframe');
-      iframe.width = '640';
-      iframe.height = '360';
+      iframe.style.position = 'absolute';
+      iframe.style.top = '0';
+      iframe.style.left = '0';
+      iframe.style.width = '100%';
+      iframe.style.height = '100%';
+      iframe.style.border = '0';
+
       iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
 
-      // Ajout du cadre directement sur l'iframe
-      iframe.style.marginLeft = '10px';
-      iframe.style.borderRadius = '6px';
-      iframe.style.display = 'block';
-      iframe.style.marginTop = '5px';
-
-      iframe.style.border = '3px solid #888';       // Cadre gris
-      iframe.style.padding = '3px';                  // Petit padding intérieur
-      iframe.style.backgroundColor = '#222';         // Fond sombre derrière la vidéo
-
-      messageElement.appendChild(iframe);
+      wrapper.appendChild(iframe);
+      messageElement.appendChild(wrapper);
     }
   });
 }
+
 
 
 // Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
