@@ -1,4 +1,4 @@
-/* === RESET et correction hauteur sans scroll === */
+#user-list /* === RESET et correction hauteur sans scroll === */
 html, body {
   margin: 0;
   padding: 0;
@@ -339,6 +339,8 @@ main {
   text-overflow: initial;
   flex: 1;
   min-width: 0;
+  width: max-content;      /* <-- adapte la largeur au contenu (le pseudo) */
+  max-width: 100%;   
 }
 
 #users li.selected {
