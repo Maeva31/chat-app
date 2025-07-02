@@ -107,6 +107,16 @@ main {
   transition: 0.2s ease;
 }
 
+#channel-list .channel .channel-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+  max-width: 100%;
+}
+
+
+
 #channel-list .channel:hover {
   background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
   background-size: 400% 400%;
