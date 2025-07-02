@@ -279,7 +279,18 @@ if (logoutModal) {
 
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
-  newMessage.append(`: ${msg.message}`);
+ const messageSpan = document.createElement('span');
+messageSpan.textContent = `: ${msg.message}`;
+
+if (msg.style) {
+  if (msg.style.font) messageSpan.style.fontFamily = msg.style.font;
+  if (msg.style.color) messageSpan.style.color = msg.style.color;
+  if (msg.style.bold) messageSpan.style.fontWeight = 'bold';
+  if (msg.style.italic) messageSpan.style.fontStyle = 'italic';
+}
+
+newMessage.appendChild(messageSpan);
+
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
@@ -336,10 +347,17 @@ if (logoutModal) {
     if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
 
     if (username) {
-      socket.emit('chat message', {
-        message,
-        timestamp: new Date().toISOString(),
-      });
+     socket.emit('chat message', {
+  message,
+  timestamp: new Date().toISOString(),
+  style: {
+    font: fontSelect?.value || '',
+    color: colorPicker?.value || '#000',
+    bold: boldToggle?.checked || false,
+    italic: italicToggle?.checked || false
+  }
+});
+
       input.value = '';
     }
   }
@@ -630,6 +648,46 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       e.stopPropagation();
     });
   }
+
+  // 🎨 Style Picker
+const styleButton = document.getElementById('style-button');
+const styleMenu = document.getElementById('style-menu');
+const fontSelect = document.getElementById('font-select');
+const colorPicker = document.getElementById('font-color-picker');
+const boldToggle = document.getElementById('bold-toggle');
+const italicToggle = document.getElementById('italic-toggle');
+
+if (styleButton && styleMenu && messageInput) {
+  styleButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    styleMenu.style.display = styleMenu.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.addEventListener('click', () => {
+    styleMenu.style.display = 'none';
+  });
+
+  styleMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+  });
+
+  function applyStyle() {
+    const font = fontSelect.value;
+    const color = colorPicker.value;
+    const bold = boldToggle.checked;
+    const italic = italicToggle.checked;
+
+    messageInput.style.fontFamily = font;
+    messageInput.style.color = color;
+    messageInput.style.fontWeight = bold ? 'bold' : 'normal';
+    messageInput.style.fontStyle = italic ? 'italic' : 'normal';
+  }
+
+  [fontSelect, colorPicker, boldToggle, italicToggle].forEach(input => {
+    input.addEventListener('input', applyStyle);
+  });
+}
+
 
   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
   socket.on('banned', () => {
