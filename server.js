@@ -397,13 +397,15 @@ io.on('connection', (socket) => {
     }
 
     const message = {
-      username: user.username,
-      gender: user.gender,
-      role: user.role,
-      message: msg.message || '',
-      timestamp: msg.timestamp || new Date().toISOString(),
-      channel
-    };
+  username: user.username,
+  gender: user.gender,
+  role: user.role,
+  message: msg.message || '',
+  timestamp: msg.timestamp || new Date().toISOString(),
+  channel,
+  style: msg.style || {} 
+};
+
 
     if (!messageHistory[channel]) messageHistory[channel] = [];
     messageHistory[channel].push(message);
