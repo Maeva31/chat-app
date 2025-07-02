@@ -770,3 +770,24 @@ button:focus {
   pointer-events: auto; /* Autorise le clic uniquement ici */
   cursor: pointer;
 }
+.youtube-wrapper {
+  width: 480px;
+  height: 270px;
+  margin-top: 10px;
+  margin-left: 10px;
+  padding: 3px;
+  background-color: #222;
+  border: 3px solid #888;
+  border-radius: 6px;
+  box-sizing: content-box;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.youtube-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  border-radius: 4px;
+}
