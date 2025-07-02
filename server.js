@@ -123,8 +123,7 @@ io.on('connection', (socket) => {
           username: 'Système',
           message: `${user.username} a quitté le serveur (logout)`,
           timestamp: new Date().toISOString(),
-          channel: room,
-          style: {}
+          channel: room
         });
       }
 
@@ -397,25 +396,14 @@ io.on('connection', (socket) => {
       }
     }
 
-const style = msg.style || {};
-
-const message = {
-  username: user.username,
-  gender: user.gender,
-  role: user.role,
-  message: msg.message || '',
-  timestamp: msg.timestamp || new Date().toISOString(),
-  channel,
-  style: {
-    font: style.font || 'inherit',
-    color: style.color || '#000000',
-    bold: style.bold || false,
-    italic: style.italic || false
-  }
-};
-
-
-
+    const message = {
+      username: user.username,
+      gender: user.gender,
+      role: user.role,
+      message: msg.message || '',
+      timestamp: msg.timestamp || new Date().toISOString(),
+      channel
+    };
 
     if (!messageHistory[channel]) messageHistory[channel] = [];
     messageHistory[channel].push(message);
