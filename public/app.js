@@ -235,17 +235,23 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
   urls.forEach(url => {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
-      // Conteneur avec overflow-x auto
       const wrapper = document.createElement('div');
-      wrapper.style.maxWidth = '100%';  // jamais plus large que le parent
-      wrapper.style.overflowX = 'auto'; // scroll horizontal localisé si besoin
+
+      // Le cadre a la même taille fixe que l'iframe
+      wrapper.style.width = '640px';
+      wrapper.style.height = '360px';
+
+      // Si la fenêtre est plus petite, on aura une scrollbar horizontale locale
+      wrapper.style.overflowX = 'auto';
+      wrapper.style.overflowY = 'hidden';
+
       wrapper.style.marginLeft = '10px';
       wrapper.style.marginTop = '5px';
+
       wrapper.style.border = '3px solid #888';
       wrapper.style.borderRadius = '6px';
       wrapper.style.backgroundColor = '#222';
 
-      // iframe fixe 640x360
       const iframe = document.createElement('iframe');
       iframe.width = '640';
       iframe.height = '360';
@@ -260,6 +266,7 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
     }
   });
 }
+
 
 
 
