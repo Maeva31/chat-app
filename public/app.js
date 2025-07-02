@@ -157,7 +157,7 @@ if (usernameInput && passwordInput) {
   const usernameSpan = li.querySelector('.username-span');
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
-    const mention = `@${username}${(role === 'admin' || role === 'modo') ? '⁹' : ''} `;
+    const mention = `@${username}${(role === 'admin' || role === 'modo') ? '⁹' : ''}`;
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
     selectedUser = username;
@@ -261,7 +261,7 @@ if (logoutModal) {
   // Clic pour mention
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
-    const mention = `@${msg.username}${(msg.role === 'admin' || msg.role === 'modo') ? '⁹' : ''} `;
+    const mention = `@${msg.username}${(msg.role === 'admin' || msg.role === 'modo') ? '⁹' : ''}`;
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
   });
