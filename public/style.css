@@ -621,20 +621,22 @@ button:focus {
   position: absolute;
   bottom: 70px;
   left: 10px;
-  background: #222; /* fond sombre */
+  background: #222;
   border: 1px solid #444;
   border-radius: 12px;
   padding: 12px;
   z-index: 1000;
-  max-width: 320px;
-  max-height: 240px;
-  overflow-y: auto;
+  max-width: 320px; /* Garde la largeur max si tu veux */
+  /* max-height: 240px;  <-- supprime ou commente cette ligne */
+  /* overflow-y: auto;  <-- supprime ou commente cette ligne */
+  overflow-y: visible; /* ou simplement pas de overflow-y */
   box-shadow: 0 8px 16px rgba(0,0,0,0.6);
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
   justify-content: center;
 }
+
 
 /* Style des emojis */
 #emoji-picker .emoji {
