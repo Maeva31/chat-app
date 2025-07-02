@@ -237,14 +237,11 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
     if (videoId) {
       const wrapper = document.createElement('div');
 
-      // Le cadre a la même taille fixe que l'iframe
-      wrapper.style.width = '640px';
-      wrapper.style.height = '360px';
-
-      // Si la fenêtre est plus petite, on aura une scrollbar horizontale locale
-      wrapper.style.overflowX = 'auto';
-      wrapper.style.overflowY = 'hidden';
-
+      // Wrapper responsive avec max-width 640px
+      wrapper.style.maxWidth = '640px';
+      wrapper.style.width = '100%';           // prend toute la largeur dispo (max 640px)
+      wrapper.style.position = 'relative';
+      wrapper.style.paddingTop = '56.25%';    // 16:9 ratio (360/640 = 0.5625 = 56.25%)
       wrapper.style.marginLeft = '10px';
       wrapper.style.marginTop = '5px';
 
@@ -253,19 +250,25 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       wrapper.style.backgroundColor = '#222';
 
       const iframe = document.createElement('iframe');
-      iframe.width = '640';
-      iframe.height = '360';
       iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
-      iframe.style.display = 'block';
+
+      // Positionnement absolu pour le responsive
+      iframe.style.position = 'absolute';
+      iframe.style.top = '0';
+      iframe.style.left = '0';
+      iframe.style.width = '100%';     // prend 100% largeur du wrapper
+      iframe.style.height = '100%';    // prend 100% hauteur du wrapper
+      iframe.style.borderRadius = '6px';
 
       wrapper.appendChild(iframe);
       messageElement.appendChild(wrapper);
     }
   });
 }
+
 
 
 
