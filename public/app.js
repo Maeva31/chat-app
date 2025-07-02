@@ -267,8 +267,8 @@ if (msg.role === 'admin') {
   const icon = document.createElement('span');
   icon.textContent = '🛡️';
   icon.title = 'Modérateur';
-  icon.style.marginRight = '4px';  // espace à droite de l'icône
-  icon.style.verticalAlign = '-4px';
+  icon.style.marginRight = '1px';  // espace à droite de l'icône
+  icon.style.verticalAlign = '0px';
   usernameSpan.insertBefore(icon, usernameSpan.firstChild);
 }
 
