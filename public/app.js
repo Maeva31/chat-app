@@ -1,4 +1,3 @@
-
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -15,6 +14,7 @@ const modoUsernames = ['DarkGirL'];
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
+
 
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
@@ -48,14 +48,6 @@ if (usernameInput && passwordInput) {
     "Gaming": "🎮",
     "Détente": "🌿"
   };
-
-        // 🎨 Style Picker
-const styleButton = document.getElementById('style-button');
-const styleMenu = document.getElementById('style-menu');
-const fontSelect = document.getElementById('font-select');
-const colorPicker = document.getElementById('font-color-picker');
-const boldToggle = document.getElementById('bold-toggle');
-const italicToggle = document.getElementById('italic-toggle');
 
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
@@ -287,18 +279,7 @@ if (logoutModal) {
 
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
- const messageSpan = document.createElement('span');
-messageSpan.textContent = `: ${msg.message}`;
-
-if (msg.style) {
-  if (msg.style.font) messageSpan.style.fontFamily = msg.style.font;
-  if (msg.style.color) messageSpan.style.color = msg.style.color;
-  if (msg.style.bold) messageSpan.style.fontWeight = 'bold';
-  if (msg.style.italic) messageSpan.style.fontStyle = 'italic';
-}
-
-newMessage.appendChild(messageSpan);
-
+  newMessage.append(`: ${msg.message}`);
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
@@ -346,44 +327,22 @@ newMessage.appendChild(messageSpan);
   });
 
   // Envoi message
-function sendMessage() {
-  const input = document.getElementById('message-input');
-  if (!input) return;
-  const message = input.value.trim();
-  const username = localStorage.getItem('username');
-  if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
-  if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
+  function sendMessage() {
+    const input = document.getElementById('message-input');
+    if (!input) return;
+    const message = input.value.trim();
+    const username = localStorage.getItem('username');
+    if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
+    if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
 
-  if (username) {
-    const selectedFont = fontSelect ? fontSelect.value : 'Arial';
-    const selectedColor = colorPicker ? colorPicker.value : '#000000';
-    const isBold = boldToggle ? boldToggle.checked : false;
-    const isItalic = italicToggle ? italicToggle.checked : false;
-
-console.log('Envoi style:', {
-  font: selectedFont,
-  color: selectedColor,
-  bold: isBold,
-  italic: isItalic,
-});
-
-
-    socket.emit('chat message', {
-      message: message,
-      style: {
-        font: selectedFont,
-        color: selectedColor,
-        bold: isBold,
-        italic: isItalic,
-      },
-      timestamp: new Date().toISOString()
-    });
-
-    input.value = '';
+    if (username) {
+      socket.emit('chat message', {
+        message,
+        timestamp: new Date().toISOString(),
+      });
+      input.value = '';
+    }
   }
-}
-
-
 
 
 function submitUserInfo() {
@@ -671,45 +630,6 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
       e.stopPropagation();
     });
   }
-
-
-function applyStyle() {
-  if (!fontSelect || !colorPicker || !boldToggle || !italicToggle || !messageInput) return;
-
-  const font = fontSelect.value;
-  const color = colorPicker.value;
-  const bold = boldToggle.checked;
-  const italic = italicToggle.checked;
-
-  messageInput.style.fontFamily = font;
-  messageInput.style.color = color;
-  messageInput.style.fontWeight = bold ? 'bold' : 'normal';
-  messageInput.style.fontStyle = italic ? 'italic' : 'normal';
-}
-
-if (styleButton && styleMenu && messageInput) {
-  styleButton.addEventListener('click', (e) => {
-    e.stopPropagation();
-    styleMenu.style.display = styleMenu.style.display === 'none' ? 'block' : 'none';
-  });
-
-  document.addEventListener('click', () => {
-    styleMenu.style.display = 'none';
-  });
-
-  styleMenu.addEventListener('click', (e) => {
-    e.stopPropagation();
-  });
-
-  [fontSelect, colorPicker, boldToggle, italicToggle].forEach(input => {
-    input.addEventListener('input', applyStyle);
-  });
-}
-
-applyStyle();
-
-
-
 
   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
   socket.on('banned', () => {
