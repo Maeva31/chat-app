@@ -235,35 +235,32 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
   urls.forEach(url => {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
+      // Conteneur avec overflow-x auto
       const wrapper = document.createElement('div');
-      wrapper.style.position = 'relative';
-      wrapper.style.width = '100%';
-      wrapper.style.maxWidth = '640px';
-      wrapper.style.paddingTop = '56.25%'; // ratio 16:9
+      wrapper.style.maxWidth = '100%';  // jamais plus large que le parent
+      wrapper.style.overflowX = 'auto'; // scroll horizontal localisé si besoin
       wrapper.style.marginLeft = '10px';
       wrapper.style.marginTop = '5px';
-      wrapper.style.border = '3px solid #888';       
+      wrapper.style.border = '3px solid #888';
       wrapper.style.borderRadius = '6px';
       wrapper.style.backgroundColor = '#222';
 
+      // iframe fixe 640x360
       const iframe = document.createElement('iframe');
-      iframe.style.position = 'absolute';
-      iframe.style.top = '0';
-      iframe.style.left = '0';
-      iframe.style.width = '100%';
-      iframe.style.height = '100%';
-      iframe.style.border = '0';
-
+      iframe.width = '640';
+      iframe.height = '360';
       iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
+      iframe.style.display = 'block';
 
       wrapper.appendChild(iframe);
       messageElement.appendChild(wrapper);
     }
   });
 }
+
 
 
 
