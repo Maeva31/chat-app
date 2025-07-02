@@ -157,7 +157,7 @@ if (usernameInput && passwordInput) {
   const usernameSpan = li.querySelector('.username-span');
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
-    const mention = `@${username}${(role === 'admin' || role === 'modo') ? '⁹' : ''}`;
+    const mention = `@${username}${(role === 'admin' || role === 'modo') ? '⁹' : ''} `;
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
     selectedUser = username;
@@ -245,15 +245,28 @@ if (logoutModal) {
                 getUsernameColor(msg.gender);
 
   if (msg.username === 'Système') {
-    usernameSpan.textContent = msg.username;
-    usernameSpan.style.color = '#888';
-    usernameSpan.style.fontWeight = 'bold';
-  } else {
-    usernameSpan.classList.add('clickable-username');
-    usernameSpan.style.color = color;
-    usernameSpan.textContent = msg.username;
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                         (msg.role === 'modo') ? 'Modérateur' : '';
+  usernameSpan.textContent = msg.username;
+  usernameSpan.style.color = '#888';
+  usernameSpan.style.fontWeight = 'bold';
+} else {
+  usernameSpan.classList.add('clickable-username');
+  usernameSpan.style.color = color;
+  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                       (msg.role === 'modo') ? 'Modérateur' : '';
+
+  const displayName = msg.username + ((msg.role === 'admin' || msg.role === 'modo') ? '⁹' : '');
+  const heart = msg.role === 'admin' ? '❤️ ' : msg.role === 'modo' ? '💙 ' : '';
+  usernameSpan.textContent = heart + displayName;
+
+  // Clic pour mention
+  usernameSpan.addEventListener('click', () => {
+    const input = document.getElementById('message-input');
+    const mention = `@${msg.username}${(msg.role === 'admin' || msg.role === 'modo') ? '⁹' : ''} `;
+    if (!input.value.includes(mention)) input.value = mention + input.value;
+    input.focus();
+  });
+}
+
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
@@ -278,7 +291,8 @@ if (logoutModal) {
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = `@${msg.username}${(msg.role === 'admin' || msg.role === 'modo') ? '⁹' : ''}`;
+      const mention = `@${msg.username}${(msg.role === 'admin' || msg.role === 'modo') ? '⁹' : ''} `;
+
 
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
