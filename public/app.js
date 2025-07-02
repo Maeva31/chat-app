@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -348,15 +349,14 @@ newMessage.appendChild(messageSpan);
 
     if (username) {
      socket.emit('chat message', {
-  message,
-  timestamp: new Date().toISOString(),
-  style: {
-    font: fontSelect?.value || '',
-    color: colorPicker?.value || '#000',
-    bold: boldToggle?.checked || false,
-    italic: italicToggle?.checked || false
-  }
+  message: inputMessage,
+  fontColor: selectedColor,
+  fontFamily: selectedFont,
+  isBold: isBold,
+  isItalic: isItalic,
+  timestamp: new Date().toISOString()
 });
+
 
       input.value = '';
     }
