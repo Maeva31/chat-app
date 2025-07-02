@@ -212,7 +212,7 @@ if (logoutModal) {
 
 
   // Ajoute un message dans la zone de chat
- function addMessageToChat(msg) {
+  function addMessageToChat(msg) {
   // Si c'est un message système, vérifier qu'il concerne bien le salon courant
   if (msg.username === 'Système') {
     const salonRegex = /salon\s+(.+)$/i;
@@ -275,64 +275,19 @@ if (logoutModal) {
     });
   }
 
-  // Texte et styles du message
-  const messageContainer = document.createElement('span');
-
-  // On récupère le pseudo local (celui qui reçoit)
-  const myUsername = localStorage.getItem('username');
-
-  // On va séparer le message en morceaux : texte normal et mentions en gras
-  // Regex pour matcher toutes les mentions @Pseudo (sensibles à casse)
-  const mentionRegex = /@(\w{1,16})/g;
-  let lastIndex = 0;
-  let match;
-
-  while ((match = mentionRegex.exec(msg.message)) !== null) {
-    const mention = match[0];      // ex: "@MaEvA"
-    const mentionedName = match[1]; // ex: "MaEvA"
-    const start = match.index;
-
-    // Texte avant la mention
-    if (start > lastIndex) {
-      const textBefore = msg.message.substring(lastIndex, start);
-      const textNode = document.createTextNode(textBefore);
-      messageContainer.appendChild(textNode);
-    }
-
-    // Élément <span> pour la mention
-    const mentionSpan = document.createElement('span');
-    mentionSpan.textContent = mention;
-
-    // Mettre en gras et couleur si la mention correspond au pseudo local
-    if (myUsername && mentionedName.toLowerCase() === myUsername.toLowerCase()) {
-      mentionSpan.style.fontWeight = 'bold';
-      mentionSpan.style.color = style.color || '#fff';
-    }
-
-    messageContainer.appendChild(mentionSpan);
-
-    lastIndex = start + mention.length;
-  }
-
-  // Reste du message après la dernière mention
-  if (lastIndex < msg.message.length) {
-    const textAfter = msg.message.substring(lastIndex);
-    const textNode = document.createTextNode(textAfter);
-    messageContainer.appendChild(textNode);
-  }
-
-  // Appliquer les styles globaux (couleur, italique, police) au container entier sauf gras qui est géré localement sur les mentions
+  // Style du message
+  const messageText = document.createElement('span');
+  messageText.textContent = `: ${msg.message}`;
   const style = msg.style || {};
-  messageContainer.style.color = style.color || '#fff';
-  messageContainer.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageContainer.style.fontFamily = style.font || 'Arial';
-  // Ne PAS mettre fontWeight ici, ça écraserait les gras partiels
+  messageText.style.color = style.color || '#fff';
+  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = style.font || 'Arial';
 
   // Assemblage
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
-  newMessage.appendChild(document.createTextNode(': '));
-  newMessage.appendChild(messageContainer);
+  newMessage.appendChild(messageText);
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
