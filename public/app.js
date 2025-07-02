@@ -235,6 +235,17 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
   urls.forEach(url => {
     const videoId = getYouTubeVideoId(url);
     if (videoId) {
+      // Création du wrapper avec cadre et fond
+      const wrapper = document.createElement('div');
+      wrapper.style.display = 'inline-block';
+      wrapper.style.marginLeft = '10px';
+      wrapper.style.marginTop = '5px';
+      wrapper.style.padding = '5px';
+      wrapper.style.border = '2px solid #888';       // Couleur cadre (gris)
+      wrapper.style.borderRadius = '8px';
+      wrapper.style.backgroundColor = '#222';         // Fond sombre
+
+      // Création de l'iframe vidéo
       const iframe = document.createElement('iframe');
       iframe.width = '320';
       iframe.height = '180';
@@ -242,15 +253,15 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       iframe.frameBorder = '0';
       iframe.allow = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
       iframe.allowFullscreen = true;
-      iframe.style.marginLeft = '10px';
       iframe.style.borderRadius = '6px';
       iframe.style.display = 'block';
-      iframe.style.marginTop = '5px';
 
-      messageElement.appendChild(iframe);
+      wrapper.appendChild(iframe);
+      messageElement.appendChild(wrapper);
     }
   });
 }
+
 
 // Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
 function getYouTubeVideoId(url) {
