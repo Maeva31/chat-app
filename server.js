@@ -412,7 +412,7 @@ const message = {
     italic: style.italic || false
   }
 };
-io.to(channel).emit('chat message', message);
+
 
 
 
