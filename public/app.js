@@ -258,8 +258,8 @@ if (msg.role === 'admin') {
   icon.src = '/favicon.ico';
   icon.alt = 'Admin';
   icon.title = 'Admin';
-  icon.style.width = '20px';
-  icon.style.height = '20px';
+  icon.style.width = '18px';
+  icon.style.height = '18px';
   icon.style.marginRight = '4px';  // espace à droite de l'icône
   icon.style.verticalAlign = '-4px';
   usernameSpan.insertBefore(icon, usernameSpan.firstChild);
