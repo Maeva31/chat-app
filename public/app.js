@@ -101,37 +101,32 @@ if (usernameInput && passwordInput) {
   }
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
-  function extractChannelName(text) {
-    text = text.replace(/\s*\(\d+\)$/, '').trim();
-    const parts = text.split('┊');
-    if (parts.length > 1) return parts[1].trim();
-    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-  }
-
-  // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
-    const userList = document.getElementById('users');
-    if (!userList) return;
-    userList.innerHTML = '';
-    if (!Array.isArray(users)) return;
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
 
-    users.forEach(user => {
-  const username = user?.username || 'Inconnu';
-  const age = user?.age || '?';
-  const gender = user?.gender || 'non spécifié';
-  const role = user?.role || 'user';
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
 
-  const li = document.createElement('li');
-  li.classList.add('user-item');
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-  const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+    // Ajout du ⁹ à l'affichage si admin ou modo
+    const displayUsername = (role === 'admin' || role === 'modo') ? username + '⁹' : username;
 
-  // On vide le li et on construit le contenu manuellement
-  li.innerHTML = `
-    <span class="role-icon"></span> 
-    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-  `;
+    const li = document.createElement('li');
+    li.classList.add('user-item');
+
+    // On construit le contenu en injectant displayUsername
+    li.innerHTML = `
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${displayUsername}</span>
+    `;
 
   // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
@@ -154,7 +149,7 @@ if (usernameInput && passwordInput) {
   const usernameSpan = li.querySelector('.username-span');
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
-    const mention = `@${username} `;
+    const mention = (role === 'admin' || role === 'modo') ? `@${username}⁹ ` : `@${username} `;
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
     selectedUser = username;
@@ -246,11 +241,13 @@ if (logoutModal) {
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
-    usernameSpan.classList.add('clickable-username');
-    usernameSpan.style.color = color;
-    usernameSpan.textContent = msg.username;
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                         (msg.role === 'modo') ? 'Modérateur' : '';
+  usernameSpan.classList.add('clickable-username');
+  usernameSpan.style.color = color;
+  const displayUsername = (msg.role === 'admin' || msg.role === 'modo') ? msg.username + '⁹' : msg.username;
+  usernameSpan.textContent = displayUsername;
+  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                       (msg.role === 'modo') ? 'Modérateur' : '';
+
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
@@ -275,7 +272,7 @@ if (logoutModal) {
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
+      const mention = (msg.role === 'admin' || msg.role === 'modo') ? `@${msg.username}⁹ ` : `@${msg.username} `;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
