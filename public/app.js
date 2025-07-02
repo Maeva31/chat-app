@@ -370,11 +370,14 @@ function getYouTubeVideoId(url) {
   newMessage.appendChild(usernameSpan);
 
   // Ajouter ":" + espace après le pseudo uniquement si message non vide
-  if (messageText.textContent.trim() !== '') {
-    const separator = document.createTextNode(': ');
-    newMessage.appendChild(separator);
-    newMessage.appendChild(messageText);
-  }
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide, en gras
+if (messageText.textContent.trim() !== '') {
+  const separator = document.createElement('strong');
+  separator.textContent = ': ';
+  newMessage.appendChild(separator);
+  newMessage.appendChild(messageText);
+}
+
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
