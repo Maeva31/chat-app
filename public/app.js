@@ -239,8 +239,9 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       wrapper.classList.add('youtube-wrapper');
 
       const iframe = document.createElement('iframe');
-      iframe.width = '480';
-      iframe.height = '270';
+      // Supprimer largeur/hauteur fixes pour laisser le CSS gérer
+      // iframe.width = '480';
+      // iframe.height = '270';
       iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow =
@@ -252,6 +253,7 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
     }
   });
 }
+
 
 
 
