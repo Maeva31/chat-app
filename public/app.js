@@ -258,10 +258,10 @@ if (logoutModal) {
       icon.src = '/favicon.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
-      icon.style.width = '16px';
-      icon.style.height = '16px';
-      icon.style.marginLeft = '4px';
-      icon.style.verticalAlign = 'middle';
+      icon.style.width = '20px';
+      icon.style.height = '20px';
+      icon.style.marginLeft = '1px';
+      icon.style.verticalAlign = '-4';
       usernameSpan.appendChild(icon);
     } else if (msg.role === 'modo') {
       const icon = document.createElement('span');
