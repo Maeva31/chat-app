@@ -332,31 +332,68 @@ function getYouTubeVideoId(url) {
     });
   }
 
-  // Supprimer les URLs du texte affiché (masquer les liens)
-  const messageSansUrl = msg.message.replace(/https?:\/\/[^\s]+/g, '').trim();
+  // Fonction pour détecter si une URL est YouTube
+  function isYouTubeUrl(url) {
+    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
+  }
 
-  // Style du message (sans les liens)
+  // Parse le message en morceaux (texte et URLs)
+  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
+
+  // Créer un conteneur pour le texte avec URLs cliquables (sauf YouTube)
   const messageText = document.createElement('span');
-  messageText.textContent = messageSansUrl ? `: ${messageSansUrl}` : '';
   const style = msg.style || {};
   messageText.style.color = style.color || '#fff';
   messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
 
+  // Construire le contenu avec liens cliquables sauf pour les URLs YouTube (qui seront ignorées dans le texte)
+  parts.forEach(part => {
+    if (/https?:\/\/[^\s]+/.test(part)) {
+      // C'est une URL
+      if (isYouTubeUrl(part)) {
+        // Ne rien afficher dans le texte (la vidéo sera intégrée ailleurs)
+        return;
+      } else {
+        // URL non YouTube => créer un lien cliquable
+        const a = document.createElement('a');
+        a.href = part;
+        a.textContent = part;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.color = style.color || '#00aaff'; // couleur lien personnalisable
+        a.style.textDecoration = 'underline';
+        messageText.appendChild(a);
+      }
+    } else {
+      // C'est du texte normal
+      if (part.trim() !== '') {
+        messageText.appendChild(document.createTextNode(part));
+      }
+    }
+  });
+
+  if (messageText.textContent.trim() !== '') {
+    // Ajouter ": " seulement s'il y a du texte après le pseudo
+    const prefix = document.createTextNode(': ');
+    newMessage.appendChild(prefix);
+    newMessage.appendChild(messageText);
+  }
+
   // Assemblage
-  newMessage.innerHTML = `[${timeString}] `;
-  newMessage.appendChild(usernameSpan);
-  newMessage.appendChild(messageText);
+  newMessage.innerHTML = `[${timeString}] ` + newMessage.innerHTML;
+  newMessage.insertBefore(usernameSpan, newMessage.childNodes[1]); // juste après le timestamp
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
-  // Ajout des vidéos YouTube intégrées
+  // Ajout des vidéos YouTube intégrées (iframe)
   addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
   // Sélectionne visuellement un salon dans la liste
