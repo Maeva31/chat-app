@@ -570,17 +570,17 @@ button:focus {
 
 /* Optionnel : espace entre l'âge et le pseudo */
 .user-item .gender-square {
-  display: inline-block;
-  width: 24px;
-  height: 24px;
-  line-height: 24px;
-  text-align: center;
-  border-radius: 4px;
-  color: white;
-  font-weight: bold;
-  margin-right: 8px;
-  font-size: 14px;
-  user-select: none;
+    display: inline-block;
+    width: 20px;
+    height: 19px;
+    line-height: 20px;
+    text-align: center;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+    user-select: none;
 }
 
 /* Texte laser */
@@ -618,8 +618,8 @@ button:focus {
 
 /* Icône admin */
 .admin-icon {
-  width: 16px;
-  height: 16px;
+  width: 20px;
+  height: 20px;
   vertical-align: middle;
   flex-shrink: 0;
 }
