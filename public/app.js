@@ -101,57 +101,63 @@ if (usernameInput && passwordInput) {
   }
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
+  function extractChannelName(text) {
+    text = text.replace(/\s*\(\d+\)$/, '').trim();
+    const parts = text.split('┊');
+    if (parts.length > 1) return parts[1].trim();
+    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+  }
+
+  // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
+    const userList = document.getElementById('users');
+    if (!userList) return;
+    userList.innerHTML = '';
+    if (!Array.isArray(users)) return;
 
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+    users.forEach(user => {
+      const username = user?.username || 'Inconnu';
+      const age = user?.age || '?';
+      const gender = user?.gender || 'non spécifié';
+      const role = user?.role || 'user';
 
-    const li = document.createElement('li');
-    li.classList.add('user-item');
+      const li = document.createElement('li');
+      li.classList.add('user-item');
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+      const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-    li.innerHTML = `
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
+      li.innerHTML = `
+        <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+        <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+      `;
 
-    const usernameSpan = li.querySelector('.username-span');
-    if (role === 'admin') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Admin';
-      icon.title = 'Admin';
-      icon.classList.add('admin-icon');
-      usernameSpan.appendChild(icon);
-    } else if (role === 'modo') {
-      const icon = document.createElement('span');
-      icon.textContent = '🛡️';
-      icon.title = 'Modérateur';
-      icon.classList.add('modo-icon');
-      usernameSpan.appendChild(icon);
-    }
+      const usernameSpan = li.querySelector('.username-span');
+      if (role === 'admin') {
+        const icon = document.createElement('img');
+        icon.src = '/favicon.ico';
+        icon.alt = 'Admin';
+        icon.title = 'Admin';
+        icon.classList.add('admin-icon');
+        usernameSpan.appendChild(icon);
+      } else if (role === 'modo') {
+        const icon = document.createElement('span');
+        icon.textContent = '🛡️';
+        icon.title = 'Modérateur';
+        icon.classList.add('modo-icon');
+        usernameSpan.appendChild(icon);
+      }
 
-    // Ici le listener click sur le pseudo uniquement (le span)
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
+      usernameSpan.addEventListener('click', () => {
+        const input = document.getElementById('message-input');
+        const mention = `@${username} `;
+        if (!input.value.includes(mention)) input.value = mention + input.value;
+        input.focus();
+        selectedUser = username;
+      });
+
+      userList.appendChild(li);
     });
-
-    userList.appendChild(li);
-  });
-}
-
+  }
 
  const logoutButton = document.getElementById('logoutButton');
 
