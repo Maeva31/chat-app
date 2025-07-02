@@ -261,14 +261,14 @@ if (logoutModal) {
       icon.style.width = '20px';
       icon.style.height = '20px';
       icon.style.marginLeft = '1px';
-      icon.style.verticalAlign = '-4';
+      icon.style.verticalAlign = '-4px';
       usernameSpan.appendChild(icon);
     } else if (msg.role === 'modo') {
       const icon = document.createElement('span');
       icon.textContent = '🛡️';
       icon.title = 'Modérateur';
       icon.style.marginLeft = '4px';
-      icon.style.verticalAlign = 'middle';
+      icon.style.verticalAlign = '-4px';
       usernameSpan.appendChild(icon);
     }
 
