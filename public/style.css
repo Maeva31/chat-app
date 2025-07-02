@@ -322,6 +322,55 @@ main {
   background-color: #aaa;
 }
 
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px; /* espace entre carré âge, âge et pseudo */
+}
+
+.gender-square {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+  background-color: #aaa;
+  user-select: none;
+}
+
+.age-span {
+  min-width: 20px; /* largeur fixe pour aligner les âges */
+  color: #000;
+  font-weight: normal;
+  font-size: 1em;
+  user-select: none;
+}
+
+.username-span {
+  flex: 1; /* prend le reste de la ligne */
+  color: #000;
+  font-weight: bold;
+  font-size: 1.1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Icônes admin/modo dans le username-span, alignées sans décaler le texte */
+.admin-icon, .modo-icon {
+  flex-shrink: 0;
+  font-size: 1em;
+  color: red; /* ou couleur appropriée */
+}
+
 .age-span {
   color: #000;
 }
