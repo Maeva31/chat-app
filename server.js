@@ -405,12 +405,15 @@ const message = {
   message: msg.message || '',
   timestamp: msg.timestamp || new Date().toISOString(),
   channel,
-  style: {
-    font: style.font || 'inherit',
-    color: style.color || '#000000',
-    bold: style.bold || false,
-    italic: style.italic || false
-  }
+  const style = msg.style || {};
+
+style: {
+  font: style.font || 'inherit',
+  color: style.color || '#000000',
+  bold: style.bold || false,
+  italic: style.italic || false
+}
+
 };
 
 
