@@ -396,6 +396,8 @@ io.on('connection', (socket) => {
       }
     }
 
+const style = msg.style || {};
+
 const message = {
   username: user.username,
   gender: user.gender,
@@ -404,12 +406,13 @@ const message = {
   timestamp: msg.timestamp || new Date().toISOString(),
   channel,
   style: {
-    font: msg.font || 'inherit',
-    color: msg.color || '#000000',
-    bold: msg.bold || false,
-    italic: msg.italic || false
+    font: style.font || 'inherit',
+    color: style.color || '#000000',
+    bold: style.bold || false,
+    italic: style.italic || false
   }
 };
+
 
 
     if (!messageHistory[channel]) messageHistory[channel] = [];
