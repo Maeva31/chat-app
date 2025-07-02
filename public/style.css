@@ -626,8 +626,8 @@ button:focus {
 
 /* Pseudo, commence toujours après âge */
 .user-item .username-span {
-  flex: 1;
-  min-width: 0; /* Permet de shrink */
+  flex: 1 1 auto;
+  min-width: 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
