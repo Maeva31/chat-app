@@ -116,7 +116,14 @@ if (usernameInput && passwordInput) {
     if (!Array.isArray(users)) return;
 
     users.forEach(user => {
-  const username = user?.username || 'Inconnu';
+ const username = user?.username || 'Inconnu';
+const role = user?.role || 'user';
+
+let displayedUsername = username;
+if (role === 'admin' || role === 'modo') {
+  displayedUsername += '⁹';
+}
+
   const age = user?.age || '?';
   const gender = user?.gender || 'non spécifié';
   const role = user?.role || 'user';
@@ -133,22 +140,39 @@ if (usernameInput && passwordInput) {
     <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
   `;
 
-  // Ajout icône dans le span.role-icon (avant le carré âge)
-  const roleIconSpan = li.querySelector('.role-icon');
-  if (role === 'admin') {
-    const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // ou ton icône admin
-    icon.alt = 'Admin';
-    icon.title = 'Admin';
-    icon.classList.add('admin-icon');
-    roleIconSpan.appendChild(icon);
-  } else if (role === 'modo') {
-    const icon = document.createElement('span');
-    icon.textContent = '🛡️';
-    icon.title = 'Modérateur';
-    icon.classList.add('modo-icon');
-    roleIconSpan.appendChild(icon);
-  }
+  // Ajout icône + cœur dans le span.role-icon (avant le carré âge)
+const roleIconSpan = li.querySelector('.role-icon');
+
+if (role === 'admin') {
+  // Icône admin
+  const icon = document.createElement('img');
+  icon.src = '/favicon.ico'; // ou ton icône admin
+  icon.alt = 'Admin';
+  icon.title = 'Admin';
+  icon.classList.add('admin-icon');
+  roleIconSpan.appendChild(icon);
+
+  // Cœur rouge
+  const heart = document.createElement('span');
+  heart.textContent = '❤️';
+  heart.style.marginLeft = '4px';
+  roleIconSpan.appendChild(heart);
+
+} else if (role === 'modo') {
+  // Icône modo
+  const icon = document.createElement('span');
+  icon.textContent = '🛡️';
+  icon.title = 'Modérateur';
+  icon.classList.add('modo-icon');
+  roleIconSpan.appendChild(icon);
+
+  // Cœur bleu
+  const heart = document.createElement('span');
+  heart.textContent = '💙';
+  heart.style.marginLeft = '4px';
+  roleIconSpan.appendChild(heart);
+}
+
 
   // Ajout de l'event click sur le nom
   const usernameSpan = li.querySelector('.username-span');
@@ -242,7 +266,12 @@ if (logoutModal) {
                 getUsernameColor(msg.gender);
 
   if (msg.username === 'Système') {
-    usernameSpan.textContent = msg.username;
+    usernameSpan.textContent = displayedUsername;
+
+    let displayedUsername = msg.username;
+if (msg.role === 'admin' || msg.role === 'modo') {
+  displayedUsername += '⁹';
+}
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
