@@ -101,12 +101,30 @@ main {
 }
 
 #channel-list .channel:hover {
-  background-color: #444;
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 3s ease infinite;
+  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
 }
 
+@keyframes gradientThumb {
+  0% {
+    background-position: 400% 0;
+  }
+  50% {
+    background-position: 0 100%;
+  }
+  100% {
+    background-position: 400% 0;
+  }
+}
+
+
 #channel-list .channel.selected {
-  background-color: #00ffff;
-  color: black;
+  background-color: #444;
+  color: white;
   font-weight: bold;
 }
 
