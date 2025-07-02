@@ -626,9 +626,10 @@ button:focus {
   border-radius: 12px;
   padding: 12px;
   z-index: 1000;
-  max-width: 320px;
-  max-height: none; /* height illimitée */
-  overflow-y: visible; /* pas de scroll */
+  max-width: 320px; /* Garde la largeur max si tu veux */
+  /* max-height: 240px;  <-- supprime ou commente cette ligne */
+  /* overflow-y: auto;  <-- supprime ou commente cette ligne */
+  overflow-y: visible; /* ou simplement pas de overflow-y */
   box-shadow: 0 8px 16px rgba(0,0,0,0.6);
   display: flex;
   flex-wrap: wrap;
@@ -636,6 +637,8 @@ button:focus {
   justify-content: center;
 }
 
+
+/* Style des emojis */
 #emoji-picker .emoji {
   font-size: 26px;
   cursor: pointer;
@@ -649,4 +652,3 @@ button:focus {
   background-color: #555;
   transform: scale(1.3);
 }
-
