@@ -355,16 +355,19 @@ function sendMessage() {
 
     socket.emit('chat message', {
       message: message,
-      font: selectedFont,
-      color: selectedColor,
-      bold: isBold,
-      italic: isItalic,
+      style: {
+        font: selectedFont,
+        color: selectedColor,
+        bold: isBold,
+        italic: isItalic,
+      },
       timestamp: new Date().toISOString()
     });
 
     input.value = '';
   }
 }
+
 
 
 
