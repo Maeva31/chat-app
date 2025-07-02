@@ -215,6 +215,39 @@ if (logoutModal) {
   });
 }
 
+// Extrait l'ID vidéo YouTube depuis une URL et retourne l'URL de la miniature
+function getYouTubeThumbnail(url) {
+  const regExp = /^.*(?:youtu\.be\/|youtube\.com\/(?:watch\?(?:.*&)?v=|embed\/|v\/))([^#&?]*).*/;
+  const match = url.match(regExp);
+  return (match && match[1].length === 11) ? `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg` : null;
+}
+
+// Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
+function addYouTubeThumbnailIfAny(messageElement, messageText) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = messageText.match(urlRegex);
+  if (!urls) return;
+
+  urls.forEach(url => {
+    const thumbUrl = getYouTubeThumbnail(url);
+    if (thumbUrl) {
+      const img = document.createElement('img');
+      img.src = thumbUrl;
+      img.alt = 'Miniature YouTube';
+      img.style.maxWidth = '200px';
+      img.style.marginLeft = '10px';
+      img.style.borderRadius = '6px';
+      img.style.cursor = 'pointer';
+
+      // Ouvre la vidéo dans un nouvel onglet au clic
+      img.addEventListener('click', () => {
+        window.open(url, '_blank');
+      });
+
+      messageElement.appendChild(img);
+    }
+  });
+}
 
 
   // Ajoute un message dans la zone de chat
@@ -290,6 +323,9 @@ if (msg.role === 'admin') {
   messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
+
+    // Ajout des miniatures YouTube si liens détectés
+  addYouTubeThumbnailIfAny(newMessage, msg.message);
 
   // Assemblage
   newMessage.innerHTML = `[${timeString}] `;
