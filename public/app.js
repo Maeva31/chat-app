@@ -16,7 +16,6 @@ const modoUsernames = ['DarkGirL'];
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
 
-
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
   const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
@@ -49,6 +48,14 @@ if (usernameInput && passwordInput) {
     "Gaming": "🎮",
     "Détente": "🌿"
   };
+
+        // 🎨 Style Picker
+const styleButton = document.getElementById('style-button');
+const styleMenu = document.getElementById('style-menu');
+const fontSelect = document.getElementById('font-select');
+const colorPicker = document.getElementById('font-color-picker');
+const boldToggle = document.getElementById('bold-toggle');
+const italicToggle = document.getElementById('italic-toggle');
 
   // Affiche la modal si pas de pseudo
   const savedUsername = localStorage.getItem('username');
@@ -657,13 +664,6 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
     });
   }
 
-  // 🎨 Style Picker
-const styleButton = document.getElementById('style-button');
-const styleMenu = document.getElementById('style-menu');
-const fontSelect = document.getElementById('font-select');
-const colorPicker = document.getElementById('font-color-picker');
-const boldToggle = document.getElementById('bold-toggle');
-const italicToggle = document.getElementById('italic-toggle');
 
 if (styleButton && styleMenu && messageInput) {
   styleButton.addEventListener('click', (e) => {
