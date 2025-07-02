@@ -124,6 +124,7 @@ io.on('connection', (socket) => {
           message: `${user.username} a quitté le serveur (logout)`,
           timestamp: new Date().toISOString(),
           channel: room
+          style: {}
         });
       }
 
