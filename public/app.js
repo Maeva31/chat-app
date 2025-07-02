@@ -130,11 +130,12 @@ if (usernameInput && passwordInput) {
     const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
     li.innerHTML = `
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}; cursor: default;">${age}</div>
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
     const usernameSpan = li.querySelector('.username-span');
+    const ageSquare = li.querySelector('.gender-square');
 
     // Ajout des icônes admin/modo
     if (role === 'admin') {
@@ -162,9 +163,9 @@ if (usernameInput && passwordInput) {
     });
 
     // Ajout menu d'actions uniquement pour user "normal"
-    const ageSquare = li.querySelector('.gender-square');
     if (role !== 'admin' && role !== 'modo') {
-      ageSquare.style.cursor = 'pointer';
+      ageSquare.style.cursor = 'pointer'; // Indiquer que c’est cliquable
+
       ageSquare.addEventListener('click', (e) => {
         e.stopPropagation();
 
@@ -201,15 +202,36 @@ if (usernameInput && passwordInput) {
           btn.style.borderRadius = '4px';
           btn.style.backgroundColor = '#444';
           btn.style.color = '#fff';
+
           btn.addEventListener('mouseenter', () => btn.style.backgroundColor = '#666');
           btn.addEventListener('mouseleave', () => btn.style.backgroundColor = '#444');
+
           btn.addEventListener('click', () => {
             socket.emit(action.toLowerCase(), username);
             menu.remove();
             showBanner(`${action} demandé pour ${username}`, 'success');
           });
+
           menu.appendChild(btn);
         });
+
+        document.body.appendChild(menu);
+
+        // Ferme le menu si clic en dehors
+        function onClickOutside(event) {
+          if (!menu.contains(event.target)) {
+            menu.remove();
+            document.removeEventListener('click', onClickOutside);
+          }
+        }
+        document.addEventListener('click', onClickOutside);
+      });
+    }
+
+    userList.appendChild(li);
+  });
+}
+
 
         document.body.appendChild(menu);
 
