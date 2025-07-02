@@ -105,14 +105,7 @@ main {
   cursor: pointer;
   color: white;
   transition: 0.2s ease;
-  white-space: nowrap;          /* Empêche le retour à la ligne */
-  overflow: hidden;             /* Cache le dépassement */
-  text-overflow: ellipsis;      /* Ajoute "..." si texte trop long */
-  max-width: 100%;              /* Limite la largeur à celle du parent */
-  box-sizing: border-box;       /* Pour prise en compte des paddings */
-  display: block;               /* S’assurer que le comportement est bon */
 }
-
 
 #channel-list .channel:hover {
   background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
