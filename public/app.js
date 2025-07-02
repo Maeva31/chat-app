@@ -212,7 +212,7 @@ if (logoutModal) {
 
 
   // Ajoute un message dans la zone de chat
-  function addMessageToChat(msg) {
+ function addMessageToChat(msg) {
   // Si c'est un message système, vérifier qu'il concerne bien le salon courant
   if (msg.username === 'Système') {
     const salonRegex = /salon\s+(.+)$/i;
@@ -275,54 +275,64 @@ if (logoutModal) {
     });
   }
 
-  // Récupérer pseudo local (celui qui reçoit le message)
+  // Texte et styles du message
+  const messageContainer = document.createElement('span');
+
+  // On récupère le pseudo local (celui qui reçoit)
   const myUsername = localStorage.getItem('username');
-  // Vérifier si le message mentionne mon pseudo (regex avec \b pour éviter faux positifs)
-  const mentionRegex = new RegExp(`@${myUsername}\\b`, 'i');
-  const isMentioned = mentionRegex.test(msg.message);
-  const isAuthor = msg.username === myUsername;
 
-  // Créer l'élément texte du message
-  const messageText = document.createElement('span');
-  messageText.textContent = `: ${msg.message}`;
+  // On va séparer le message en morceaux : texte normal et mentions en gras
+  // Regex pour matcher toutes les mentions @Pseudo (sensibles à casse)
+  const mentionRegex = /@(\w{1,16})/g;
+  let lastIndex = 0;
+  let match;
 
-  // Appliquer style gras uniquement si auteur ou mentionné
-  if (isAuthor || isMentioned) {
-    messageText.style.fontWeight = 'bold';
-  } else {
-    // Sinon on applique le style reçu s'il y en a
-    messageText.style.fontWeight = msg.style?.bold ? 'bold' : 'normal';
+  while ((match = mentionRegex.exec(msg.message)) !== null) {
+    const mention = match[0];      // ex: "@MaEvA"
+    const mentionedName = match[1]; // ex: "MaEvA"
+    const start = match.index;
+
+    // Texte avant la mention
+    if (start > lastIndex) {
+      const textBefore = msg.message.substring(lastIndex, start);
+      const textNode = document.createTextNode(textBefore);
+      messageContainer.appendChild(textNode);
+    }
+
+    // Élément <span> pour la mention
+    const mentionSpan = document.createElement('span');
+    mentionSpan.textContent = mention;
+
+    // Mettre en gras et couleur si la mention correspond au pseudo local
+    if (myUsername && mentionedName.toLowerCase() === myUsername.toLowerCase()) {
+      mentionSpan.style.fontWeight = 'bold';
+      mentionSpan.style.color = style.color || '#fff';
+    }
+
+    messageContainer.appendChild(mentionSpan);
+
+    lastIndex = start + mention.length;
   }
 
-  messageText.style.color = msg.style?.color || '#fff';
-  messageText.style.fontStyle = msg.style?.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = msg.style?.font || 'Arial';
+  // Reste du message après la dernière mention
+  if (lastIndex < msg.message.length) {
+    const textAfter = msg.message.substring(lastIndex);
+    const textNode = document.createTextNode(textAfter);
+    messageContainer.appendChild(textNode);
+  }
 
-  // Assemblage final
-  newMessage.innerHTML = `[${timeString}] `;
-  newMessage.appendChild(usernameSpan);
-  newMessage.appendChild(messageText);
-  newMessage.classList.add('message');
-  newMessage.dataset.username = msg.username;
-
-  chatMessages.appendChild(newMessage);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-
-  // Style du message
-  const messageText = document.createElement('span');
-  messageText.textContent = `: ${msg.message}`;
+  // Appliquer les styles globaux (couleur, italique, police) au container entier sauf gras qui est géré localement sur les mentions
   const style = msg.style || {};
-  messageText.style.color = style.color || '#fff';
-  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = style.font || 'Arial';
+  messageContainer.style.color = style.color || '#fff';
+  messageContainer.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageContainer.style.fontFamily = style.font || 'Arial';
+  // Ne PAS mettre fontWeight ici, ça écraserait les gras partiels
 
   // Assemblage
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
-  newMessage.appendChild(messageText);
+  newMessage.appendChild(document.createTextNode(': '));
+  newMessage.appendChild(messageContainer);
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
 
