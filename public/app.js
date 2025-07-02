@@ -665,6 +665,20 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   }
 
 
+function applyStyle() {
+  if (!fontSelect || !colorPicker || !boldToggle || !italicToggle || !messageInput) return;
+
+  const font = fontSelect.value;
+  const color = colorPicker.value;
+  const bold = boldToggle.checked;
+  const italic = italicToggle.checked;
+
+  messageInput.style.fontFamily = font;
+  messageInput.style.color = color;
+  messageInput.style.fontWeight = bold ? 'bold' : 'normal';
+  messageInput.style.fontStyle = italic ? 'italic' : 'normal';
+}
+
 if (styleButton && styleMenu && messageInput) {
   styleButton.addEventListener('click', (e) => {
     e.stopPropagation();
@@ -679,24 +693,14 @@ if (styleButton && styleMenu && messageInput) {
     e.stopPropagation();
   });
 
-  function applyStyle() {
-    const font = fontSelect.value;
-    const color = colorPicker.value;
-    const bold = boldToggle.checked;
-    const italic = italicToggle.checked;
-
-    messageInput.style.fontFamily = font;
-    messageInput.style.color = color;
-    messageInput.style.fontWeight = bold ? 'bold' : 'normal';
-    messageInput.style.fontStyle = italic ? 'italic' : 'normal';
-  }
-
   [fontSelect, colorPicker, boldToggle, italicToggle].forEach(input => {
     input.addEventListener('input', applyStyle);
   });
 }
 
 applyStyle();
+
+
 
 
   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
