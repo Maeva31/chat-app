@@ -359,6 +359,16 @@ main {
   color: #ff00ff;
 }
 
+#users .user-item {
+  user-select: none;
+}
+
+#users .user-item .username-span {
+  user-select: text;
+  cursor: pointer;
+}
+
+
 /* === MODAL === */
 .modal {
   position: fixed;
