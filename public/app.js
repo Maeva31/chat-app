@@ -42,6 +42,15 @@ if (usernameInput && passwordInput) {
     default: '#aaa'
   };
 
+  const genderIcons = {
+  Homme: '/male.ico',   // exemple de chemin
+  Femme: '/female.ico',
+  Autre: '/icons/autre.ico',
+  'non spécifié': '/icons/unknown.ico',
+  default: '/icons/unknown.ico'
+};
+
+
   const channelEmojis = {
     "Général": "💬",
     "Musique": "🎧",
@@ -123,7 +132,7 @@ if (usernameInput && passwordInput) {
 
   const li = document.createElement('li');
   li.classList.add('user-item');
-
+  
   const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
   // On vide le li et on construit le contenu manuellement
@@ -132,6 +141,30 @@ if (usernameInput && passwordInput) {
     <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
     <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
   `;
+
+  const genderSquare = li.querySelector('.gender-square');
+if (genderSquare) {
+  const icon = document.createElement('img');
+  icon.src = genderIcons[gender] || genderIcons.default;
+  icon.alt = gender;
+  icon.title = gender;
+  icon.style.width = '16px';
+  icon.style.height = '16px';
+
+  const ageSpan = document.createElement('span');
+  ageSpan.textContent = age;
+  ageSpan.style.fontSize = '13px';
+  ageSpan.style.color = '#fff';
+
+  genderSquare.style.display = 'flex';
+  genderSquare.style.alignItems = 'center';
+  genderSquare.style.justifyContent = 'center';
+  genderSquare.style.gap = '4px';
+
+  genderSquare.appendChild(icon);
+  genderSquare.appendChild(ageSpan);
+}
+
 
   // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
