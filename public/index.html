@@ -259,7 +259,32 @@
   <span class="emoji">🚀</span>
 </div>
 
-<div id="style-menu" style="display:none; position:absolute; background:#222; color:#fff; padding:10px; border-radius:5px; z-index:100;">
+<!-- Menu de style -->
+<div id="style-menu" style="
+  display: none;
+  position: absolute;
+  background: #222;
+  color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+">
+
+  <div id="style-menu" style="
+  display: none;
+  position: absolute;
+  background: #222;
+  color: #fff;
+  padding: 10px;
+  border-radius: 5px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+">
   <input type="color" id="style-color" value="#ffffff" />
   <label><input type="checkbox" id="style-bold" /> Gras</label>
   <label><input type="checkbox" id="style-italic" /> Italique</label>
@@ -277,16 +302,15 @@
     <option value="Trebuchet MS">Trebuchet MS</option>
     <option value="Arial Black">Arial Black</option>
   </select>
+
+  <!-- Ajout des boutons + et − -->
+  <div id="text-size-controls" style="display: flex; gap: 5px; justify-content: center; margin-top: 5px;">
+    <button id="increase-text" title="Agrandir le texte" style="border-radius: 50%; width: 28px; height: 28px; font-size: 18px;">+</button>
+    <button id="decrease-text" title="Réduire le texte" style="border-radius: 50%; width: 28px; height: 28px; font-size: 18px;">−</button>
+  </div>
 </div>
 
-    </section>
 
-    <!-- Sidebar droite : utilisateurs -->
-    <aside id="user-list">
-      <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
-      <ul id="users"></ul>
-    </aside>
-  </main>
 
   <!-- Scripts -->
   <script>
