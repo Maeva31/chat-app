@@ -285,6 +285,7 @@
   flex-direction: column;
   gap: 8px;
 ">
+  <div id="style-menu" style="display:none; position:absolute; background:#222; color:#fff; padding:10px; border-radius:5px; z-index:100;">
   <input type="color" id="style-color" value="#ffffff" />
   <label><input type="checkbox" id="style-bold" /> Gras</label>
   <label><input type="checkbox" id="style-italic" /> Italique</label>
@@ -302,7 +303,10 @@
     <option value="Trebuchet MS">Trebuchet MS</option>
     <option value="Arial Black">Arial Black</option>
   </select>
+</div>
 
+    </section>
+    
   <!-- Scripts -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
