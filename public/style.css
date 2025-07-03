@@ -676,9 +676,9 @@ button:focus {
 
 /* Icône modo */
 .modo-icon {
-  width: 20px;
-  height: 20px;
-  font-size: 20px;
+  width: 23px;
+  height: 50px;
+  font-size: 8px;
   vertical-align: middle;
   flex-shrink: 0;
 }
