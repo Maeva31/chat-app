@@ -790,19 +790,38 @@ button:focus {
   display: block;
 } 
 
-.active-tab {
+#private-tabs {
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #111;
+  border-bottom: 1px solid #444;
+  border-top-left-radius: 10px;
+  border-top-right-radius: 10px;
+}
+
+#private-tabs button {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 12px;
   background-color: #333;
   color: white;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease;
+}
+
+#private-tabs .active-tab {
+  background-color: #4CAF50;
   font-weight: bold;
 }
-.inactive-tab {
-  background-color: #ccc;
-  color: black;
-  padding: 5px 10px;
-  border: none;
-  border-radius: 4px;
+
+#private-tabs .inactive-tab {
+  background-color: #444;
 }
+
+#private-tabs button:hover {
+  background-color: #555;
+}
+
 
