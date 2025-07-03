@@ -65,7 +65,6 @@ savedRooms.forEach(room => {
   if (!roomUsers[room]) roomUsers[room] = [];
 });
 
-app.use(express.static('public'));
 
 app.get('/', (req, res) => {
   res.redirect('/chat.html');
