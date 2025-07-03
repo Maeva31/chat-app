@@ -311,7 +311,7 @@ function getYouTubeVideoId(url) {
       icon.title = 'Admin';
       icon.style.width = '17px';
       icon.style.height = '15px';
-      icon.style.marginRight = '2px';
+      icon.style.marginRight = '3px';
       icon.style.verticalAlign = '-2px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
