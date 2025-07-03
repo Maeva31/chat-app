@@ -8,13 +8,14 @@ const app = express();
 
 app.use(express.static('public', {
   setHeaders: (res, path) => {
-    if (path.endsWith('chat.html')) {
+    if (path.endsWith('chat.html') || path.endsWith('index.html')) {
       res.setHeader('Permissions-Policy', 'microphone=(self)');
     } else {
       res.setHeader('Permissions-Policy', 'microphone=()');
     }
   }
 }));
+
 
 const server = http.createServer(app);
 const io = new Server(server);
@@ -66,9 +67,10 @@ savedRooms.forEach(room => {
 });
 
 
-app.get('/', (req, res) => {
+app.get('/index.html', (req, res) => {
   res.redirect('/chat.html');
 });
+
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
