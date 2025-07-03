@@ -929,5 +929,3 @@ applyFontSize();
 
 });
 
-
-});
