@@ -581,24 +581,29 @@ button:focus {
 }
 
 /* Conteneur utilisateur */
+/* Conteneur utilisateur : flex horizontal aligné verticalement */
 .user-item {
   display: flex;
-  align-items: center;
+  align-items: center; /* centre verticalement tous les éléments */
   gap: 8px;
-  /* Optionnel pour que le texte ne dépasse pas */
+  min-height: 36px; /* hauteur fixe ou minimum, ajuste si besoin */
+  /* facultatif pour uniformiser la hauteur */
+  line-height: 36px;
+  font-size: 16px; /* taille de police uniforme */
   min-width: 0;
 }
 
-/* Zone icône rôle (admin/modo), largeur fixe */
+/* Icône rôle (admin/modo) : hauteur et largeur fixes */
 .user-item .role-icon {
-  width: 24px;  /* largeur fixe, à ajuster */
+  width: 24px;    /* largeur fixe */
+  height: 36px;   /* même hauteur que .user-item */
   flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Icône admin/mode centrée dans le conteneur */
+/* L'icône admin/mode au centre du conteneur */
 .user-item .role-icon img,
 .user-item .role-icon svg {
   max-width: 20px;
@@ -606,10 +611,11 @@ button:focus {
   display: block;
 }
 
-/* Carré âge, largeur fixe */
-.user-item .age-square {
-  width: 22px;  /* même largeur que ton .gender-square ? */
-  height: 22px;
+/* Carré âge (ou gender-square), hauteur et largeur fixes identiques */
+.user-item .age-square,
+.user-item .gender-square {
+  width: 36px;    /* ajusté pour être carré et même hauteur */
+  height: 36px;   /* même hauteur que .user-item */
   flex-shrink: 0;
   display: flex;
   justify-content: center;
@@ -619,18 +625,29 @@ button:focus {
   color: #000;
   font-weight: bold;
   font-size: 1em;
+  user-select: none;
 }
 
-/* Pseudo, commence toujours après âge */
+/* Pseudo : même hauteur que user-item, ne déborde pas */
 .user-item .username-span {
   flex: 1;
-  min-width: 0; /* Permet de shrink */
+  min-width: 0; /* permet au texte de shrink */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: #000;
+  line-height: 36px;  /* même hauteur que conteneur */
   font-weight: bold;
+  color: #000;
 }
+
+/* Pour les utilisateurs sans rôle (pas d'icône), on peut ajouter un espace invisible à la place de .role-icon */
+.user-item.no-role .role-icon {
+  width: 24px;   /* même espace réservé */
+  height: 36px;
+}
+
+/* Bonus : si tu veux que la liste soit plus compacte, ajuste 36px à 32px ou 30px selon goût */
+
 
 
 /* Texte laser */
