@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -6,6 +7,8 @@ const modoUsernames = ['DarkGirL'];
 
 
   let selectedUser = null;
+  let privateChats = {};  // { username: [msg, msg, ...] }
+  let currentPrivateChat = null; // null = chat public
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
@@ -161,6 +164,11 @@ if (usernameInput && passwordInput) {
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
     selectedUser = username;
+    if (username !== localStorage.getItem('username')) {
+  if (!privateChats[username]) privateChats[username] = [];
+  openPrivateChat(username);
+}
+
   });
 
   userList.appendChild(li);
@@ -436,22 +444,46 @@ if (messageText.textContent.trim() !== '') {
 
   // Envoi message
   function sendMessage() {
-    const input = document.getElementById('message-input');
-    if (!input) return;
-    const message = input.value.trim();
-    const username = localStorage.getItem('username');
-    if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
-    if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
+  const input = document.getElementById('message-input');
+  if (!input) return;
+  const message = input.value.trim();
+  const username = localStorage.getItem('username');
+  if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
+  if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
 
-    if (username) {
+  if (username) {
+    if (currentPrivateChat) {
+      socket.emit('private message', {
+        to: currentPrivateChat,
+        message,
+        timestamp: new Date().toISOString(),
+        style: loadSavedStyle()
+      });
+      // On affiche aussi dans l'onglet local
+      if (!privateChats[currentPrivateChat]) privateChats[currentPrivateChat] = [];
+      privateChats[currentPrivateChat].push({ username, message, timestamp: new Date().toISOString(), style: loadSavedStyle() });
+      renderMessages();
+    } else {
       socket.emit('chat message', {
         message,
         timestamp: new Date().toISOString(),
-        style: loadSavedStyle() 
+        style: loadSavedStyle()
       });
-      input.value = '';
     }
+    input.value = '';
   }
+}
+
+socket.on('private message', ({ from, message, timestamp, style }) => {
+  if (!privateChats[from]) privateChats[from] = [];
+  privateChats[from].push({ username: from, message, timestamp, style });
+  showBanner(`💌 Message privé reçu de ${from}`, 'success');
+  renderPrivateTabs();
+
+  if (currentPrivateChat === from) {
+    renderMessages();
+  }
+});
 
 
 function submitUserInfo() {
@@ -543,8 +575,11 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   socket.on('chat history', (messages) => {
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
-    chatMessages.innerHTML = '';
-    messages.forEach(addMessageToChat);
+    if (!currentPrivateChat) {
+  chatMessages.innerHTML = '';
+  messages.forEach(addMessageToChat);
+}
+
   });
 
   socket.on('chat message', addMessageToChat);
@@ -884,6 +919,51 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     applyStyleToInput(newStyle);
   });
 });
+
+function openPrivateChat(username) {
+  currentPrivateChat = username;
+  renderPrivateTabs();
+  renderMessages();
+}
+
+function closePrivateChat(username) {
+  delete privateChats[username];
+  if (currentPrivateChat === username) {
+    currentPrivateChat = null;
+    renderMessages();
+  }
+  renderPrivateTabs();
+}
+
+function renderPrivateTabs() {
+  const tabContainer = document.getElementById('private-tabs');
+  tabContainer.innerHTML = '';
+
+  const generalTab = document.createElement('button');
+  generalTab.textContent = '# Public';
+  generalTab.className = currentPrivateChat ? 'inactive-tab' : 'active-tab';
+  generalTab.addEventListener('click', () => {
+    currentPrivateChat = null;
+    renderMessages();
+    renderPrivateTabs();
+  });
+  tabContainer.appendChild(generalTab);
+
+  for (const username in privateChats) {
+    const btn = document.createElement('button');
+    btn.textContent = `@ ${username} ✖`;
+    btn.className = username === currentPrivateChat ? 'active-tab' : 'inactive-tab';
+    btn.addEventListener('click', () => openPrivateChat(username));
+
+    // Fermeture via croix
+    btn.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      closePrivateChat(username);
+    });
+
+    tabContainer.appendChild(btn);
+  }
+}
 
 
 });
