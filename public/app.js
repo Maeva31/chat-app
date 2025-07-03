@@ -137,14 +137,15 @@ if (usernameInput && passwordInput) {
   const roleIconSpan = li.querySelector('.role-icon');
   if (role === 'admin') {
     const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // ou ton icône admin
+    icon.src = '/diamond.ico'; // ou ton icône admin
     icon.alt = 'Admin';
     icon.title = 'Admin';
     icon.classList.add('admin-icon');
     roleIconSpan.appendChild(icon);
   } else if (role === 'modo') {
-    const icon = document.createElement('span');
-    icon.textContent = '🛡️';
+    const icon = document.createElement('img');
+    /*icon.textContent = '🛡️';*/
+    icon.src = '/favicon.ico'; 
     icon.title = 'Modérateur';
     icon.classList.add('modo-icon');
     roleIconSpan.appendChild(icon);
@@ -305,22 +306,25 @@ function getYouTubeVideoId(url) {
     // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
+      icon.src = '/diamond.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
-      icon.style.width = '18px';
-      icon.style.height = '18px';
-      icon.style.marginRight = '0px';
-      icon.style.verticalAlign = '-4px';
+      icon.style.width = '17px';
+      icon.style.height = '15px';
+      icon.style.marginRight = '3px';
+      icon.style.verticalAlign = '-1px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
-      const icon = document.createElement('span');
-      icon.textContent = '🛡️';
-      icon.title = 'Modérateur';
-      icon.style.marginRight = '0px';
-      icon.style.verticalAlign = '0px';
-      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-    }
+  const icon = document.createElement('img');
+  icon.src = '/favicon.ico'; // Assure-toi que cette image correspond bien à une icône de modérateur
+  icon.alt = 'Modérateur';
+  icon.title = 'Modérateur';
+  icon.style.width = '16px';
+  icon.style.height = '16px';
+  icon.style.marginRight = '2px';
+  icon.style.verticalAlign = '-2px';
+  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+}
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
