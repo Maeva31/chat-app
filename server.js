@@ -6,11 +6,15 @@ import configureMicrophone from './microphoneManager.js';
 
 const app = express();
 
-// Ajout header pour autoriser microphone
-app.use((req, res, next) => {
-  res.setHeader('Permissions-Policy', 'microphone=(self)');
-  next();
-});
+app.use(express.static('public', {
+  setHeaders: (res, path) => {
+    if (path.endsWith('chat.html')) {
+      res.setHeader('Permissions-Policy', 'microphone=(self)');
+    } else {
+      res.setHeader('Permissions-Policy', 'microphone=()');
+    }
+  }
+}));
 
 const server = http.createServer(app);
 const io = new Server(server);
