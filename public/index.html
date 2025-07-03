@@ -119,9 +119,15 @@
       </div>
     </aside>
 
-    <div id="private-tabs" style="display:flex; gap:8px; padding:8px 12px; background:#111; border-bottom:1px solid #444; border-top-left-radius:10px; border-top-right-radius:10px;"></div>
+   <!-- Message privé -->
+    <div id="chat-tabs" style="display:flex; gap:8px; margin-bottom:8px;">
+  <button id="tab-general" class="chat-tab selected" style="border-radius: 10px 10px 0 0; padding: 6px 12px; cursor: pointer; border: 1px solid #666; background-color: #333; color: white;">
+    Général
+  </button>
+  <div id="private-tabs-container" style="display:flex; gap:5px;"></div>
+</div>
+<div id="chat-messages" style="height: 400px; overflow-y: auto; border: 1px solid #444; padding: 10px; background: #111; border-radius: 0 10px 10px 10px;"></div>
 
-    <div id="chat-messages" style="overflow-y:auto; flex-grow:1; padding:10px; background:#222; color:#fff;"></div>
 
 
     <!-- Zone centrale : chat -->
