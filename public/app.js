@@ -173,6 +173,7 @@ genderSquare.textContent = age;
 li.appendChild(genderSquare);
 
 // Nom d’utilisateur
+
 const usernameSpan = document.createElement('span');
 usernameSpan.className = 'username-span clickable-username';
 usernameSpan.style.color = color;
