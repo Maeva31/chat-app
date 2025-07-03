@@ -229,25 +229,49 @@ main {
 #chat-input {
   display: flex;
   gap: 10px;
+  align-items: center;  /* centre verticalement */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 #message-input {
-  flex: 1;
+  flex: 1;              /* prend toute la place possible */
+  min-width: 0;         /* important en flexbox pour éviter débordement */
   padding: 1em;
   font-size: 1em;
   border-radius: 5px;
   border: none;
   background-color: #121212;
   color: white;
+  box-sizing: border-box;
+  /* facultatif: pour autoriser la zone texte à grandir verticalement si textarea */
+  resize: vertical;
+  max-height: 150px;
 }
 
+/* Le bouton reste sa taille mais ne rétrécit pas */
 #send-button {
   padding: 0.5em 1em;
   background-color: #4caf50;
   color: white;
   border: none;
   border-radius: 5px;
+  flex-shrink: 0;
+  cursor: pointer;
 }
+
+/* Responsive : en petit écran, empile le champ et bouton */
+@media (max-width: 600px) {
+  #chat-input {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #send-button {
+    width: 100%;
+  }
+}
+
 
 /* === USER LIST (RIGHT SIDEBAR) === */
 #user-list {
