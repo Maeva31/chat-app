@@ -217,57 +217,6 @@ if (logoutModal) {
   });
 }
 
-// Extrait l'ID vidéo YouTube depuis une URL et retourne l'URL de la miniature
-function getYouTubeThumbnail(url) {
-  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  if (match) {
-    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-  }
-  return null;
-}
-
-
-// Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
-function addYouTubeVideoIfAny(messageElement, messageText) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = messageText.match(urlRegex);
-  if (!urls) return;
-
-  urls.forEach(url => {
-    const videoId = getYouTubeVideoId(url);
-    if (videoId) {
-      const wrapper = document.createElement('div');
-      wrapper.classList.add('youtube-wrapper');
-
-      const iframe = document.createElement('iframe');
-      // Supprimer largeur/hauteur fixes pour laisser le CSS gérer
-      // iframe.width = '480';
-      // iframe.height = '270';
-      iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
-      iframe.frameBorder = '0';
-      iframe.allow =
-        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-      iframe.allowFullscreen = true;
-
-      wrapper.appendChild(iframe);
-      messageElement.appendChild(wrapper);
-    }
-  });
-}
-
-
-
-
-
-
-// Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
-function getYouTubeVideoId(url) {
-  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  return match ? match[1] : null;
-}
-
 
 
   // Ajoute un message dans la zone de chat
@@ -333,9 +282,7 @@ function getYouTubeVideoId(url) {
     });
   }
 
-  function isYouTubeUrl(url) {
-    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
-  }
+
 
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
@@ -880,6 +827,13 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     applyStyleToInput(newStyle);
   });
 });
+
+import {
+  getYouTubeVideoId,
+  getYouTubeThumbnail,
+  isYouTubeUrl,
+  addYouTubeVideoIfAny
+} from './js/youtube.js';
 
 
 });
