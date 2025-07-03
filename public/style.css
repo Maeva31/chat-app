@@ -766,26 +766,28 @@ button:focus {
 /* Responsive : ajuste automatiquement la taille en dessous de 500px */
 .youtube-wrapper {
   position: relative;
-  width: 100%;          /* prend toute la largeur du parent */
-  max-width: 480px;     /* largeur max fixe */
-  padding-top: 56.25%;  /* ratio 16:9 (9/16 = 0.5625 soit 56.25%) */
-  margin: 10px 0;
+  width: 100%;          /* prend toute la largeur possible */
+  max-width: 480px;     /* taille max 480px */
+  padding-top: 56.25%;  /* ratio 16:9 (270/480 = 0.5625 = 56.25%) */
+  margin: 10px 0 10px 10px;
   background-color: #222;
   border: 3px solid #888;
   border-radius: 6px;
   box-sizing: border-box;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .youtube-wrapper iframe {
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;          /* remplit tout le wrapper */
-  height: 100%;         /* idem hauteur */
+  width: 100%;          /* remplit tout le conteneur */
+  height: 100%;         /* remplit tout le conteneur */
   border: none;
   border-radius: 4px;
   display: block;
 }
+
 
 
