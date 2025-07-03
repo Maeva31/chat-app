@@ -205,13 +205,21 @@ export function initSocketHandlers() {
     const savedPassword = localStorage.getItem('password');
 
     if (!window.hasSentUserInfo && savedUsername && savedAge) {
-      socket.emit('set username', {
-        username: savedUsername,
-        gender: savedGender || 'non spécifié',
-        age: savedAge,
-        invisible: localStorage.getItem('invisibleMode') === 'true',
-        password: savedPassword || ''
-      });
+  console.log('Emission set username', {
+    username: savedUsername,
+    gender: savedGender,
+    age: savedAge,
+    invisible: localStorage.getItem('invisibleMode') === 'true',
+    password: savedPassword
+  });
+
+  socket.emit('set username', {
+    username: savedUsername,
+    gender: savedGender || 'non spécifié',
+    age: savedAge,
+    invisible: localStorage.getItem('invisibleMode') === 'true',
+    password: savedPassword || ''
+  });
       window.currentChannel = 'Général';
       localStorage.setItem('currentChannel', window.currentChannel);
       socket.emit('joinRoom', window.currentChannel);
