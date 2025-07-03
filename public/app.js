@@ -173,7 +173,7 @@ if (usernameInput && passwordInput) {
       genderIcon.classList.add('gender-icon-img');
       genderIcon.style.width = '16px';
       genderIcon.style.height = '16px';
-      genderIcon.style.marginRight = '4px';
+      genderIcon.style.marginRight = '1px';
       genderIconSpan.appendChild(genderIcon);
     }
   } else {
