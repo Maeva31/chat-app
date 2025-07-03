@@ -1,6 +1,3 @@
-// === microphoneManager.js ===
-// Gestion du micro pour 3 personnes max par salon
-
 const MAX_MIC_USERS = 3;
 const micAccessPerRoom = {}; // { roomName: [socketId1, socketId2, ...] }
 
@@ -35,6 +32,16 @@ export default function configureMicrophone(io) {
 
       micAccessPerRoom[roomName] = micAccessPerRoom[roomName].filter(id => id !== socket.id);
       io.to(roomName).emit('mic users', micAccessPerRoom[roomName]);
+    });
+
+    socket.on('requestAllMicUsers', () => {
+      const filteredMicAccess = {};
+      for (const room in micAccessPerRoom) {
+        if (room !== 'Général') {
+          filteredMicAccess[room] = micAccessPerRoom[room];
+        }
+      }
+      socket.emit('allMicUsers', filteredMicAccess);
     });
 
     socket.on('disconnect', () => {
