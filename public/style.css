@@ -765,24 +765,30 @@ button:focus {
 
 /* Responsive : ajuste automatiquement la taille en dessous de 500px */
 @media (max-width: 500px) {
-  .youtube-wrapper {
-    width: 100%;
-    height: auto;
-    aspect-ratio: 16 / 9;
-    margin-left: 0;
-    margin-right: 0;
-  }
-
-  .youtube-wrapper iframe {
-    width: 100%;
-    height: 100%;
-  }
+  ..youtube-wrapper {
+  width: 100%;           /* Prend toute la largeur disponible */
+  max-width: 480px;      /* Largeur max souhaitée */
+  aspect-ratio: 16 / 9;  /* Garde un ratio 16:9 automatiquement */
+  margin-top: 10px;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 3px;
+  background-color: #222;
+  border: 3px solid #888;
+  border-radius: 6px;
+  box-sizing: border-box;
+  overflow: hidden;
+  flex-shrink: 0;
 }
 
-body, html {
-  width: 100%;
-  overflow-x: hidden !important;
+.youtube-wrapper iframe {
+  width: 100%;           /* Remplit toute la largeur du conteneur */
+  height: 100%;          /* Remplit toute la hauteur du conteneur */
+  border: none;
+  display: block;
+  border-radius: 4px;
 }
+
 
 main, #content-container, #chat-container, #channel-sidebar, #user-list {
   min-width: 0 !important;
