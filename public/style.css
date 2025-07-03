@@ -306,18 +306,21 @@ main {
 }
 
 .gender-square {
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0; /* empêche de rétrécir */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  color: #000;
-  font-weight: bold;
-  font-size: 1em;
+  width: 20px;
+  height: 20px;
+  line-height: 20px; /* centre le texte verticalement */
+  text-align: center;
+  border-radius: 4px;
   background-color: #aaa;
+  color: white;
+  font-weight: bold;
+  font-size: 0.9em;
+  flex-shrink: 0;
+  display: inline-block;
+  vertical-align: middle;
+  object-fit: contain;
 }
+
 
 .age-span {
   color: #000;
