@@ -1,3 +1,5 @@
+import { addYouTubeVideoIfAny } from './js/youtube.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -828,12 +830,6 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
   });
 });
 
-import {
-  getYouTubeVideoId,
-  getYouTubeThumbnail,
-  isYouTubeUrl,
-  addYouTubeVideoIfAny
-} from './js/youtube.js';
 
 
 });
