@@ -765,41 +765,35 @@ button:focus {
 
 /* Responsive : ajuste automatiquement la taille en dessous de 500px */
 @media (max-width: 500px) {
-  ..youtube-wrapper {
-  width: 100%;           /* Prend toute la largeur disponible */
-  max-width: 480px;      /* Largeur max souhaitée */
-  aspect-ratio: 16 / 9;  /* Garde un ratio 16:9 automatiquement */
-  margin-top: 10px;
-  margin-left: 0;
-  margin-right: 0;
-  padding: 3px;
-  background-color: #222;
-  border: 3px solid #888;
-  border-radius: 6px;
-  box-sizing: border-box;
-  overflow: hidden;
-  flex-shrink: 0;
-}
+  .youtube-wrapper {
+    width: 100%;             /* prend toute la largeur disponible */
+    max-width: 480px;        /* largeur max */
+    aspect-ratio: 16 / 9;    /* ratio 16:9 */
+    box-sizing: border-box;
+    margin: 10px 0;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
 
-.youtube-wrapper iframe {
-  width: 100%;           /* Remplit toute la largeur du conteneur */
-  height: 100%;          /* Remplit toute la hauteur du conteneur */
-  border: none;
-  display: block;
-  border-radius: 4px;
-}
+  .youtube-wrapper iframe {
+    width: 100% !important;  /* force remplissage horizontal */
+    height: 100% !important; /* hauteur selon le ratio */
+    border: none;
+    display: block;
+    border-radius: 4px;
+  }
 
+  main, #content-container, #chat-container, #channel-sidebar, #user-list {
+    min-width: 0 !important;
+    max-width: 100% !important;
+    overflow-x: hidden !important;
+  }
 
-main, #content-container, #chat-container, #channel-sidebar, #user-list {
-  min-width: 0 !important;
-  max-width: 100% !important;
-  overflow-x: hidden !important;
-}
-
-.chat-messages,
-.message {
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-  word-break: break-word;
-  white-space: normal;
+  .chat-messages,
+  .message {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: normal;
+  }
 }
