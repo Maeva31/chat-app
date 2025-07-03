@@ -158,18 +158,36 @@ if (usernameInput && passwordInput) {
 
   // Ajout de l'event click sur le nom
   const usernameSpan = li.querySelector('.username-span');
-  usernameSpan.addEventListener('click', () => {
+  // --- Nouveau comportement : clic gauche = mention, double clic = MP, clic droit = mention rapide ---
+let clickTimeout;
+
+usernameSpan.addEventListener('click', () => {
+  clickTimeout = setTimeout(() => {
     const input = document.getElementById('message-input');
     const mention = `@${username} `;
     if (!input.value.includes(mention)) input.value = mention + input.value;
     input.focus();
     selectedUser = username;
-    if (username !== localStorage.getItem('username')) {
-  if (!privateChats[username]) privateChats[username] = [];
-  openPrivateChat(username);
-}
+  }, 250);
+});
 
-  });
+usernameSpan.addEventListener('dblclick', () => {
+  clearTimeout(clickTimeout);
+  if (username !== localStorage.getItem('username')) {
+    if (!privateChats[username]) privateChats[username] = [];
+    openPrivateChat(username);
+  }
+});
+
+usernameSpan.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('message-input');
+  const mention = `@${username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
+
+
 
   userList.appendChild(li);
 });
@@ -294,6 +312,11 @@ function getYouTubeVideoId(url) {
   if (!chatMessages) return;
 
   const newMessage = document.createElement('div');
+  if (currentPrivateChat) {
+  newMessage.style.backgroundColor = '#222'; // Fond sombre pour MP
+  newMessage.style.borderLeft = '4px solid #aaa'; // Marqueur
+}
+
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
