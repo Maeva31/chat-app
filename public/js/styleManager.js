@@ -1,68 +1,65 @@
-// styleManager.js
+const colorTextBtn = document.getElementById('color-text');
+const styleMenu = document.getElementById('style-menu');
+const styleColor = document.getElementById('style-color');
+const styleBold = document.getElementById('style-bold');
+const styleItalic = document.getElementById('style-italic');
+const styleFont = document.getElementById('style-font');
 
-export function initStyleManager() {
-  const styleButton = document.getElementById('styleButton');
-  const styleMenu = document.getElementById('styleMenu');
-  const messageInput = document.getElementById('message-input');
+const defaultStyle = {
+  color: '#ffffff',
+  bold: false,
+  italic: false,
+  font: 'Arial'
+};
 
-  if (!styleButton || !styleMenu || !messageInput) return;
-
-  styleButton.addEventListener('click', () => {
-    styleMenu.style.display = styleMenu.style.display === 'block' ? 'none' : 'block';
-  });
-
-  styleMenu.querySelectorAll('input, select').forEach(el => {
-    el.addEventListener('change', () => {
-      const style = getCurrentStyle();
-      saveStyle(style);
-      applyStyleToInput(style);
-    });
-  });
-
-  const savedStyle = loadSavedStyle();
-  applyStyleToInput(savedStyle);
-  setInputsFromStyle(savedStyle);
-
-  function applyStyleToInput(style) {
-    messageInput.style.fontWeight = style.bold ? 'bold' : 'normal';
-    messageInput.style.fontStyle = style.italic ? 'italic' : 'normal';
-    messageInput.style.color = style.color || '#ffffff';
-    messageInput.style.fontFamily = style.font || 'Arial, sans-serif';
-  }
-
-  function getCurrentStyle() {
-    return {
-      font: styleMenu.querySelector('select[name="font"]').value,
-      color: styleMenu.querySelector('input[name="color"]').value,
-      bold: styleMenu.querySelector('input[name="bold"]').checked,
-      italic: styleMenu.querySelector('input[name="italic"]').checked,
-    };
-  }
-
-  function setInputsFromStyle(style) {
-    if (!style) return;
-    styleMenu.querySelector('select[name="font"]').value = style.font || 'Arial, sans-serif';
-    styleMenu.querySelector('input[name="color"]').value = style.color || '#ffffff';
-    styleMenu.querySelector('input[name="bold"]').checked = style.bold || false;
-    styleMenu.querySelector('input[name="italic"]').checked = style.italic || false;
-  }
-
-  function saveStyle(style) {
-    localStorage.setItem('chatStyle', JSON.stringify(style));
-  }
-
-  window.applyStyleToInput = applyStyleToInput; // pour socketHandlers
+function loadSavedStyle() {
+  const saved = localStorage.getItem('chatStyle');
+  return saved ? JSON.parse(saved) : defaultStyle;
 }
 
-// FONCTION exportée séparément
-export function loadSavedStyle() {
-  const styleJSON = localStorage.getItem('chatStyle');
-  if (!styleJSON) {
-    return { font: 'Arial, sans-serif', color: '#ffffff', bold: false, italic: false };
-  }
-  try {
-    return JSON.parse(styleJSON);
-  } catch {
-    return { font: 'Arial, sans-serif', color: '#ffffff', bold: false, italic: false };
-  }
+function saveStyle(style) {
+  localStorage.setItem('chatStyle', JSON.stringify(style));
+}
+
+function applyStyleToInput(style) {
+  const input = document.getElementById('message-input');
+  if (!input) return;
+  input.style.color = style.color;
+  input.style.fontWeight = style.bold ? 'bold' : 'normal';
+  input.style.fontStyle = style.italic ? 'italic' : 'normal';
+  input.style.fontFamily = style.font;
+}
+
+const currentStyle = loadSavedStyle();
+styleColor.value = currentStyle.color;
+styleBold.checked = currentStyle.bold;
+styleItalic.checked = currentStyle.italic;
+styleFont.value = currentStyle.font;
+applyStyleToInput(currentStyle);
+
+// 🎨 Toggle menu de style
+if (colorTextBtn && styleMenu) {
+  colorTextBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    styleMenu.style.display = styleMenu.style.display === 'none' ? 'block' : 'none';
+  });
+
+  document.addEventListener('click', () => {
+    styleMenu.style.display = 'none';
+  });
+
+  styleMenu.addEventListener('click', e => e.stopPropagation());
+
+  [styleColor, styleBold, styleItalic, styleFont].forEach(el => {
+    el.addEventListener('input', () => {
+      const newStyle = {
+        color: styleColor.value,
+        bold: styleBold.checked,
+        italic: styleItalic.checked,
+        font: styleFont.value
+      };
+      saveStyle(newStyle);
+      applyStyleToInput(newStyle);
+    });
+  });
 }
