@@ -309,10 +309,10 @@ function getYouTubeVideoId(url) {
       icon.src = '/diamond.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
-      icon.style.width = '18px';
-      icon.style.height = '18px';
-      icon.style.marginRight = '0px';
-      icon.style.verticalAlign = '-4px';
+      icon.style.width = '17px';
+      icon.style.height = '15px';
+      icon.style.marginRight = '2px';
+      icon.style.verticalAlign = '-2px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
   const icon = document.createElement('img');
