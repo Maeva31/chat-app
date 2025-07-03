@@ -310,14 +310,14 @@ function getYouTubeVideoId(url) {
       icon.title = 'Admin';
       icon.style.width = '18px';
       icon.style.height = '18px';
-      icon.style.marginRight = '4px';
+      icon.style.marginRight = '0px';
       icon.style.verticalAlign = '-4px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
       const icon = document.createElement('span');
       icon.textContent = '🛡️';
       icon.title = 'Modérateur';
-      icon.style.marginRight = '1px';
+      icon.style.marginRight = '0px';
       icon.style.verticalAlign = '0px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     }
