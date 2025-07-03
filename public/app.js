@@ -143,7 +143,7 @@ if (usernameInput && passwordInput) {
     icon.classList.add('admin-icon');
     roleIconSpan.appendChild(icon);
   } else if (role === 'modo') {
-    const icon = document.createElement('span');
+    const icon = document.createElement('img');
     /*icon.textContent = '🛡️';*/
     icon.src = '/favicon.ico'; 
     icon.title = 'Modérateur';
