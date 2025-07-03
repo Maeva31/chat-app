@@ -259,33 +259,7 @@
   <span class="emoji">🚀</span>
 </div>
 
-<!-- Menu de style -->
-<div id="style-menu" style="
-  display: none;
-  position: absolute;
-  background: #222;
-  color: #fff;
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-">
-
-  <div id="style-menu" style="
-  display: none;
-  position: absolute;
-  background: #222;
-  color: #fff;
-  padding: 10px;
-  border-radius: 5px;
-  z-index: 100;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-">
-  <div id="style-menu" style="display:none; position:absolute; background:#222; color:#fff; padding:10px; border-radius:5px; z-index:100;">
+<div id="style-menu" style="display:none; position:absolute; background:#222; color:#fff; padding:10px; border-radius:5px; z-index:100;">
   <input type="color" id="style-color" value="#ffffff" />
   <label><input type="checkbox" id="style-bold" /> Gras</label>
   <label><input type="checkbox" id="style-italic" /> Italique</label>
@@ -306,7 +280,14 @@
 </div>
 
     </section>
-    
+
+    <!-- Sidebar droite : utilisateurs -->
+    <aside id="user-list">
+      <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
+      <ul id="users"></ul>
+    </aside>
+  </main>
+
   <!-- Scripts -->
   <script>
   document.addEventListener('DOMContentLoaded', () => {
