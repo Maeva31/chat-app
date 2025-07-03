@@ -5,8 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
  const adminUsernames = ['MaEvA'];
 const modoUsernames = ['DarkGirL'];
 
-let privateChats = {};       // Stocke messages privés par utilisateur { username: [msg,...] }
-let currentPrivateChat = null;  // null = chat général ouvert, sinon pseudo de la conversation privée ouverte
 
   let selectedUser = null;
   let hasSentUserInfo = false;
@@ -14,6 +12,147 @@ let currentPrivateChat = null;  // null = chat général ouvert, sinon pseudo de
   let bannerTimeoutId = null;
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
+
+  const privateTabsContainer = document.getElementById('private-tabs-container');
+const tabGeneralBtn = document.getElementById('tab-general');
+const chatMessages = document.getElementById('chat-messages');
+
+let currentTab = 'general';
+const privateMessages = {};
+const unreadPrivateTabs = new Set(); // Garde les onglets privés avec messages non lus
+
+function createPrivateTab(username) {
+  if (document.getElementById('tab-private-' + username)) return;
+
+  const btn = document.createElement('button');
+  btn.id = 'tab-private-' + username;
+  btn.classList.add('chat-tab');
+  btn.textContent = username;
+  btn.style.borderRadius = '10px 10px 0 0';
+  btn.style.padding = '6px 10px';
+  btn.style.cursor = 'pointer';
+  btn.style.border = '1px solid #666';
+  btn.style.backgroundColor = '#222';
+  btn.style.color = '#aaa';
+
+  btn.addEventListener('click', () => {
+    currentTab = `private:${username}`;
+    updateTabStyles();
+    renderMessages();
+
+    // Suppression de la notification jaune à la lecture
+    unreadPrivateTabs.delete(username);
+    updateTabNotification(username);
+  });
+
+  privateTabsContainer.appendChild(btn);
+}
+
+function updateTabNotification(username) {
+  const btn = document.getElementById('tab-private-' + username);
+  if (!btn) return;
+
+  if (unreadPrivateTabs.has(username)) {
+    // couleur jaune pour nouveau message non lu
+    btn.style.backgroundColor = '#ffc107';
+    btn.style.color = '#000';
+    btn.style.fontWeight = 'bold';
+  } else {
+    // couleur normale
+    btn.style.backgroundColor = currentTab === `private:${username}` ? '#4CAF50' : '#222';
+    btn.style.color = currentTab === `private:${username}` ? '#fff' : '#aaa';
+    btn.style.fontWeight = currentTab === `private:${username}` ? 'bold' : 'normal';
+  }
+}
+
+function updateTabStyles() {
+  tabGeneralBtn.classList.toggle('selected', currentTab === 'general');
+  tabGeneralBtn.style.backgroundColor = currentTab === 'general' ? '#4CAF50' : '#222';
+  tabGeneralBtn.style.color = currentTab === 'general' ? 'white' : '#aaa';
+  tabGeneralBtn.style.fontWeight = currentTab === 'general' ? 'bold' : 'normal';
+
+  for (const btn of privateTabsContainer.children) {
+    const username = btn.textContent;
+    if (unreadPrivateTabs.has(username)) {
+      updateTabNotification(username);
+    } else {
+      btn.style.backgroundColor = currentTab === `private:${username}` ? '#4CAF50' : '#222';
+      btn.style.color = currentTab === `private:${username}` ? '#fff' : '#aaa';
+      btn.style.fontWeight = currentTab === `private:${username}` ? 'bold' : 'normal';
+    }
+  }
+}
+
+function renderMessages() {
+  chatMessages.innerHTML = '';
+
+  if (currentTab === 'general') {
+    socket.emit('request history', currentChannel);
+  } else if (currentTab.startsWith('private:')) {
+    const username = currentTab.slice(8);
+    const msgs = privateMessages[username] || [];
+    msgs.forEach(displayMessageElement);
+  }
+}
+
+function displayMessageElement(msg) {
+  const newMessage = document.createElement('div');
+  const date = new Date(msg.timestamp);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const usernameSpan = document.createElement('span');
+  usernameSpan.textContent = msg.username;
+  usernameSpan.style.color = '#fff';
+  usernameSpan.style.fontWeight = 'bold';
+
+  const messageText = document.createElement('span');
+  messageText.textContent = msg.message;
+  messageText.style.color = '#eee';
+
+  newMessage.textContent = `[${timeString}] `;
+  newMessage.appendChild(usernameSpan);
+  newMessage.appendChild(document.createTextNode(': '));
+  newMessage.appendChild(messageText);
+  newMessage.classList.add('message');
+
+  chatMessages.appendChild(newMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Réception d'un message
+socket.on('chat message', (msg) => {
+  const myUsername = localStorage.getItem('username');
+
+  // Si message privé reçu ou envoyé par moi
+  if (msg.privateTo === myUsername || msg.privateFrom === myUsername) {
+    const otherUser = (msg.privateFrom === myUsername) ? msg.privateTo : msg.privateFrom;
+
+    if (!privateMessages[otherUser]) privateMessages[otherUser] = [];
+    privateMessages[otherUser].push(msg);
+
+    // Crée onglet privé s'il n'existe pas
+    createPrivateTab(otherUser);
+
+    // Si onglet privé actif, affiche direct
+    if (currentTab === `private:${otherUser}`) {
+      displayMessageElement(msg);
+      // Message lu → supprime notif
+      unreadPrivateTabs.delete(otherUser);
+      updateTabNotification(otherUser);
+    } else {
+      // Message non lu → ajoute notif (couleur jaune)
+      unreadPrivateTabs.add(otherUser);
+      updateTabNotification(otherUser);
+    }
+    return;
+  }
+
+  // Sinon message salon
+  if (msg.channel && msg.channel === currentChannel && currentTab === 'general') {
+    displayMessageElement(msg);
+  }
+});
+
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
@@ -106,87 +245,70 @@ if (usernameInput && passwordInput) {
   }
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
-function extractChannelName(text) {
-  text = text.replace(/\s*\(\d+\)$/, '').trim();
-  const parts = text.split('┊');
-  if (parts.length > 1) return parts[1].trim();
-  return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-}
-
+  function extractChannelName(text) {
+    text = text.replace(/\s*\(\d+\)$/, '').trim();
+    const parts = text.split('┊');
+    if (parts.length > 1) return parts[1].trim();
+    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+  }
 
   // Met à jour la liste des utilisateurs affichée
- function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    if (!userList) return;
+    userList.innerHTML = '';
+    if (!Array.isArray(users)) return;
 
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+    users.forEach(user => {
+  const username = user?.username || 'Inconnu';
+  const age = user?.age || '?';
+  const gender = user?.gender || 'non spécifié';
+  const role = user?.role || 'user';
 
-    const li = document.createElement('li');
-    li.classList.add('user-item');
+  const li = document.createElement('li');
+  li.classList.add('user-item');
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+  const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
+  // On vide le li et on construit le contenu manuellement
+  li.innerHTML = `
+    <span class="role-icon"></span> 
+    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+  `;
 
-    // Icones role
-    const roleIconSpan = li.querySelector('.role-icon');
-    if (role === 'admin') {
-      const icon = document.createElement('img');
-      icon.src = '/diamond.ico';
-      icon.alt = 'Admin';
-      icon.title = 'Admin';
-      icon.classList.add('admin-icon');
-      roleIconSpan.appendChild(icon);
-    } else if (role === 'modo') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Modérateur';
-      icon.title = 'Modérateur';
-      icon.classList.add('modo-icon');
-      roleIconSpan.appendChild(icon);
-    }
+  // Ajout icône dans le span.role-icon (avant le carré âge)
+  const roleIconSpan = li.querySelector('.role-icon');
+  if (role === 'admin') {
+    const icon = document.createElement('img');
+    icon.src = '/diamond.ico'; // ou ton icône admin
+    icon.alt = 'Admin';
+    icon.title = 'Admin';
+    icon.classList.add('admin-icon');
+    roleIconSpan.appendChild(icon);
+  } else if (role === 'modo') {
+    const icon = document.createElement('img');
+    /*icon.textContent = '🛡️';*/
+    icon.src = '/favicon.ico'; 
+    icon.title = 'Modérateur';
+    icon.classList.add('modo-icon');
+    roleIconSpan.appendChild(icon);
+  }
 
-    const usernameSpan = li.querySelector('.username-span');
-
-    // Clic gauche : mention
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
-
-    // Double clic : ouvrir conversation privée
-    usernameSpan.addEventListener('dblclick', () => {
-      currentPrivateChat = username;
-      renderMessages();
-      renderPrivateTabs();
-    });
-
-    // Clic droit : insérer mention
-    usernameSpan.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-    });
-
-    userList.appendChild(li);
+  // Ajout de l'event click sur le nom
+  const usernameSpan = li.querySelector('.username-span');
+  usernameSpan.addEventListener('click', () => {
+    const input = document.getElementById('message-input');
+    const mention = `@${username} `;
+    if (!input.value.includes(mention)) input.value = mention + input.value;
+    input.focus();
+    selectedUser = username;
   });
-}
 
+  userList.appendChild(li);
+});
+
+  }
 
  const logoutButton = document.getElementById('logoutButton');
 
@@ -560,19 +682,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
     modalError.style.display = 'block';
   });
 
-  socket.on('private message', ({ from, message, timestamp, style, role, gender }) => {
-  if (!privateChats[from]) privateChats[from] = [];
-  privateChats[from].push({ username: from, message, timestamp, style, role, gender });
-
-  showBanner(`💌 Message privé reçu de ${from}`, 'success');
-  renderPrivateTabs();
-
-  // Si onglet privé ouvert sur cet utilisateur, on rafraîchit les messages
-  if (currentPrivateChat === from) {
-    renderMessages();
-  }
-});
-
+  socket.on('chat history', (messages) => {
     const chatMessages = document.getElementById('chat-messages');
     if (!chatMessages) return;
     chatMessages.innerHTML = '';
@@ -590,7 +700,6 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 });
 
   socket.on('user list', updateUserList);
-
 
   socket.on('room created', (newChannel) => {
     const channelList = document.getElementById('channel-list');
@@ -917,87 +1026,6 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     applyStyleToInput(newStyle);
   });
 });
-
-function renderPrivateTabs() {
-  const tabContainer = document.getElementById('private-tabs');
-  if (!tabContainer) return;
-
-  tabContainer.innerHTML = '';
-
-  // Onglet Public (chat général)
-  const publicBtn = document.createElement('button');
-  publicBtn.textContent = '# Public';
-  publicBtn.className = currentPrivateChat ? 'inactive-tab' : 'active-tab';
-  publicBtn.style = `
-    padding:6px 12px;
-    border:none;
-    border-radius:12px;
-    background-color:${currentPrivateChat ? '#444' : '#4CAF50'};
-    color:white;
-    cursor:pointer;
-    font-weight:${currentPrivateChat ? 'normal' : 'bold'};
-  `;
-  publicBtn.addEventListener('click', () => {
-    currentPrivateChat = null;
-    renderMessages();
-    renderPrivateTabs();
-  });
-  tabContainer.appendChild(publicBtn);
-
-  // Onglets pour chaque conversation privée
-  for (const username in privateChats) {
-    const tabBtn = document.createElement('button');
-    tabBtn.textContent = `@${username} ✖`;
-    tabBtn.className = username === currentPrivateChat ? 'active-tab' : 'inactive-tab';
-    tabBtn.style = `
-      padding:6px 12px;
-      border:none;
-      border-radius:12px;
-      background-color:${username === currentPrivateChat ? '#4CAF50' : '#444'};
-      color:white;
-      cursor:pointer;
-      font-weight:${username === currentPrivateChat ? 'bold' : 'normal'};
-      position: relative;
-    `;
-
-    // Clic gauche : ouvrir la conversation privée
-    tabBtn.addEventListener('click', () => {
-      currentPrivateChat = username;
-      renderMessages();
-      renderPrivateTabs();
-    });
-
-    // Clic droit : fermer l'onglet
-    tabBtn.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      delete privateChats[username];
-      if (currentPrivateChat === username) {
-        currentPrivateChat = null;
-        renderMessages();
-      }
-      renderPrivateTabs();
-    });
-
-    tabContainer.appendChild(tabBtn);
-  }
-}
-
-// Fonction pour afficher messages dans #chat-messages selon l'onglet actif
-function renderMessages() {
-  const chatMessages = document.getElementById('chat-messages');
-  if (!chatMessages) return;
-  chatMessages.innerHTML = '';
-
-  if (currentPrivateChat) {
-    // Affiche messages privés de l'utilisateur sélectionné
-    const messages = privateChats[currentPrivateChat] || [];
-    messages.forEach(msg => addMessageToChat(msg));
-  } else {
-    // Chat général : demande l’historique et on affiche via socket.on('chat history')
-    socket.emit('request history', currentChannel);
-  }
-}
-
 
 
 });
