@@ -132,7 +132,7 @@ if (usernameInput && passwordInput) {
 
   const li = document.createElement('li');
   li.classList.add('user-item');
-  
+
   const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
   // On vide le li et on construit le contenu manuellement
@@ -142,28 +142,43 @@ if (usernameInput && passwordInput) {
     <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
   `;
 
-  const genderSquare = li.querySelector('.gender-square');
-if (genderSquare) {
-  const icon = document.createElement('img');
-  icon.src = genderIcons[gender] || genderIcons.default;
-  icon.alt = gender;
-  icon.title = gender;
-  icon.style.width = '16px';
-  icon.style.height = '16px';
+  li.innerHTML = `<span class="role-icon"></span>`;
 
-  const ageSpan = document.createElement('span');
-  ageSpan.textContent = age;
-  ageSpan.style.fontSize = '13px';
-  ageSpan.style.color = '#fff';
-
-  genderSquare.style.display = 'flex';
-  genderSquare.style.alignItems = 'center';
-  genderSquare.style.justifyContent = 'center';
-  genderSquare.style.gap = '4px';
-
-  genderSquare.appendChild(icon);
-  genderSquare.appendChild(ageSpan);
+// Si ce n’est ni un admin ni un modo, on ajoute une icône genre
+if (role !== 'admin' && role !== 'modo') {
+  const genderIcon = document.createElement('img');
+  genderIcon.src = genderIcons[gender] || genderIcons.default;
+  genderIcon.alt = gender;
+  genderIcon.title = gender;
+  genderIcon.style.width = '16px';
+  genderIcon.style.height = '16px';
+  genderIcon.style.marginRight = '4px';
+  li.appendChild(genderIcon);
 }
+
+// Carré d’âge
+const genderSquare = document.createElement('div');
+genderSquare.className = 'gender-square';
+genderSquare.style.backgroundColor = getUsernameColor(gender);
+genderSquare.style.display = 'inline-flex';
+genderSquare.style.alignItems = 'center';
+genderSquare.style.justifyContent = 'center';
+genderSquare.style.width = '28px';
+genderSquare.style.height = '18px';
+genderSquare.style.borderRadius = '4px';
+genderSquare.style.color = '#fff';
+genderSquare.style.fontSize = '13px';
+genderSquare.style.marginRight = '6px';
+genderSquare.textContent = age;
+li.appendChild(genderSquare);
+
+// Nom d’utilisateur
+const usernameSpan = document.createElement('span');
+usernameSpan.className = 'username-span clickable-username';
+usernameSpan.style.color = color;
+usernameSpan.title = role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : '';
+usernameSpan.textContent = username;
+li.appendChild(usernameSpan);
 
 
   // Ajout icône dans le span.role-icon (avant le carré âge)
