@@ -6,15 +6,18 @@ import configureMicrophone from './microphoneManager.js';
 
 const app = express();
 
+const allowedParentOrigin = 'https://chat.maevakonnect.fr';
+
 app.use(express.static('public', {
   setHeaders: (res, path) => {
     if (path.endsWith('chat.html') || path.endsWith('index.html')) {
-      res.setHeader('Permissions-Policy', 'microphone=(self)');
+      res.setHeader('Permissions-Policy', `microphone=(self "${allowedParentOrigin}")`);
     } else {
       res.setHeader('Permissions-Policy', 'microphone=()');
     }
   }
 }));
+
 
 
 const server = http.createServer(app);
