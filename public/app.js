@@ -312,7 +312,7 @@ function getYouTubeVideoId(url) {
       icon.style.width = '17px';
       icon.style.height = '15px';
       icon.style.marginRight = '3px';
-      icon.style.verticalAlign = '-2px';
+      icon.style.verticalAlign = '-1px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
   const icon = document.createElement('img');
@@ -322,7 +322,7 @@ function getYouTubeVideoId(url) {
   icon.style.width = '16px';
   icon.style.height = '16px';
   icon.style.marginRight = '2px';
-  icon.style.verticalAlign = '-3px';
+  icon.style.verticalAlign = '-2px';
   usernameSpan.insertBefore(icon, usernameSpan.firstChild);
 }
 
