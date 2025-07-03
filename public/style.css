@@ -667,27 +667,29 @@ button:focus {
 }
 
 /* Icône admin */
-.admin-icon,
-.modo-icon,
-.gender-icon-img {
+.admin-icon {
   width: 20px;
   height: 20px;
   vertical-align: middle;
   flex-shrink: 0;
-  object-fit: contain; /* Pour bien ajuster l'image dans la boîte */
 }
-
+/* Icône modo */
+.modo-icon {
+  width: 23px;
+  height: 50px;
+  font-size: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
 
 @media (max-width: 400px) {
   .admin-icon,
-  .modo-icon,
-  .gender-icon-img {
+  .modo-icon {
     width: 12px;
     height: 12px;
     font-size: 12px;
   }
 }
-
 
 #user-list {
   display: flex;
