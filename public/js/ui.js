@@ -1,10 +1,17 @@
+import { extractChannelName, showBanner } from './chatUtils.js';
+
 export function initUI() {
   const adminUsernames = ['MaEvA'];
   const modoUsernames = ['DarkGirL'];
 
-  // Inputs pseudo + password
+  // Inputs pseudo + password + autres champs
   const usernameInput = document.getElementById('username-input');
   const passwordInput = document.getElementById('password-input');
+  const genderSelect = document.getElementById('gender-select');
+  const ageInput = document.getElementById('age-input');
+  const submitBtn = document.getElementById('username-submit');
+  const modalError = document.getElementById('modal-error');
+  const modal = document.getElementById('myModal');
 
   if (usernameInput && passwordInput) {
     usernameInput.addEventListener('input', () => {
@@ -23,23 +30,36 @@ export function initUI() {
     }
   }
 
-  // --- AJOUT DE LA GESTION DU FORMULAIRE DE CONNEXION ---
-  const loginForm = document.getElementById('login-form');
-  if (loginForm) {
-    loginForm.addEventListener('submit', e => {
-      e.preventDefault();
+  // Gestion clic sur bouton "Valider" dans modal
+  if (submitBtn && usernameInput && genderSelect && ageInput && passwordInput && modalError && modal) {
+    submitBtn.addEventListener('click', () => {
+      modalError.style.display = 'none';
+      modalError.textContent = '';
 
       const username = usernameInput.value.trim();
-      const gender = document.querySelector('input[name="gender"]:checked')?.value || 'non spécifié';
-      const age = document.getElementById('age-input')?.value || '';
+      const gender = genderSelect.value || 'non spécifié';
+      const age = parseInt(ageInput.value, 10);
       const password = passwordInput.value || '';
 
       if (!username) {
-        showBanner('Veuillez saisir un pseudo.', 'error');
+        modalError.textContent = 'Veuillez saisir un pseudo.';
+        modalError.style.display = 'block';
         return;
       }
-      if (!age || isNaN(age) || age < 1) {
-        showBanner('Veuillez saisir un âge valide.', 'error');
+      if (username.length > 16) {
+        modalError.textContent = 'Le pseudo ne doit pas dépasser 16 caractères.';
+        modalError.style.display = 'block';
+        return;
+      }
+      if (!age || isNaN(age) || age < 18 || age > 89) {
+        modalError.textContent = 'Veuillez saisir un âge valide entre 18 et 89 ans.';
+        modalError.style.display = 'block';
+        return;
+      }
+
+      if (!window.socket) {
+        modalError.textContent = 'Connexion au serveur indisponible.';
+        modalError.style.display = 'block';
         return;
       }
 
@@ -53,10 +73,9 @@ export function initUI() {
     });
   }
 
-  // Modal pseudo si pas de pseudo
+  // Modal pseudo si pas de pseudo enregistré
   const savedUsername = localStorage.getItem('username');
   if (!savedUsername) {
-    const modal = document.getElementById('myModal');
     if (modal) modal.style.display = 'block';
   }
 
