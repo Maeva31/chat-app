@@ -177,7 +177,6 @@ li.appendChild(genderSquare);
 const usernameSpan = document.createElement('span');
 usernameSpan.className = 'username-span clickable-username';
 usernameSpan.style.color = color;
-usernameSpan.title = role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : '';
 usernameSpan.textContent = username;
 li.appendChild(usernameSpan);
 
