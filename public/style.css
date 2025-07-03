@@ -789,3 +789,20 @@ button:focus {
   border-radius: 4px;
   display: block;
 } 
+
+.active-tab {
+  background-color: #333;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  font-weight: bold;
+}
+.inactive-tab {
+  background-color: #ccc;
+  color: black;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+}
+
