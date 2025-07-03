@@ -65,6 +65,7 @@ if (usernameInput && passwordInput) {
     if (!invisibleBtn) return;
     invisibleBtn.textContent = `👻`;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
+    invisibleBtn.style.padding = '6px 10px';
   }
 
   if (invisibleBtn) {
