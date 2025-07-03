@@ -3,7 +3,8 @@ import { initSocketHandlers } from './socketHandlers.js';
 import { initStyleManager } from './styleManager.js';
 import { initEmojiPicker } from './emojiPicker.js';
 import { initInvisibleMode } from './invisibleMode.js';
-import { addChatMessage } from './chatUtils.js';
+import addChatMessage from './chatUtils.js';
+
 
 
 document.addEventListener('DOMContentLoaded', () => {
