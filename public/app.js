@@ -106,70 +106,87 @@ if (usernameInput && passwordInput) {
   }
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
-  function extractChannelName(text) {
-    text = text.replace(/\s*\(\d+\)$/, '').trim();
-    const parts = text.split('┊');
-    if (parts.length > 1) return parts[1].trim();
-    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-  }
+function extractChannelName(text) {
+  text = text.replace(/\s*\(\d+\)$/, '').trim();
+  const parts = text.split('┊');
+  if (parts.length > 1) return parts[1].trim();
+  return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+}
+
 
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
-    const userList = document.getElementById('users');
-    if (!userList) return;
-    userList.innerHTML = '';
-    if (!Array.isArray(users)) return;
+ function updateUserList(users) {
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
 
-    users.forEach(user => {
-  const username = user?.username || 'Inconnu';
-  const age = user?.age || '?';
-  const gender = user?.gender || 'non spécifié';
-  const role = user?.role || 'user';
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
 
-  const li = document.createElement('li');
-  li.classList.add('user-item');
+    const li = document.createElement('li');
+    li.classList.add('user-item');
 
-  const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-  // On vide le li et on construit le contenu manuellement
-  li.innerHTML = `
-    <span class="role-icon"></span> 
-    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-  `;
+    li.innerHTML = `
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+    `;
 
-  // Ajout icône dans le span.role-icon (avant le carré âge)
-  const roleIconSpan = li.querySelector('.role-icon');
-  if (role === 'admin') {
-    const icon = document.createElement('img');
-    icon.src = '/diamond.ico'; // ou ton icône admin
-    icon.alt = 'Admin';
-    icon.title = 'Admin';
-    icon.classList.add('admin-icon');
-    roleIconSpan.appendChild(icon);
-  } else if (role === 'modo') {
-    const icon = document.createElement('img');
-    /*icon.textContent = '🛡️';*/
-    icon.src = '/favicon.ico'; 
-    icon.title = 'Modérateur';
-    icon.classList.add('modo-icon');
-    roleIconSpan.appendChild(icon);
-  }
+    // Icones role
+    const roleIconSpan = li.querySelector('.role-icon');
+    if (role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.classList.add('admin-icon');
+      roleIconSpan.appendChild(icon);
+    } else if (role === 'modo') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.classList.add('modo-icon');
+      roleIconSpan.appendChild(icon);
+    }
 
-  // Ajout de l'event click sur le nom
-  const usernameSpan = li.querySelector('.username-span');
-  usernameSpan.addEventListener('click', () => {
-    const input = document.getElementById('message-input');
-    const mention = `@${username} `;
-    if (!input.value.includes(mention)) input.value = mention + input.value;
-    input.focus();
-    selectedUser = username;
+    const usernameSpan = li.querySelector('.username-span');
+
+    // Clic gauche : mention
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
+    // Double clic : ouvrir conversation privée
+    usernameSpan.addEventListener('dblclick', () => {
+      currentPrivateChat = username;
+      renderMessages();
+      renderPrivateTabs();
+    });
+
+    // Clic droit : insérer mention
+    usernameSpan.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
+
+    userList.appendChild(li);
   });
+}
 
-  userList.appendChild(li);
-});
-
-  }
 
  const logoutButton = document.getElementById('logoutButton');
 
@@ -574,7 +591,6 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
   socket.on('user list', updateUserList);
 
-  socket.on('private message', ({ from, message, timestamp, style, role, gender }) => {
 
   socket.on('room created', (newChannel) => {
     const channelList = document.getElementById('channel-list');
