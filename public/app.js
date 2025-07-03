@@ -912,9 +912,10 @@ async function startMic() {
     socket.emit('mic status', { active: true, room: currentChannel });
   } catch (err) {
     console.error('Erreur accès microphone:', err);
-    alert('Impossible d\'accéder au microphone.');
+    alert(`Impossible d'accéder au microphone : ${err.name} - ${err.message}`);
   }
 }
+
 
 // Stoppe le micro
 function stopMic() {
