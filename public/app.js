@@ -306,7 +306,7 @@ function getYouTubeVideoId(url) {
     // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
+      icon.src = '/diamond.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
       icon.style.width = '18px';
@@ -316,7 +316,8 @@ function getYouTubeVideoId(url) {
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
       const icon = document.createElement('span');
-      icon.textContent = '🛡️';
+      /* icon.textContent = '🛡️';*/
+      icon.src = '/favicon.ico';
       icon.title = 'Modérateur';
       icon.style.marginRight = '0px';
       icon.style.verticalAlign = '0px';
