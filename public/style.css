@@ -602,7 +602,7 @@ button:focus {
 .user-item .role-icon img,
 .user-item .role-icon svg {
   max-width: 20px;
-  max-height: 23px;
+  max-height: 20px;
   display: block;
 }
 
