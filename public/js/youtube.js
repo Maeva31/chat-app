@@ -42,3 +42,9 @@ export function addYouTubeVideoIfAny(messageElement, messageText) {
     }
   });
 }
+
+      if (part.trim() !== '') {
+        messageText.appendChild(document.createTextNode(part));
+      }
+    }
+  });
