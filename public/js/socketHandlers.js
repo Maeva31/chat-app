@@ -3,7 +3,6 @@ import { loadSavedStyle } from './styleManager.js';
 
 export function initSocketHandlers() {
   window.socket = io(); // global pour UI et autres modules
-
   window.currentChannel = 'Général';
 
   const socket = window.socket;
@@ -13,8 +12,6 @@ export function initSocketHandlers() {
     localStorage.setItem('currentChannel', newChannel);
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) chatMessages.innerHTML = '';
-    // Mise à jour visuelle dans UI (via événement clique géré dans ui.js)
-    // ...
     socket.emit('request history', newChannel);
   });
 
@@ -37,7 +34,6 @@ export function initSocketHandlers() {
     if (chatWrapper) chatWrapper.style.display = 'block';
 
     socket.emit('joinRoom', window.currentChannel);
-    // selectChannelInUI(window.currentChannel); // fait dans ui.js au clic
 
     window.hasSentUserInfo = true;
     window.initialLoadComplete = true;
@@ -66,7 +62,13 @@ export function initSocketHandlers() {
     const channelList = document.getElementById('channel-list');
     if (!channelList) return;
 
-    if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
+    // Protection avant extractChannelName
+    const exists = [...channelList.children].some(li => {
+      if (!li || typeof li.textContent !== 'string') return false;
+      return extractChannelName(li.textContent) === newChannel;
+    });
+
+    if (!exists) {
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = {
@@ -96,30 +98,35 @@ export function initSocketHandlers() {
     if (!channelList) return;
 
     [...channelList.children].forEach(li => {
+      if (!li || typeof li.textContent !== 'string') return;
       const name = extractChannelName(li.textContent);
-      if (name && counts[name] !== undefined) {
-        const emoji = {
-          "Général": "💬",
-          "Musique": "🎧",
-          "Gaming": "🎮",
-          "Détente": "🌿"
-        }[name] || "💬";
+      if (!name) return;
+      if (counts[name] === undefined) return;
 
-        let countSpan = li.querySelector('.user-count');
-        if (!countSpan) {
-          countSpan = document.createElement('span');
-          countSpan.classList.add('user-count');
-          li.appendChild(countSpan);
-        }
+      const emoji = {
+        "Général": "💬",
+        "Musique": "🎧",
+        "Gaming": "🎮",
+        "Détente": "🌿"
+      }[name] || "💬";
 
-        const invisibleMode = localStorage.getItem('invisibleMode') === 'true';
-        if (invisibleMode && name === window.currentChannel) {
-          countSpan.textContent = '';
-          li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-        } else {
-          countSpan.textContent = ` (${counts[name]})`;
-          li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-        }
+      let countSpan = li.querySelector('.user-count');
+      if (!countSpan) {
+        countSpan = document.createElement('span');
+        countSpan.classList.add('user-count');
+        li.appendChild(countSpan);
+      }
+
+      const invisibleMode = localStorage.getItem('invisibleMode') === 'true';
+      if (invisibleMode && name === window.currentChannel) {
+        countSpan.textContent = '';
+        // Attention li.firstChild peut être un textNode, on remplace textContent complet
+        li.textContent = `# ${emoji} ┊ ${name} `;
+        li.appendChild(countSpan); // On rajoute le span vide
+      } else {
+        countSpan.textContent = ` (${counts[name]})`;
+        li.textContent = `# ${emoji} ┊ ${name} `;
+        li.appendChild(countSpan);
       }
     });
   });
