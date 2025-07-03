@@ -585,37 +585,26 @@ button:focus {
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Optionnel pour que le texte ne dépasse pas */
   min-width: 0;
 }
 
-/* Zone icône rôle (admin/modo), largeur et hauteur fixes */
+/* Zone icône rôle (admin/modo), largeur fixe */
 .user-item .role-icon {
-  width: 24px;       /* largeur fixe */
-  height: 24px;      /* hauteur fixe */
+  width: 24px;  /* largeur fixe, à ajuster */
   flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
-/* Icône admin (image) : taille fixe */
-.user-item .role-icon img.admin-icon {
-  width: 20px;
-  height: 20px;
+/* Icône admin/mode centrée dans le conteneur */
+.user-item .role-icon img,
+.user-item .role-icon svg {
+  max-width: 20px;
+  max-height: 20px;
   display: block;
 }
-
-/* Icône modo (emoji dans span) : taille et centrage */
-.user-item .role-icon span.modo-icon {
-  font-size: 20px;
-  line-height: 20px;
-  width: 20px;
-  height: 20px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
 
 /* Carré âge, largeur fixe */
 .user-item .age-square {
