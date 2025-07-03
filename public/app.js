@@ -881,5 +881,73 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
   });
 });
 
+// --- Gestion microphone client ---
+
+const micButton = document.createElement('button');
+micButton.id = 'mic-toggle-btn';
+micButton.textContent = '🎙️';
+micButton.style.position = 'fixed';
+micButton.style.bottom = '20px';
+micButton.style.right = '20px';
+micButton.style.fontSize = '24px';
+micButton.style.padding = '10px';
+micButton.style.borderRadius = '50%';
+micButton.style.border = 'none';
+micButton.style.backgroundColor = '#f44336'; // rouge = off
+micButton.style.color = 'white';
+micButton.style.cursor = 'pointer';
+micButton.title = 'Activer/Désactiver microphone';
+
+document.body.appendChild(micButton);
+
+let micStream = null;
+let micActive = false;
+
+// Active le micro (getUserMedia)
+async function startMic() {
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micActive = true;
+    micButton.style.backgroundColor = '#4CAF50'; // vert = on
+    socket.emit('mic status', { active: true, room: currentChannel });
+  } catch (err) {
+    console.error('Erreur accès microphone:', err);
+    alert('Impossible d\'accéder au microphone.');
+  }
+}
+
+// Stoppe le micro
+function stopMic() {
+  if (micStream) {
+    micStream.getTracks().forEach(track => track.stop());
+    micStream = null;
+  }
+  micActive = false;
+  micButton.style.backgroundColor = '#f44336';
+  socket.emit('mic status', { active: false, room: currentChannel });
+}
+
+// Bouton toggle micro
+micButton.addEventListener('click', () => {
+  if (!micActive) {
+    startMic();
+  } else {
+    stopMic();
+  }
+});
+
+// Quand on change de salon, si micro actif, prévenir serveur du changement de salon
+socket.on('joinedRoom', (newChannel) => {
+  currentChannel = newChannel;
+  if (micActive) {
+    socket.emit('mic status', { active: true, room: currentChannel });
+  }
+});
+
+// Si déconnexion socket, couper le micro
+socket.on('disconnect', () => {
+  if (micActive) stopMic();
+});
+
 
 });
