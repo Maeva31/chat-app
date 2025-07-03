@@ -66,22 +66,23 @@ function updateTabNotification(username) {
 }
 
 function updateTabStyles() {
-  tabGeneralBtn.classList.toggle('selected', currentTab === 'general');
-  tabGeneralBtn.style.backgroundColor = currentTab === 'general' ? '#4CAF50' : '#222';
-  tabGeneralBtn.style.color = currentTab === 'general' ? 'white' : '#aaa';
-  tabGeneralBtn.style.fontWeight = currentTab === 'general' ? 'bold' : 'normal';
+  if (tabGeneralBtn) {
+    tabGeneralBtn.classList.toggle('selected', currentTab === 'general');
+    tabGeneralBtn.classList.toggle('unread', false);
+  }
 
   for (const btn of privateTabsContainer.children) {
     const username = btn.textContent;
     if (unreadPrivateTabs.has(username)) {
-      updateTabNotification(username);
+      btn.classList.add('unread');
+      btn.classList.remove('selected');
     } else {
-      btn.style.backgroundColor = currentTab === `private:${username}` ? '#4CAF50' : '#222';
-      btn.style.color = currentTab === `private:${username}` ? '#fff' : '#aaa';
-      btn.style.fontWeight = currentTab === `private:${username}` ? 'bold' : 'normal';
+      btn.classList.remove('unread');
+      btn.classList.toggle('selected', currentTab === `private:${username}`);
     }
   }
 }
+
 
 function renderMessages() {
   chatMessages.innerHTML = '';
