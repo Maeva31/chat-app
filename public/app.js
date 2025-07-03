@@ -42,15 +42,6 @@ if (usernameInput && passwordInput) {
     default: '#aaa'
   };
 
-  const genderIcons = {
-  Homme: '/male.ico',   
-  Femme: '/female.ico',
-  Autre: '/icons/autre.ico',
-  'non spécifié': '/icons/unknown.ico',
-  default: '/icons/unknown.ico'
-};
-
-
   const channelEmojis = {
     "Général": "💬",
     "Musique": "🎧",
@@ -124,7 +115,7 @@ if (usernameInput && passwordInput) {
     userList.innerHTML = '';
     if (!Array.isArray(users)) return;
 
-   users.forEach(user => {
+    users.forEach(user => {
   const username = user?.username || 'Inconnu';
   const age = user?.age || '?';
   const gender = user?.gender || 'non spécifié';
@@ -135,50 +126,33 @@ if (usernameInput && passwordInput) {
 
   const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-  // Construction HTML
+  // On vide le li et on construit le contenu manuellement
   li.innerHTML = `
-    <div class="user-info-row">
-      <span class="role-icon"></span>
-      <span class="gender-icon"></span>
-      <div class="gender-square">${age}</div>
-      <span class="username-span clickable-username" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    </div>
+    <span class="role-icon"></span> 
+    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
   `;
 
-  // Ajout icône role (admin/modo)
+  // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
   if (role === 'admin') {
     const icon = document.createElement('img');
-    icon.src = '/diamond.ico';
+    icon.src = '/diamond.ico'; // ou ton icône admin
     icon.alt = 'Admin';
     icon.title = 'Admin';
     icon.classList.add('admin-icon');
     roleIconSpan.appendChild(icon);
   } else if (role === 'modo') {
     const icon = document.createElement('img');
-    icon.src = '/favicon.ico';
-    icon.alt = 'Modérateur';
+    /*icon.textContent = '🛡️';*/
+    icon.src = '/favicon.ico'; 
     icon.title = 'Modérateur';
     icon.classList.add('modo-icon');
     roleIconSpan.appendChild(icon);
   }
 
-  // Ajout icône genre (sauf admin/modo)
-  const genderIconSpan = li.querySelector('.gender-icon');
-  if (role !== 'admin' && role !== 'modo') {
-    const genderIconImg = document.createElement('img');
-    genderIconImg.src = genderIcons[gender] || genderIcons.default;
-    genderIconImg.alt = gender;
-    genderIconImg.title = gender;
-    genderIconImg.classList.add('gender-icon-img');
-    genderIconSpan.appendChild(genderIconImg);
-  } else {
-    genderIconSpan.remove();
-  }
-
-  // Clic sur pseudo
+  // Ajout de l'event click sur le nom
   const usernameSpan = li.querySelector('.username-span');
-  usernameSpan.style.color = color;
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
     const mention = `@${username} `;
@@ -189,8 +163,6 @@ if (usernameInput && passwordInput) {
 
   userList.appendChild(li);
 });
-
-
 
   }
 
