@@ -15,7 +15,7 @@ export function initInvisibleMode() {
     invisibleMode = !invisibleMode;
     localStorage.setItem('invisibleMode', invisibleMode);
     updateInvisibleButton();
-    if (window.socket) {
+    if (window.socket && window.socket.connected) {
       window.socket.emit('toggle invisible', invisibleMode);
     }
   });
