@@ -137,14 +137,15 @@ if (usernameInput && passwordInput) {
   const roleIconSpan = li.querySelector('.role-icon');
   if (role === 'admin') {
     const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // ou ton icône admin
+    icon.src = '/diamond.ico'; // ou ton icône admin
     icon.alt = 'Admin';
     icon.title = 'Admin';
     icon.classList.add('admin-icon');
     roleIconSpan.appendChild(icon);
   } else if (role === 'modo') {
     const icon = document.createElement('span');
-    icon.textContent = '🛡️';
+    /*icon.textContent = '🛡️';*/
+    icon.src = '/favicon.ico'; 
     icon.title = 'Modérateur';
     icon.classList.add('modo-icon');
     roleIconSpan.appendChild(icon);
