@@ -126,32 +126,63 @@ if (usernameInput && passwordInput) {
 
   const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-  // On vide le li et on construit le contenu manuellement
   li.innerHTML = `
     <span class="role-icon"></span> 
+    <span class="gender-icon"></span> 
     <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
     <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
   `;
 
-  // Ajout icône dans le span.role-icon (avant le carré âge)
+  // Icônes admin/modo devant pseudo
   const roleIconSpan = li.querySelector('.role-icon');
   if (role === 'admin') {
     const icon = document.createElement('img');
-    icon.src = '/diamond.ico'; // ou ton icône admin
+    icon.src = '/diamond.ico';
     icon.alt = 'Admin';
     icon.title = 'Admin';
     icon.classList.add('admin-icon');
     roleIconSpan.appendChild(icon);
   } else if (role === 'modo') {
     const icon = document.createElement('img');
-    /*icon.textContent = '🛡️';*/
-    icon.src = '/favicon.ico'; 
+    icon.src = '/favicon.ico';
+    icon.alt = 'Modérateur';
     icon.title = 'Modérateur';
     icon.classList.add('modo-icon');
     roleIconSpan.appendChild(icon);
   }
 
-  // Ajout de l'event click sur le nom
+  // Icônes homme/femme devant carré âge uniquement si role user (pas admin/modo)
+  if (role === 'user') {
+    const genderIconSpan = li.querySelector('.gender-icon');
+    const genderIcon = document.createElement('img');
+
+    if (gender === 'Homme') {
+      genderIcon.src = '/man.ico'; // Remplace par le chemin réel de l’icône homme
+      genderIcon.alt = 'Homme';
+      genderIcon.title = 'Homme';
+    } else if (gender === 'Femme') {
+      genderIcon.src = '/woman.ico'; // Remplace par le chemin réel de l’icône femme
+      genderIcon.alt = 'Femme';
+      genderIcon.title = 'Femme';
+    } else {
+      // Pas d'icône pour autres genres ou non spécifié
+      genderIconSpan.style.display = 'none';
+    }
+
+    if (genderIcon.src) {
+      genderIcon.classList.add('gender-icon-img');
+      genderIcon.style.width = '16px';
+      genderIcon.style.height = '16px';
+      genderIcon.style.marginRight = '4px';
+      genderIconSpan.appendChild(genderIcon);
+    }
+  } else {
+    // Pas d'icône si admin/modo
+    const genderIconSpan = li.querySelector('.gender-icon');
+    if (genderIconSpan) genderIconSpan.style.display = 'none';
+  }
+
+  // Clic sur nom pour mention
   const usernameSpan = li.querySelector('.username-span');
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
@@ -163,6 +194,7 @@ if (usernameInput && passwordInput) {
 
   userList.appendChild(li);
 });
+
 
   }
 
