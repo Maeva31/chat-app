@@ -13,21 +13,37 @@ export function initUI() {
   const modalError = document.getElementById('modal-error');
   const modal = document.getElementById('myModal');
 
+  // Fonction pour afficher ou cacher le champ mot de passe selon le pseudo
+  function updatePasswordFieldVisibility(username) {
+    if (adminUsernames.includes(username) || modoUsernames.includes(username)) {
+      passwordInput.style.display = 'block';
+    } else {
+      passwordInput.style.display = 'none';
+      passwordInput.value = '';
+      localStorage.removeItem('password');
+    }
+  }
+
   if (usernameInput && passwordInput) {
+    // Restaurer mot de passe sauvegardé
+    const savedPassword = localStorage.getItem('password') || '';
+    passwordInput.value = savedPassword;
+
+    // Restaurer pseudo sauvegardé, le mettre dans le champ et adapter visibilité mot de passe
+    const savedUsername = localStorage.getItem('username') || '';
+    usernameInput.value = savedUsername;
+    updatePasswordFieldVisibility(savedUsername);
+
+    // Quand on modifie le pseudo, adapter la visibilité du mot de passe
     usernameInput.addEventListener('input', () => {
       const val = usernameInput.value.trim();
-      if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-        passwordInput.style.display = 'block';
-      } else {
-        passwordInput.style.display = 'none';
-        passwordInput.value = '';
-      }
+      updatePasswordFieldVisibility(val);
     });
 
-    const initialUsername = usernameInput.value.trim();
-    if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
-      passwordInput.style.display = 'block';
-    }
+    // Sauvegarder le mot de passe à chaque changement
+    passwordInput.addEventListener('input', () => {
+      localStorage.setItem('password', passwordInput.value);
+    });
   }
 
   // Gestion clic sur bouton "Valider" dans modal
@@ -62,6 +78,12 @@ export function initUI() {
         modalError.style.display = 'block';
         return;
       }
+
+      // Sauvegarder pseudo, mot de passe, genre, age dans localStorage
+      localStorage.setItem('username', username);
+      localStorage.setItem('password', password);
+      localStorage.setItem('gender', gender);
+      localStorage.setItem('age', age);
 
       window.socket.emit('set username', {
         username,
