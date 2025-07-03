@@ -869,7 +869,7 @@ document.addEventListener('click', () => {
 
 styleMenu.addEventListener('click', e => e.stopPropagation());
 
-// Mise à jour et sauvegarde des styles
+// === STYLE : couleur, gras, italique, police ===
 [styleColor, styleBold, styleItalic, styleFont].forEach(el => {
   el.addEventListener('input', () => {
     const newStyle = {
@@ -882,6 +882,49 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     applyStyleToInput(newStyle);
   });
 });
+
+// === TAILLE DE POLICE (champ de saisie) ===
+const increaseBtn = document.getElementById('increase-font');
+const decreaseBtn = document.getElementById('decrease-font');
+const fontSizeDisplay = document.getElementById('font-size-display');
+
+let currentFontSize = parseInt(localStorage.getItem('chatFontSize')) || 14;
+
+function updateFontSizeDisplay() {
+  if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentFontSize}px`;
+}
+
+function applyFontSize() {
+  const input = document.getElementById('message-input');
+  if (input) input.style.fontSize = `${currentFontSize}px`;
+}
+
+if (increaseBtn) {
+  increaseBtn.addEventListener('click', () => {
+    if (currentFontSize < 30) {
+      currentFontSize++;
+      localStorage.setItem('chatFontSize', currentFontSize);
+      updateFontSizeDisplay();
+      applyFontSize();
+    }
+  });
+}
+
+if (decreaseBtn) {
+  decreaseBtn.addEventListener('click', () => {
+    if (currentFontSize > 8) {
+      currentFontSize--;
+      localStorage.setItem('chatFontSize', currentFontSize);
+      updateFontSizeDisplay();
+      applyFontSize();
+    }
+  });
+}
+
+// Initialisation taille de police
+updateFontSizeDisplay();
+applyFontSize();
+
 
 
 });
