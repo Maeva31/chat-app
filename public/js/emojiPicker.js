@@ -1,29 +1,31 @@
-export function initEmojiPicker() {
-  const emojiButton = document.getElementById('emoji-button');
-  const emojiPicker = document.getElementById('emoji-picker');
-  const messageInput = document.getElementById('message-input');
+const emojiButton = document.getElementById('emoji-button');
+const emojiPicker = document.getElementById('emoji-picker');
+const messageInput = document.getElementById('message-input');
 
-  if (!emojiButton || !emojiPicker || !messageInput) return;
+if (emojiPicker && emojiButton && messageInput) {
+  emojiPicker.style.display = 'none';
 
-  emojiButton.addEventListener('click', () => {
-    emojiPicker.style.display = emojiPicker.style.display === 'block' ? 'none' : 'block';
+  emojiButton.addEventListener('click', (e) => {
+    e.stopPropagation();
+    emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
   });
 
-  emojiPicker.querySelectorAll('.emoji').forEach(emojiSpan => {
-    emojiSpan.addEventListener('click', () => {
-      messageInput.value += emojiSpan.textContent;
+  emojiPicker.querySelectorAll('.emoji').forEach(emoji => {
+    emoji.style.cursor = 'pointer';
+    emoji.style.fontSize = '22px';
+    emoji.style.margin = '5px';
+    emoji.addEventListener('click', () => {
+      messageInput.value += emoji.textContent;
       messageInput.focus();
-      emojiPicker.style.display = 'none';  // Fermer après sélection
+      emojiPicker.style.display = 'none';
     });
   });
 
-  // Fermer le picker si clic en dehors
-  document.addEventListener('click', (event) => {
-    if (
-      event.target !== emojiButton &&
-      !emojiPicker.contains(event.target)
-    ) {
-      emojiPicker.style.display = 'none';
-    }
+  document.addEventListener('click', () => {
+    emojiPicker.style.display = 'none';
+  });
+
+  emojiPicker.addEventListener('click', e => {
+    e.stopPropagation();
   });
 }
