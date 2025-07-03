@@ -255,7 +255,6 @@ if (logoutModal) {
     usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
-    // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/favicon.ico';
@@ -275,7 +274,6 @@ if (logoutModal) {
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     }
 
-    // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${msg.username} `;
@@ -283,8 +281,6 @@ if (logoutModal) {
       input.focus();
     });
   }
-
-
 
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
@@ -298,7 +294,7 @@ if (logoutModal) {
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
       if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
+        return; // On ignore dans texte, vidéo intégrée ailleurs
       } else {
         const a = document.createElement('a');
         a.href = part;
@@ -316,19 +312,15 @@ if (logoutModal) {
     }
   });
 
-  // Assemblage avec pseudo + ":" + espace + message
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
 
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide, en gras
-if (messageText.textContent.trim() !== '') {
-  const separator = document.createElement('strong');
-  separator.textContent = ': ';
-  newMessage.appendChild(separator);
-  newMessage.appendChild(messageText);
-}
-
+  if (messageText.textContent.trim() !== '') {
+    const separator = document.createElement('strong');
+    separator.textContent = ': ';
+    newMessage.appendChild(separator);
+    newMessage.appendChild(messageText);
+  }
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
@@ -338,6 +330,7 @@ if (messageText.textContent.trim() !== '') {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
 
