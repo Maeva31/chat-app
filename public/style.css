@@ -682,6 +682,14 @@ button:focus {
   flex-shrink: 0;
 }
 
+.gender-icon-img {
+   width: 23px;
+  height: 50px;
+  font-size: 8px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
 @media (max-width: 400px) {
   .admin-icon,
   .modo-icon {
