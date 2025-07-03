@@ -76,10 +76,11 @@
 
   
   <!-- Modal d'information utilisateur -->
-  <div id="myModal" class="modal" style="display:none;">
-    <div class="modal-content">
-      <h2>Bienvenue !</h2>
-      <p>Veuillez entrer vos informations pour accéder au chat.</p>
+ <div id="myModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <img src="https://maevakonnect.fr/maevacircle.png" alt="Image modal" class="modal-image" />
+    <h2>Bienvenue !</h2>
+    <p>Veuillez entrer vos informations pour accéder au chat.</p>
 
       <label for="username-input">Pseudo (max 16 caractères)</label>
       <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" autocomplete="off" />
@@ -130,12 +131,13 @@
 
       <!-- Champ message avec bouton emoji -->
       <div id="chat-input" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
-        <button id="emoji-button" title="Insérer un émoji" style="font-size: 22px; background: transparent; border: none; outline: none; cursor: pointer;">😊</button>
+        <button id="color-text" title="Choisir une couleur" style="font-size: 20px; background: transparent; border: none; outline: none; cursor: pointer;">🎨</button>
+        <button id="emoji-button" title="Insérer un émoji" style="font-size: 20px; background: transparent; border: none; outline: none; cursor: pointer;">😊</button>
         <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" style="flex: 1;" />
       </div>
 
       <!-- Emoji Picker -->
-<div id="emoji-picker" style="display: none; position: absolute; bottom: 70px; left: 10px; background: white; border: 1px solid #ccc; border-radius: 10px; padding: 10px; z-index: 1000; max-width: 350px; max-height: 250px; overflow-y: auto; display: flex; flex-wrap: wrap; gap: 5px;">
+<div id="emoji-picker" class="emoji-picker">
   <span class="emoji">😀</span>
   <span class="emoji">😁</span>
   <span class="emoji">😂</span>
@@ -263,6 +265,27 @@
   <span class="emoji">🚀</span>
 </div>
 
+<div id="style-menu" style="display:none; position:absolute; background:#222; color:#fff; padding:10px; border-radius:5px; z-index:100;">
+  <input type="color" id="style-color" value="#ffffff" />
+  <label><input type="checkbox" id="style-bold" /> Gras</label>
+  <label><input type="checkbox" id="style-italic" /> Italique</label>
+  <select id="style-font">
+    <option value="Arial">Arial</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Helvetica">Helvetica</option>
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Palatino">Palatino</option>
+    <option value="Garamond">Garamond</option>
+    <option value="Bookman">Bookman</option>
+    <option value="Comic Sans MS">Comic Sans MS</option>
+    <option value="Trebuchet MS">Trebuchet MS</option>
+    <option value="Arial Black">Arial Black</option>
+  </select>
+</div>
+
+
 
     </section>
 
@@ -274,7 +297,29 @@
   </main>
 
   <!-- Scripts -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('myModal');
+    const topBar = document.getElementById('top-bar');
+
+    // Appliquer l'état initial
+    if (getComputedStyle(modal).display !== 'none') {
+      topBar.style.display = 'none';
+    } else {
+      topBar.style.display = 'flex';
+    }
+
+    // Observer les changements de style de la modal
+    const observer = new MutationObserver(() => {
+      const isModalVisible = getComputedStyle(modal).display !== 'none';
+      topBar.style.display = isModalVisible ? 'none' : 'flex';
+    });
+
+    observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+  });
+</script>
+
   <script src="/socket.io/socket.io.js"></script>
-  <script src="app.js"></script>
+  <script type="module" src="app.js"></script>
 </body>
 </html>
