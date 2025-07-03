@@ -788,3 +788,33 @@ button:focus {
   border-radius: 4px;
   display: block;
 } 
+/* TEST */
+
+.chat-messages .message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.message-timestamp {
+  color: #888;
+  font-size: 0.8em;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.username-span {
+  font-weight: bold;
+  white-space: nowrap;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.message-content {
+  flex: 1;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+}
