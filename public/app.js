@@ -157,11 +157,11 @@ if (usernameInput && passwordInput) {
     const genderIcon = document.createElement('img');
 
     if (gender === 'Homme') {
-      genderIcon.src = '/man.ico'; // Remplace par le chemin réel de l’icône homme
+      genderIcon.src = '/male.ico'; // Remplace par le chemin réel de l’icône homme
       genderIcon.alt = 'Homme';
       genderIcon.title = 'Homme';
     } else if (gender === 'Femme') {
-      genderIcon.src = '/woman.ico'; // Remplace par le chemin réel de l’icône femme
+      genderIcon.src = '/female.ico'; // Remplace par le chemin réel de l’icône femme
       genderIcon.alt = 'Femme';
       genderIcon.title = 'Femme';
     } else {
