@@ -1,5 +1,6 @@
 export function initInvisibleMode() {
-  const invisibleBtn = document.getElementById('invisible-btn');
+  const invisibleBtn = document.getElementById('toggle-invisible-btn');
+
   if (!invisibleBtn) return;
 
   let invisibleMode = localStorage.getItem('invisibleMode') === 'true';
