@@ -268,71 +268,93 @@ io.on('connection', (socket) => {
 
       switch (cmd) {
         case '/ban':
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
-            return;
-          }
-          if (isUserModo && isTargetProtected) {
-            socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
-            return;
-          }
-          bannedUsers.add(targetName);
-          io.to(targetUser.id).emit('banned');
-          io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis sur ban
-          setTimeout(() => {
-            io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-          }, 1500);
-          io.emit('server message', `${targetName} a été banni par ${user.username}`);
-          console.log(`⚠️ ${user.username} a banni ${targetName}`);
-          return;
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
 
-        case '/kick':
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
-            return;
-          }
-          if (isUserModo && isTargetProtected) {
-            socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
-            return;
-          }
-          io.to(targetUser.id).emit('kicked');
-          io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr'); // Redirection kick
-          setTimeout(() => {
-            io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-          }, 1500);
-          io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
-          console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
-          return;
+  // Interdiction de se bannir soi-même (modo ou admin)
+  if (targetName === user.username) {
+    socket.emit('error message', 'Vous ne pouvez pas vous bannir vous-même.');
+    return;
+  }
 
-        case '/mute':
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
-            return;
-          }
-          if (isUserModo && isTargetProtected) {
-            socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
-            return;
-          }
-          mutedUsers.add(targetName);
-          io.to(targetUser.id).emit('muted');
-          io.emit('server message', `${targetName} a été muté par ${user.username}`);
-          console.log(`⚠️ ${user.username} a muté ${targetName}`);
-          return;
+  const isUserModo = user.role === 'modo';
+  const isTargetProtected = targetUser.role === 'admin' || targetUser.role === 'modo';
 
-        case '/unmute':
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
-            return;
-          }
-          if (mutedUsers.has(targetName)) {
-            mutedUsers.delete(targetName);
-            io.to(targetUser.id).emit('unmuted');
-            io.emit('server message', `${targetName} a été unmuté par ${user.username}`);
-            console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
-          } else {
-            socket.emit('error message', `${targetName} n'est pas muté.`);
-          }
-          return;
+  // Les modos ne peuvent pas bannir d'autres modos/admins
+  if (isUserModo && isTargetProtected) {
+    socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
+    return;
+  }
+
+  bannedUsers.add(targetName);
+  io.to(targetUser.id).emit('banned');
+  io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection bannis sur ban
+  setTimeout(() => {
+    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+  }, 1500);
+  io.emit('server message', `${targetName} a été banni par ${user.username}`);
+  console.log(`⚠️ ${user.username} a banni ${targetName}`);
+  return;
+
+case '/kick':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+
+  // Interdiction de se kicker soi-même (modo ou admin)
+  if (targetName === user.username) {
+    socket.emit('error message', 'Vous ne pouvez pas vous expulser vous-même.');
+    return;
+  }
+
+  const isUserModoKick = user.role === 'modo';
+  const isTargetProtectedKick = targetUser.role === 'admin' || targetUser.role === 'modo';
+
+  // Les modos ne peuvent pas kicker d'autres modos/admins
+  if (isUserModoKick && isTargetProtectedKick) {
+    socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
+    return;
+  }
+
+  io.to(targetUser.id).emit('kicked');
+  io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr'); // Redirection kick
+  setTimeout(() => {
+    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+  }, 1500);
+  io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
+  console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+  return;
+
+case '/mute':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+
+  // Interdiction de se muter soi-même (modo ou admin)
+  if (targetName === user.username) {
+    socket.emit('error message', 'Vous ne pouvez pas vous muter vous-même.');
+    return;
+  }
+
+  const isUserModoMute = user.role === 'modo';
+  const isTargetProtectedMute = targetUser.role === 'admin' || targetUser.role === 'modo';
+
+  // Les modos ne peuvent pas muter d'autres modos/admins
+  if (isUserModoMute && isTargetProtectedMute) {
+    socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
+    return;
+  }
+
+  mutedUsers.add(targetName);
+  io.to(targetUser.id).emit('muted');
+  io.emit('server message', `${targetName} a été muté par ${user.username}`);
+  console.log(`⚠️ ${user.username} a muté ${targetName}`);
+  return;
+
 
         case '/unban':
           if (!targetUser) {
