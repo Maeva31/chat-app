@@ -3,7 +3,13 @@ import { initSocketHandlers } from './socketHandlers.js';
 import { initStyleManager } from './styleManager.js';
 import { initEmojiPicker } from './emojiPicker.js';
 import { initInvisibleMode } from './invisibleMode.js';
-import { addMessageToChat } from './chatUtils.js';
+import {
+  addMessageToChat,
+  updateUserList,
+  extractChannelName,
+  showBanner
+} from './chatUtils.js';
+
 
 
 
