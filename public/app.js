@@ -63,10 +63,8 @@ if (usernameInput && passwordInput) {
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
-    invisibleBtn.textContent = `👻`;
+    invisibleBtn.textContent = `👻 Mode Invisible`;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
-    invisibleBtn.title = invisibleMode ? 'Mode invisible activé' : 'Mode invisible désactivé';
-    invisibleBtn.style.padding = '6px 10px';
   }
 
   if (invisibleBtn) {
