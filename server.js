@@ -2,10 +2,13 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
+import configureMicrophone from './microphoneManager.js';
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
+
+configureMicrophone(io);
 
 const MAX_HISTORY = 10;
 const MAX_ROOMS = 50;
