@@ -65,6 +65,8 @@ if (usernameInput && passwordInput) {
     if (!invisibleBtn) return;
     invisibleBtn.textContent = `👻`;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
+    invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
+
   }
 
   if (invisibleBtn) {
@@ -311,7 +313,7 @@ function getYouTubeVideoId(url) {
       icon.title = 'Admin';
       icon.style.width = '17px';
       icon.style.height = '15px';
-      icon.style.marginRight = '3px';
+      icon.style.marginRight = '2px';
       icon.style.verticalAlign = '-1px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
@@ -321,7 +323,7 @@ function getYouTubeVideoId(url) {
   icon.title = 'Modérateur';
   icon.style.width = '16px';
   icon.style.height = '16px';
-  icon.style.marginRight = '2px';
+  icon.style.marginRight = '1px';
   icon.style.verticalAlign = '-2px';
   usernameSpan.insertBefore(icon, usernameSpan.firstChild);
 }
@@ -869,7 +871,7 @@ document.addEventListener('click', () => {
 
 styleMenu.addEventListener('click', e => e.stopPropagation());
 
-// === STYLE : couleur, gras, italique, police ===
+// Mise à jour et sauvegarde des styles
 [styleColor, styleBold, styleItalic, styleFont].forEach(el => {
   el.addEventListener('input', () => {
     const newStyle = {
@@ -882,49 +884,6 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     applyStyleToInput(newStyle);
   });
 });
-
-// === TAILLE DE POLICE (champ de saisie) ===
-const increaseBtn = document.getElementById('increase-font');
-const decreaseBtn = document.getElementById('decrease-font');
-const fontSizeDisplay = document.getElementById('font-size-display');
-
-let currentFontSize = parseInt(localStorage.getItem('chatFontSize')) || 14;
-
-function updateFontSizeDisplay() {
-  if (fontSizeDisplay) fontSizeDisplay.textContent = `${currentFontSize}px`;
-}
-
-function applyFontSize() {
-  const input = document.getElementById('message-input');
-  if (input) input.style.fontSize = `${currentFontSize}px`;
-}
-
-if (increaseBtn) {
-  increaseBtn.addEventListener('click', () => {
-    if (currentFontSize < 30) {
-      currentFontSize++;
-      localStorage.setItem('chatFontSize', currentFontSize);
-      updateFontSizeDisplay();
-      applyFontSize();
-    }
-  });
-}
-
-if (decreaseBtn) {
-  decreaseBtn.addEventListener('click', () => {
-    if (currentFontSize > 8) {
-      currentFontSize--;
-      localStorage.setItem('chatFontSize', currentFontSize);
-      updateFontSizeDisplay();
-      applyFontSize();
-    }
-  });
-}
-
-// Initialisation taille de police
-updateFontSizeDisplay();
-applyFontSize();
-
 
 
 });
