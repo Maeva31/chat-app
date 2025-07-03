@@ -1,5 +1,3 @@
-import { addYouTubeVideoIfAny } from './js/youtube.js';
-
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -219,6 +217,57 @@ if (logoutModal) {
   });
 }
 
+// Extrait l'ID vidéo YouTube depuis une URL et retourne l'URL de la miniature
+function getYouTubeThumbnail(url) {
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regExp);
+  if (match) {
+    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
+  }
+  return null;
+}
+
+
+// Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
+function addYouTubeVideoIfAny(messageElement, messageText) {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const urls = messageText.match(urlRegex);
+  if (!urls) return;
+
+  urls.forEach(url => {
+    const videoId = getYouTubeVideoId(url);
+    if (videoId) {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('youtube-wrapper');
+
+      const iframe = document.createElement('iframe');
+      // Supprimer largeur/hauteur fixes pour laisser le CSS gérer
+      // iframe.width = '480';
+      // iframe.height = '270';
+      iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
+      iframe.frameBorder = '0';
+      iframe.allow =
+        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
+      iframe.allowFullscreen = true;
+
+      wrapper.appendChild(iframe);
+      messageElement.appendChild(wrapper);
+    }
+  });
+}
+
+
+
+
+
+
+// Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
+function getYouTubeVideoId(url) {
+  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
+  const match = url.match(regExp);
+  return match ? match[1] : null;
+}
+
 
 
   // Ajoute un message dans la zone de chat
@@ -255,6 +304,7 @@ if (logoutModal) {
     usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
+    // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/favicon.ico';
@@ -274,12 +324,17 @@ if (logoutModal) {
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     }
 
+    // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${msg.username} `;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
+  }
+
+  function isYouTubeUrl(url) {
+    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
   }
 
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
@@ -294,7 +349,7 @@ if (logoutModal) {
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
       if (isYouTubeUrl(part)) {
-        return; // On ignore dans texte, vidéo intégrée ailleurs
+        return; // ignore dans texte, vidéo intégrée ailleurs
       } else {
         const a = document.createElement('a');
         a.href = part;
@@ -312,15 +367,19 @@ if (logoutModal) {
     }
   });
 
+  // Assemblage avec pseudo + ":" + espace + message
   newMessage.innerHTML = `[${timeString}] `;
   newMessage.appendChild(usernameSpan);
 
-  if (messageText.textContent.trim() !== '') {
-    const separator = document.createElement('strong');
-    separator.textContent = ': ';
-    newMessage.appendChild(separator);
-    newMessage.appendChild(messageText);
-  }
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide, en gras
+if (messageText.textContent.trim() !== '') {
+  const separator = document.createElement('strong');
+  separator.textContent = ': ';
+  newMessage.appendChild(separator);
+  newMessage.appendChild(messageText);
+}
+
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
@@ -330,7 +389,6 @@ if (logoutModal) {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
 
 
 
@@ -822,7 +880,6 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     applyStyleToInput(newStyle);
   });
 });
-
 
 
 });
