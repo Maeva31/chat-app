@@ -20,7 +20,7 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       const wrapper = document.createElement('div');
       wrapper.classList.add('youtube-wrapper');
 
-      // Création de la miniature image
+      // Créer la miniature cliquable au lieu de charger direct l'iframe
       const thumbnail = document.createElement('img');
       thumbnail.src = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
       thumbnail.alt = "YouTube Video Thumbnail";
@@ -29,7 +29,7 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       thumbnail.style.width = '100%';
       thumbnail.style.height = 'auto';
 
-      // Au clic sur la miniature, remplacer par l'iframe qui lance la vidéo
+      // Au clic sur la miniature, remplacer par l'iframe
       thumbnail.addEventListener('click', () => {
         const iframe = document.createElement('iframe');
         iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&controls=1`;
