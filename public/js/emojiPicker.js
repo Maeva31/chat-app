@@ -13,6 +13,17 @@ export function initEmojiPicker() {
     emojiSpan.addEventListener('click', () => {
       messageInput.value += emojiSpan.textContent;
       messageInput.focus();
+      emojiPicker.style.display = 'none';  // Fermer après sélection
     });
+  });
+
+  // Fermer le picker si clic en dehors
+  document.addEventListener('click', (event) => {
+    if (
+      event.target !== emojiButton &&
+      !emojiPicker.contains(event.target)
+    ) {
+      emojiPicker.style.display = 'none';
+    }
   });
 }
