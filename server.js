@@ -2,28 +2,10 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
-import configureMicrophone from './microphoneManager.js';
 
 const app = express();
-
-const allowedParentOrigin = 'https://chat.maevakonnect.fr';
-
-app.use(express.static('public', {
-  setHeaders: (res, path) => {
-    if (path.endsWith('chat.html') || path.endsWith('index.html')) {
-      res.setHeader('Permissions-Policy', `microphone=(self "${allowedParentOrigin}")`);
-    } else {
-      res.setHeader('Permissions-Policy', 'microphone=()');
-    }
-  }
-}));
-
-
-
 const server = http.createServer(app);
 const io = new Server(server);
-
-configureMicrophone(io);
 
 const MAX_HISTORY = 10;
 const MAX_ROOMS = 50;
@@ -69,11 +51,11 @@ savedRooms.forEach(room => {
   if (!roomUsers[room]) roomUsers[room] = [];
 });
 
+app.use(express.static('public'));
 
-app.get('/index.html', (req, res) => {
+app.get('/', (req, res) => {
   res.redirect('/chat.html');
 });
-
 
 app.get('/health', (req, res) => {
   res.status(200).send('OK');
