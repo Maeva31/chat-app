@@ -21,6 +21,7 @@ export function initStyleManager() {
     styleMenu.style.display = styleMenu.style.display === 'block' ? 'none' : 'block';
   });
 
+  // Sauvegarde du style en localStorage à chaque modification
   styleMenu.querySelectorAll('input, select').forEach(el => {
     el.addEventListener('change', () => {
       const style = getCurrentStyle();
@@ -33,6 +34,7 @@ export function initStyleManager() {
   applyStyleToInput(savedStyle);
   setInputsFromStyle(savedStyle);
 
+  // Appliquer le style à l'input de message
   function applyStyleToInput(style) {
     if (!messageInput) return;
     messageInput.style.fontWeight = style.bold ? 'bold' : 'normal';
@@ -41,6 +43,7 @@ export function initStyleManager() {
     messageInput.style.fontFamily = style.font || 'Arial, sans-serif';
   }
 
+  // Récupère le style sélectionné dans les inputs
   function getCurrentStyle() {
     return {
       font: styleMenu.querySelector('select[name="font"]').value,
@@ -50,6 +53,7 @@ export function initStyleManager() {
     };
   }
 
+  // Met à jour les inputs du menu avec les données du style
   function setInputsFromStyle(style) {
     if (!style) return;
     styleMenu.querySelector('select[name="font"]').value = style.font || 'Arial, sans-serif';
@@ -58,9 +62,11 @@ export function initStyleManager() {
     styleMenu.querySelector('input[name="italic"]').checked = style.italic || false;
   }
 
+  // Sauvegarde du style en localStorage
   function saveStyle(style) {
     localStorage.setItem('chatStyle', JSON.stringify(style));
   }
 
+  // Exposer à window pour socketHandlers.js si besoin
   window.applyStyleToInput = applyStyleToInput;
 }
