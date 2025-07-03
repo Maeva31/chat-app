@@ -744,9 +744,9 @@ button:focus {
 
 /* Responsive : ajuste automatiquement la taille en dessous de 500px */
 .youtube-wrapper {
-  width: 100%;          /* prend toute la largeur disponible */
-  max-width: 640px;     /* largeur max 640px */
-  aspect-ratio: 16 / 9; /* ratio 16:9 */
+  width: 100%;        /* prend toute la largeur possible */
+  max-width: 640px;   /* ne dépasse pas 640px */
+  aspect-ratio: 16 / 9;
   margin: 10px 0 10px 10px;
   background-color: #222;
   border: 3px solid #888;
