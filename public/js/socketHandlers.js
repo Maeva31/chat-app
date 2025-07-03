@@ -28,6 +28,7 @@ export function initSocketHandlers() {
     localStorage.setItem('gender', gender);
     localStorage.setItem('age', age);
 
+    // On cache la modale et affiche le chat
     const modal = document.getElementById('myModal');
     if (modal) modal.style.display = 'none';
     const chatWrapper = document.getElementById('chat-wrapper');
@@ -48,6 +49,28 @@ export function initSocketHandlers() {
     modalError.style.display = 'block';
   });
 
+  // Nouveau : demande de mot de passe côté client
+  socket.on('password required', (username) => {
+    showBanner(`Le mot de passe est requis pour "${username}".`, 'error');
+
+    const modalError = document.getElementById('modal-error');
+    if (modalError) {
+      modalError.textContent = `Le mot de passe est requis pour "${username}".`;
+      modalError.style.display = 'block';
+    }
+
+    // Affiche le champ mot de passe (doit exister dans ta modale HTML)
+    const passwordInput = document.getElementById('password-input');
+    if (passwordInput) {
+      passwordInput.style.display = 'block';
+      passwordInput.focus();
+    }
+  });
+
+  socket.on('password error', (msg) => {
+    showBanner(msg, 'error');
+  });
+
   socket.on('server message', msg => {
     addMessageToChat({
       username: 'Système',
@@ -62,7 +85,6 @@ export function initSocketHandlers() {
     const channelList = document.getElementById('channel-list');
     if (!channelList) return;
 
-    // Protection avant extractChannelName
     const exists = [...channelList.children].some(li => {
       if (!li || typeof li.textContent !== 'string') return false;
       return extractChannelName(li.textContent) === newChannel;
@@ -120,9 +142,8 @@ export function initSocketHandlers() {
       const invisibleMode = localStorage.getItem('invisibleMode') === 'true';
       if (invisibleMode && name === window.currentChannel) {
         countSpan.textContent = '';
-        // Attention li.firstChild peut être un textNode, on remplace textContent complet
         li.textContent = `# ${emoji} ┊ ${name} `;
-        li.appendChild(countSpan); // On rajoute le span vide
+        li.appendChild(countSpan);
       } else {
         countSpan.textContent = ` (${counts[name]})`;
         li.textContent = `# ${emoji} ┊ ${name} `;
@@ -205,21 +226,21 @@ export function initSocketHandlers() {
     const savedPassword = localStorage.getItem('password');
 
     if (!window.hasSentUserInfo && savedUsername && savedAge) {
-  console.log('Emission set username', {
-    username: savedUsername,
-    gender: savedGender,
-    age: savedAge,
-    invisible: localStorage.getItem('invisibleMode') === 'true',
-    password: savedPassword
-  });
+      console.log('Emission set username', {
+        username: savedUsername,
+        gender: savedGender,
+        age: savedAge,
+        invisible: localStorage.getItem('invisibleMode') === 'true',
+        password: savedPassword
+      });
 
-  socket.emit('set username', {
-    username: savedUsername,
-    gender: savedGender || 'non spécifié',
-    age: savedAge,
-    invisible: localStorage.getItem('invisibleMode') === 'true',
-    password: savedPassword || ''
-  });
+      socket.emit('set username', {
+        username: savedUsername,
+        gender: savedGender || 'non spécifié',
+        age: savedAge,
+        invisible: localStorage.getItem('invisibleMode') === 'true',
+        password: savedPassword || ''
+      });
       window.currentChannel = 'Général';
       localStorage.setItem('currentChannel', window.currentChannel);
       socket.emit('joinRoom', window.currentChannel);
