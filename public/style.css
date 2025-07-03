@@ -765,24 +765,15 @@ button:focus {
 
 /* Responsive : ajuste automatiquement la taille en dessous de 500px */
 .youtube-wrapper {
-  position: relative;
-  width: 640px;        /* largeur fixe max */
-  height: 360px;       /* hauteur fixe max */
+  width: 640px;
+  height: 360px;
   margin: 10px 0 10px 10px;
   background-color: #222;
   border: 3px solid #888;
   border-radius: 6px;
   box-sizing: border-box;
   overflow: hidden;
-  flex-shrink: 0;
-}
-
-@media (max-width: 640px) {
-  .youtube-wrapper {
-    width: 100%;       /* width = 100% de la zone dispo */
-    height: auto;      /* hauteur automatique selon ratio */
-    aspect-ratio: 16 / 9; /* garde le ratio */
-  }
+  /* flex-shrink: 0; */ /* tu peux essayer de commenter */
 }
 
 .youtube-wrapper iframe {
@@ -792,6 +783,9 @@ button:focus {
   border-radius: 4px;
   display: block;
 }
+
+
+
 
 
 
