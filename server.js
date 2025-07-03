@@ -589,6 +589,44 @@ io.on('connection', (socket) => {
     }
   });
   
+    socket.on('private message', ({ to, message, style, timestamp }) => {
+    const sender = Object.values(users).find(u => u.id === socket.id);
+    const recipient = users[to];
+
+    if (!sender) return;
+    if (!recipient) {
+      socket.emit('error message', `Utilisateur ${to} introuvable pour message privé.`);
+      return;
+    }
+
+    if (bannedUsers.has(sender.username)) {
+      socket.emit('error message', 'Vous êtes banni et ne pouvez pas envoyer de messages privés.');
+      return;
+    }
+
+    if (mutedUsers.has(sender.username)) {
+      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages privés.');
+      return;
+    }
+
+    const privateMsg = {
+      from: sender.username,
+      to,
+      gender: sender.gender,
+      role: sender.role,
+      message,
+      style: style || {},
+      timestamp: timestamp || new Date().toISOString(),
+      private: true
+    };
+
+    // Envoyer au destinataire
+    io.to(recipient.id).emit('private message', privateMsg);
+    // Écho au sender
+    socket.emit('private message', privateMsg);
+  });
+
+
 
 });
 
