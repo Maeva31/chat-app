@@ -126,63 +126,31 @@ if (usernameInput && passwordInput) {
 
   const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
+  // On vide le li et on construit le contenu manuellement
   li.innerHTML = `
     <span class="role-icon"></span> 
-    <span class="gender-icon"></span> 
     <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
     <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
   `;
 
-  // Icônes admin/modo devant pseudo
+  // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
   if (role === 'admin') {
     const icon = document.createElement('img');
-    icon.src = '/diamond.ico';
+    icon.src = '/favicon.ico'; // ou ton icône admin
     icon.alt = 'Admin';
     icon.title = 'Admin';
     icon.classList.add('admin-icon');
     roleIconSpan.appendChild(icon);
   } else if (role === 'modo') {
-    const icon = document.createElement('img');
-    icon.src = '/favicon.ico';
-    icon.alt = 'Modérateur';
+    const icon = document.createElement('span');
+    icon.textContent = '🛡️';
     icon.title = 'Modérateur';
     icon.classList.add('modo-icon');
     roleIconSpan.appendChild(icon);
   }
 
-  // Icônes homme/femme devant carré âge uniquement si role user (pas admin/modo)
-  if (role === 'user') {
-    const genderIconSpan = li.querySelector('.gender-icon');
-    const genderIcon = document.createElement('img');
-
-    if (gender === 'Homme') {
-      genderIcon.src = '/male.ico'; // Remplace par le chemin réel de l’icône homme
-      genderIcon.alt = 'Homme';
-      genderIcon.title = 'Homme';
-    } else if (gender === 'Femme') {
-      genderIcon.src = '/female.ico'; // Remplace par le chemin réel de l’icône femme
-      genderIcon.alt = 'Femme';
-      genderIcon.title = 'Femme';
-    } else {
-      // Pas d'icône pour autres genres ou non spécifié
-      genderIconSpan.style.display = 'none';
-    }
-
-    if (genderIcon.src) {
-      genderIcon.classList.add('gender-icon-img');
-      genderIcon.style.width = '16px';
-      genderIcon.style.height = '16px';
-      genderIcon.style.marginRight = '1px';
-      genderIconSpan.appendChild(genderIcon);
-    }
-  } else {
-    // Pas d'icône si admin/modo
-    const genderIconSpan = li.querySelector('.gender-icon');
-    if (genderIconSpan) genderIconSpan.style.display = 'none';
-  }
-
-  // Clic sur nom pour mention
+  // Ajout de l'event click sur le nom
   const usernameSpan = li.querySelector('.username-span');
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
@@ -194,7 +162,6 @@ if (usernameInput && passwordInput) {
 
   userList.appendChild(li);
 });
-
 
   }
 
@@ -338,25 +305,22 @@ function getYouTubeVideoId(url) {
     // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
-      icon.src = '/diamond.ico';
+      icon.src = '/favicon.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
-      icon.style.width = '17px';
-      icon.style.height = '15px';
-      icon.style.marginRight = '3px';
-      icon.style.verticalAlign = '-1px';
+      icon.style.width = '18px';
+      icon.style.height = '18px';
+      icon.style.marginRight = '0px';
+      icon.style.verticalAlign = '-4px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
-  const icon = document.createElement('img');
-  icon.src = '/favicon.ico'; // Assure-toi que cette image correspond bien à une icône de modérateur
-  icon.alt = 'Modérateur';
-  icon.title = 'Modérateur';
-  icon.style.width = '16px';
-  icon.style.height = '16px';
-  icon.style.marginRight = '2px';
-  icon.style.verticalAlign = '-2px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-}
+      const icon = document.createElement('span');
+      icon.textContent = '🛡️';
+      icon.title = 'Modérateur';
+      icon.style.marginRight = '0px';
+      icon.style.verticalAlign = '0px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    }
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
