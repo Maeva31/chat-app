@@ -12,6 +12,138 @@ const modoUsernames = ['DarkGirL'];
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
+  const peers = {}; // { socketId: RTCPeerConnection }
+let localStream = null;
+
+async function startLocalStream() {
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    console.log("Micro activé");
+  } catch (e) {
+    console.error("Erreur accès micro:", e);
+    alert("Impossible d'accéder au micro");
+  }
+}
+
+async function requestMicAccess() {
+  socket.emit('requestMic', currentChannel);
+}
+
+async function releaseMicAccess() {
+  socket.emit('releaseMic', currentChannel);
+  stopLocalStream();
+  for (const id in peers) {
+    peers[id]?.close();
+    delete peers[id];
+  }
+}
+
+function stopLocalStream() {
+  if (localStream) {
+    localStream.getTracks().forEach(t => t.stop());
+    localStream = null;
+  }
+}
+
+// Quand serveur répond à la demande mic
+socket.on('mic status', async ({ granted, users, reason }) => {
+  if (granted) {
+    console.log('Accès micro accordé');
+    if (!localStream) await startLocalStream();
+    // On initie ou attend connexions WebRTC avec les autres users ayant le micro
+    users.forEach(async id => {
+      if (id !== socket.id && !peers[id]) {
+        await createPeerConnection(id, true);
+      }
+    });
+  } else {
+    alert(reason || "Accès micro refusé");
+  }
+});
+
+// Création connexion WebRTC
+async function createPeerConnection(peerId, isOfferer) {
+  const pc = new RTCPeerConnection({
+    iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+  });
+
+  // Ajout du flux local au PeerConnection
+  if (localStream) {
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  }
+
+  pc.onicecandidate = (event) => {
+    if (event.candidate) {
+      socket.emit('webrtc-ice-candidate', { to: peerId, candidate: event.candidate });
+    }
+  };
+
+  pc.ontrack = (event) => {
+    // Création ou récupération d'un élément audio pour ce peer
+    let audioElem = document.getElementById('audio-' + peerId);
+    if (!audioElem) {
+      audioElem = document.createElement('audio');
+      audioElem.id = 'audio-' + peerId;
+      audioElem.autoplay = true;
+      audioElem.style.display = 'none'; // ou visible selon souhait
+      document.body.appendChild(audioElem);
+    }
+    audioElem.srcObject = event.streams[0];
+  };
+
+  peers[peerId] = pc;
+
+  if (isOfferer) {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+    socket.emit('webrtc-offer', { to: peerId, sdp: pc.localDescription });
+  }
+}
+
+// Réception offre WebRTC
+socket.on('webrtc-offer', async ({ from, sdp }) => {
+  if (!peers[from]) await createPeerConnection(from, false);
+  const pc = peers[from];
+  await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+  const answer = await pc.createAnswer();
+  await pc.setLocalDescription(answer);
+  socket.emit('webrtc-answer', { to: from, sdp: pc.localDescription });
+});
+
+// Réception réponse WebRTC
+socket.on('webrtc-answer', async ({ from, sdp }) => {
+  const pc = peers[from];
+  if (!pc) return;
+  await pc.setRemoteDescription(new RTCSessionDescription(sdp));
+});
+
+// Réception ICE candidates
+socket.on('webrtc-ice-candidate', async ({ from, candidate }) => {
+  const pc = peers[from];
+  if (!pc) return;
+  try {
+    await pc.addIceCandidate(new RTCIceCandidate(candidate));
+  } catch (e) {
+    console.warn("Erreur ICE candidate", e);
+  }
+});
+
+// Quand on active/désactive micro via bouton
+micButton.addEventListener('click', async () => {
+  if (!localStream) {
+    await requestMicAccess();
+  } else {
+    await releaseMicAccess();
+  }
+});
+
+// Quand on change de salon, on libère le micro
+socket.on('joinedRoom', (newChannel) => {
+  if (localStream) releaseMicAccess();
+  currentChannel = newChannel;
+});
+
+
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
 
