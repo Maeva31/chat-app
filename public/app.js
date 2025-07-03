@@ -315,14 +315,16 @@ function getYouTubeVideoId(url) {
       icon.style.verticalAlign = '-4px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
-      const icon = document.createElement('span');
-      /* icon.textContent = '🛡️';*/
-      icon.src = '/favicon.ico';
-      icon.title = 'Modérateur';
-      icon.style.marginRight = '0px';
-      icon.style.verticalAlign = '0px';
-      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-    }
+  const icon = document.createElement('img');
+  icon.src = '/favicon.ico'; // Assure-toi que cette image correspond bien à une icône de modérateur
+  icon.alt = 'Modérateur';
+  icon.title = 'Modérateur';
+  icon.style.width = '16px';
+  icon.style.height = '16px';
+  icon.style.marginRight = '2px';
+  icon.style.verticalAlign = '-3px';
+  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+}
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
