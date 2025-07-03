@@ -52,19 +52,29 @@ export function initUI() {
   // Gestion clic salon (delegation)
   const channelList = document.getElementById('channel-list');
   if (channelList) {
-    channelList.addEventListener('click', e => {
-      const target = e.target.closest('.channel');
-      if (!target) return;
-      const clickedChannel = extractChannelName(target.textContent);
-      if (!clickedChannel || clickedChannel === window.currentChannel) return;
-      window.currentChannel = clickedChannel;
-      localStorage.setItem('currentChannel', window.currentChannel);
-      const chatMessages = document.getElementById('chat-messages');
-      if (chatMessages) chatMessages.innerHTML = '';
-      // Emission joinRoom via socketHandlers.js
-      window.socket.emit('joinRoom', window.currentChannel);
-    });
-  }
+  channelList.addEventListener('click', e => {
+    const target = e.target.closest('.channel');
+    if (!target) return;
+
+    const text = target.textContent;
+    if (typeof text !== 'string' || !text.trim()) {
+      console.warn('Channel click with invalid textContent:', text);
+      return;
+    }
+
+    const clickedChannel = extractChannelName(text);
+    if (!clickedChannel || clickedChannel === window.currentChannel) return;
+
+    window.currentChannel = clickedChannel;
+    localStorage.setItem('currentChannel', window.currentChannel);
+
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) chatMessages.innerHTML = '';
+
+    window.socket.emit('joinRoom', window.currentChannel);
+  });
+}
+
 
   // Gestion bouton logout
   const logoutButton = document.getElementById('logoutButton');
