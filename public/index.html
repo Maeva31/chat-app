@@ -120,13 +120,23 @@
     </aside>
 
    <!-- Message privé -->
-    <div id="chat-tabs" style="display:flex; gap:8px; margin-bottom:8px;">
-  <button id="tab-general" class="chat-tab selected" style="border-radius: 10px 10px 0 0; padding: 6px 12px; cursor: pointer; border: 1px solid #666; background-color: #333; color: white;">
+    <div id="chat-wrapper">
+
+  <!-- Conteneur onglets privés -->
+  <div id="private-tabs-container" style="display: flex; gap: 8px; margin-bottom: 8px; overflow-x: auto;"></div>
+
+  <!-- Onglet général (salon) -->
+  <button id="tab-general" class="chat-tab" style="border-radius: 10px 10px 0 0; background-color: #4CAF50; color: white; font-weight: bold; padding: 6px 10px; cursor: pointer;">
     Général
   </button>
-  <div id="private-tabs-container" style="display:flex; gap:5px;"></div>
+
+  <!-- Zone des messages -->
+  <div id="chat-messages" style="height: 400px; overflow-y: auto; background-color: #111; padding: 10px; border-radius: 0 10px 10px 10px;"></div>
+
+  <!-- Zone d'entrée message, bouton envoyer, etc. -->
+  ...
 </div>
-<div id="chat-messages" style="height: 400px; overflow-y: auto; border: 1px solid #444; padding: 10px; background: #111; border-radius: 0 10px 10px 10px;"></div>
+
 
 
 
