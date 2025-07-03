@@ -155,9 +155,10 @@ export function addMessageToChat(msg) {
   timeSpan.classList.add('message-timestamp');
   timeSpan.textContent = ` [${formattedTime}]`;
 
-  newMessage.appendChild(userNameSpan);
-  newMessage.appendChild(messageContent);
   newMessage.appendChild(timeSpan);
+newMessage.appendChild(userNameSpan);
+newMessage.appendChild(messageContent);
+
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
