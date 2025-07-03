@@ -673,7 +673,12 @@ button:focus {
   vertical-align: middle;
   flex-shrink: 0;
 }
-
+.role-icon img,
+.gender-icon img {
+  width: 16px;
+  height: 16px;
+  display: block;
+}
 /* Icône modo */
 .modo-icon {
   width: 23px;
