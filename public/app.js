@@ -135,20 +135,21 @@ if (usernameInput && passwordInput) {
 
   // Ajout icône dans le span.role-icon (avant le carré âge)
   const roleIconSpan = li.querySelector('.role-icon');
-  if (role === 'admin') {
-    const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // ou ton icône admin
-    icon.alt = 'Admin';
-    icon.title = 'Admin';
-    icon.classList.add('admin-icon');
-    roleIconSpan.appendChild(icon);
-  } else if (role === 'modo') {
-    const icon = document.createElement('span');
-    icon.textContent = '🛡️';
-    icon.title = 'Modérateur';
-    icon.classList.add('modo-icon');
-    roleIconSpan.appendChild(icon);
-  }
+if (role === 'admin') {
+  const icon = document.createElement('img');
+  icon.src = '/favicon.ico';
+  icon.alt = 'Admin';
+  icon.title = 'Admin';
+  icon.classList.add('admin-icon');
+  roleIconSpan.appendChild(icon);
+} else if (role === 'modo') {
+  const icon = document.createElement('span');
+  icon.textContent = '🛡️';
+  icon.title = 'Modérateur';
+  icon.classList.add('modo-icon');
+  roleIconSpan.appendChild(icon);
+}
+
 
   // Ajout de l'event click sur le nom
   const usernameSpan = li.querySelector('.username-span');
