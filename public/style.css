@@ -261,6 +261,8 @@ main {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100%;      /* Prend toute la hauteur disponible */
+  overflow-y: auto
 }
 
 #users {
@@ -761,14 +763,4 @@ button:focus {
   border: none;
   border-radius: 4px;
   display: block;
-}
-
-
-
-
-
-
-
-
-
-
+} 
