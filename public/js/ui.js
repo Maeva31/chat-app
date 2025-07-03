@@ -1,5 +1,3 @@
-import { extractChannelName, showBanner } from './chatUtils.js';
-
 export function initUI() {
   const adminUsernames = ['MaEvA'];
   const modoUsernames = ['DarkGirL'];
@@ -23,6 +21,36 @@ export function initUI() {
     if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
       passwordInput.style.display = 'block';
     }
+  }
+
+  // --- AJOUT DE LA GESTION DU FORMULAIRE DE CONNEXION ---
+  const loginForm = document.getElementById('login-form');
+  if (loginForm) {
+    loginForm.addEventListener('submit', e => {
+      e.preventDefault();
+
+      const username = usernameInput.value.trim();
+      const gender = document.querySelector('input[name="gender"]:checked')?.value || 'non spécifié';
+      const age = document.getElementById('age-input')?.value || '';
+      const password = passwordInput.value || '';
+
+      if (!username) {
+        showBanner('Veuillez saisir un pseudo.', 'error');
+        return;
+      }
+      if (!age || isNaN(age) || age < 1) {
+        showBanner('Veuillez saisir un âge valide.', 'error');
+        return;
+      }
+
+      window.socket.emit('set username', {
+        username,
+        gender,
+        age,
+        invisible: false,
+        password
+      });
+    });
   }
 
   // Modal pseudo si pas de pseudo
@@ -52,29 +80,28 @@ export function initUI() {
   // Gestion clic salon (delegation)
   const channelList = document.getElementById('channel-list');
   if (channelList) {
-  channelList.addEventListener('click', e => {
-    const target = e.target.closest('.channel');
-    if (!target) return;
+    channelList.addEventListener('click', e => {
+      const target = e.target.closest('.channel');
+      if (!target) return;
 
-    const text = target.textContent;
-    if (typeof text !== 'string' || !text.trim()) {
-      console.warn('Channel click with invalid textContent:', text);
-      return;
-    }
+      const text = target.textContent;
+      if (typeof text !== 'string' || !text.trim()) {
+        console.warn('Channel click with invalid textContent:', text);
+        return;
+      }
 
-    const clickedChannel = extractChannelName(text);
-    if (!clickedChannel || clickedChannel === window.currentChannel) return;
+      const clickedChannel = extractChannelName(text);
+      if (!clickedChannel || clickedChannel === window.currentChannel) return;
 
-    window.currentChannel = clickedChannel;
-    localStorage.setItem('currentChannel', window.currentChannel);
+      window.currentChannel = clickedChannel;
+      localStorage.setItem('currentChannel', window.currentChannel);
 
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
+      const chatMessages = document.getElementById('chat-messages');
+      if (chatMessages) chatMessages.innerHTML = '';
 
-    window.socket.emit('joinRoom', window.currentChannel);
-  });
-}
-
+      window.socket.emit('joinRoom', window.currentChannel);
+    });
+  }
 
   // Gestion bouton logout
   const logoutButton = document.getElementById('logoutButton');
