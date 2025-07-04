@@ -267,16 +267,21 @@ io.on('connection', (socket) => {
       const isUserModo = user.role === 'modo';
       const isUserAdmin = user.role === 'admin';
 
-      // ❌ Bloquer même un admin contre un autre admin
-      if (isUserAdmin && targetUser.role === 'admin') {
-      socket.emit('error message', 'Vous ne pouvez pas bannir un autre administrateur.');
-      return;
-      }
-      // ❌ Bloquer modo contre tout compte protégé
+      // ✅ Seul un admin avec mot de passe peut agir sur un autre admin/modo
+      const isPrivilegedAdmin = isUserAdmin && passwords[user.username];
+
+      // Refus pour les modos
       if (isUserModo && isTargetProtected) {
-      socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
+      socket.emit('error message', 'Vous ne pouvez pas agir sur cet utilisateur.');
       return;
 }
+
+// Refus pour admin non privilégié
+if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
+  socket.emit('error message', 'Seuls les administrateurs authentifiés peuvent agir sur les modérateurs ou administrateurs.');
+  return;
+}
+
 
 
       switch (cmd) {
