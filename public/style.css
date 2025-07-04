@@ -54,12 +54,13 @@ body {
 /* === GENERAL === */
 main {
   display: flex;
-  flex: 1;
+  flex: 1 1 auto;
   overflow: hidden;
-  margin-top: 50px; /* Décalage pour laisser place à la bande fixe */
-  height: calc(100vh - 40px); /* Prend toute la hauteur restante */
-  min-width: 0; /* Pour permettre le shrink */
+  margin-top: 40px; /* égal au top-bar */
+  height: calc(100vh - 40px);
+  min-width: 0;
 }
+
 
 #content-container {
   display: flex;
@@ -820,13 +821,15 @@ button:focus {
 }
 
 #chat-messages {
-  flex: 1;
+  flex: 1 1 auto;
   overflow-y: auto;
   padding: 10px;
   display: flex;
   flex-direction: column;
   gap: 6px;
+  min-height: 0; /* important pour scroll correct */
 }
+
 
 
 
