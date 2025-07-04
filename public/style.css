@@ -808,35 +808,5 @@ button:focus {
   margin-top: 15px;           
 }
 
-#private-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 10px;
-  background-color: #111;
-  padding: 6px 10px;
-  border-radius: 8px;
-  border: 1px solid #444;
-}
-#private-tabs .tab {
-  padding: 5px 10px;
-  background-color: #333;
-  border-radius: 6px;
-  color: #00ffff;
-  font-weight: bold;
-  cursor: pointer;
-  user-select: none;
-}
-#private-tabs .tab.active {
-  background-color: #00ffff;
-  color: #000;
-}
-#private-tabs .tab:hover {
-  background-color: #555;
-}
-
-
-
-
 
 
