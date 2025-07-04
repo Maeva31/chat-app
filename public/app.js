@@ -1,6 +1,7 @@
 import setupPrivateMessaging from './js/privateMessages.js';
 
 
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
