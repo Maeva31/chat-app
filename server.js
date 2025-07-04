@@ -360,6 +360,52 @@ io.on('connection', (socket) => {
           }
           return;
 
+          case '/addmodo':
+case '/addadmin':
+  if (user.role !== 'admin') {
+    socket.emit('error message', "Seuls les administrateurs peuvent ajouter des modos ou admins.");
+    return;
+  }
+  if (!targetName) {
+    socket.emit('error message', `Usage : ${cmd} <pseudo>`);
+    return;
+  }
+  if (!users[targetName]) {
+    socket.emit('error message', `Utilisateur ${targetName} introuvable.`);
+    return;
+  }
+
+  if (cmd === '/addmodo') {
+    if (!modData.modos.includes(targetName)) {
+      modData.modos.push(targetName);
+      // Si l'utilisateur était admin, on peut enlever son rôle admin s'il faut
+      modData.admins = modData.admins.filter(u => u !== targetName);
+      fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+      io.emit('server message', `${targetName} est maintenant modérateur (ajouté par ${user.username})`);
+      console.log(`⚠️ ${user.username} a ajouté modo ${targetName}`);
+    } else {
+      socket.emit('error message', `${targetName} est déjà modérateur.`);
+    }
+  } else if (cmd === '/addadmin') {
+    if (!modData.admins.includes(targetName)) {
+      modData.admins.push(targetName);
+      // Si l'utilisateur était modo, on peut enlever son rôle modo pour éviter conflit
+      modData.modos = modData.modos.filter(u => u !== targetName);
+      fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+      io.emit('server message', `${targetName} est maintenant administrateur (ajouté par ${user.username})`);
+      console.log(`⚠️ ${user.username} a ajouté admin ${targetName}`);
+    } else {
+      socket.emit('error message', `${targetName} est déjà administrateur.`);
+    }
+  }
+
+  // Actualiser le rôle en mémoire pour l'utilisateur si connecté
+  if (users[targetName]) {
+    users[targetName].role = (cmd === '/addmodo') ? 'modo' : 'admin';
+  }
+  return;
+
+
         case '/invisible':
           if (user.role !== 'admin') {
             socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
