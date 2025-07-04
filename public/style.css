@@ -800,13 +800,6 @@ button:focus {
   height: 100%; /* s’assurer que la hauteur est bien totale */
 }
 
-#chat-container {
-  flex: 1 1 auto; /* prend la place restante */
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  overflow: hidden;
-}
 
 
 
