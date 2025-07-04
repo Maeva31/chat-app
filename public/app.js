@@ -34,13 +34,29 @@ if (usernameInput && passwordInput) {
 }
 
 
-  const genderColors = {
-    Homme: '#00f' <ico src="/male.ico">,
-    Femme: '#f0f' <ico src="/female.ico">,
-    Autre: '#0ff',
-    'non spécifié': '#aaa',
-    default: '#aaa'
-  };
+  const genderStyles = {
+  Homme: {
+    color: '#00f',
+    icon: '/male.ico'
+  },
+  Femme: {
+    color: '#f0f',
+    icon: '/female.ico'
+  },
+  Autre: {
+    color: '#0ff',
+    icon: '/other.ico'
+  },
+  'non spécifié': {
+    color: '#aaa',
+    icon: '/unspecified.ico'
+  },
+  default: {
+    color: '#aaa',
+    icon: '/default.ico'
+  }
+};
+
 
   const channelEmojis = {
     "Général": "💬",
