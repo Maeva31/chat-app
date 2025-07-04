@@ -1,4 +1,4 @@
-import setupPrivateMessaging from './privateMessages.js';
+import setupPrivateMessaging from './js/privateMessages.js';
 
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
