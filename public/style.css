@@ -801,3 +801,14 @@ button:focus {
   padding-top: 40px; /* Ajout pour laisser la place à la top-bar */
   box-sizing: border-box;
 }
+
+#channel-sidebar,
+#user-list {
+  height: calc(100vh - 40px); /* Hauteur sans la top bar */
+  margin-top: 40px;           /* Décalage visuel aussi si nécessaire */
+}
+
+
+
+
+
