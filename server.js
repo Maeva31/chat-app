@@ -433,12 +433,15 @@ case '/addadmin':
   return;
 
 
-  case '/removemodo':
+case '/removemodo':
 case '/removeadmin':
-  if (user.role !== 'admin') {
-    socket.emit('error message', "Seuls les administrateurs peuvent retirer des modos ou admins.");
+  // Seuls les admins authentifiés peuvent exécuter
+  const isPrivilegedAdmin = user.role === 'admin' && passwords[user.username];
+  if (!isPrivilegedAdmin) {
+    socket.emit('error message', "Seuls les administrateurs authentifiés peuvent retirer des rôles.");
     return;
   }
+
   if (!targetName) {
     socket.emit('error message', `Usage : ${cmd} <pseudo>`);
     return;
@@ -448,26 +451,20 @@ case '/removeadmin':
     return;
   }
 
-  // Interdire de retirer si le compte est protégé par mot de passe
-  if (passwords[targetName]) {
-    socket.emit('error message', `Impossible de retirer ce rôle car ${targetName} est protégé (compte avec mot de passe).`);
-    return;
-  }
-
-  // Empêcher de se retirer soi-même
+  // Ne pas se retirer soi-même
   if (targetName === user.username) {
     socket.emit('error message', "Vous ne pouvez pas vous retirer votre propre rôle.");
     return;
   }
 
-  // Empêcher de retirer un admin ou modo pour la cible selon la commande
+  // Vérifie le rôle actuel de la cible
   const targetRole = getUserRole(targetName);
+
   if (cmd === '/removemodo') {
     if (!modData.modos.includes(targetName)) {
       socket.emit('error message', `${targetName} n'est pas modérateur.`);
       return;
     }
-    // Interdire de retirer un admin (protection)
     if (targetRole === 'admin') {
       socket.emit('error message', "Vous ne pouvez pas retirer un administrateur avec /removemodo.");
       return;
@@ -477,12 +474,51 @@ case '/removeadmin':
       socket.emit('error message', `${targetName} n'est pas administrateur.`);
       return;
     }
-    // Interdire de retirer un modo (protection)
     if (targetRole === 'modo') {
       socket.emit('error message', "Vous ne pouvez pas retirer un modérateur avec /removeadmin.");
       return;
     }
   }
+
+  // Retrait du rôle
+  if (cmd === '/removemodo') {
+    modData.modos = modData.modos.filter(u => u !== targetName);
+  } else {
+    modData.admins = modData.admins.filter(u => u !== targetName);
+  }
+
+  fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+  io.emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
+  console.log(`⚠️ ${user.username} a retiré ${cmd === '/removemodo' ? 'modo' : 'admin'} ${targetName}`);
+
+  if (users[targetName]) {
+    users[targetName].role = 'user';
+
+    // Supprimer l'invisibilité si présente
+    if (users[targetName].invisible) {
+      users[targetName].invisible = false;
+      const targetSocketId = users[targetName].id;
+      const targetChannel = userChannels[targetSocketId];
+
+      if (roomUsers[targetChannel]) {
+        const u = roomUsers[targetChannel].find(u => u.id === targetSocketId);
+        if (u) u.invisible = false;
+      }
+
+      io.to(targetSocketId).emit('server message', "Vous avez perdu votre rôle, le mode invisible est désactivé.");
+      io.to(targetChannel).emit('chat message', {
+        username: 'Système',
+        message: `${targetName} est maintenant visible.`,
+        timestamp: new Date().toISOString(),
+        channel: targetChannel
+      });
+
+      emitUserList(targetChannel);
+      updateRoomUserCounts();
+    }
+  }
+  return;
+
 
   // Ok, retirer le rôle
  if (cmd === '/removemodo') {
