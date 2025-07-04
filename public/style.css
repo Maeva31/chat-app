@@ -602,8 +602,8 @@ button:focus {
 /* Icône admin/mode centrée dans le conteneur */
 .user-item .role-icon img,
 .user-item .role-icon svg {
-  max-width: 22px;
-  max-height: 22px;
+  max-width: 20px;
+  max-height: 18px;
   display: block;
 }
 
