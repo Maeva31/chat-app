@@ -420,6 +420,12 @@ case '/removeadmin':
     return;
   }
 
+  // Interdire de retirer si le compte est protégé par mot de passe
+  if (passwords[targetName]) {
+    socket.emit('error message', `Impossible de retirer ce rôle car ${targetName} est protégé (compte avec mot de passe).`);
+    return;
+  }
+
   // Empêcher de se retirer soi-même
   if (targetName === user.username) {
     socket.emit('error message', "Vous ne pouvez pas vous retirer votre propre rôle.");
@@ -443,7 +449,7 @@ case '/removeadmin':
       socket.emit('error message', `${targetName} n'est pas administrateur.`);
       return;
     }
-    // Interdire de retirer un modo (protection) — ça n'a pas trop de sens, mais on peut
+    // Interdire de retirer un modo (protection)
     if (targetRole === 'modo') {
       socket.emit('error message', "Vous ne pouvez pas retirer un modérateur avec /removeadmin.");
       return;
