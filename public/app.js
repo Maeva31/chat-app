@@ -112,61 +112,65 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
-    const userList = document.getElementById('users');
-    if (!userList) return;
-    userList.innerHTML = '';
-    if (!Array.isArray(users)) return;
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
 
-    users.forEach(user => {
-  const username = user?.username || 'Inconnu';
-  const age = user?.age || '?';
-  const gender = user?.gender || 'non spécifié';
-  const role = user?.role || 'user';
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
 
-  const li = document.createElement('li');
-  li.classList.add('user-item');
+    const li = document.createElement('li');
+    li.classList.add('user-item');
 
-  const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
 
-  // On vide le li et on construit le contenu manuellement
-  li.innerHTML = `
-    <span class="role-icon"></span> 
-    <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-    <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-  `;
+    li.innerHTML = `
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+    `;
 
-  // Ajout icône dans le span.role-icon (avant le carré âge)
-  const roleIconSpan = li.querySelector('.role-icon');
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
+
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
+    userList.appendChild(li);
+  });
+}
+
+
+function createRoleIcon(role) {
   if (role === 'admin') {
     const icon = document.createElement('img');
-    icon.src = '/diamond.ico'; // ou ton icône admin
+    icon.src = '/diamond.ico'; // icône admin
     icon.alt = 'Admin';
     icon.title = 'Admin';
     icon.classList.add('admin-icon');
-    roleIconSpan.appendChild(icon);
+    return icon;
   } else if (role === 'modo') {
     const icon = document.createElement('img');
-    /*icon.textContent = '🛡️';*/
-    icon.src = '/favicon.ico'; 
+    icon.src = '/favicon.ico'; // icône modo
+    icon.alt = 'Modérateur';
     icon.title = 'Modérateur';
     icon.classList.add('modo-icon');
-    roleIconSpan.appendChild(icon);
+    return icon;
   }
+  return null;
+}
 
-  // Ajout de l'event click sur le nom
-  const usernameSpan = li.querySelector('.username-span');
-  usernameSpan.addEventListener('click', () => {
-    const input = document.getElementById('message-input');
-    const mention = `@${username} `;
-    if (!input.value.includes(mention)) input.value = mention + input.value;
-    input.focus();
-    selectedUser = username;
-  });
-
-  userList.appendChild(li);
-});
-
-  }
 
  const logoutButton = document.getElementById('logoutButton');
 
