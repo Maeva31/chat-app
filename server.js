@@ -165,89 +165,72 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
-  const { username, gender, age, invisible, password } = data;
+    const { username, gender, age, invisible, password } = data;
 
-  if (!username || username.length > 16 || /\s/.test(username)) {
-    return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
-  }
-  if (isNaN(age) || age < 18 || age > 89) {
-    return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
-  }
-  if (!gender) {
-    return socket.emit('username error', 'Genre non spécifié');
-  }
-
-  if (bannedUsers.has(username)) {
-    socket.emit('username error', 'Vous êtes banni du serveur.');
-    socket.emit('redirect', 'https://banned.maevakonnect.fr');
-    return;
-  }
-
-  if (users[username] && users[username].id !== socket.id) {
-    return socket.emit('username exists', username);
-  }
-
-  // **VÉRIFICATION DE LA RÉSERVATION DU PSEUDO :**
-
-  const isReservedAdmin = modData.admins.includes(username);
-  const isReservedModo = modData.modos.includes(username);
-
-  // Le rôle attendu selon réservation
-  let expectedRole = 'user';
-  if (isReservedAdmin) expectedRole = 'admin';
-  else if (isReservedModo) expectedRole = 'modo';
-
-  // Vérifier que le mot de passe est fourni et correct si pseudo réservé
-  if (expectedRole === 'admin' || expectedRole === 'modo') {
-    if (!password) {
-      return socket.emit('password required', username);
+    if (!username || username.length > 16 || /\s/.test(username)) {
+      return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
     }
-    if (passwords[username] !== password) {
-      return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
+    if (isNaN(age) || age < 18 || age > 89) {
+      return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
     }
-  }
+    if (!gender) {
+      return socket.emit('username error', 'Genre non spécifié');
+    }
 
-  // Attribuer rôle selon réservation
-  const role = expectedRole;
+    if (bannedUsers.has(username)) {
+      socket.emit('username error', 'Vous êtes banni du serveur.');
+      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+      return;
+    }
 
-  // IMPORTANT : si pseudo réservé, on refuse la connexion si mot de passe invalide (déjà fait au-dessus)
-  // Sinon pour un pseudo non réservé, rôle = 'user'
-  if (!isReservedAdmin && !isReservedModo) {
-    // Pseudo libre, rôle user
-  }
+    if (users[username] && users[username].id !== socket.id) {
+      return socket.emit('username exists', username);
+    }
 
-  // On continue la création utilisateur
+    // VÉRIFICATION : Mot de passe pour les rôles privilégiés
+    if (requiresPassword(username)) {
+      if (!password) {
+        return socket.emit('password required', username);
+      }
+      if (passwords[username] !== password) {
+        return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
+      }
+      console.log(`🔐 Authentification réussie pour ${username}`);
+    }
 
-  const invisibleFromClient = invisible === true;
-  const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
+    // Récupérer invisible si l'utilisateur existait déjà
+    const invisibleFromClient = invisible === true;
+    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
-  const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
-  users[username] = userData;
+    const role = getUserRole(username);
+    // Par défaut invisible = false, sauf si récupéré
+    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
+    users[username] = userData;
 
-  let channel = userChannels[socket.id] || 'Général';
-  socket.join(channel);
+    let channel = userChannels[socket.id] || defaultChannel;
+    socket.join(channel);
 
-  if (!roomUsers[channel]) roomUsers[channel] = [];
-  roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
-  roomUsers[channel].push(userData);
+    if (!roomUsers[channel]) roomUsers[channel] = [];
+    roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+    roomUsers[channel].push(userData);
 
-  console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
+    console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
 
-  emitUserList(channel);
-  socket.emit('username accepted', { username, gender, age, role });
-  socket.emit('chat history', messageHistory[channel]);
-  updateRoomUserCounts();
+    emitUserList(channel);
+    socket.emit('username accepted', { username, gender, age });
+    socket.emit('chat history', messageHistory[channel]);
+    updateRoomUserCounts();
 
-  if (!userData.invisible) {
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${username} a rejoint le salon ${channel}`,
-      timestamp: new Date().toISOString(),
-      channel
-    });
-  }
-});
-
+    // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
+    if (!userData.invisible) {
+      io.to(channel).emit('chat message', {
+        username: 'Système',
+        message: `${username} a rejoint le salon ${channel}`,
+        timestamp: new Date().toISOString(),
+        channel
+      });
+    }
+  });
 
   socket.on('chat message', (msg) => {
     const user = Object.values(users).find(u => u.id === socket.id);
