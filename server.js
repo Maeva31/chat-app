@@ -26,6 +26,13 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
+// <-- Ici, ajoute la déclaration de tempMods
+const tempMods = {
+  admins: new Set(),
+  modos: new Set()
+};
+
+
 // Chargement des mots de passe pour les rôles privilégiés
 let passwords = {};
 try {
@@ -63,10 +70,11 @@ app.get('/health', (req, res) => {
 
 
 function getUserRole(username) {
-  if (modData.admins.includes(username)) return 'admin';
-  if (modData.modos.includes(username)) return 'modo';
+  if (modData.admins.includes(username) || tempMods.admins.has(username)) return 'admin';
+  if (modData.modos.includes(username) || tempMods.modos.has(username)) return 'modo';
   return 'user';
 }
+
 
 // Fonction pour vérifier si un utilisateur a besoin d'un mot de passe
 function requiresPassword(username) {
@@ -378,7 +386,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
           }
           return;
 
-          case '/addmodo':
+        case '/addmodo':
 case '/addadmin':
   if (user.role !== 'admin') {
     socket.emit('error message', "Seuls les administrateurs peuvent ajouter des modos ou admins.");
@@ -394,24 +402,22 @@ case '/addadmin':
   }
 
   if (cmd === '/addmodo') {
-    if (!modData.modos.includes(targetName)) {
-      modData.modos.push(targetName);
-      // Si l'utilisateur était admin, on peut enlever son rôle admin s'il faut
-      modData.admins = modData.admins.filter(u => u !== targetName);
-      fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-      io.emit('server message', `${targetName} est maintenant modérateur (ajouté par ${user.username})`);
-      console.log(`⚠️ ${user.username} a ajouté modo ${targetName}`);
+    if (!modData.modos.includes(targetName) && !tempMods.modos.has(targetName)) {
+      tempMods.modos.add(targetName);
+      // Supprimer du rôle admin temporaire si existant
+      tempMods.admins.delete(targetName);
+      io.emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
+      console.log(`⚠️ ${user.username} a ajouté modo temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà modérateur.`);
     }
   } else if (cmd === '/addadmin') {
-    if (!modData.admins.includes(targetName)) {
-      modData.admins.push(targetName);
-      // Si l'utilisateur était modo, on peut enlever son rôle modo pour éviter conflit
-      modData.modos = modData.modos.filter(u => u !== targetName);
-      fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-      io.emit('server message', `${targetName} est maintenant administrateur (ajouté par ${user.username})`);
-      console.log(`⚠️ ${user.username} a ajouté admin ${targetName}`);
+    if (!modData.admins.includes(targetName) && !tempMods.admins.has(targetName)) {
+      tempMods.admins.add(targetName);
+      // Supprimer du rôle modo temporaire si existant
+      tempMods.modos.delete(targetName);
+      io.emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
+      console.log(`⚠️ ${user.username} a ajouté admin temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà administrateur.`);
     }
@@ -422,6 +428,7 @@ case '/addadmin':
     users[targetName].role = (cmd === '/addmodo') ? 'modo' : 'admin';
   }
   return;
+
 
   case '/removemodo':
 case '/removeadmin':
@@ -695,21 +702,40 @@ case '/removeadmin':
   });
 
   socket.on('disconnect', () => {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (user) {
-      console.log(`❌ Déconnexion : ${user.username}`);
+  const user = Object.values(users).find(u => u.id === socket.id);
+  if (user) {
+    console.log(`❌ Déconnexion : ${user.username}`);
 
-      const room = userChannels[socket.id];
-      if (room) {
-        if (!user.invisible) {
-          io.to(room).emit('chat message', {
-            username: 'Système',
-            message: `${user.username} a quitté le serveur`,
-            timestamp: new Date().toISOString(),
-            channel: room
-          });
-        }
+    // SUPPRESSION des rôles temporaires à la déconnexion
+    tempMods.admins.delete(user.username);
+    tempMods.modos.delete(user.username);
+
+    const room = userChannels[socket.id];
+    if (room) {
+      if (!user.invisible) {
+        io.to(room).emit('chat message', {
+          username: 'Système',
+          message: `${user.username} a quitté le serveur`,
+          timestamp: new Date().toISOString(),
+          channel: room
+        });
       }
+    }
+
+    for (const channel in roomUsers) {
+      roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+      emitUserList(channel);
+    }
+
+    delete users[user.username];
+    delete userChannels[socket.id];
+
+    cleanupEmptyDynamicRooms();
+  } else {
+    console.log(`❌ Déconnexion inconnue : ${socket.id}`);
+  }
+});
+
 
       for (const channel in roomUsers) {
         roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
