@@ -1,3 +1,5 @@
+import setupPrivateMessaging from './privateMessages.js';
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -11,7 +13,7 @@ const modoUsernames = ['DarkGirL'];
   let bannerTimeoutId = null;
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
-
+setupPrivateMessaging(socket);
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
 
