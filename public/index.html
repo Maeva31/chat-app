@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="fr">
 <head>
@@ -98,18 +97,13 @@
     </div>
   </div>
 
+  <!-- Wrapper principal -->
   <main>
-  <div id="content-container">
-    <aside id="channel-sidebar">...</aside>
-    <section id="chat-container">
-      <div class="private-tabs">...onglets messages privés...</div>
-      <div id="chat-messages" class="chat-messages">...messages...</div>
-      <form id="chat-input">...</form>
-    </section>
-    <aside id="user-list">...</aside>
-  </div>
-</main>
-
+    <!-- Sidebar gauche : salons -->
+    <aside id="channel-sidebar">
+      <header>
+        <div class="texte-laser"><h3>Salons</h3></div>
+      </header>
 
       <ul id="channel-list">
         <li class="channel selected"># 💬 ┊ Général</li>
@@ -125,22 +119,9 @@
       </div>
     </aside>
 
-    <main>
-  <div id="channel-sidebar">...</div>
-  <div id="content-container">
-    <div id="chat-container">
-      <div id="chat-messages">...</div>
-      <div id="chat-input">...</div>
-    </div>
-    <div id="user-list">...</div>
-  </div>
-</main>
-
-
-  <!-- Zone de messages -->
-  <div id="chat-messages" class="chat-messages"></div>
-</section>
-
+    <!-- Zone centrale : chat -->
+    <section id="chat-container">
+      <div id="chat-messages" class="chat-messages"></div>
 
       <!-- Champ message avec bouton emoji -->
       <div id="chat-input" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
