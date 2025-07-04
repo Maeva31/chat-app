@@ -119,12 +119,20 @@
       </div>
     </aside>
 
-    <div id="tabs-container"></div>
+   <div id="chat-wrapper">
+  <!-- Onglets (public + privés) -->
+  <div id="chat-tabs"></div>
 
-    
-    <!-- Zone centrale : chat -->
-    <section id="chat-container">
-      <div id="chat-messages" class="chat-messages"></div>
+  <!-- Messages publics -->
+  <div id="chat-messages" style="overflow-y: auto; height: 300px; border: 1px solid #ccc; padding: 5px;"></div>
+
+  <!-- Messages privés -->
+  <div id="private-messages" style="display:none; overflow-y: auto; height: 300px; border: 1px solid #ccc; padding: 5px;"></div>
+
+  <!-- Input message -->
+  <input id="message-input" type="text" placeholder="Écrivez un message..." />
+</div>
+
 
       <!-- Champ message avec bouton emoji -->
       <div id="chat-input" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
