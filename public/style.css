@@ -805,7 +805,7 @@ button:focus {
 #channel-sidebar,
 #user-list {
   height: calc(100vh - 40px); /* Hauteur sans la top bar */
-  margin-top: 40px;           /* Décalage visuel aussi si nécessaire */
+  margin-top: 15px;           
 }
 
 #private-tabs {
