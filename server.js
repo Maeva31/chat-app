@@ -461,32 +461,30 @@ case '/removeadmin':
   const targetRole = getUserRole(targetName);
 
   if (cmd === '/removemodo') {
-    if (!modData.modos.includes(targetName) && !tempMods.modos.has(targetName)) {
-      socket.emit('error message', `${targetName} n'est pas modérateur.`);
-      return;
-    }
-    if (targetRole === 'admin') {
-      socket.emit('error message', "Vous ne pouvez pas retirer un administrateur avec /removemodo.");
-      return;
-    }
-  } else if (cmd === '/removeadmin') {
-    if (!modData.admins.includes(targetName) && !tempMods.admins.has(targetName)) {
-      socket.emit('error message', `${targetName} n'est pas administrateur.`);
-      return;
-    }
-    if (targetRole === 'modo') {
-      socket.emit('error message', "Vous ne pouvez pas retirer un modérateur avec /removeadmin.");
-      return;
-    }
+  if (!modData.modos.includes(targetName) && !tempMods.modos.has(targetName)) {
+    socket.emit('error message', `${targetName} n'est pas modérateur.`);
+    return;
   }
+  if (targetRole === 'admin') {
+    socket.emit('error message', "Vous ne pouvez pas retirer un administrateur avec /removemodo.");
+    return;
+  }
+} else if (cmd === '/removeadmin') {
+  if (!modData.admins.includes(targetName) && !tempMods.admins.has(targetName)) {
+    socket.emit('error message', `${targetName} n'est pas administrateur.`);
+    return;
+  }
+  if (targetRole === 'modo') {
+    socket.emit('error message', "Vous ne pouvez pas retirer un modérateur avec /removeadmin.");
+    return;
+  }
+}
 
   // Retrait du rôle
   if (cmd === '/removemodo') {
     modData.modos = modData.modos.filter(u => u !== targetName);
-    tempMods.modos.delete(targetName); // ✅ AJOUT ICI
   } else {
     modData.admins = modData.admins.filter(u => u !== targetName);
-    tempMods.admins.delete(targetName); // ✅ AJOUT ICI
   }
 
   fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
@@ -520,7 +518,6 @@ case '/removeadmin':
     }
   }
   return;
-
 
         case '/invisible':
           if (user.role !== 'admin') {
