@@ -405,6 +405,72 @@ case '/addadmin':
   }
   return;
 
+  case '/removemodo':
+case '/removeadmin':
+  if (user.role !== 'admin') {
+    socket.emit('error message', "Seuls les administrateurs peuvent retirer des modos ou admins.");
+    return;
+  }
+  if (!targetName) {
+    socket.emit('error message', `Usage : ${cmd} <pseudo>`);
+    return;
+  }
+  if (!users[targetName]) {
+    socket.emit('error message', `Utilisateur ${targetName} introuvable.`);
+    return;
+  }
+
+  // Empêcher de se retirer soi-même
+  if (targetName === user.username) {
+    socket.emit('error message', "Vous ne pouvez pas vous retirer votre propre rôle.");
+    return;
+  }
+
+  // Empêcher de retirer un admin ou modo pour la cible selon la commande
+  const targetRole = getUserRole(targetName);
+  if (cmd === '/removemodo') {
+    if (!modData.modos.includes(targetName)) {
+      socket.emit('error message', `${targetName} n'est pas modérateur.`);
+      return;
+    }
+    // Interdire de retirer un admin (protection)
+    if (targetRole === 'admin') {
+      socket.emit('error message', "Vous ne pouvez pas retirer un administrateur avec /removemodo.");
+      return;
+    }
+  } else if (cmd === '/removeadmin') {
+    if (!modData.admins.includes(targetName)) {
+      socket.emit('error message', `${targetName} n'est pas administrateur.`);
+      return;
+    }
+    // Interdire de retirer un modo (protection) — ça n'a pas trop de sens, mais on peut
+    if (targetRole === 'modo') {
+      socket.emit('error message', "Vous ne pouvez pas retirer un modérateur avec /removeadmin.");
+      return;
+    }
+  }
+
+  // Ok, retirer le rôle
+  if (cmd === '/removemodo') {
+    modData.modos = modData.modos.filter(u => u !== targetName);
+    fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+    io.emit('server message', `${targetName} n'est plus modérateur (retiré par ${user.username})`);
+    console.log(`⚠️ ${user.username} a retiré modo ${targetName}`);
+    if (users[targetName]) {
+      users[targetName].role = 'user';
+    }
+  } else if (cmd === '/removeadmin') {
+    modData.admins = modData.admins.filter(u => u !== targetName);
+    fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+    io.emit('server message', `${targetName} n'est plus administrateur (retiré par ${user.username})`);
+    console.log(`⚠️ ${user.username} a retiré admin ${targetName}`);
+    if (users[targetName]) {
+      users[targetName].role = 'user';
+    }
+  }
+  return;
+
+
 
         case '/invisible':
           if (user.role !== 'admin') {
