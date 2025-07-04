@@ -265,6 +265,19 @@ io.on('connection', (socket) => {
       // Protection rôles
       const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
       const isUserModo = user.role === 'modo';
+      const isUserAdmin = user.role === 'admin';
+
+// ❌ Bloquer même un admin contre un autre admin
+if (isUserAdmin && targetUser.role === 'admin') {
+  socket.emit('error message', 'Vous ne pouvez pas bannir un autre administrateur.');
+  return;
+}
+// ❌ Bloquer modo contre tout compte protégé
+if (isUserModo && isTargetProtected) {
+  socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
+  return;
+}
+
 
       switch (cmd) {
   case '/ban':
