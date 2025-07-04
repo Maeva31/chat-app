@@ -790,35 +790,43 @@ button:focus {
   display: block;
 } 
 
-#private-tabs-container {
+#chat-container {
   display: flex;
-  gap: 8px;
-  margin-bottom: 8px;
-  overflow-x: auto;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
 }
 
-.chat-tab {
-  border: 1px solid #666;
+.private-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 5px 10px;
   background-color: #222;
-  color: #aaa;
-  border-radius: 10px 10px 0 0;
-  padding: 6px 10px;
+  border-bottom: 1px solid #444;
+}
+
+.private-tab {
+  padding: 5px 10px;
+  background-color: #333;
+  color: white;
+  border-radius: 4px;
   cursor: pointer;
-  user-select: none;
-  white-space: nowrap;
-  transition: background-color 0.3s, color 0.3s;
 }
 
-.chat-tab.selected {
-  background-color: #4CAF50 !important;
-  color: white !important;
+.private-tab.active {
+  background-color: #555;
   font-weight: bold;
 }
 
-.chat-tab.unread {
-  background-color: #ffc107 !important;
-  color: black !important;
-  font-weight: bold;
+#chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
 }
+
 
 
