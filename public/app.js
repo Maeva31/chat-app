@@ -276,7 +276,7 @@ function getYouTubeVideoId(url) {
 
 
   // Ajoute un message dans la zone de chat
-  function addMessageToChat(msg) {
+function addMessageToChat(msg) {
   if (msg.username === 'Système') {
     // Ignore le message "est maintenant visible."
     if (/est maintenant visible\.$/i.test(msg.message)) return;
@@ -324,16 +324,16 @@ function getYouTubeVideoId(url) {
       icon.style.verticalAlign = '-1px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
-  const icon = document.createElement('img');
-  icon.src = '/favicon.ico'; // Assure-toi que cette image correspond bien à une icône de modérateur
-  icon.alt = 'Modérateur';
-  icon.title = 'Modérateur';
-  icon.style.width = '16px';
-  icon.style.height = '16px';
-  icon.style.marginRight = '1px';
-  icon.style.verticalAlign = '-2px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-}
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
+      icon.style.marginRight = '1px';
+      icon.style.verticalAlign = '-2px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    }
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
@@ -378,39 +378,31 @@ function getYouTubeVideoId(url) {
     }
   });
 
-  // Assemblage avec pseudo + ":" + espace + message
-if (msg.username !== 'Système') {
-  newMessage.innerHTML = `[${timeString}] `;
-}
-
-
-
-if (msg.username !== 'Système') {
-  newMessage.appendChild(usernameSpan);
-}
-
-
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide, en gras
-if (msg.username === 'Système') {
-  messageText.style.color = '#888';
-  messageText.style.fontStyle = 'italic';
-
+  // --- Ici la modification principale : ajout du span timeSpan ---
   const timeSpan = document.createElement('span');
   timeSpan.textContent = timeString + ' ';
   timeSpan.style.color = '#888';
   timeSpan.style.fontStyle = 'italic';
+  timeSpan.style.marginRight = '5px';
 
   newMessage.appendChild(timeSpan);
-  newMessage.appendChild(messageText);
-} else if (messageText.textContent.trim() !== '') {
-  const separator = document.createElement('strong');
-  separator.textContent = ': ';
-  newMessage.appendChild(separator);
-  newMessage.appendChild(messageText);
-}
 
+  if (msg.username !== 'Système') {
+    newMessage.appendChild(usernameSpan);
+  }
 
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide
+  if (msg.username === 'Système') {
+    messageText.style.color = '#888';
+    messageText.style.fontStyle = 'italic';
+
+    newMessage.appendChild(messageText);
+  } else if (messageText.textContent.trim() !== '') {
+    const separator = document.createElement('strong');
+    separator.textContent = ': ';
+    newMessage.appendChild(separator);
+    newMessage.appendChild(messageText);
+  }
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
@@ -420,8 +412,6 @@ if (msg.username === 'Système') {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-
 
   // Sélectionne visuellement un salon dans la liste
   function selectChannelInUI(channelName) {
@@ -977,7 +967,24 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
-  wrapper.innerHTML = `[${new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}] <strong>${username}</strong>: `;
+
+  // Création span pour le temps en italique gris
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = `[${new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}] `;
+  timeSpan.style.color = '#888';
+  timeSpan.style.fontStyle = 'italic';
+  timeSpan.style.marginRight = '5px';
+
+  // Création pseudo en gras
+  const userStrong = document.createElement('strong');
+  userStrong.textContent = username;
+
+  // Création séparateur ": "
+  const separator = document.createTextNode(': ');
+
+  wrapper.appendChild(timeSpan);
+  wrapper.appendChild(userStrong);
+  wrapper.appendChild(separator);
 
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
@@ -1013,7 +1020,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
+});
+
 }
 });
 
