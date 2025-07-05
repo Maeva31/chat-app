@@ -523,8 +523,10 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   localStorage.setItem('gender', gender);
   localStorage.setItem('age', age);
 
-const modal = document.getElementById('myModal');
-if (modal) modal.style.display = 'none';
+  document.getElementById('myModal').style.display = 'none';
+ const chatWrapper = document.getElementById('chat-wrapper');
+if (chatWrapper) chatWrapper.style.display = 'block';
+else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
 
 
