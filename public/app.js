@@ -981,10 +981,12 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   timeSpan.style.marginRight = '5px';
   wrapper.appendChild(timeSpan);
 
-  // Pseudo avec icône et couleur selon rôle et genre
-  const usernameSpan = document.createElement('span');
-  usernameSpan.style.fontWeight = 'bold';
-  usernameSpan.style.marginRight = '4px';
+  // Conteneur pour pseudo + icône
+  const usernameContainer = document.createElement('span');
+  usernameContainer.style.fontWeight = 'bold';
+  usernameContainer.style.marginRight = '4px';
+  usernameContainer.style.display = 'inline-flex';
+  usernameContainer.style.alignItems = 'center'; // pour aligner verticalement icône + texte
 
   // Couleur selon rôle / genre
   let color = 'white';
@@ -992,17 +994,23 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   else if (role === 'modo') color = 'limegreen';
   else if (gender === 'Femme') color = 'deeppink';
   else if (gender === 'Homme') color = 'dodgerblue';
-  usernameSpan.style.color = color;
+  usernameContainer.style.color = color;
 
-  // Ajouter icône selon rôle
+  // Ajouter icône selon rôle avec styles en ligne
   if (role === 'admin' || role === 'modo') {
-    const icon = createRoleIcon(role); // ta fonction qui crée <img>
-    if (icon) usernameSpan.appendChild(icon);
+    const icon = createRoleIcon(role); // ta fonction qui crée l'élément <img> ou similaire
+    if (icon) {
+      icon.style.width = '17px';
+      icon.style.height = '15px';
+      icon.style.marginRight = '2px';
+      icon.style.verticalAlign = '-1px';
+      usernameContainer.appendChild(icon);
+    }
   }
-  
+
   // Ajouter texte pseudo
-  usernameSpan.appendChild(document.createTextNode(username));
-  wrapper.appendChild(usernameSpan);
+  usernameContainer.appendChild(document.createTextNode(username));
+  wrapper.appendChild(usernameContainer);
 
   // Séparateur ": "
   wrapper.appendChild(document.createTextNode(': '));
