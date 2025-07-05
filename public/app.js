@@ -376,7 +376,11 @@ function getYouTubeVideoId(url) {
   });
 
   // Assemblage avec pseudo + ":" + espace + message
- newMessage.innerHTML = `[${timeString}] `;
+if (msg.username !== 'Système') {
+  newMessage.innerHTML = `[${timeString}] `;
+}
+
+
 
 if (msg.username !== 'Système') {
   newMessage.appendChild(usernameSpan);
@@ -388,6 +392,13 @@ if (msg.username !== 'Système') {
 if (msg.username === 'Système') {
   messageText.style.color = '#888';
   messageText.style.fontStyle = 'italic';
+
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = timeString + ' ';
+  timeSpan.style.color = '#888';
+  timeSpan.style.fontStyle = 'italic';
+
+  newMessage.appendChild(timeSpan);
   newMessage.appendChild(messageText);
 } else if (messageText.textContent.trim() !== '') {
   const separator = document.createElement('strong');
