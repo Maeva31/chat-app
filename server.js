@@ -2,6 +2,9 @@ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
+import path from 'path';
+import multer from 'multer';
+
 
 const app = express();
 const server = http.createServer(app);
@@ -113,6 +116,67 @@ function cleanupEmptyDynamicRooms() {
   }
   updateRoomUserCounts();
 }
+
+const UPLOAD_DIR = path.resolve('./public/uploads');
+if (!fs.existsSync(UPLOAD_DIR)) {
+  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
+}
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, UPLOAD_DIR),
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    const ext = path.extname(file.originalname);
+    cb(null, file.fieldname + '-' + uniqueSuffix + ext);
+  }
+});
+
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5 Mo max
+  fileFilter: (req, file, cb) => {
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Type de fichier non autorisé'));
+  }
+});
+
+app.post('/upload', upload.single('file'), (req, res) => {
+  const userId = req.body.userId; // id socket ou username
+  const room = req.body.room;
+
+  if (!req.file) {
+    return res.status(400).json({ error: 'Aucun fichier reçu' });
+  }
+
+  const fileUrl = `/uploads/${req.file.filename}`;
+
+  // Envoi message dans le salon via Socket.IO
+  if (userId && room && io.sockets.sockets.has(userId)) {
+    const userSocket = io.sockets.sockets.get(userId);
+    const user = Object.values(users).find(u => u.id === userId);
+
+    const message = {
+      username: user ? user.username : 'Utilisateur',
+      role: user ? user.role : 'user',
+      message: '',
+      file: fileUrl,
+      timestamp: new Date().toISOString(),
+      channel: room,
+    };
+
+    if (!messageHistory[room]) messageHistory[room] = [];
+    messageHistory[room].push(message);
+    if (messageHistory[room].length > MAX_HISTORY) messageHistory[room].shift();
+
+    io.to(room).emit('chat message', message);
+
+    res.json({ success: true, url: fileUrl });
+  } else {
+    res.status(400).json({ error: 'Informations utilisateur ou salon manquantes ou invalides' });
+  }
+});
+
 
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
