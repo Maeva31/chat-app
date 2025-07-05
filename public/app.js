@@ -610,13 +610,23 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       }
 
       if (invisibleMode && name === currentChannel) {
-        countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      }
-    }
+  countSpan.textContent = '';  // Pas de nombre si invisible
+  // Met à jour uniquement le texte en début, sans supprimer les enfants
+  if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
+    li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+  } else {
+    // Si pas de texte en premier enfant, crée un noeud texte au début
+    li.insertBefore(document.createTextNode(`# ${emoji} ┊ ${name} `), li.firstChild);
+  }
+} else {
+  countSpan.textContent = ` (${counts[name]})`;
+  if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
+    li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+  } else {
+    li.insertBefore(document.createTextNode(`# ${emoji} ┊ ${name} `), li.firstChild);
+  }
+}
+
   });
 });
 
