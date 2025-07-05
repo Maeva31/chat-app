@@ -1011,9 +1011,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   newWindow.document.close();
 }
 
-// ...
-
-// Supposons que ce code se trouve dans la fonction ou le callback qui gère l'affichage des fichiers reçus :
+// ... Plus bas dans le code, par exemple dans une fonction qui traite un message avec fichier :
 
 if (mimetype.startsWith('image/')) {
   const img = document.createElement('img');
