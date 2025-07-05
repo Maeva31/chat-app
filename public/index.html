@@ -315,6 +315,80 @@
   });
 </script>
 
+<script>const chatTabs = document.getElementById('chat-tabs');
+const chatMessages = document.getElementById('chat-messages');
+const messageInput = document.getElementById('message-input');
+
+let currentTab = 'channel';  // 'channel' = salon, sinon pseudo pour privé
+let currentChannel = 'Général';
+const privateTabs = new Set();
+
+function renderTabs() {
+  chatTabs.innerHTML = '';
+
+  // Onglet salon
+  const channelTab = document.createElement('div');
+  channelTab.classList.add('tab');
+  if (currentTab === 'channel') channelTab.classList.add('active');
+  channelTab.textContent = currentChannel;
+  channelTab.onclick = () => {
+    if (currentTab !== 'channel') {
+      currentTab = 'channel';
+      renderTabs();
+      loadMessagesForCurrentTab();
+      messageInput.placeholder = `Message dans #${currentChannel}`;
+    }
+  };
+  chatTabs.appendChild(channelTab);
+
+  // Onglets privés
+  privateTabs.forEach(username => {
+    const tab = document.createElement('div');
+    tab.classList.add('tab');
+    if (currentTab === username) tab.classList.add('active');
+    tab.textContent = username;
+    tab.onclick = () => {
+      if (currentTab !== username) {
+        currentTab = username;
+        renderTabs();
+        loadMessagesForCurrentTab();
+        messageInput.placeholder = `Message privé à ${username}`;
+      }
+    };
+    chatTabs.appendChild(tab);
+  });
+}
+
+function loadMessagesForCurrentTab() {
+  chatMessages.innerHTML = '';
+  if (currentTab === 'channel') {
+    // Affiche l’historique salon (à remplacer par tes données)
+    chatMessages.textContent = `Historique du salon ${currentChannel}`;
+  } else {
+    // Affiche l’historique messages privés (à remplacer par tes données)
+    chatMessages.textContent = `Historique messages privés avec ${currentTab}`;
+  }
+}
+
+// Lors d’un double clic sur pseudo dans la liste utilisateurs
+document.getElementById('users').addEventListener('dblclick', e => {
+  if (e.target.classList.contains('clickable-username')) {
+    const username = e.target.textContent.trim();
+    if (!privateTabs.has(username)) {
+      privateTabs.add(username);
+    }
+    currentTab = username;
+    renderTabs();
+    loadMessagesForCurrentTab();
+    messageInput.placeholder = `Message privé à ${username}`;
+  }
+});
+
+// Initialisation
+renderTabs();
+loadMessagesForCurrentTab();
+</script>
+
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
 </body>
