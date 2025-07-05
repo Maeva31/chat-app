@@ -292,9 +292,37 @@ function getYouTubeVideoId(url) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
-  const newMessage = document.createElement('div');
-  const date = new Date(msg.timestamp);
-  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+ const newMessage = document.createElement('div');
+newMessage.classList.add('chat-message'); // optionnel
+
+const date = new Date(msg.timestamp);
+const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+// Élément heure en italique gris
+const timeElem = document.createElement('span');
+timeElem.textContent = `[${timeString}] `;
+timeElem.style.color = 'gray';
+timeElem.style.fontStyle = 'italic';
+
+// Élément pseudo
+const usernameElem = document.createElement('span');
+usernameElem.textContent = msg.username;
+usernameElem.style.fontWeight = 'bold';
+usernameElem.style.marginRight = '6px';
+
+// Élément message
+const messageText = document.createElement('span');
+messageText.textContent = `: ${msg.message}`;
+
+// Assemblage dans le div message
+newMessage.appendChild(timeElem);
+newMessage.appendChild(usernameElem);
+newMessage.appendChild(messageText);
+
+// Ajout dans la fenêtre de chat
+chatMessages.appendChild(newMessage);
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
 
   const usernameSpan = document.createElement('span');
   const color = (msg.role === 'admin') ? 'red' :
