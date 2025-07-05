@@ -178,29 +178,33 @@ app.post('/upload', upload.single('file'), (req, res) => {
   }
 });
 
+socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
+  // Ici, tu peux stocker le fichier ou pas.
+  // Pour commencer, juste rediffuser aux clients de la room
+
+  // Vérifier que le socket est bien dans la room
+  if (!channel || !savedRooms.includes(channel)) {
+    socket.emit('error message', 'Salon invalide pour upload de fichier.');
+    return;
+  }
+
+  const user = Object.values(users).find(u => u.id === socket.id);
+  if (!user) return;
+
+  // Tu peux limiter taille max base64 ici si tu veux
+
+  io.to(channel).emit('file uploaded', {
+    username: user.username,
+    filename,
+    data,
+    mimetype,
+    timestamp
+  });
+});
+
 
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
-
-  socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
-    if (!channel || !savedRooms.includes(channel)) {
-      socket.emit('error message', 'Salon invalide pour upload de fichier.');
-      return;
-    }
-
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
-
-    // Tu peux limiter taille max base64 ici si besoin
-
-    io.to(channel).emit('file uploaded', {
-      username: user.username,
-      filename,
-      data,
-      mimetype,
-      timestamp
-    });
-  });
 
  function logout(socket) {
   const user = Object.values(users).find(u => u.id === socket.id);
