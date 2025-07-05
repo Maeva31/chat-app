@@ -299,34 +299,30 @@
 
   <!-- Scripts -->
 
-  <script>
-    const colorTextBtn = document.getElementById('color-text');
-const styleMenu = document.getElementById('style-menu');
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const colorTextBtn = document.getElementById('color-text');
+  const styleMenu = document.getElementById('style-menu');
 
-colorTextBtn.addEventListener('click', () => {
-  if (styleMenu.style.display === 'block') {
+  colorTextBtn.addEventListener('click', (e) => {
+    e.stopPropagation(); // Pour éviter que le clic ferme immédiatement le menu
+    if (styleMenu.style.display === 'block') {
+      styleMenu.style.display = 'none';
+    } else {
+      const rect = colorTextBtn.getBoundingClientRect();
+      styleMenu.style.top = (rect.bottom + window.scrollY) + 'px';
+      styleMenu.style.left = (rect.left + window.scrollX) + 'px';
+      styleMenu.style.display = 'block';
+    }
+  });
+
+  document.addEventListener('click', () => {
     styleMenu.style.display = 'none';
-  } else {
-    // Récupère la position du bouton
-    const rect = colorTextBtn.getBoundingClientRect();
-
-    // Positionne le menu sous le bouton, aligné à gauche
-    styleMenu.style.top = (rect.bottom + window.scrollY) + 'px';
-    styleMenu.style.left = (rect.left + window.scrollX) + 'px';
-
-    styleMenu.style.display = 'block';
-  }
+  });
 });
+</script>
 
-// Optionnel : clic en dehors pour fermer le menu
-document.addEventListener('click', (e) => {
-  if (!styleMenu.contains(e.target) && e.target !== colorTextBtn) {
-    styleMenu.style.display = 'none';
-  }
-});
 
-  </script>
-  
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('myModal');
