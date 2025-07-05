@@ -812,15 +812,16 @@ button:focus {
   width: 24px;
   height: 24px;
   background: url('/icon/starbis.gif') no-repeat top center;
+  background-size: 24px 48px;
   border: none;
-  background-size: 24px 48px; /* largeur x hauteur totale du sprite */
   cursor: pointer;
   display: inline-block;
   padding: 0;
 }
 
 .sprite-button:hover {
-  background-position: 0 -24px; /* décale le fond vers le bas */
+  background-position: 0 -24px;
 }
+
 
 
