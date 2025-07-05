@@ -822,6 +822,18 @@ button:focus {
 .sprite-button:hover {
   background-position: 0 -24px;
 }
+.sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sprite-button:focus,
+.sprite-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
 
 
 
