@@ -298,48 +298,55 @@
 
 
   <!-- Scripts -->
+
   <script>
-document.addEventListener('DOMContentLoaded', () => {
-  const modal = document.getElementById('myModal');
-  const topBar = document.getElementById('top-bar');
+    const colorTextBtn = document.getElementById('color-text');
+const styleMenu = document.getElementById('style-menu');
 
-  // Appliquer l'état initial
-  if (getComputedStyle(modal).display !== 'none') {
-    topBar.style.display = 'none';
+colorTextBtn.addEventListener('click', () => {
+  if (styleMenu.style.display === 'block') {
+    styleMenu.style.display = 'none';
   } else {
-    topBar.style.display = 'flex';
+    // Récupère la position du bouton
+    const rect = colorTextBtn.getBoundingClientRect();
+
+    // Positionne le menu sous le bouton, aligné à gauche
+    styleMenu.style.top = (rect.bottom + window.scrollY) + 'px';
+    styleMenu.style.left = (rect.left + window.scrollX) + 'px';
+
+    styleMenu.style.display = 'block';
   }
-
-  // Observer les changements de style de la modal
-  const observer = new MutationObserver(() => {
-    const isModalVisible = getComputedStyle(modal).display !== 'none';
-    topBar.style.display = isModalVisible ? 'none' : 'flex';
-  });
-
-  observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
-
-  // Code pour le menu style-menu
-  const colorTextBtn = document.getElementById('color-text');
-  const styleMenu = document.getElementById('style-menu');
-
-  colorTextBtn.addEventListener('click', () => {
-    if (styleMenu.style.display === 'block') {
-      styleMenu.style.display = 'none';
-    } else {
-      const rect = colorTextBtn.getBoundingClientRect();
-      styleMenu.style.top = (rect.bottom + window.scrollY) + 'px';
-      styleMenu.style.left = (rect.left + window.scrollX) + 'px';
-      styleMenu.style.display = 'block';
-    }
-  });
-
-  document.addEventListener('click', (e) => {
-    if (!styleMenu.contains(e.target) && e.target !== colorTextBtn) {
-      styleMenu.style.display = 'none';
-    }
-  });
 });
 
+// Optionnel : clic en dehors pour fermer le menu
+document.addEventListener('click', (e) => {
+  if (!styleMenu.contains(e.target) && e.target !== colorTextBtn) {
+    styleMenu.style.display = 'none';
+  }
+});
+
+  </script>
+  
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('myModal');
+    const topBar = document.getElementById('top-bar');
+
+    // Appliquer l'état initial
+    if (getComputedStyle(modal).display !== 'none') {
+      topBar.style.display = 'none';
+    } else {
+      topBar.style.display = 'flex';
+    }
+
+    // Observer les changements de style de la modal
+    const observer = new MutationObserver(() => {
+      const isModalVisible = getComputedStyle(modal).display !== 'none';
+      topBar.style.display = isModalVisible ? 'none' : 'flex';
+    });
+
+    observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+  });
 </script>
 
   <script src="/socket.io/socket.io.js"></script>
