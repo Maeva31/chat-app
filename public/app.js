@@ -389,15 +389,15 @@ function addMessageToChat(msg) {
     usernameSpan.style.color = color;
   }
 
-const timeNode = document.createTextNode(`[${timeString}] `);
+  const timeNode = document.createTextNode(`[${timeString}] `);
 newMessage.appendChild(timeNode);
 newMessage.appendChild(usernameSpan);
 
-const separator = document.createElement('strong');
-separator.textContent = ': ';
-newMessage.appendChild(separator);
 
-if (msg.file) {
+  const separator = document.createElement('strong');
+  separator.textContent = ': ';
+  newMessage.appendChild(separator);
+
   const url = msg.file;
 
   if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
@@ -407,64 +407,69 @@ if (msg.file) {
     img.style.border = '1px solid #333';
     newMessage.appendChild(img);
 
-  } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = url;
-    newMessage.appendChild(audio);
+    } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = url;
+      newMessage.appendChild(audio);
 
-  } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.width = 320;
-    video.src = url;
-    newMessage.appendChild(video);
+    } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.width = 320;
+      video.src = url;
+      newMessage.appendChild(video);
+
+    } else {
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.textContent = '📎 Télécharger le fichier';
+      newMessage.appendChild(link);
+    }
 
   } else {
-    const link = document.createElement('a');
-    link.href = url;
-    link.target = '_blank';
-    link.textContent = '📎 Télécharger le fichier';
-    newMessage.appendChild(link);
-  }
+    // Message texte classique
+    const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-} else {
-  // Message texte classique
-  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
+    const messageText = document.createElement('span');
+    const style = msg.style || {};
+    messageText.style.color = style.color || '#fff';
+    messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+    messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+    messageText.style.fontFamily = style.font || 'Arial';
 
-  const messageText = document.createElement('span');
-  const style = msg.style || {};
-  messageText.style.color = style.color || '#fff';
-  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = style.font || 'Arial';
-
-  parts.forEach(part => {
-    if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
+    parts.forEach(part => {
+      if (/https?:\/\/[^\s]+/.test(part)) {
+        if (isYouTubeUrl(part)) {
+          return; // ignore dans texte, vidéo intégrée ailleurs
+        } else {
+          const a = document.createElement('a');
+          a.href = part;
+          a.textContent = part;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.style.color = style.color || '#00aaff';
+          a.style.textDecoration = 'underline';
+          messageText.appendChild(a);
+        }
       } else {
-        const a = document.createElement('a');
-        a.href = part;
-        a.textContent = part;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff';
-        a.style.textDecoration = 'underline';
-        messageText.appendChild(a);
+        if (part.trim() !== '') {
+          messageText.appendChild(document.createTextNode(part));
+        }
       }
-    } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
-    }
-  });
+    });
 
-  if (messageText.textContent.trim() !== '') {
-    newMessage.appendChild(messageText);
-  }
+   const timeNode = document.createTextNode(`[${timeString}] `);
+newMessage.appendChild(timeNode);
+newMessage.appendChild(usernameSpan);
+
+if (messageText.textContent.trim() !== '') {
+  const separator = document.createElement('strong');
+  separator.textContent = ': ';
+  newMessage.appendChild(separator);
+  newMessage.appendChild(messageText);
 }
-
 
 
   newMessage.classList.add('message');
