@@ -1,0 +1,317 @@
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- Bandeau d'erreur -->
+  <div id="error-banner" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    background-color: #f44336;
+    color: white;
+    padding: 10px;
+    text-align: center;
+    font-weight: bold;
+    z-index: 9999;">
+    <span id="error-banner-text"></span>
+  </div>
+
+ <!-- ... Partie de ta barre du haut ... -->
+<div id="top-bar" style="
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px;
+    background-color: #3333339e;
+    color: white;
+">
+  <div class="texte-laser">
+    <h2>Bienvenue Bon Chat 💬</h2>
+  </div>
+
+  <!-- Conteneur des boutons à droite -->
+  <div style="display: flex; gap: 8px; align-items: center;">
+    <button id="toggle-invisible-btn" style="
+      padding: 6px 10px;
+      font-weight: bold;
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      display: none; /* caché par défaut */
+    ">
+      👻
+    </button>
+
+    <!-- BOUTON DÉCONNEXION AJOUTÉ -->
+    <button id="logoutButton" title="Déconnexion" class="control-button">🚪</button>
+
+  </div>
+
+  <!-- Modal de confirmation déconnexion -->
+  <div id="logoutModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <h3>Confirmer la déconnexion</h3>
+      <p>Voulez-vous vraiment vous déconnecter ?</p>
+      <button id="logoutConfirmBtn">Oui</button>
+      <button id="logoutCancelBtn">Non</button>
+    </div>
+  </div>
+</div>
+
+  <!-- Modal d'information utilisateur -->
+ <div id="myModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <img src="https://maevakonnect.fr/maevacircle.png" alt="Image modal" class="modal-image" />
+    <h2>Bienvenue !</h2>
+    <p>Veuillez entrer vos informations pour accéder au chat.</p>
+
+      <label for="username-input">Pseudo (max 16 caractères)</label>
+      <input id="username-input" type="text" placeholder="Pseudo (max 16 caractères)" maxlength="16" autocomplete="off" />
+      <input type="password" id="password-input" placeholder="Mot de passe" style="display:none; margin-top:8px;" />
+
+      <label for="gender-select">Genre</label>
+      <select id="gender-select" autocomplete="off">
+        <option value="">Genre</option>
+        <option value="Homme">Homme</option>
+        <option value="Femme">Femme</option>
+        <option value="Autre">Autre</option>
+      </select>
+
+      <label for="age-input">Âge (18-89)</label>
+      <input id="age-input" type="number" placeholder="Âge (18-89)" min="18" max="89" autocomplete="off" />
+
+      <div id="modal-error" class="modal-error" style="display: none; color: red; margin-top: 10px;"></div>
+
+      <button id="username-submit">Valider</button>
+    </div>
+  </div>
+
+  <!-- Wrapper principal -->
+  <main>
+    <!-- Sidebar gauche : salons -->
+    <aside id="channel-sidebar">
+      <header>
+        <div class="texte-laser"><h3>Salons</h3></div>
+      </header>
+
+      <ul id="channel-list">
+        <li class="channel selected"># 💬 ┊ Général</li>
+        <li class="channel"># 🎧 ┊ Musique</li>
+        <li class="channel"># 🎮 ┊ Gaming</li>
+        <li class="channel"># 🌿 ┊ Détente</li>
+      </ul>
+
+      <!-- ZONE CRÉATION SALON -->
+      <div id="create-channel">
+        <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off" />
+        <button id="create-channel-button">Créer</button>
+      </div>
+    </aside>
+
+    <!-- Zone centrale : chat -->
+    <section id="chat-container">
+      <div id="chat-messages" class="chat-messages"></div>
+
+      <!-- Champ message avec bouton emoji -->
+      <div id="chat-input" style="display: flex; align-items: center; gap: 5px; padding: 5px;">
+        <button id="color-text" title="Choisir une couleur" style="font-size: 20px; background: transparent; border: none; outline: none; cursor: pointer;">🎨</button>
+        <button id="emoji-button" title="Insérer un émoji" style="font-size: 20px; background: transparent; border: none; outline: none; cursor: pointer;">😊</button>
+        <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" style="flex: 1;" />
+      </div>
+
+      <!-- Emoji Picker -->
+<div id="emoji-picker" class="emoji-picker">
+  <span class="emoji">😀</span>
+  <span class="emoji">😁</span>
+  <span class="emoji">😂</span>
+  <span class="emoji">🤣</span>
+  <span class="emoji">😃</span>
+  <span class="emoji">😄</span>
+  <span class="emoji">😅</span>
+  <span class="emoji">😆</span>
+  <span class="emoji">😉</span>
+  <span class="emoji">😊</span>
+  <span class="emoji">😋</span>
+  <span class="emoji">😎</span>
+  <span class="emoji">😍</span>
+  <span class="emoji">😘</span>
+  <span class="emoji">😗</span>
+  <span class="emoji">😙</span>
+  <span class="emoji">😚</span>
+  <span class="emoji">🙂</span>
+  <span class="emoji">🤗</span>
+  <span class="emoji">🤩</span>
+  <span class="emoji">🤔</span>
+  <span class="emoji">🤨</span>
+  <span class="emoji">😐</span>
+  <span class="emoji">😑</span>
+  <span class="emoji">😶</span>
+  <span class="emoji">🙄</span>
+  <span class="emoji">😏</span>
+  <span class="emoji">😣</span>
+  <span class="emoji">😥</span>
+  <span class="emoji">😮</span>
+  <span class="emoji">🤐</span>
+  <span class="emoji">😯</span>
+  <span class="emoji">😪</span>
+  <span class="emoji">😫</span>
+  <span class="emoji">🥱</span>
+  <span class="emoji">😴</span>
+  <span class="emoji">😌</span>
+  <span class="emoji">😛</span>
+  <span class="emoji">😜</span>
+  <span class="emoji">😝</span>
+  <span class="emoji">🤤</span>
+  <span class="emoji">😒</span>
+  <span class="emoji">😓</span>
+  <span class="emoji">😔</span>
+  <span class="emoji">😕</span>
+  <span class="emoji">🙁</span>
+  <span class="emoji">☹️</span>
+  <span class="emoji">😖</span>
+  <span class="emoji">😞</span>
+  <span class="emoji">😟</span>
+  <span class="emoji">😢</span>
+  <span class="emoji">😭</span>
+  <span class="emoji">😤</span>
+  <span class="emoji">😠</span>
+  <span class="emoji">😡</span>
+  <span class="emoji">🤬</span>
+  <span class="emoji">🤯</span>
+  <span class="emoji">😳</span>
+  <span class="emoji">🥵</span>
+  <span class="emoji">🥶</span>
+  <span class="emoji">😱</span>
+  <span class="emoji">😨</span>
+  <span class="emoji">😰</span>
+  <span class="emoji">😬</span>
+  <span class="emoji">😷</span>
+  <span class="emoji">🤒</span>
+  <span class="emoji">🤕</span>
+  <span class="emoji">🤢</span>
+  <span class="emoji">🤮</span>
+  <span class="emoji">🤧</span>
+  <span class="emoji">🥴</span>
+  <span class="emoji">😵</span>
+  <span class="emoji">🤑</span>
+  <span class="emoji">🤠</span>
+  <span class="emoji">😇</span>
+  <span class="emoji">🤓</span>
+  <span class="emoji">🧐</span>
+  <span class="emoji">🙃</span>
+  <span class="emoji">🤫</span>
+  <span class="emoji">🤭</span>
+  <span class="emoji">🤥</span>
+  <span class="emoji">😺</span>
+  <span class="emoji">😸</span>
+  <span class="emoji">😹</span>
+  <span class="emoji">😻</span>
+  <span class="emoji">😼</span>
+  <span class="emoji">😽</span>
+  <span class="emoji">🙀</span>
+  <span class="emoji">😿</span>
+  <span class="emoji">😾</span>
+  <span class="emoji">👿</span>
+  <span class="emoji">😈</span>
+  <span class="emoji">👹</span>
+  <span class="emoji">👺</span>
+  <span class="emoji">💀</span>
+  <span class="emoji">💃</span>
+  <span class="emoji">👻</span>
+  <span class="emoji">👽</span>
+  <span class="emoji">🤖</span>
+  <span class="emoji">💩</span>
+  <span class="emoji">🦧</span>
+  <span class="emoji">🐒</span>
+  <span class="emoji">🐖</span>
+  <span class="emoji">🐕</span>
+  <span class="emoji">🐽</span>
+  <span class="emoji">🍑</span>
+  <span class="emoji">🍆</span>
+  <span class="emoji">🍕</span>
+  <span class="emoji">🍒</span>
+  <span class="emoji">🍺</span>
+  <span class="emoji">💪</span>
+  <span class="emoji">🙌</span>
+  <span class="emoji">👍</span>
+  <span class="emoji">👎</span>
+  <span class="emoji">💚</span>
+  <span class="emoji">❤️</span>
+  <span class="emoji">💯</span>
+  <span class="emoji">🎉</span>
+  <span class="emoji">🎧</span>
+  <span class="emoji">🎮</span>
+  <span class="emoji">🎃</span>
+  <span class="emoji">🌈</span>
+  <span class="emoji">⚡</span>
+  <span class="emoji">💥</span>
+  <span class="emoji">🚀</span>
+</div>
+
+<div id="style-menu" style="display:none; position:absolute; background:#222; color:#fff; padding:10px; border-radius:5px; z-index:100;">
+  <input type="color" id="style-color" value="#ffffff" />
+  <label><input type="checkbox" id="style-bold" /> Gras</label>
+  <label><input type="checkbox" id="style-italic" /> Italique</label>
+  <select id="style-font">
+    <option value="Arial">Arial</option>
+    <option value="Courier New">Courier New</option>
+    <option value="Georgia">Georgia</option>
+    <option value="Helvetica">Helvetica</option>
+    <option value="Times New Roman">Times New Roman</option>
+    <option value="Verdana">Verdana</option>
+    <option value="Palatino">Palatino</option>
+    <option value="Garamond">Garamond</option>
+    <option value="Bookman">Bookman</option>
+    <option value="Comic Sans MS">Comic Sans MS</option>
+    <option value="Trebuchet MS">Trebuchet MS</option>
+    <option value="Arial Black">Arial Black</option>
+  </select>
+</div>
+
+    </section>
+
+    <!-- Sidebar droite : utilisateurs -->
+    <aside id="user-list">
+      <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
+      <ul id="users"></ul>
+    </aside>
+  </main>
+
+  <!-- Scripts -->
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('myModal');
+    const topBar = document.getElementById('top-bar');
+
+    // Appliquer l'état initial
+    if (getComputedStyle(modal).display !== 'none') {
+      topBar.style.display = 'none';
+    } else {
+      topBar.style.display = 'flex';
+    }
+
+    // Observer les changements de style de la modal
+    const observer = new MutationObserver(() => {
+      const isModalVisible = getComputedStyle(modal).display !== 'none';
+      topBar.style.display = isModalVisible ? 'none' : 'flex';
+    });
+
+    observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+  });
+</script>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
