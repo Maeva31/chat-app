@@ -389,8 +389,10 @@ function addMessageToChat(msg) {
     usernameSpan.style.color = color;
   }
 
-  newMessage.innerHTML = `[${timeString}] `;
-  newMessage.appendChild(usernameSpan);
+  const timeNode = document.createTextNode(`[${timeString}] `);
+newMessage.appendChild(timeNode);
+newMessage.appendChild(usernameSpan);
+
 
   const separator = document.createElement('strong');
   separator.textContent = ': ';
@@ -458,8 +460,10 @@ function addMessageToChat(msg) {
       }
     });
 
-    newMessage.innerHTML = `[${timeString}] `;
-    newMessage.appendChild(usernameSpan);
+    const timeNode = document.createTextNode(`[${timeString}] `);
+newMessage.appendChild(timeNode);
+newMessage.appendChild(usernameSpan);
+
 
     if (messageText.textContent.trim() !== '') {
       const separator = document.createElement('strong');
