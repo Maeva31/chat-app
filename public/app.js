@@ -956,7 +956,11 @@ uploadInput.addEventListener('change', () => {
   reader.readAsArrayBuffer(file);
 });
 
+
+
+
 // Affichage d’un fichier uploadé
+
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
@@ -982,51 +986,43 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   wrapper.appendChild(userStrong);
   wrapper.appendChild(separator);
 
-  // Gestion des types de fichiers
- if (mimetype.startsWith('image/')) {
-  const img = document.createElement('img');
-  img.src = `data:${mimetype};base64,${data}`;
-  img.alt = filename;
-  img.style.maxWidth = '200px';
-  img.style.maxHeight = '200px';
-  img.style.border = '1px solid #333';
-  img.style.marginTop = '4px';
-  img.style.cursor = 'pointer';
+  if (mimetype.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = `data:${mimetype};base64,${data}`;
+    img.alt = filename;
+    img.style.maxWidth = '200px';
+    img.style.maxHeight = '200px';
+    img.style.border = '1px solid #333';
+    img.style.marginTop = '4px';
+    wrapper.appendChild(img);
+  } else if (mimetype.startsWith('audio/')) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = `data:${mimetype};base64,${data}`;
+    audio.style.marginTop = '4px';
+    wrapper.appendChild(audio);
+  } else if (mimetype.startsWith('video/')) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = `data:${mimetype};base64,${data}`;
+    video.style.maxWidth = '300px';
+    video.style.maxHeight = '200px';
+    video.style.marginTop = '4px';
+    wrapper.appendChild(video);
+  } else {
+    const link = document.createElement('a');
+    link.href = `data:${mimetype};base64,${data}`;
+    link.download = filename;
+    link.textContent = `📎 ${filename}`;
+    link.target = '_blank';
+    wrapper.appendChild(link);
+  }
 
-  // Clic pour ouvrir dans un nouvel onglet avec debug
-  img.addEventListener('click', () => {
-    console.log('Open image src:', img.src); // debug ici
-    window.open(img.src, '_blank');
-  });
-
-  wrapper.appendChild(img);
-} else if (mimetype.startsWith('audio/')) {
-  const audio = document.createElement('audio');
-  audio.controls = true;
-  audio.src = `data:${mimetype};base64,${data}`;
-  audio.style.marginTop = '4px';
-  wrapper.appendChild(audio);
-} else if (mimetype.startsWith('video/')) {
-  const video = document.createElement('video');
-  video.controls = true;
-  video.src = `data:${mimetype};base64,${data}`;
-  video.style.maxWidth = '300px';
-  video.style.maxHeight = '200px';
-  video.style.marginTop = '4px';
-  wrapper.appendChild(video);
-} else {
-  const link = document.createElement('a');
-  link.href = `data:${mimetype};base64,${data}`;
-  link.download = filename;
-  link.textContent = `📎 ${filename}`;
-  link.target = '_blank';
-  wrapper.appendChild(link);
-}
-
-chatMessages.appendChild(wrapper);
-chatMessages.scrollTop = chatMessages.scrollHeight;
-
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
 }
-}); 
-// FIN app.js
+});
+
+ 
