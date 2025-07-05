@@ -993,6 +993,10 @@ if (mimetype.startsWith('image/')) {
   img.src = `data:${mimetype};base64,${data}`;
   img.style.maxWidth = '100px';
   img.style.cursor = 'pointer';
+  img.style.border = '2px solid #ccc';
+  img.style.borderRadius = '8px';
+  img.style.padding = '4px';
+  img.style.backgroundColor = '#fff';
 
   const link = document.createElement('a');
   link.href = '#'; // lien fictif
@@ -1034,6 +1038,11 @@ if (mimetype.startsWith('image/')) {
   video.style.maxWidth = '300px';
   video.style.maxHeight = '300px';
   video.style.marginTop = '4px';
+  video.style.border = '2px solid #ccc';
+  video.style.borderRadius = '8px';
+  video.style.padding = '4px';
+  video.style.backgroundColor = '#000';
+
   wrapper.appendChild(video);
 
 } else {
@@ -1049,6 +1058,7 @@ if (mimetype.startsWith('image/')) {
 // Ajout dans la zone de chat et scroll automatique
 chatMessages.appendChild(wrapper);
 chatMessages.scrollTop = chatMessages.scrollHeight;
+
 
 });
 }
