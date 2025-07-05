@@ -996,12 +996,18 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   img.style.marginTop = '4px';
 
   // Création du lien autour de l'image pour ouvrir dans un nouvel onglet
-  const link = document.createElement('a');
-  link.href = img.src;
-  link.target = '_blank';
-  link.appendChild(img);
+ if (mimetype.startsWith('image/')) {
+  const img = document.createElement('img');
+  img.src = `data:${mimetype};base64,${data}`;
+  img.style.maxWidth = '200px';
+  img.style.cursor = 'pointer';
+  img.style.marginTop = '4px';
 
-  wrapper.appendChild(link);
+  img.addEventListener('click', () => {
+    window.open(img.src, '_blank');
+  });
+
+  wrapper.appendChild(img);
 } else if (mimetype.startsWith('audio/')) {
   const audio = document.createElement('audio');
   audio.controls = true;
@@ -1027,6 +1033,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 
 chatMessages.appendChild(wrapper);
 chatMessages.scrollTop = chatMessages.scrollHeight;
+
 });
 
 }
