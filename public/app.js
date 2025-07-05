@@ -930,7 +930,7 @@ uploadInput.addEventListener('change', () => {
 
   // ICI : ajout du test taille fichier
  if (file.size > 20 * 1024 * 1024) {
-  showBanner('❌ Le fichier est trop volumineux (20 Mo max).', 'error');
+  showBanner('Le fichier est trop volumineux (20 Mo max).', 'error');
   return;
 }
 
