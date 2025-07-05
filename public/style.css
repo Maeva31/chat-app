@@ -811,7 +811,7 @@ button:focus {
 .sprite-button {
   width: 24px;
   height: 24px;
-  background: url('/path/to/starbis.gif') no-repeat top center;
+  background: url('/icon/starbis.gif') no-repeat top center;
   border: none;
   background-size: 24px 48px; /* largeur x hauteur totale du sprite */
   cursor: pointer;
