@@ -1,3 +1,4 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -965,107 +966,122 @@ if (uploadInput && uploadButton) {
 
 // Affichage d’un fichier uploadé
 
-socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) => {
+socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
 
-  // Création span pour le temps en italique gris
+  // Création du timestamp
   const timeSpan = document.createElement('span');
   timeSpan.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
   timeSpan.style.color = '#888';
   timeSpan.style.fontStyle = 'italic';
   timeSpan.style.marginRight = '5px';
-
-  // Création pseudo en gras
-  const userStrong = document.createElement('strong');
-  userStrong.textContent = username;
-
-  // Création séparateur ": "
-  const separator = document.createTextNode(': ');
-
   wrapper.appendChild(timeSpan);
-  wrapper.appendChild(userStrong);
+
+  // Création pseudo avec couleur + icône
+  const usernameSpan = document.createElement('span');
+  usernameSpan.classList.add('username-span');
+
+  const userColor =
+    role === 'admin' ? 'red' :
+    role === 'modo' ? 'limegreen' :
+    gender === 'Femme' ? 'deeppink' :
+    gender === 'Homme' ? 'dodgerblue' :
+    'white';
+
+  usernameSpan.style.color = userColor;
+  usernameSpan.style.fontWeight = 'bold';
+  usernameSpan.style.marginRight = '4px';
+
+  // Ajout de l’icône si admin ou modo
+  if (role === 'admin' || role === 'modo') {
+    const icon = createRoleIcon(role); // fonction déjà existante
+    if (icon) usernameSpan.appendChild(icon);
+  }
+
+  const usernameText = document.createTextNode(username);
+  usernameSpan.appendChild(usernameText);
+  wrapper.appendChild(usernameSpan);
+
+  // Ajout séparateur :
+  const separator = document.createTextNode(': ');
   wrapper.appendChild(separator);
 
-  // Supposons que wrapper, mimetype, data, filename, chatMessages sont déjà définis
+  // Affichage fichier selon type MIME
+  if (mimetype.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = `data:${mimetype};base64,${data}`;
+    img.style.maxWidth = '100px';
+    img.style.cursor = 'pointer';
+    img.style.border = '2px solid #ccc';
+    img.style.borderRadius = '8px';
+    img.style.padding = '4px';
+    img.style.backgroundColor = '#fff';
 
-if (mimetype.startsWith('image/')) {
-  const img = document.createElement('img');
-  img.src = `data:${mimetype};base64,${data}`;
-  img.style.maxWidth = '100px';
-  img.style.cursor = 'pointer';
-  img.style.border = '2px solid #ccc';
-  img.style.borderRadius = '8px';
-  img.style.padding = '4px';
-  img.style.backgroundColor = '#fff';
+    const link = document.createElement('a');
+    link.href = '#';
+    link.style.cursor = 'pointer';
+    link.appendChild(img);
 
-  const link = document.createElement('a');
-  link.href = '#';
-  link.style.cursor = 'pointer';
-  link.appendChild(img);
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
 
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head><title>${filename}</title></head>
+            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+              <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      } else {
+        alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
+      }
+    });
 
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-          <head><title>${filename}</title></head>
-          <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-            <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-          </body>
-        </html>
-      `);
-      newWindow.document.close();
-    } else {
-      alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
-    }
-  });
+    wrapper.appendChild(link);
 
-  wrapper.appendChild(link);
+  } else if (mimetype.startsWith('audio/')) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = `data:${mimetype};base64,${data}`;
+    audio.style.marginTop = '4px';
+    audio.style.border = '2px solid #ccc';
+    audio.style.borderRadius = '8px';
+    audio.style.padding = '4px';
+    audio.style.backgroundColor = '#f9f9f9';
+    wrapper.appendChild(audio);
 
-} else if (mimetype.startsWith('audio/')) {
-  const audio = document.createElement('audio');
-  audio.controls = true;
-  audio.src = `data:${mimetype};base64,${data}`;
-  audio.style.marginTop = '4px';
-  audio.style.border = '2px solid #ccc';
-  audio.style.borderRadius = '8px';
-  audio.style.padding = '4px';
-  audio.style.backgroundColor = '#f9f9f9';
-  wrapper.appendChild(audio);
+  } else if (mimetype.startsWith('video/')) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = `data:${mimetype};base64,${data}`;
+    video.style.maxWidth = '300px';
+    video.style.maxHeight = '300px';
+    video.style.marginTop = '4px';
+    video.style.border = '2px solid #ccc';
+    video.style.borderRadius = '8px';
+    video.style.padding = '4px';
+    video.style.backgroundColor = '#000';
+    wrapper.appendChild(video);
 
-} else if (mimetype.startsWith('video/')) {
-  const video = document.createElement('video');
-  video.controls = true;
-  video.src = `data:${mimetype};base64,${data}`;
-  video.style.maxWidth = '300px';
-  video.style.maxHeight = '300px';
-  video.style.marginTop = '4px';
-  video.style.border = '2px solid #ccc';
-  video.style.borderRadius = '8px';
-  video.style.padding = '4px';
-  video.style.backgroundColor = '#000';
-  wrapper.appendChild(video);
+  } else {
+    const link = document.createElement('a');
+    link.href = `data:${mimetype};base64,${data}`;
+    link.download = filename;
+    link.textContent = `📎 ${filename}`;
+    link.target = '_blank';
+    wrapper.appendChild(link);
+  }
 
-} else {
-  const link = document.createElement('a');
-  link.href = `data:${mimetype};base64,${data}`;
-  link.download = filename;
-  link.textContent = `📎 ${filename}`;
-  link.target = '_blank';
-  wrapper.appendChild(link);
-}
-
-chatMessages.appendChild(wrapper);
-chatMessages.scrollTop = chatMessages.scrollHeight;
-
-
-
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 }
 });
