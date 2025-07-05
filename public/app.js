@@ -452,6 +452,14 @@ function addMessageToChat(msg) {
       }
     });
 
+    if (msg.username !== 'Système') {
+  const color = (msg.role === 'admin') ? 'red' :
+                (msg.role === 'modo') ? 'green' :
+                getUsernameColor(msg.gender);
+  usernameSpan.style.color = color;
+}
+
+
     newMessage.innerHTML = `[${timeString}] `;
     newMessage.appendChild(usernameSpan);
 
