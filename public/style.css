@@ -817,11 +817,28 @@ button:focus {
   cursor: pointer;
   display: inline-block;
   padding: 0;
+  position: relative;
+  left: -8px; /* décale vers la gauche */
 }
 
 .sprite-button:hover {
   background-position: 0 -24px;
 }
+
+/* Pour désactiver les focus/outline si tu veux */
+.sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.sprite-button:focus,
+.sprite-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 
 
 
