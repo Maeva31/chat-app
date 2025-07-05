@@ -958,6 +958,20 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
     img.style.border = '1px solid #333';
     img.style.marginTop = '4px';
     wrapper.appendChild(img);
+  } else if (mimetype.startsWith('audio/')) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = `data:${mimetype};base64,${data}`;
+    audio.style.marginTop = '4px';
+    wrapper.appendChild(audio);
+  } else if (mimetype.startsWith('video/')) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = `data:${mimetype};base64,${data}`;
+    video.style.maxWidth = '300px';
+    video.style.maxHeight = '200px';
+    video.style.marginTop = '4px';
+    wrapper.appendChild(video);
   } else {
     const link = document.createElement('a');
     link.href = `data:${mimetype};base64,${data}`;
@@ -970,6 +984,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
 
 
 
