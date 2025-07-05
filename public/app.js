@@ -929,11 +929,11 @@ uploadInput.addEventListener('change', () => {
   if (!file) return;
 
   // ICI : ajout du test taille fichier
-  if (file.size > 20 * 1024 * 1024) { // 20 Mo
-    alert("Fichier trop volumineux (max 20 Mo)");
-    uploadInput.value = ''; // reset input fichier pour pouvoir re-sélectionner
-    return;
-  }
+ if (file.size > 20 * 1024 * 1024) {
+  showBanner('❌ Le fichier est trop volumineux (20 Mo max).', 'error');
+  return;
+}
+
 
   const reader = new FileReader();
 
