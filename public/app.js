@@ -382,22 +382,28 @@ function addMessageToChat(msg) {
 
   // Gestion fichier uploadé avec URL dans msg.file
   if (msg.file) {
-    // Exemple : msg.file contient l'URL du fichier
-    newMessage.innerHTML = `[${timeString}] `;
-    newMessage.appendChild(usernameSpan);
+  if (msg.username !== 'Système') {
+    const color = (msg.role === 'admin') ? 'red' :
+                  (msg.role === 'modo') ? 'green' :
+                  getUsernameColor(msg.gender);
+    usernameSpan.style.color = color;
+  }
 
-    const separator = document.createElement('strong');
-    separator.textContent = ': ';
-    newMessage.appendChild(separator);
+  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.appendChild(usernameSpan);
 
-    const url = msg.file;
+  const separator = document.createElement('strong');
+  separator.textContent = ': ';
+  newMessage.appendChild(separator);
 
-    if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
-      const img = document.createElement('img');
-      img.src = url;
-      img.style.maxWidth = '200px';
-      img.style.border = '1px solid #333';
-      newMessage.appendChild(img);
+  const url = msg.file;
+
+  if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
+    const img = document.createElement('img');
+    img.src = url;
+    img.style.maxWidth = '200px';
+    img.style.border = '1px solid #333';
+    newMessage.appendChild(img);
 
     } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
       const audio = document.createElement('audio');
@@ -451,14 +457,6 @@ function addMessageToChat(msg) {
         }
       }
     });
-
-    if (msg.username !== 'Système') {
-  const color = (msg.role === 'admin') ? 'red' :
-                (msg.role === 'modo') ? 'green' :
-                getUsernameColor(msg.gender);
-  usernameSpan.style.color = color;
-}
-
 
     newMessage.innerHTML = `[${timeString}] `;
     newMessage.appendChild(usernameSpan);
