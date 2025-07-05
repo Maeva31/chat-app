@@ -276,54 +276,18 @@ function getYouTubeVideoId(url) {
 
 
   // Ajoute un message dans la zone de chat
-function addMessageToChat(msg) {
+  function addMessageToChat(msg) {
   if (msg.username === 'Système') {
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
     if (match && match[1]) {
       const salonDuMessage = match[1].trim();
-      if (salonDuMessage !== currentChannel) return; // Ignore message système d'autres salons
+      if (salonDuMessage !== currentChannel) return;
     }
   }
 
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
-
-  const messageElem = document.createElement('div');
-  messageElem.classList.add('message');
-
-  // Date et heure formatées (facultatif)
-  const time = new Date(msg.timestamp).toLocaleTimeString();
-
-  // Affichage du pseudo, avec role si tu veux (exemple simple)
-  const header = document.createElement('span');
-  header.classList.add('message-header');
-  header.textContent = `[${time}] ${msg.username}: `;
-  messageElem.appendChild(header);
-
-  // Si message contient un fichier (image)
-  if (msg.file) {
-    const img = document.createElement('img');
-    img.src = msg.file;
-    img.alt = "Image envoyée";
-    img.style.maxWidth = '200px';
-    img.style.maxHeight = '200px';
-    img.style.display = 'block';
-    img.style.marginTop = '5px';
-    messageElem.appendChild(img);
-
-    // Si le message a aussi du texte (message non vide), l'afficher en dessous
-    if (msg.message && msg.message.trim() !== '') {
-      const text = document.createElement('p');
-      text.textContent = msg.message;
-      messageElem.appendChild(text);
-    }
-  } else if (msg.message) {
-    // Sinon, afficher juste le texte
-    const text = document.createElement('span');
-    text.textContent = msg.message;
-    messageElem.appendChild(text);
-  }
 
   const newMessage = document.createElement('div');
   const date = new Date(msg.timestamp);
@@ -345,6 +309,7 @@ function addMessageToChat(msg) {
     usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
+    // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/diamond.ico';
@@ -356,16 +321,16 @@ function addMessageToChat(msg) {
       icon.style.verticalAlign = '-1px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Modérateur';
-      icon.title = 'Modérateur';
-      icon.style.width = '16px';
-      icon.style.height = '16px';
-      icon.style.marginRight = '1px';
-      icon.style.verticalAlign = '-2px';
-      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-    }
+  const icon = document.createElement('img');
+  icon.src = '/favicon.ico'; // Assure-toi que cette image correspond bien à une icône de modérateur
+  icon.alt = 'Modérateur';
+  icon.title = 'Modérateur';
+  icon.style.width = '16px';
+  icon.style.height = '16px';
+  icon.style.marginRight = '1px';
+  icon.style.verticalAlign = '-2px';
+  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+}
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
@@ -380,90 +345,42 @@ function addMessageToChat(msg) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
   }
 
-  // Gestion fichier uploadé avec URL dans msg.file
-  if (msg.file) {
-  if (msg.username !== 'Système') {
-    const color = (msg.role === 'admin') ? 'red' :
-                  (msg.role === 'modo') ? 'green' :
-                  getUsernameColor(msg.gender);
-    usernameSpan.style.color = color;
-  }
+  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-  const timeNode = document.createTextNode(`[${timeString}] `);
-newMessage.appendChild(timeNode);
-newMessage.appendChild(usernameSpan);
+  const messageText = document.createElement('span');
+  const style = msg.style || {};
+  messageText.style.color = style.color || '#fff';
+  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = style.font || 'Arial';
 
-
-  const separator = document.createElement('strong');
-  separator.textContent = ': ';
-  newMessage.appendChild(separator);
-
-  const url = msg.file;
-
-  if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
-    const img = document.createElement('img');
-    img.src = url;
-    img.style.maxWidth = '200px';
-    img.style.border = '1px solid #333';
-    newMessage.appendChild(img);
-
-    } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
-      const audio = document.createElement('audio');
-      audio.controls = true;
-      audio.src = url;
-      newMessage.appendChild(audio);
-
-    } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
-      const video = document.createElement('video');
-      video.controls = true;
-      video.width = 320;
-      video.src = url;
-      newMessage.appendChild(video);
-
-    } else {
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank';
-      link.textContent = '📎 Télécharger le fichier';
-      newMessage.appendChild(link);
-    }
-
-  } else {
-    // Message texte classique
-    const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
-
-    const messageText = document.createElement('span');
-    const style = msg.style || {};
-    messageText.style.color = style.color || '#fff';
-    messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-    messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-    messageText.style.fontFamily = style.font || 'Arial';
-
-    parts.forEach(part => {
-      if (/https?:\/\/[^\s]+/.test(part)) {
-        if (isYouTubeUrl(part)) {
-          return; // ignore dans texte, vidéo intégrée ailleurs
-        } else {
-          const a = document.createElement('a');
-          a.href = part;
-          a.textContent = part;
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.style.color = style.color || '#00aaff';
-          a.style.textDecoration = 'underline';
-          messageText.appendChild(a);
-        }
+  parts.forEach(part => {
+    if (/https?:\/\/[^\s]+/.test(part)) {
+      if (isYouTubeUrl(part)) {
+        return; // ignore dans texte, vidéo intégrée ailleurs
       } else {
-        if (part.trim() !== '') {
-          messageText.appendChild(document.createTextNode(part));
-        }
+        const a = document.createElement('a');
+        a.href = part;
+        a.textContent = part;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.color = style.color || '#00aaff';
+        a.style.textDecoration = 'underline';
+        messageText.appendChild(a);
       }
-    });
+    } else {
+      if (part.trim() !== '') {
+        messageText.appendChild(document.createTextNode(part));
+      }
+    }
+  });
 
-   const timeNode = document.createTextNode(`[${timeString}] `);
-newMessage.appendChild(timeNode);
-newMessage.appendChild(usernameSpan);
+  // Assemblage avec pseudo + ":" + espace + message
+  newMessage.innerHTML = `[${timeString}] `;
+  newMessage.appendChild(usernameSpan);
 
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide, en gras
 if (messageText.textContent.trim() !== '') {
   const separator = document.createElement('strong');
   separator.textContent = ': ';
@@ -480,6 +397,8 @@ if (messageText.textContent.trim() !== '') {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+
 
   // Sélectionne visuellement un salon dans la liste
   function selectChannelInUI(channelName) {
@@ -992,38 +911,31 @@ if (uploadInput && uploadButton) {
     uploadInput.click();
   });
 
-uploadInput.addEventListener('change', () => {
-  const file = uploadInput.files[0];
-  if (!file) return;
+  uploadInput.addEventListener('change', () => {
+    const file = uploadInput.files[0];
+    if (!file) return;
 
-  // ICI : ajout du test taille fichier
-  if (file.size > 20 * 1024 * 1024) { // 20 Mo
-    alert("Fichier trop volumineux (max 20 Mo)");
-    uploadInput.value = ''; // reset input fichier pour pouvoir re-sélectionner
-    return;
-  }
+    const reader = new FileReader();
 
-  const reader = new FileReader();
+    reader.onload = () => {
+      const arrayBuffer = reader.result;
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer)
+          .reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
 
-  reader.onload = () => {
-    const arrayBuffer = reader.result;
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+      socket.emit('upload file', {
+        filename: file.name,
+        mimetype: file.type,
+        data: base64,
+        channel: currentChannel,
+        timestamp: new Date().toISOString()
+      });
+    };
 
-    socket.emit('upload file', {
-      filename: file.name,
-      mimetype: file.type,
-      data: base64,
-      channel: currentChannel,
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  reader.readAsArrayBuffer(file);
-});
-
+    reader.readAsArrayBuffer(file);
+  });
+}
 
 
 
@@ -1046,20 +958,6 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
     img.style.border = '1px solid #333';
     img.style.marginTop = '4px';
     wrapper.appendChild(img);
-  } else if (mimetype.startsWith('audio/')) {
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = `data:${mimetype};base64,${data}`;
-    audio.style.marginTop = '4px';
-    wrapper.appendChild(audio);
-  } else if (mimetype.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = `data:${mimetype};base64,${data}`;
-    video.style.maxWidth = '300px';
-    video.style.maxHeight = '200px';
-    video.style.marginTop = '4px';
-    wrapper.appendChild(video);
   } else {
     const link = document.createElement('a');
     link.href = `data:${mimetype};base64,${data}`;
@@ -1071,8 +969,9 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
-  });
-}
 });
 
+
+
+});
  
