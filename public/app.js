@@ -1016,40 +1016,41 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   wrapper.appendChild(document.createTextNode(': '));
 
   // Affichage fichier selon mimetype
-  if (mimetype.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = `data:${mimetype};base64,${data}`;
-    img.style.maxWidth = '100px';
-    img.style.cursor = 'pointer';
-    img.style.border = '2px solid #ccc';
-    img.style.borderRadius = '8px';
-    img.style.padding = '4px';
-    img.style.backgroundColor = '#fff';
+ if (mimetype.startsWith('image/')) {
+  const img = document.createElement('img');
+  img.src = `data:${mimetype};base64,${data}`;
+  img.style.maxWidth = '100px';
+  img.style.cursor = 'pointer';
+  img.style.border = '2px solid #ccc';
+  img.style.borderRadius = '8px';
+  img.style.padding = '4px';
+  // img.style.backgroundColor = '#fff'; // <-- supprimé, plus de fond blanc
 
-    const link = document.createElement('a');
-    link.href = '#';
-    link.style.cursor = 'pointer';
-    link.appendChild(img);
+  const link = document.createElement('a');
+  link.href = '#';
+  link.style.cursor = 'pointer';
+  link.appendChild(img);
 
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.document.write(`
-          <html>
-            <head><title>${filename}</title></head>
-            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-              <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-            </body>
-          </html>
-        `);
-        newWindow.document.close();
-      } else {
-        alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
-      }
-    });
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head><title>${filename}</title></head>
+          <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+            <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    } else {
+      alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
+    }
+  });
 
-    wrapper.appendChild(link);
+  wrapper.appendChild(link);
+
 
   } else if (mimetype.startsWith('audio/')) {
     const audio = document.createElement('audio');
