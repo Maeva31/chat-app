@@ -210,7 +210,7 @@ io.on('connection', (socket) => {
       timestamp: timestamp || new Date().toISOString()
     });
   });
-});
+
 
 
  function logout(socket) {
