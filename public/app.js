@@ -994,47 +994,18 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   img.style.cursor = 'pointer';
 
   // Clic pour ouvrir dans un nouvel onglet avec debug
-  function openImageInNewTab(base64Src, filename = '') {
-  const newWindow = window.open();
-  if (!newWindow) {
-    alert('Veuillez autoriser les popups pour ce site.');
-    return;
-  }
-  newWindow.document.write(`
-    <html>
-      <head><title>${filename}</title></head>
-      <body style="margin:0; display:flex; justify-content:center; align-items:center; background:#000;">
-        <img src="${base64Src}" alt="${filename}" style="max-width:100vw; max-height:100vh;">
-      </body>
-    </html>
-  `);
-  newWindow.document.close();
-}
-
-// ... Plus bas dans le code, par exemple dans une fonction qui traite un message avec fichier :
-
-if (mimetype.startsWith('image/')) {
-  const img = document.createElement('img');
-  img.src = `data:${mimetype};base64,${data}`;
-  img.style.maxWidth = '300px';
-  img.style.maxHeight = '200px';
-  img.style.cursor = 'pointer';
-  img.title = filename || 'Image';
-
   img.addEventListener('click', () => {
     console.log('Open image src:', img.src); // debug ici
-    openImageInNewTab(img.src, filename);
+    window.open(img.src, '_blank');
   });
 
   wrapper.appendChild(img);
-
 } else if (mimetype.startsWith('audio/')) {
   const audio = document.createElement('audio');
   audio.controls = true;
   audio.src = `data:${mimetype};base64,${data}`;
   audio.style.marginTop = '4px';
   wrapper.appendChild(audio);
-
 } else if (mimetype.startsWith('video/')) {
   const video = document.createElement('video');
   video.controls = true;
@@ -1043,7 +1014,6 @@ if (mimetype.startsWith('image/')) {
   video.style.maxHeight = '200px';
   video.style.marginTop = '4px';
   wrapper.appendChild(video);
-
 } else {
   const link = document.createElement('a');
   link.href = `data:${mimetype};base64,${data}`;
@@ -1055,7 +1025,6 @@ if (mimetype.startsWith('image/')) {
 
 chatMessages.appendChild(wrapper);
 chatMessages.scrollTop = chatMessages.scrollHeight;
-
 
 });
 }
