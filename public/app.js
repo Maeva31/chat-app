@@ -523,8 +523,9 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   localStorage.setItem('gender', gender);
   localStorage.setItem('age', age);
 
-  document.getElementById('myModal').style.display = 'none';
-  document.getElementById('chat-wrapper').style.display = 'block';
+const modal = document.getElementById('myModal');
+if (modal) modal.style.display = 'none';
+
 
 
   socket.emit('joinRoom', currentChannel);
