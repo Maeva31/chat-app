@@ -970,7 +970,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 
   // Création span pour le temps en italique gris
   const timeSpan = document.createElement('span');
-  timeSpan.textContent = `[${new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}] `;
+  timeSpan.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
   timeSpan.style.color = '#888';
   timeSpan.style.fontStyle = 'italic';
   timeSpan.style.marginRight = '5px';
