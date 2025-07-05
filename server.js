@@ -24,6 +24,22 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 
+function addSystemMessage(channel, text) {
+  if (!messageHistory[channel]) messageHistory[channel] = [];
+  const message = {
+    username: 'Système',
+    message: text,
+    timestamp: new Date().toISOString(),
+    channel
+  };
+  messageHistory[channel].push(message);
+  if (messageHistory[channel].length > MAX_HISTORY) {
+    messageHistory[channel].shift();
+  }
+  io.to(channel).emit('chat message', message);
+}
+
+
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
 try {
