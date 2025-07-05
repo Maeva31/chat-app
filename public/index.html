@@ -285,17 +285,20 @@
 <aside id="user-list">
   <input type="file" id="file-input" style="display: none;" />
   
+  <!-- Sidebar droite : utilisateurs -->
+<aside id="user-list">
+  <input type="file" id="file-input" style="display: none;" />
+
   <div class="texte-laser">
-    <h3 style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
-      <button id="upload-btn" style="background: none; border: none; cursor: pointer;">
-        <img src="icon/starbis.gif" alt="Upload" style="height: 20px;" />
-      </button>
-      Liste du salon
-    </h3>
+    <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <button id="upload-btn" class="sprite-button" title="Envoyer un fichier"></button>
+      <h3 style="margin: 0;">Liste du salon</h3>
+    </div>
   </div>
 
   <ul id="users"></ul>
 </aside>
+
 
   <!-- Scripts -->
   <script>
