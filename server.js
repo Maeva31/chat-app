@@ -3,7 +3,8 @@ import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
-import multer from 'multer';
+const multer = require('multer');
+
 
 
 const app = express();
