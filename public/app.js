@@ -276,7 +276,7 @@ function getYouTubeVideoId(url) {
 
 
   // Ajoute un message dans la zone de chat
-  function addMessageToChat(msg) {
+function addMessageToChat(msg) {
   if (msg.username === 'Système') {
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
@@ -309,7 +309,6 @@ function getYouTubeVideoId(url) {
     usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
-    // Icônes selon rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/diamond.ico';
@@ -321,16 +320,16 @@ function getYouTubeVideoId(url) {
       icon.style.verticalAlign = '-1px';
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
-  const icon = document.createElement('img');
-  icon.src = '/favicon.ico'; // Assure-toi que cette image correspond bien à une icône de modérateur
-  icon.alt = 'Modérateur';
-  icon.title = 'Modérateur';
-  icon.style.width = '16px';
-  icon.style.height = '16px';
-  icon.style.marginRight = '1px';
-  icon.style.verticalAlign = '-2px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-}
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
+      icon.style.marginRight = '1px';
+      icon.style.verticalAlign = '-2px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    }
 
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
@@ -345,49 +344,88 @@ function getYouTubeVideoId(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
   }
 
-  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
+  // Gestion fichier uploadé avec URL dans msg.file
+  if (msg.file) {
+    // Exemple : msg.file contient l'URL du fichier
+    newMessage.innerHTML = `[${timeString}] `;
+    newMessage.appendChild(usernameSpan);
 
-  const messageText = document.createElement('span');
-  const style = msg.style || {};
-  messageText.style.color = style.color || '#fff';
-  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = style.font || 'Arial';
+    const separator = document.createElement('strong');
+    separator.textContent = ': ';
+    newMessage.appendChild(separator);
 
-  parts.forEach(part => {
-    if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
-      } else {
-        const a = document.createElement('a');
-        a.href = part;
-        a.textContent = part;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff';
-        a.style.textDecoration = 'underline';
-        messageText.appendChild(a);
-      }
+    const url = msg.file;
+
+    if (url.match(/\.(jpeg|jpg|png|gif|webp)$/i)) {
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.maxWidth = '200px';
+      img.style.border = '1px solid #333';
+      newMessage.appendChild(img);
+
+    } else if (url.match(/\.(mp3|wav|ogg)$/i)) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = url;
+      newMessage.appendChild(audio);
+
+    } else if (url.match(/\.(mp4|webm|ogg)$/i)) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.width = 320;
+      video.src = url;
+      newMessage.appendChild(video);
+
     } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
+      const link = document.createElement('a');
+      link.href = url;
+      link.target = '_blank';
+      link.textContent = '📎 Télécharger le fichier';
+      newMessage.appendChild(link);
     }
-  });
 
-  // Assemblage avec pseudo + ":" + espace + message
-  newMessage.innerHTML = `[${timeString}] `;
-  newMessage.appendChild(usernameSpan);
+  } else {
+    // Message texte classique
+    const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide, en gras
-if (messageText.textContent.trim() !== '') {
-  const separator = document.createElement('strong');
-  separator.textContent = ': ';
-  newMessage.appendChild(separator);
-  newMessage.appendChild(messageText);
-}
+    const messageText = document.createElement('span');
+    const style = msg.style || {};
+    messageText.style.color = style.color || '#fff';
+    messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+    messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+    messageText.style.fontFamily = style.font || 'Arial';
 
+    parts.forEach(part => {
+      if (/https?:\/\/[^\s]+/.test(part)) {
+        if (isYouTubeUrl(part)) {
+          return; // ignore dans texte, vidéo intégrée ailleurs
+        } else {
+          const a = document.createElement('a');
+          a.href = part;
+          a.textContent = part;
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.style.color = style.color || '#00aaff';
+          a.style.textDecoration = 'underline';
+          messageText.appendChild(a);
+        }
+      } else {
+        if (part.trim() !== '') {
+          messageText.appendChild(document.createTextNode(part));
+        }
+      }
+    });
+
+    newMessage.innerHTML = `[${timeString}] `;
+    newMessage.appendChild(usernameSpan);
+
+    if (messageText.textContent.trim() !== '') {
+      const separator = document.createElement('strong');
+      separator.textContent = ': ';
+      newMessage.appendChild(separator);
+      newMessage.appendChild(messageText);
+    }
+  }
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
@@ -397,8 +435,6 @@ if (messageText.textContent.trim() !== '') {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-
 
   // Sélectionne visuellement un salon dans la liste
   function selectChannelInUI(channelName) {
