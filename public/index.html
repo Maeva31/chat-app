@@ -305,7 +305,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const styleMenu = document.getElementById('style-menu');
 
   colorTextBtn.addEventListener('click', (e) => {
-    e.stopPropagation(); // Pour éviter que le clic ferme immédiatement le menu
+    e.stopPropagation();
     if (styleMenu.style.display === 'block') {
       styleMenu.style.display = 'none';
     } else {
@@ -316,10 +316,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
+  styleMenu.addEventListener('click', (e) => {
+    e.stopPropagation(); // Important: empêcher la fermeture si clic dans le menu
+  });
+
   document.addEventListener('click', () => {
     styleMenu.style.display = 'none';
   });
 });
+
 </script>
 
 
