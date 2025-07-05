@@ -36,7 +36,7 @@ if (usernameInput && passwordInput) {
 
 
   const genderColors = {
-    Homme: '#00f',
+    Homme: 'dodgerblue',
     Femme: '#f0f',
     Autre: '#0ff',
     'non spécifié': '#aaa',
@@ -127,7 +127,7 @@ if (usernameInput && passwordInput) {
     const li = document.createElement('li');
     li.classList.add('user-item');
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'green' : getUsernameColor(gender);
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
     li.innerHTML = `
       <span class="role-icon"></span> 
@@ -299,7 +299,7 @@ function addMessageToChat(msg) {
 
   const usernameSpan = document.createElement('span');
   const color = (msg.role === 'admin') ? 'red' :
-                (msg.role === 'modo') ? 'green' :
+                (msg.role === 'modo') ? 'limegreen' :
                 getUsernameColor(msg.gender);
 
   if (msg.username === 'Système') {
@@ -992,7 +992,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   let color = 'white';
   if (role === 'admin') color = 'red';
   else if (role === 'modo') color = 'limegreen';
-  else if (gender === 'Femme') color = 'deeppink';
+  else if (gender === 'Femme') color = '#f0f';
   else if (gender === 'Homme') color = 'dodgerblue';
   usernameContainer.style.color = color;
 
