@@ -297,6 +297,14 @@ function addMessageToChat(msg) {
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+  // Timestamp
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = timeString + ' ';
+  timeSpan.style.color = '#888';
+  timeSpan.style.fontStyle = 'italic';
+  timeSpan.style.marginRight = '5px';
+  newMessage.appendChild(timeSpan);
+
   const usernameSpan = document.createElement('span');
   const color = (msg.role === 'admin') ? 'red' :
                 (msg.role === 'modo') ? 'limegreen' :
@@ -344,6 +352,13 @@ function addMessageToChat(msg) {
       input.focus();
     });
   }
+  newMessage.appendChild(usernameSpan);
+
+  // Ajouter les deux-points ":" avec la même couleur que le pseudo
+  const separatorSpan = document.createElement('span');
+  separatorSpan.textContent = ': ';
+  separatorSpan.style.color = color;
+  newMessage.appendChild(separatorSpan);
 
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
