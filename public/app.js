@@ -973,7 +973,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
 
-  // Création du timestamp
+  // Timestamp
   const timeSpan = document.createElement('span');
   timeSpan.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
   timeSpan.style.color = '#888';
@@ -981,36 +981,33 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   timeSpan.style.marginRight = '5px';
   wrapper.appendChild(timeSpan);
 
-  // Création pseudo avec couleur + icône
+  // Pseudo avec icône et couleur selon rôle et genre
   const usernameSpan = document.createElement('span');
-  usernameSpan.classList.add('username-span');
-
-  const userColor =
-    role === 'admin' ? 'red' :
-    role === 'modo' ? 'limegreen' :
-    gender === 'Femme' ? 'deeppink' :
-    gender === 'Homme' ? 'dodgerblue' :
-    'white';
-
-  usernameSpan.style.color = userColor;
   usernameSpan.style.fontWeight = 'bold';
   usernameSpan.style.marginRight = '4px';
 
-  // Ajout de l’icône si admin ou modo
+  // Couleur selon rôle / genre
+  let color = 'white';
+  if (role === 'admin') color = 'red';
+  else if (role === 'modo') color = 'limegreen';
+  else if (gender === 'Femme') color = 'deeppink';
+  else if (gender === 'Homme') color = 'dodgerblue';
+  usernameSpan.style.color = color;
+
+  // Ajouter icône selon rôle
   if (role === 'admin' || role === 'modo') {
-    const icon = createRoleIcon(role); // fonction déjà existante
+    const icon = createRoleIcon(role); // ta fonction qui crée <img>
     if (icon) usernameSpan.appendChild(icon);
   }
-
-  const usernameText = document.createTextNode(username);
-  usernameSpan.appendChild(usernameText);
+  
+  // Ajouter texte pseudo
+  usernameSpan.appendChild(document.createTextNode(username));
   wrapper.appendChild(usernameSpan);
 
-  // Ajout séparateur :
-  const separator = document.createTextNode(': ');
-  wrapper.appendChild(separator);
+  // Séparateur ": "
+  wrapper.appendChild(document.createTextNode(': '));
 
-  // Affichage fichier selon type MIME
+  // Affichage fichier selon mimetype
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
     img.src = `data:${mimetype};base64,${data}`;
@@ -1028,7 +1025,6 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
     link.addEventListener('click', (e) => {
       e.preventDefault();
-
       const newWindow = window.open();
       if (newWindow) {
         newWindow.document.write(`
