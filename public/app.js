@@ -1032,7 +1032,7 @@ if (mimetype.startsWith('image/')) {
   video.controls = true;
   video.src = `data:${mimetype};base64,${data}`;
   video.style.maxWidth = '300px';
-  video.style.maxHeight = '200px';
+  video.style.maxHeight = '300px';
   video.style.marginTop = '4px';
   wrapper.appendChild(video);
 
