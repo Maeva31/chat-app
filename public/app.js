@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
+  window.socket = socket;
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
