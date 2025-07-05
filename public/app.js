@@ -999,7 +999,7 @@ if (mimetype.startsWith('image/')) {
   img.style.backgroundColor = '#fff';
 
   const link = document.createElement('a');
-  link.href = '#'; // lien fictif
+  link.href = '#';
   link.style.cursor = 'pointer';
   link.appendChild(img);
 
@@ -1029,6 +1029,10 @@ if (mimetype.startsWith('image/')) {
   audio.controls = true;
   audio.src = `data:${mimetype};base64,${data}`;
   audio.style.marginTop = '4px';
+  audio.style.border = '2px solid #ccc';
+  audio.style.borderRadius = '8px';
+  audio.style.padding = '4px';
+  audio.style.backgroundColor = '#f9f9f9';
   wrapper.appendChild(audio);
 
 } else if (mimetype.startsWith('video/')) {
@@ -1042,11 +1046,9 @@ if (mimetype.startsWith('image/')) {
   video.style.borderRadius = '8px';
   video.style.padding = '4px';
   video.style.backgroundColor = '#000';
-
   wrapper.appendChild(video);
 
 } else {
-  // Autres fichiers : lien de téléchargement
   const link = document.createElement('a');
   link.href = `data:${mimetype};base64,${data}`;
   link.download = filename;
@@ -1055,9 +1057,9 @@ if (mimetype.startsWith('image/')) {
   wrapper.appendChild(link);
 }
 
-// Ajout dans la zone de chat et scroll automatique
 chatMessages.appendChild(wrapper);
 chatMessages.scrollTop = chatMessages.scrollHeight;
+
 
 
 });
