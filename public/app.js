@@ -987,39 +987,46 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   wrapper.appendChild(separator);
 
   if (mimetype.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = `data:${mimetype};base64,${data}`;
-    img.alt = filename;
-    img.style.maxWidth = '200px';
-    img.style.maxHeight = '200px';
-    img.style.border = '1px solid #333';
-    img.style.marginTop = '4px';
-    wrapper.appendChild(img);
-  } else if (mimetype.startsWith('audio/')) {
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = `data:${mimetype};base64,${data}`;
-    audio.style.marginTop = '4px';
-    wrapper.appendChild(audio);
-  } else if (mimetype.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = `data:${mimetype};base64,${data}`;
-    video.style.maxWidth = '300px';
-    video.style.maxHeight = '200px';
-    video.style.marginTop = '4px';
-    wrapper.appendChild(video);
-  } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    wrapper.appendChild(link);
-  }
+  const img = document.createElement('img');
+  img.src = `data:${mimetype};base64,${data}`;
+  img.alt = filename;
+  img.style.maxWidth = '200px';
+  img.style.maxHeight = '200px';
+  img.style.border = '1px solid #333';
+  img.style.marginTop = '4px';
 
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+  // Création du lien autour de l'image pour ouvrir dans un nouvel onglet
+  const link = document.createElement('a');
+  link.href = img.src;
+  link.target = '_blank';
+  link.appendChild(img);
+
+  wrapper.appendChild(link);
+} else if (mimetype.startsWith('audio/')) {
+  const audio = document.createElement('audio');
+  audio.controls = true;
+  audio.src = `data:${mimetype};base64,${data}`;
+  audio.style.marginTop = '4px';
+  wrapper.appendChild(audio);
+} else if (mimetype.startsWith('video/')) {
+  const video = document.createElement('video');
+  video.controls = true;
+  video.src = `data:${mimetype};base64,${data}`;
+  video.style.maxWidth = '300px';
+  video.style.maxHeight = '200px';
+  video.style.marginTop = '4px';
+  wrapper.appendChild(video);
+} else {
+  const link = document.createElement('a');
+  link.href = `data:${mimetype};base64,${data}`;
+  link.download = filename;
+  link.textContent = `📎 ${filename}`;
+  link.target = '_blank';
+  wrapper.appendChild(link);
+}
+
+chatMessages.appendChild(wrapper);
+chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
 }
