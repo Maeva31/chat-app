@@ -96,10 +96,8 @@
       <button id="username-submit">Valider</button>
     </div>
   </div>
-</div>
 
   <!-- Wrapper principal -->
-<div id="chat-wrapper" style="display: none;">
   <main>
     <!-- Sidebar gauche : salons -->
     <aside id="channel-sidebar">
@@ -131,18 +129,6 @@
         <button id="emoji-button" title="Insérer un émoji" style="font-size: 20px; background: transparent; border: none; outline: none; cursor: pointer;">😊</button>
         <input id="message-input" type="text" placeholder="Votre message..." maxlength="300" autocomplete="off" style="flex: 1;" />
       </div>
-    </section>
-
-    <!-- Sidebar droite : utilisateurs -->
-    <aside id="user-list">
-      <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
-      <ul id="users"></ul>
-    </aside>
-  </main>
-</div>
-
-
-
 
       <!-- Emoji Picker -->
 <div id="emoji-picker" class="emoji-picker">
@@ -295,39 +281,14 @@
 
     </section>
 
-
+    <!-- Sidebar droite : utilisateurs -->
+    <aside id="user-list">
+      <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
+      <ul id="users"></ul>
+    </aside>
+  </main>
 
   <!-- Scripts -->
-
-<script>
-document.addEventListener('DOMContentLoaded', () => {
-  const colorTextBtn = document.getElementById('color-text');
-  const styleMenu = document.getElementById('style-menu');
-
-  colorTextBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    if (styleMenu.style.display === 'block') {
-      styleMenu.style.display = 'none';
-    } else {
-      const rect = colorTextBtn.getBoundingClientRect();
-      styleMenu.style.top = (rect.bottom + window.scrollY) + 'px';
-      styleMenu.style.left = (rect.left + window.scrollX) + 'px';
-      styleMenu.style.display = 'block';
-    }
-  });
-
-  styleMenu.addEventListener('click', (e) => {
-    e.stopPropagation(); // Important: empêcher la fermeture si clic dans le menu
-  });
-
-  document.addEventListener('click', () => {
-    styleMenu.style.display = 'none';
-  });
-});
-
-</script>
-
-
   <script>
   document.addEventListener('DOMContentLoaded', () => {
     const modal = document.getElementById('myModal');
