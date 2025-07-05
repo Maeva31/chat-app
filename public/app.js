@@ -958,7 +958,7 @@ if (uploadInput && uploadButton) {
 
     reader.readAsArrayBuffer(file);
   });
-}
+
 
 
 
