@@ -342,14 +342,9 @@ io.on('connection', (socket) => {
 
     // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
     if (!userData.invisible) {
-      io.to(channel).emit('chat message', {
-        username: 'Système',
-        message: `${username} a rejoint le salon ${channel}`,
-        timestamp: new Date().toISOString(),
-        channel
-      });
-    }
-  });
+  addSystemMessage(channel, `${username} a rejoint le salon ${channel}`);
+}
+
 
   socket.on('chat message', (msg) => {
     const user = Object.values(users).find(u => u.id === socket.id);
@@ -658,12 +653,7 @@ case '/removeadmin':
             console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
             emitUserList(channel);
             updateRoomUserCounts();
-            io.to(channel).emit('chat message', {
-              username: 'Système',
-              message: `${user.username} est maintenant visible.`,
-              timestamp: new Date().toISOString(),
-              channel
-            });
+           addSystemMessage(channel, 'Texte du message système');
           } else {
             socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
           }
