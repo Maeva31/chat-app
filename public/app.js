@@ -800,10 +800,15 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
   // Mise à jour bouton mode invisible selon rôle
   socket.on('user list', (users) => {
+  // Met à jour la liste des utilisateurs dans l'interface
+  updateUserList(users);
+
+  // Gestion bouton mode invisible pour admin avec mot de passe valide
   const username = localStorage.getItem('username');
-  const me = users.find(u => u.username === username);
   const userPassword = localStorage.getItem('password');
   const isOnAddAdminPage = window.location.pathname === '/addadmin';
+
+  const me = users.find(u => u.username === username);
 
   if (me && me.role === 'admin' && userPassword && userPassword.length > 0 && !isOnAddAdminPage) {
     if (!isAdmin) isAdmin = true;
@@ -820,6 +825,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     }
   }
 });
+
 
 
   // --- Fin ajout mode invisible ---
