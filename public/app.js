@@ -911,31 +911,38 @@ if (uploadInput && uploadButton) {
     uploadInput.click();
   });
 
-  uploadInput.addEventListener('change', () => {
-    const file = uploadInput.files[0];
-    if (!file) return;
+uploadInput.addEventListener('change', () => {
+  const file = uploadInput.files[0];
+  if (!file) return;
 
-    const reader = new FileReader();
+  // ICI : ajout du test taille fichier
+  if (file.size > 20 * 1024 * 1024) { // 20 Mo
+    alert("Fichier trop volumineux (max 20 Mo)");
+    uploadInput.value = ''; // reset input fichier pour pouvoir re-sélectionner
+    return;
+  }
 
-    reader.onload = () => {
-      const arrayBuffer = reader.result;
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer)
-          .reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
+  const reader = new FileReader();
 
-      socket.emit('upload file', {
-        filename: file.name,
-        mimetype: file.type,
-        data: base64,
-        channel: currentChannel,
-        timestamp: new Date().toISOString()
-      });
-    };
+  reader.onload = () => {
+    const arrayBuffer = reader.result;
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer)
+        .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
 
-    reader.readAsArrayBuffer(file);
-  });
-}
+    socket.emit('upload file', {
+      filename: file.name,
+      mimetype: file.type,
+      data: base64,
+      channel: currentChannel,
+      timestamp: new Date().toISOString()
+    });
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
 
 
 
@@ -958,6 +965,20 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
     img.style.border = '1px solid #333';
     img.style.marginTop = '4px';
     wrapper.appendChild(img);
+  } else if (mimetype.startsWith('audio/')) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = `data:${mimetype};base64,${data}`;
+    audio.style.marginTop = '4px';
+    wrapper.appendChild(audio);
+  } else if (mimetype.startsWith('video/')) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = `data:${mimetype};base64,${data}`;
+    video.style.maxWidth = '300px';
+    video.style.maxHeight = '200px';
+    video.style.marginTop = '4px';
+    wrapper.appendChild(video);
   } else {
     const link = document.createElement('a');
     link.href = `data:${mimetype};base64,${data}`;
@@ -969,9 +990,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
+  });
+}
 });
 
-
-
-});
  
