@@ -278,6 +278,9 @@ function getYouTubeVideoId(url) {
   // Ajoute un message dans la zone de chat
   function addMessageToChat(msg) {
   if (msg.username === 'Système') {
+    // Ignore le message "est maintenant visible."
+    if (/est maintenant visible\.$/i.test(msg.message)) return;
+
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
     if (match && match[1]) {
