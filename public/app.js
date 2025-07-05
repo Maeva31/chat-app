@@ -986,42 +986,71 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   wrapper.appendChild(userStrong);
   wrapper.appendChild(separator);
 
-  if (mimetype.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = `data:${mimetype};base64,${data}`;
-    img.alt = filename;
-    img.style.maxWidth = '200px';
-    img.style.maxHeight = '200px';
-    img.style.border = '1px solid #333';
-    img.style.marginTop = '4px';
-    wrapper.appendChild(img);
-  } else if (mimetype.startsWith('audio/')) {
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = `data:${mimetype};base64,${data}`;
-    audio.style.marginTop = '4px';
-    wrapper.appendChild(audio);
-  } else if (mimetype.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = `data:${mimetype};base64,${data}`;
-    video.style.maxWidth = '300px';
-    video.style.maxHeight = '200px';
-    video.style.marginTop = '4px';
-    wrapper.appendChild(video);
-  } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    wrapper.appendChild(link);
-  }
+  // Supposons que wrapper, mimetype, data, filename, chatMessages sont déjà définis
 
-  chatMessages.appendChild(wrapper);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+if (mimetype.startsWith('image/')) {
+  const img = document.createElement('img');
+  img.src = `data:${mimetype};base64,${data}`;
+  img.style.maxWidth = '300px';
+  img.style.cursor = 'pointer';
+
+  const link = document.createElement('a');
+  link.href = '#'; // lien fictif
+  link.style.cursor = 'pointer';
+  link.appendChild(img);
+
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+
+    const newWindow = window.open();
+    if (newWindow) {
+      newWindow.document.write(`
+        <html>
+          <head><title>${filename}</title></head>
+          <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+            <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
+          </body>
+        </html>
+      `);
+      newWindow.document.close();
+    } else {
+      alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
+    }
+  });
+
+  wrapper.appendChild(link);
+
+} else if (mimetype.startsWith('audio/')) {
+  const audio = document.createElement('audio');
+  audio.controls = true;
+  audio.src = `data:${mimetype};base64,${data}`;
+  audio.style.marginTop = '4px';
+  wrapper.appendChild(audio);
+
+} else if (mimetype.startsWith('video/')) {
+  const video = document.createElement('video');
+  video.controls = true;
+  video.src = `data:${mimetype};base64,${data}`;
+  video.style.maxWidth = '300px';
+  video.style.maxHeight = '200px';
+  video.style.marginTop = '4px';
+  wrapper.appendChild(video);
+
+} else {
+  // Autres fichiers : lien de téléchargement
+  const link = document.createElement('a');
+  link.href = `data:${mimetype};base64,${data}`;
+  link.download = filename;
+  link.textContent = `📎 ${filename}`;
+  link.target = '_blank';
+  wrapper.appendChild(link);
+}
+
+// Ajout dans la zone de chat et scroll automatique
+chatMessages.appendChild(wrapper);
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
 });
-
 }
 });
 
