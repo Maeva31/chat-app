@@ -991,7 +991,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
 if (mimetype.startsWith('image/')) {
   const img = document.createElement('img');
   img.src = `data:${mimetype};base64,${data}`;
-  img.style.maxWidth = '300px';
+  img.style.maxWidth = '100px';
   img.style.cursor = 'pointer';
 
   const link = document.createElement('a');
