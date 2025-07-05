@@ -916,45 +916,49 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
 });
 
 // --- Upload fichier (fusionné depuis upload.js) ---
-const uploadInput = document.getElementById('file-input');    // correspond à l'input file
-const uploadButton = document.getElementById('upload-btn');   // correspond au bouton
+const uploadInput = document.getElementById('file-input');    // input type="file"
+const uploadButton = document.getElementById('upload-btn');   // bouton 📎 ou autre
 
 if (uploadInput && uploadButton) {
   uploadButton.addEventListener('click', () => {
     uploadInput.click();
   });
 
-uploadInput.addEventListener('change', () => {
-  const file = uploadInput.files[0];
-  if (!file) return;
+  uploadInput.addEventListener('change', () => {
+    const file = uploadInput.files[0];
+    if (!file) return;
 
-  // ICI : ajout du test taille fichier
- if (file.size > 20 * 1024 * 1024) {
-  showBanner('Le fichier est trop volumineux (20 Mo max).', 'error');
-  return;
+    const MAX_SIZE = 15 * 1024 * 1024; // 15 Mo max en binaire (~20 Mo en base64)
+    if (file.size > MAX_SIZE) {
+      showBanner('❌ Le fichier est trop volumineux (15 Mo max conseillés).', 'error');
+      uploadInput.value = ''; // reset input
+      return;
+    }
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const arrayBuffer = reader.result;
+
+      const base64 = btoa(
+        new Uint8Array(arrayBuffer)
+          .reduce((data, byte) => data + String.fromCharCode(byte), '')
+      );
+
+      socket.emit('upload file', {
+        filename: file.name,
+        mimetype: file.type,
+        data: base64,
+        channel: currentChannel,
+        timestamp: new Date().toISOString()
+      });
+
+      uploadInput.value = ''; // reset après l'envoi
+    };
+
+    reader.readAsArrayBuffer(file);
+  });
 }
-
-
-  const reader = new FileReader();
-
-  reader.onload = () => {
-    const arrayBuffer = reader.result;
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
-
-    socket.emit('upload file', {
-      filename: file.name,
-      mimetype: file.type,
-      data: base64,
-      channel: currentChannel,
-      timestamp: new Date().toISOString()
-    });
-  };
-
-  reader.readAsArrayBuffer(file);
-});
 
 
 
