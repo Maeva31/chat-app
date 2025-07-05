@@ -282,12 +282,48 @@ function addMessageToChat(msg) {
     const match = salonRegex.exec(msg.message);
     if (match && match[1]) {
       const salonDuMessage = match[1].trim();
-      if (salonDuMessage !== currentChannel) return;
+      if (salonDuMessage !== currentChannel) return; // Ignore message système d'autres salons
     }
   }
 
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
+
+  const messageElem = document.createElement('div');
+  messageElem.classList.add('message');
+
+  // Date et heure formatées (facultatif)
+  const time = new Date(msg.timestamp).toLocaleTimeString();
+
+  // Affichage du pseudo, avec role si tu veux (exemple simple)
+  const header = document.createElement('span');
+  header.classList.add('message-header');
+  header.textContent = `[${time}] ${msg.username}: `;
+  messageElem.appendChild(header);
+
+  // Si message contient un fichier (image)
+  if (msg.file) {
+    const img = document.createElement('img');
+    img.src = msg.file;
+    img.alt = "Image envoyée";
+    img.style.maxWidth = '200px';
+    img.style.maxHeight = '200px';
+    img.style.display = 'block';
+    img.style.marginTop = '5px';
+    messageElem.appendChild(img);
+
+    // Si le message a aussi du texte (message non vide), l'afficher en dessous
+    if (msg.message && msg.message.trim() !== '') {
+      const text = document.createElement('p');
+      text.textContent = msg.message;
+      messageElem.appendChild(text);
+    }
+  } else if (msg.message) {
+    // Sinon, afficher juste le texte
+    const text = document.createElement('span');
+    text.textContent = msg.message;
+    messageElem.appendChild(text);
+  }
 
   const newMessage = document.createElement('div');
   const date = new Date(msg.timestamp);
