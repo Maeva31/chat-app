@@ -290,28 +290,37 @@ function addMessageToChat(msg) {
     }
   }
 
-  const chatMessages = document.getElementById('chat-messages');
-  if (!chatMessages) return;
+const chatMessages = document.getElementById('chat-messages');
+if (!chatMessages) return;
 
-  const newMessage = document.createElement('div');
-  const date = new Date(msg.timestamp);
-  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const newMessage = document.createElement('div');
+const date = new Date(msg.timestamp);
+const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const usernameSpan = document.createElement('span');
-  const color = (msg.role === 'admin') ? 'red' :
-                (msg.role === 'modo') ? 'limegreen' :
-                getUsernameColor(msg.gender);
+const usernameSpan = document.createElement('span');
+const color = (msg.role === 'admin') ? 'red' :
+              (msg.role === 'modo') ? 'limegreen' :
+              getUsernameColor(msg.gender);
 
-  if (msg.username === 'Système') {
-    usernameSpan.textContent = msg.username;
-    usernameSpan.style.color = '#888';
-    usernameSpan.style.fontWeight = 'bold';
-  } else {
-    usernameSpan.classList.add('clickable-username');
-    usernameSpan.style.color = color;
-    usernameSpan.textContent = msg.username;
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                         (msg.role === 'modo') ? 'Modérateur' : '';
+if (msg.username === 'Système') {
+  usernameSpan.textContent = msg.username;
+  usernameSpan.style.color = '#888';
+  usernameSpan.style.fontWeight = 'bold';
+} else {
+  usernameSpan.classList.add('clickable-username');
+  usernameSpan.style.color = color;
+  usernameSpan.textContent = msg.username;
+  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                       (msg.role === 'modo') ? 'Modérateur' : '';
+}
+
+newMessage.appendChild(usernameSpan);
+
+// Ajout du séparateur ": " avec la même couleur
+const separatorSpan = document.createElement('span');
+separatorSpan.style.color = color;
+separatorSpan.textContent = ': ';
+newMessage.appendChild(separatorSpan);
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
@@ -1013,7 +1022,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   wrapper.appendChild(usernameContainer);
 
   // Séparateur ": "
-  wrapper.appendChild(document.createTextNode(': '));
+  const separatorSpan = document.createElement('span');
+separatorSpan.style.color = color; // même couleur que pseudo
+separatorSpan.textContent = ': ';
+wrapper.appendChild(separatorSpan);
+
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
