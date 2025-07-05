@@ -104,13 +104,11 @@ if (usernameInput && passwordInput) {
 
   // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
   function extractChannelName(text) {
-  if (typeof text !== 'string') return '';
-  text = text.replace(/\s*\(\d+\)$/, '').trim();
-  const parts = text.split('┊');
-  if (parts.length > 1) return parts[1].trim();
-  return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-}
-
+    text = text.replace(/\s*\(\d+\)$/, '').trim();
+    const parts = text.split('┊');
+    if (parts.length > 1) return parts[1].trim();
+    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+  }
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
@@ -610,23 +608,13 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       }
 
       if (invisibleMode && name === currentChannel) {
-  countSpan.textContent = '';  // Pas de nombre si invisible
-  // Met à jour uniquement le texte en début, sans supprimer les enfants
-  if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
-    li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-  } else {
-    // Si pas de texte en premier enfant, crée un noeud texte au début
-    li.insertBefore(document.createTextNode(`# ${emoji} ┊ ${name} `), li.firstChild);
-  }
-} else {
-  countSpan.textContent = ` (${counts[name]})`;
-  if (li.firstChild && li.firstChild.nodeType === Node.TEXT_NODE) {
-    li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-  } else {
-    li.insertBefore(document.createTextNode(`# ${emoji} ┊ ${name} `), li.firstChild);
-  }
-}
-
+        countSpan.textContent = '';  // Pas de nombre si invisible
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+      } else {
+        countSpan.textContent = ` (${counts[name]})`;
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+      }
+    }
   });
 });
 
@@ -908,4 +896,6 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
   });
 });
 
+
+});
  
