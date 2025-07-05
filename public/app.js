@@ -1025,5 +1025,6 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+}
 }); 
 // FIN app.js
