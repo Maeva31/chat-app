@@ -161,13 +161,15 @@ app.post('/upload', upload.single('file'), (req, res) => {
     const user = Object.values(users).find(u => u.id === userId);
 
     const message = {
-      username: user ? user.username : 'Utilisateur',
-      role: user ? user.role : 'user',
-      message: '',
-      file: fileUrl,
-      timestamp: new Date().toISOString(),
-      channel: room,
-    };
+  username: user ? user.username : 'Utilisateur',
+  gender: user ? user.gender : 'non spécifié',
+  role: user ? user.role : 'user',
+  message: '',
+  file: fileUrl,
+  timestamp: new Date().toISOString(),
+  channel: room,
+};
+
 
     if (!messageHistory[room]) messageHistory[room] = [];
     messageHistory[room].push(message);
