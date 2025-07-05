@@ -3,7 +3,7 @@ import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
 import path from 'path';
-const multer = require('multer');
+import multer from 'multer';
 
 
 
