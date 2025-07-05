@@ -903,8 +903,8 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
 });
 
 // --- Upload fichier (fusionné depuis upload.js) ---
-const uploadInput = document.getElementById('upload-input');
-const uploadButton = document.getElementById('upload-button');
+const uploadInput = document.getElementById('file-input');    // correspond à l'input file
+const uploadButton = document.getElementById('upload-btn');   // correspond au bouton
 
 if (uploadInput && uploadButton) {
   uploadButton.addEventListener('click', () => {
@@ -936,6 +936,8 @@ if (uploadInput && uploadButton) {
     reader.readAsArrayBuffer(file);
   });
 }
+
+
 
 // Affichage d’un fichier uploadé
 
