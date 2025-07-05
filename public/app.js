@@ -316,11 +316,12 @@ if (msg.username === 'Système') {
 
 newMessage.appendChild(usernameSpan);
 
-// Ajout du séparateur ": " avec la même couleur
 const separatorSpan = document.createElement('span');
 separatorSpan.style.color = color;
 separatorSpan.textContent = ': ';
 newMessage.appendChild(separatorSpan);
+
+
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
