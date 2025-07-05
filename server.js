@@ -712,20 +712,10 @@ case '/removeadmin':
 
       // Message système uniquement si non invisible
       if (!user.invisible) {
-        io.to(newChannel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a rejoint le salon ${newChannel}`,
-          timestamp: new Date().toISOString(),
-          channel: newChannel
-        });
+  addSystemMessage(newChannel, `${user.username} a rejoint le salon ${newChannel}`);
+  addSystemMessage(oldChannel, `${user.username} a quitté le salon ${oldChannel}`);
+}
 
-        io.to(oldChannel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a quitté le salon ${oldChannel}`,
-          timestamp: new Date().toISOString(),
-          channel: oldChannel
-        });
-      }
     } else {
       if (!roomUsers[newChannel].some(u => u.id === socket.id)) {
         roomUsers[newChannel].push(user);
@@ -777,12 +767,8 @@ case '/removeadmin':
         emitUserList(oldChannel);
       }
 
-      io.to(oldChannel).emit('chat message', {
-        username: 'Système',
-        message: `${user.username} a quitté le salon ${oldChannel}`,
-        timestamp: new Date().toISOString(),
-        channel: oldChannel
-      });
+      addSystemMessage(oldChannel, `${user.username} a quitté le salon ${oldChannel}`);
+
     }
 
     userChannels[socket.id] = newChannel;
@@ -796,12 +782,8 @@ case '/removeadmin':
 
     socket.emit('chat history', messageHistory[newChannel]);
 
-    io.to(newChannel).emit('chat message', {
-      username: 'Système',
-      message: `Bienvenue dans le salon ${newChannel}!`,
-      timestamp: new Date().toISOString(),
-      channel: newChannel
-    });
+    addSystemMessage(newChannel, `Bienvenue dans le salon ${newChannel}!`);
+
 
     emitUserList(newChannel);
 
