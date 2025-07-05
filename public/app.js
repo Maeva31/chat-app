@@ -996,49 +996,19 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) =
   img.style.marginTop = '4px';
 
   // Création du lien autour de l'image pour ouvrir dans un nouvel onglet
-  if (mimetype.startsWith('image/')) {
-  const img = document.createElement('img');
-  img.src = `data:${mimetype};base64,${data}`;
-  img.alt = filename;
-  img.style.maxWidth = '200px';
-  img.style.maxHeight = '200px';
-  img.style.border = '1px solid #333';
-  img.style.marginTop = '4px';
-
-  // Crée un lien autour de l'image
   const link = document.createElement('a');
-  link.href = '#'; // href vide car on va gérer l'ouverture au clic via JS
-  link.style.cursor = 'pointer';
+  link.href = img.src;
+  link.target = '_blank';
   link.appendChild(img);
 
-  // Au clic, ouvrir un nouvel onglet avec une page affichant l'image
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(`
-        <html><head><title>${filename}</title></head><body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-        <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-        </body></html>
-      `);
-      newWindow.document.close();
-    } else {
-      alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
-    }
-  });
-
   wrapper.appendChild(link);
-
 } else if (mimetype.startsWith('audio/')) {
-  // Ton code audio inchangé
   const audio = document.createElement('audio');
   audio.controls = true;
   audio.src = `data:${mimetype};base64,${data}`;
   audio.style.marginTop = '4px';
   wrapper.appendChild(audio);
 } else if (mimetype.startsWith('video/')) {
-  // Ton code vidéo inchangé
   const video = document.createElement('video');
   video.controls = true;
   video.src = `data:${mimetype};base64,${data}`;
