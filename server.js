@@ -195,19 +195,23 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Recherche l'utilisateur AVANT d'émettre
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
 
-    // Tu peux limiter taille max base64 ici si besoin
-
+    // Émet avec role et gender
     io.to(channel).emit('file uploaded', {
       username: user.username,
+      role: user.role,
+      gender: user.gender,
       filename,
       data,
       mimetype,
-      timestamp
+      timestamp: timestamp || new Date().toISOString()
     });
   });
+});
+
 
  function logout(socket) {
   const user = Object.values(users).find(u => u.id === socket.id);
