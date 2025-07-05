@@ -282,13 +282,20 @@
     </section>
 
     <!-- Sidebar droite : utilisateurs -->
-    <aside id="user-list">
-      <input type="file" id="file-input" style="display:none;" />
-<button id="upload-btn">📎 Joindre un fichier</button>
-      <div class="texte-laser"><h3 style="text-align: center;">Liste du salon</h3></div>
-      <ul id="users"></ul>
-    </aside>
-  </main>
+<aside id="user-list">
+  <input type="file" id="file-input" style="display: none;" />
+  
+  <div class="texte-laser">
+    <h3 style="text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px;">
+      <button id="upload-btn" style="background: none; border: none; cursor: pointer;">
+        <img src="icon/starbis.gif" alt="Upload" style="height: 20px;" />
+      </button>
+      Liste du salon
+    </h3>
+  </div>
+
+  <ul id="users"></ul>
+</aside>
 
   <!-- Scripts -->
   <script>
