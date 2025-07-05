@@ -902,9 +902,9 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
   });
 });
 
-// --- Upload fichier (fusionné depuis upload.js) ---
-const uploadInput = document.getElementById('file-input');    // correspond à l'input file
-const uploadButton = document.getElementById('upload-btn');   // correspond au bouton
+// Après la connexion socket et initialisation currentChannel
+const uploadInput = document.getElementById('file-input');    // input type="file"
+const uploadButton = document.getElementById('upload-btn');   // bouton upload
 
 if (uploadInput && uploadButton) {
   uploadButton.addEventListener('click', () => {
@@ -915,62 +915,55 @@ if (uploadInput && uploadButton) {
     const file = uploadInput.files[0];
     if (!file) return;
 
-    const reader = new FileReader();
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('userId', socket.id);
+    formData.append('room', currentChannel);
 
-    reader.onload = () => {
-      const arrayBuffer = reader.result;
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer)
-          .reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-
-      socket.emit('upload file', {
-        filename: file.name,
-        mimetype: file.type,
-        data: base64,
-        channel: currentChannel,
-        timestamp: new Date().toISOString()
-      });
-    };
-
-    reader.readAsArrayBuffer(file);
+    fetch('/upload', {
+      method: 'POST',
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      if (!data.success) {
+        alert('Erreur upload : ' + (data.error || 'inconnue'));
+      }
+    })
+    .catch(err => {
+      alert('Erreur upload : ' + err.message);
+    });
   });
 }
 
-
-// Affichage d’un fichier uploadé
-
-socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp }) => {
+// Puis gérer l’affichage des messages qui contiennent des fichiers dans le socket.on('chat message')
+socket.on('chat message', (msg) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
-  wrapper.innerHTML = `[${new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}] <strong>${username}</strong>: `;
+  wrapper.innerHTML = `[${new Date(msg.timestamp).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}] <strong>${msg.username}</strong>: ${msg.message || ''}`;
 
-  if (mimetype.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = `data:${mimetype};base64,${data}`;
-    img.alt = filename;
-    img.style.maxWidth = '200px';
-    img.style.maxHeight = '200px';
-    img.style.border = '1px solid #333';
-    img.style.marginTop = '4px';
-    wrapper.appendChild(img);
-  } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    wrapper.appendChild(link);
+  if (msg.file) {
+    if (msg.file.match(/\.(jpg|jpeg|png|gif)$/i)) {
+      const img = document.createElement('img');
+      img.src = msg.file;
+      img.style.maxWidth = '200px';
+      img.style.maxHeight = '200px';
+      img.style.marginTop = '4px';
+      wrapper.appendChild(img);
+    } else {
+      const link = document.createElement('a');
+      link.href = msg.file;
+      link.target = '_blank';
+      link.textContent = `📎 ${msg.file.split('/').pop()}`;
+      wrapper.appendChild(link);
+    }
   }
 
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
-
-
-});
  
