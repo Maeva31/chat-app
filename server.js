@@ -27,18 +27,6 @@ let mutedUsers = new Set();    // pseudos mutés
 const mutedUsersByRoom = new Map();
 const kickedUsersByRoom = new Map();
 
-const kicksMap = kickedUsersByRoom.get(newChannel);
-if (kicksMap && kicksMap.has(user.username)) {
-  const expiration = kicksMap.get(user.username);
-  if (Date.now() < expiration) {
-    socket.emit('error', `Vous êtes expulsé temporairement de ce salon jusqu'à ${new Date(expiration).toLocaleTimeString()}.`);
-    return;  // Empêche l'entrée dans le salon
-  } else {
-    // Kick expiré, on supprime l'entrée
-    kicksMap.delete(user.username);
-  }
-}
-
 
 setInterval(() => {
   for (const [room, kicksMap] of kickedUsersByRoom.entries()) {
