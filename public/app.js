@@ -1013,7 +1013,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   wrapper.appendChild(usernameContainer);
 
   // Séparateur ": "
-  /* wrapper.appendChild(document.createTextNode(': ')); */
+  wrapper.appendChild(document.createTextNode(': '));
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
