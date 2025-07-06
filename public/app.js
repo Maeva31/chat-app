@@ -996,16 +996,16 @@ function appendToChat(element, forceScroll = false) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages || !element) return;
 
+  // Ajoute l'élément
   chatMessages.appendChild(element);
 
-  requestAnimationFrame(() => {
-    if (forceScroll) {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-  });
+  // Force un scroll doux **après insertion**
+  if (forceScroll) {
+    setTimeout(() => {
+      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }, 30); // petit délai pour que le DOM ait fini de se rendre
+  }
 }
-
-
 
 
 
