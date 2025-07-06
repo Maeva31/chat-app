@@ -387,10 +387,10 @@ io.on('connection', (socket) => {
 
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
-  if (user.role !== 'admin' && user.role !== 'modo') {
-    socket.emit('no permission');
-    return;
-  }
+  if (!((user.role === 'admin' || user.role === 'modo') || isLocalModo(socket))) {
+  socket.emit('no permission');
+  return;
+}
 
   const args = msg.message.trim().split(/\s+/);
   const cmd = args[0].toLowerCase();
