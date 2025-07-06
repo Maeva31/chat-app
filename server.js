@@ -488,33 +488,54 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
 
 
         case '/unmute':
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
-            return;
-          }
-          if (mutedUsers.has(targetName)) {
-            mutedUsers.delete(targetName);
-            io.to(targetUser.id).emit('unmuted');
-            io.emit('server message', `${targetName} a été unmuté par ${user.username}`);
-            console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
-          } else {
-            socket.emit('error message', `${targetName} n'est pas muté.`);
-          }
-          return;
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+  if (mutedUsers.has(targetName)) {
+    mutedUsers.delete(targetName);
+    io.to(targetUser.id).emit('unmuted');
 
-        case '/unban':
-          if (!targetUser) {
-            socket.emit('error message', 'Utilisateur introuvable.');
-            return;
-          }
-          if (bannedUsers.has(targetName)) {
-            bannedUsers.delete(targetName);
-            io.emit('server message', `${targetName} a été débanni par ${user.username}`);
-            console.log(`⚠️ ${user.username} a débanni ${targetName}`);
-          } else {
-            socket.emit('error message', `${targetName} n'est pas banni.`);
-          }
-          return;
+    // Salon de la cible
+    const targetRoom = userChannels[targetUser.id] || defaultChannel;
+
+    io.to(targetRoom).emit('chat message', {
+      username: 'Système',
+      message: `${targetName} a été unmuté par ${user.username}`,
+      timestamp: new Date().toISOString(),
+      channel: targetRoom
+    });
+
+    console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
+  } else {
+    socket.emit('error message', `${targetName} n'est pas muté.`);
+  }
+  return;
+
+case '/unban':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+  if (bannedUsers.has(targetName)) {
+    bannedUsers.delete(targetName);
+
+    // Salon de la cible
+    const targetRoom = userChannels[targetUser.id] || defaultChannel;
+
+    io.to(targetRoom).emit('chat message', {
+      username: 'Système',
+      message: `${targetName} a été débanni par ${user.username}`,
+      timestamp: new Date().toISOString(),
+      channel: targetRoom
+    });
+
+    console.log(`⚠️ ${user.username} a débanni ${targetName}`);
+  } else {
+    socket.emit('error message', `${targetName} n'est pas banni.`);
+  }
+  return;
+
 
         case '/addmodo':
 case '/addadmin':
