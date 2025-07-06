@@ -400,7 +400,7 @@ function addMessageToChat(msg) {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
+}
   });
 
   // --- Ici la modification principale : ajout du span timeSpan ---
