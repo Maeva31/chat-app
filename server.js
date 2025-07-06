@@ -388,13 +388,9 @@ io.on('connection', (socket) => {
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
   const userRoom = userChannels[socket.id] || 'Général';
+  const isGlobalAdminOrModo = user.role === 'admin' || user.role === 'modo';
 
-  // Vérifie si l'utilisateur est admin ou modo global
-  const isGlobalAdmin = (user.role === 'admin');
-  const isGlobalModo = (user.role === 'modo');
-
-  // Si l'utilisateur n'est ni admin global, ni modo global, ni modo local
-  if (!(isGlobalAdmin || isGlobalModo || isLocalModo(socket))) {
+  if (!isGlobalAdminOrModo && !isLocalModo(socket)) {
     socket.emit('no permission');
     return;
   }
@@ -403,66 +399,27 @@ io.on('connection', (socket) => {
   const cmd = args[0].toLowerCase();
   const targetName = args[1];
   const targetUser = Object.values(users).find(u => u.username === targetName);
+  const targetUserRoom = targetUser ? userChannels[targetUser.id] : null;
   const now = Date.now();
 
-  // Gestion des commandes kick, ban, mute, etc.
   if (['/kick', '/ban', '/mute', '/unmute', '/addmodo', '/remove'].includes(cmd)) {
-    
-    // Si c'est un admin ou modo global, on autorise sans restriction locale
-    if (isGlobalAdmin || isGlobalModo) {
-      if (!targetUser) {
-        socket.emit('error message', "Utilisateur introuvable.");
-        return;
-      }
-
-      switch (cmd) {
-        case '/kick':
-          io.to(targetUser.id).emit('redirect', '/');
-          setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(userRoom), 500);
-          io.emit('server message', `${targetName} a été kické de ${userRoom} par ${user.username}`);
-          return;
-
-        case '/ban':
-          // Ici tu peux ajouter une gestion globale des bans si tu en as une
-          io.to(targetUser.id).emit('redirect', '/');
-          setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(userRoom), 500);
-          io.emit('server message', `${targetName} a été banni de ${userRoom} par ${user.username}`);
-          return;
-
-        case '/mute':
-          // Tu peux gérer un mute global si besoin, sinon local
-          io.emit('server message', `${targetName} a été muté par ${user.username}`);
-          return;
-
-        case '/unmute':
-          io.emit('server message', `${targetName} n'est plus muté par ${user.username}`);
-          return;
-
-        case '/addmodo':
-          localRoles[userRoom].modos.add(targetName);
-          io.to(userRoom).emit('server message', `${targetName} est maintenant modo local de ${userRoom}`);
-          return;
-
-        case '/remove':
-          io.sockets.sockets.get(targetUser.id)?.leave(userRoom);
-          io.to(targetUser.id).emit('removedFromRoom', userRoom);
-          io.emit('server message', `${targetName} a été retiré du salon ${userRoom} par ${user.username}`);
-          return;
-      }
-    }
-
-    // Sinon c'est un modo local (ni admin ni modo global)
-    if (!isLocalModo(socket)) {
+    if (!isGlobalAdminOrModo && !isLocalModo(socket)) {
       socket.emit('error message', "Vous n'avez pas les droits pour cette commande.");
       return;
     }
 
-    if (!targetUser || userChannels[targetUser.id] !== userRoom) {
+    if (!targetUser || !targetUserRoom) {
+      socket.emit('error message', "Utilisateur introuvable.");
+      return;
+    }
+
+    // Si ce n'est pas un admin/modo global, limite l'action au même salon
+    if (!isGlobalAdminOrModo && targetUserRoom !== userRoom) {
       socket.emit('error message', "Utilisateur introuvable dans ce salon.");
       return;
     }
 
-    // Protection : un modo local ne peut pas agir sur l'admin local du salon
+    // Protection modo local vs admin local dans le même salon
     const isActingModo = getLocalRole(user.username, userRoom) === 'modo';
     const isTargetAdminLocal = getLocalRole(targetName, userRoom) === 'admin';
     if (isActingModo && isTargetAdminLocal) {
@@ -470,30 +427,29 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Commandes en mode local
     switch (cmd) {
       case '/kick':
-        localRoles[userRoom].kicks.set(targetName, now + 90 * 60 * 1000); // 1h30
+        localRoles[targetUserRoom].kicks.set(targetName, now + 90 * 60 * 1000); // 1h30
         io.to(targetUser.id).emit('redirect', '/');
-        setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(userRoom), 500);
-        io.to(userRoom).emit('server message', `${targetName} a été kické de ${userRoom} par ${user.username}`);
+        setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(targetUserRoom), 500);
+        io.to(targetUserRoom).emit('server message', `${targetName} a été kické de ${targetUserRoom} par ${user.username}`);
         return;
 
       case '/ban':
-        localRoles[userRoom].bans.set(targetName, now + 3 * 60 * 60 * 1000); // 3h
+        localRoles[targetUserRoom].bans.set(targetName, now + 3 * 60 * 60 * 1000); // 3h
         io.to(targetUser.id).emit('redirect', '/');
-        setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(userRoom), 500);
-        io.to(userRoom).emit('server message', `${targetName} a été banni de ${userRoom} par ${user.username}`);
+        setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(targetUserRoom), 500);
+        io.to(targetUserRoom).emit('server message', `${targetName} a été banni de ${targetUserRoom} par ${user.username}`);
         return;
 
       case '/mute':
-        localRoles[userRoom].mutes.add(targetName);
-        io.to(userRoom).emit('server message', `${targetName} a été muté dans ${userRoom}`);
+        localRoles[targetUserRoom].mutes.add(targetName);
+        io.to(targetUserRoom).emit('server message', `${targetName} a été muté dans ${targetUserRoom}`);
         return;
 
       case '/unmute':
-        localRoles[userRoom].mutes.delete(targetName);
-        io.to(userRoom).emit('server message', `${targetName} n'est plus muté dans ${userRoom}`);
+        localRoles[targetUserRoom].mutes.delete(targetName);
+        io.to(targetUserRoom).emit('server message', `${targetName} n'est plus muté dans ${targetUserRoom}`);
         return;
 
       case '/addmodo':
@@ -501,19 +457,17 @@ io.on('connection', (socket) => {
           socket.emit('error message', "Seul l'admin local peut ajouter un modo.");
           return;
         }
-        localRoles[userRoom].modos.add(targetName);
-        io.to(userRoom).emit('server message', `${targetName} est maintenant modo local de ${userRoom}`);
+        localRoles[targetUserRoom].modos.add(targetName);
+        io.to(targetUserRoom).emit('server message', `${targetName} est maintenant modo local de ${targetUserRoom}`);
         return;
 
       case '/remove':
-        io.sockets.sockets.get(targetUser.id)?.leave(userRoom);
-        io.to(targetUser.id).emit('removedFromRoom', userRoom);
-        io.to(userRoom).emit('server message', `${targetName} a été retiré du salon ${userRoom} par ${user.username}`);
+        io.sockets.sockets.get(targetUser.id)?.leave(targetUserRoom);
+        io.to(targetUser.id).emit('removedFromRoom', targetUserRoom);
+        io.to(targetUserRoom).emit('server message', `${targetName} a été retiré du salon ${targetUserRoom} par ${user.username}`);
         return;
     }
   }
-
-
 
   // --- GESTION COMMANDES GLOBALES ---
   // Protection rôles
