@@ -763,29 +763,53 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   }
 
 // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
-socket.on('banned', () => {
-  showBanner('🚫 Vous avez été banni du serveur.', 'error');
-  socket.disconnect();
-});
+// Fonction pour formater le temps restant en minutes
+function formatMinutes(ms) {
+  return Math.ceil(ms / 60000);
+}
 
-socket.on('kicked', () => {
-  showBanner('👢 Vous avez été expulsé du serveur.', 'error');
-  socket.disconnect();
-});
-
-socket.on('kickedFromRoom', ({ room, message }) => {
-  showBanner(`👢 ${message}`, 'error');
-
-  // Désactive le salon temporairement dans la liste
+// Fonction pour mettre à jour l'affichage des salons bannis localement
+function updateBannedRoomsUI() {
+  const now = Date.now();
   const roomItems = document.querySelectorAll('#channel-list .channel');
+
   roomItems.forEach(item => {
     const text = item.textContent?.trim() || '';
-    if (text.includes(room)) {
-      item.classList.add('disabled');
-      // Facultatif : ajouter un tooltip
-      item.title = `Vous avez été expulsé temporairement de ${room}`;
+    const roomName = text.replace('#', '').trim();
+
+    const banDataJSON = localStorage.getItem(`bannedRoom_${roomName}`);
+    if (banDataJSON) {
+      const banData = JSON.parse(banDataJSON);
+      const remaining = banData.until - now;
+      if (remaining > 0) {
+        item.classList.add('disabled');
+        item.title = `Vous avez été banni du salon par @${banData.by} (${formatMinutes(remaining)} minutes restantes)`;
+      } else {
+        item.classList.remove('disabled');
+        item.removeAttribute('title');
+        localStorage.removeItem(`bannedRoom_${roomName}`);
+      }
+    } else {
+      item.classList.remove('disabled');
+      item.removeAttribute('title');
     }
   });
+}
+
+// Appelle la mise à jour au chargement et régulièrement
+updateBannedRoomsUI();
+setInterval(updateBannedRoomsUI, 30000);
+
+// Gestion du kick temporaire avec stockage local
+socket.on('kickedFromRoom', ({ room, message, by }) => {
+  showBanner(`👢 ${message}`, 'error');
+
+  // Enregistrer la date de fin du ban local (1h30)
+  const banDurationMs = 1.5 * 60 * 60 * 1000;
+  const until = Date.now() + banDurationMs;
+  localStorage.setItem(`bannedRoom_${room}`, JSON.stringify({ until, by }));
+
+  updateBannedRoomsUI();
 
   // Rejoindre un salon par défaut
   const fallbackRoom = 'Général';
@@ -795,17 +819,53 @@ socket.on('kickedFromRoom', ({ room, message }) => {
   const roomLabel = document.getElementById('current-room-name');
   if (roomLabel) roomLabel.textContent = fallbackRoom;
 
-  // Réactiver ce salon après 1h30 (5400000 ms)
+  // (Optionnel) tu peux garder ce setTimeout, mais ce n’est pas fiable seul
   setTimeout(() => {
-    roomItems.forEach(item => {
-      const text = item.textContent?.trim() || '';
-      if (text.includes(room)) {
-        item.classList.remove('disabled');
-        item.removeAttribute('title');
-      }
-    });
+    localStorage.removeItem(`bannedRoom_${room}`);
+    updateBannedRoomsUI();
     showBanner(`⌛ Vous pouvez à nouveau accéder au salon ${room}.`, 'success');
-  }, 1.5 * 60 * 60 * 1000);
+  }, banDurationMs);
+});
+
+// Interdire la tentative de rejoindre un salon banni localement
+function tryJoinRoom(roomName) {
+  const banDataJSON = localStorage.getItem(`bannedRoom_${roomName}`);
+  if (banDataJSON) {
+    const banData = JSON.parse(banDataJSON);
+    if (banData.until > Date.now()) {
+      const remaining = banData.until - Date.now();
+      showBanner(`🚫 Vous avez été banni du salon par @${banData.by} (${formatMinutes(remaining)} minutes restantes)`, 'error');
+      return; // Bloque la tentative
+    } else {
+      localStorage.removeItem(`bannedRoom_${roomName}`);
+    }
+  }
+
+  socket.emit('joinRoom', roomName);
+  localStorage.setItem('currentRoom', roomName);
+
+  const roomLabel = document.getElementById('current-room-name');
+  if (roomLabel) roomLabel.textContent = roomName;
+}
+
+// Remplace les clics sur les salons par tryJoinRoom
+document.querySelectorAll('#channel-list .channel').forEach(item => {
+  item.addEventListener('click', () => {
+    const roomName = item.textContent?.trim().replace('#', '').trim();
+    if (roomName) tryJoinRoom(roomName);
+  });
+});
+
+// Les autres événements socket
+
+socket.on('banned', () => {
+  showBanner('🚫 Vous avez été banni du serveur.', 'error');
+  socket.disconnect();
+});
+
+socket.on('kicked', () => {
+  showBanner('👢 Vous avez été expulsé du serveur.', 'error');
+  socket.disconnect();
 });
 
 socket.on('muted', () => {
@@ -823,6 +883,7 @@ socket.on('error message', (msg) => {
 socket.on('no permission', () => {
   showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
 });
+
 
 
 
