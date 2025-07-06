@@ -985,7 +985,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   const usernameContainer = document.createElement('span');
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
-  usernameContainer.style.display = 'inline-flex';
+  /*usernameContainer.style.display = 'inline-flex';*/
   usernameContainer.style.alignItems = 'center'; // pour aligner verticalement icône + texte
 
   // Couleur selon rôle / genre
