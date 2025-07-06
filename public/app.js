@@ -929,7 +929,7 @@ if (uploadInput && uploadButton) {
     const file = uploadInput.files[0];
     if (!file) return;
 
-    const MAX_SIZE = 15 * 1024 * 1024; // 15 Mo max en binaire (~20 Mo en base64)
+    const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
     if (file.size > MAX_SIZE) {
       showBanner('Le fichier est trop volumineux (15 Mo max conseillés).', 'error');
       uploadInput.value = ''; // reset input
