@@ -1000,9 +1000,13 @@ function appendToChat(element, forceScroll = false) {
   chatMessages.appendChild(element);
 
   if (forceScroll || isAtBottom) {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    setTimeout(() => {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    }, 50); // délai 50ms pour assurer le scroll
   }
 }
+
+
 
 
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
