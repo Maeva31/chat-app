@@ -989,7 +989,7 @@ function insertMention(username) {
   input.focus();
 }
 
-function appendToChat(element) {
+function appendToChat(element, forceScroll = false) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages || !element) return;
 
@@ -997,10 +997,11 @@ function appendToChat(element) {
 
   chatMessages.appendChild(element);
 
-  if (isAtBottom) {
+  if (forceScroll || isAtBottom) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 }
+
 
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
@@ -1123,7 +1124,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     wrapper.appendChild(link);
   }
 
-  appendToChat(wrapper);
+  appendToChat(wrapper, username === myUsername);
+
 });
 
 }
