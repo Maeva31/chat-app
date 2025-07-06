@@ -1,4 +1,4 @@
-import express from 'express';
+ import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
 import fs from 'fs';
@@ -411,7 +411,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
     setTimeout(() => {
       io.sockets.sockets.get(targetUser.id)?.disconnect(true);
     }, 1500);
-    io.emit('server message', `${targetName} a été banni par ${user.username}`);
+    io.to(currentRoomUn).emit('server message', `${targetName} a été banni par ${user.username}`);
     console.log(`⚠️ ${user.username} a banni ${targetName}`);
     return;
 
@@ -433,7 +433,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
     setTimeout(() => {
       io.sockets.sockets.get(targetUser.id)?.disconnect(true);
     }, 1500);
-    io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
+    io.to(currentRoomUn).emit('server message', `${targetName} a été expulsé par ${user.username}`);
     console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
     return;
 
@@ -452,7 +452,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
     }
     mutedUsers.add(targetName);
     io.to(targetUser.id).emit('muted');
-    io.emit('server message', `${targetName} a été muté par ${user.username}`);
+    io.to(currentRoomUn).emit('server message', `${targetName} a été muté par ${user.username}`);
     console.log(`⚠️ ${user.username} a muté ${targetName}`);
     return;
 
@@ -464,7 +464,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
           if (mutedUsers.has(targetName)) {
             mutedUsers.delete(targetName);
             io.to(targetUser.id).emit('unmuted');
-            io.emit('server message', `${targetName} a été unmuté par ${user.username}`);
+            io.to(currentRoomUn).emit('server message', `${targetName} a été unmuté par ${user.username}`);
             console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
           } else {
             socket.emit('error message', `${targetName} n'est pas muté.`);
@@ -478,7 +478,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
           }
           if (bannedUsers.has(targetName)) {
             bannedUsers.delete(targetName);
-            io.emit('server message', `${targetName} a été débanni par ${user.username}`);
+            io.to(currentRoomUn).emit('server message', `${targetName} a été débanni par ${user.username}`);
             console.log(`⚠️ ${user.username} a débanni ${targetName}`);
           } else {
             socket.emit('error message', `${targetName} n'est pas banni.`);
@@ -505,7 +505,7 @@ case '/addadmin':
       tempMods.modos.add(targetName);
       // Supprimer du rôle admin temporaire si existant
       tempMods.admins.delete(targetName);
-      io.emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
+      io.to(currentRoomUn).emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
       console.log(`⚠️ ${user.username} a ajouté modo temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà modérateur.`);
@@ -515,7 +515,7 @@ case '/addadmin':
       tempMods.admins.add(targetName);
       // Supprimer du rôle modo temporaire si existant
       tempMods.modos.delete(targetName);
-      io.emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
+      io.to(currentRoomUn).emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
       console.log(`⚠️ ${user.username} a ajouté admin temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà administrateur.`);
@@ -584,7 +584,7 @@ case '/removeadmin':
   }
 
   fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-  io.emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
+  io.to(currentRoomUn).emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
   console.log(`⚠️ ${user.username} a retiré ${cmd === '/removemodo' ? 'modo' : 'admin'} ${targetName}`);
 
   if (users[targetName]) {
