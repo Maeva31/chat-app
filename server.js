@@ -414,12 +414,20 @@ io.on('connection', (socket) => {
     return;
   }
 
+  // ✅ Protection : un modo local ne peut pas agir sur l'admin local du salon
+  const isActingModo = getLocalRole(user.username, userRoom) === 'modo';
+  const isTargetAdminLocal = getLocalRole(targetName, userRoom) === 'admin';
+  if (isActingModo && isTargetAdminLocal) {
+    socket.emit('error message', "Vous ne pouvez pas agir sur l'administrateur du salon.");
+    return;
+  }
+
   switch (cmd) {
     case '/kick':
       localRoles[userRoom].kicks.set(targetName, now + 90 * 60 * 1000); // 1h30
       io.to(targetUser.id).emit('redirect', '/');
       setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(userRoom), 500);
-      io.emit('server message', `${targetName} a été kické de ${userRoom} par ${user.username}`);
+      io.to(userRoom).emit('server message', `${targetName} a été kické de ${userRoom} par ${user.username}`);
       return;
 
     case '/ban':
