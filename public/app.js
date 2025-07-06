@@ -999,11 +999,12 @@ function appendToChat(element, forceScroll = false) {
   chatMessages.appendChild(element);
 
   if (forceScroll) {
-    // Scroll instantané en bas sans animation
-    chatMessages.scrollTop = chatMessages.scrollHeight;
+    // Forcer le scroll une fois le DOM mis à jour
+    requestAnimationFrame(() => {
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
   }
 }
-
 
 
 
