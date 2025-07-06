@@ -568,7 +568,7 @@ io.on('connection', (socket) => {
             return;
         }
       }
-    }
+
 
     const message = {
       username: user.username,
