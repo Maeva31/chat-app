@@ -312,7 +312,6 @@ if (msg.role === 'admin') {
 
 // Gestion des messages système
 if (msg.username === 'Système') {
-  usernameSpan.textContent = msg.username + ': ';
   usernameSpan.style.color = '#888';
   usernameSpan.style.fontWeight = 'bold';
 } else {
