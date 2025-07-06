@@ -24,23 +24,6 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 
-const mutedUsersByRoom = new Map();
-const kickedUsersByRoom = new Map();
-
-
-setInterval(() => {
-  for (const [room, kicksMap] of kickedUsersByRoom.entries()) {
-    for (const [username, expiration] of kicksMap.entries()) {
-      if (Date.now() > expiration) {
-        kicksMap.delete(username);
-        console.log(`Kick expiré pour ${username} dans ${room}`);
-      }
-    }
-  }
-}, 60 * 1000); // par exemple toutes les minutes
-
-
-
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
 try {
@@ -368,12 +351,11 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const mutedSet = mutedUsersByRoom.get(channel);
-    if (mutedSet && mutedSet.has(user.username)) {
-    socket.emit('error message', 'Vous êtes muté dans ce salon et ne pouvez pas envoyer de messages.');
-    return;
+    if (mutedUsers.has(user.username)) {
+      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+      // suppression de la redirection pour mute
+      return;
     }
-
 
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
@@ -411,79 +393,51 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
 
       switch (cmd) {
   case '/ban':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
+    if (!targetUser) {
+      socket.emit('error message', 'Utilisateur introuvable.');
+      return;
+    }
+    if (targetUser.username === user.username) {
+      socket.emit('error message', 'Vous ne pouvez pas vous bannir vous-même.');
+      return;
+    }
+    if (isUserModo && isTargetProtected) {
+      socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
+      return;
+    }
+    bannedUsers.add(targetName);
+    io.to(targetUser.id).emit('banned');
+    io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
+    setTimeout(() => {
+      io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+    }, 1500);
+    io.to(targetRoom).emit('server message', `${targetName} a été banni par ${user.username}`);
+    console.log(`⚠️ ${user.username} a banni ${targetName}`);
     return;
-  }
-  if (targetUser.username === user.username) {
-    socket.emit('error message', 'Vous ne pouvez pas vous bannir vous-même.');
+
+  case '/kick':
+    if (!targetUser) {
+      socket.emit('error message', 'Utilisateur introuvable.');
+      return;
+    }
+    if (targetUser.username === user.username) {
+      socket.emit('error message', 'Vous ne pouvez pas vous expulser vous-même.');
+      return;
+    }
+    if (isUserModo && isTargetProtected) {
+      socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
+      return;
+    }
+    io.to(targetUser.id).emit('kicked');
+    io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
+    setTimeout(() => {
+      io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+    }, 1500);
+    io.to(targetRoom).emit('server message', `${targetName} a été expulsé par ${user.username}`);
+    console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
     return;
-  }
-  if (isUserModo && isTargetProtected) {
-    socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
-    return;
-  }
-  bannedUsers.add(targetName);
-  io.to(targetUser.id).emit('banned');
-  io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
-  setTimeout(() => {
-    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
-  }, 1500);
 
-  const targetBanRoom = userChannels[targetUser.id] || defaultChannel;
-  io.to(targetBanRoom).emit('chat message', {
-    username: 'Système',
-    message: `${targetName} a été banni par ${user.username}`,
-    timestamp: new Date().toISOString(),
-    channel: targetBanRoom
-  });
-
-  console.log(`⚠️ ${user.username} a banni ${targetName}`);
-  return;
-
-
-case '/kick': {
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-
-  const targetSocketId = targetUser.id;
-  const targetRoom = userChannels[targetSocketId] || defaultChannel;
-
-  if (!kickedUsersByRoom.has(targetRoom)) kickedUsersByRoom.set(targetRoom, new Map());
-
-  const expiration = Date.now() + 90 * 60 * 1000; // 1h30 en ms
-  kickedUsersByRoom.get(targetRoom).set(targetName, expiration);
-
-  // Retirer le socket du salon kické pour qu'il ne reçoive plus les messages
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-  if (targetSocket) {
-    targetSocket.leave(targetRoom);
-
-    // On informe directement l'utilisateur kické
-    targetSocket.emit('kickedFromRoom', {
-      room: targetRoom,
-      message: `Vous avez été expulsé temporairement du salon ${targetRoom}. Veuillez changer de salon.`
-    });
-  }
-
-  // Message dans le salon pour signaler le kick
-  io.to(targetRoom).emit('chat message', {
-    username: 'Système',
-    message: `${targetName} a été expulsé par ${user.username}`,
-    timestamp: new Date().toISOString(),
-    channel: targetRoom
-  });
-
-  console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${targetRoom}`);
-
-  return;
-}
-
-
-
- case '/mute': {
+  case '/mute':
     if (!targetUser) {
       socket.emit('error message', 'Utilisateur introuvable.');
       return;
@@ -496,82 +450,40 @@ case '/kick': {
       socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
       return;
     }
-
-    const targetSocketId = targetUser.id;
-    const targetRoom = userChannels[targetSocketId] || defaultChannel;
-
-    if (!mutedUsersByRoom.has(targetRoom)) mutedUsersByRoom.set(targetRoom, new Set());
-    mutedUsersByRoom.get(targetRoom).add(targetName);
-
-    io.to(targetSocketId).emit('muted');
-
-    io.to(targetRoom).emit('chat message', {
-      username: 'Système',
-      message: `${targetName} a été muté par ${user.username}`,
-      timestamp: new Date().toISOString(),
-      channel: targetRoom
-    });
-
-    console.log(`⚠️ ${user.username} a muté ${targetName} dans le salon ${targetRoom}`);
+    mutedUsers.add(targetName);
+    io.to(targetUser.id).emit('muted');
+    io.to(targetRoom).emit('server message', `${targetName} a été muté par ${user.username}`);
+    console.log(`⚠️ ${user.username} a muté ${targetName}`);
     return;
-  }
 
+        case '/unmute':
+          if (!targetUser) {
+            socket.emit('error message', 'Utilisateur introuvable.');
+            return;
+          }
+          if (mutedUsers.has(targetName)) {
+            mutedUsers.delete(targetName);
+            io.to(targetUser.id).emit('unmuted');
+            io.to(targetRoom).emit('server message', `${targetName} a été unmuté par ${user.username}`);
+            console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
+          } else {
+            socket.emit('error message', `${targetName} n'est pas muté.`);
+          }
+          return;
 
-
-  case '/unmute': {
-    if (!targetUser) {
-      socket.emit('error message', 'Utilisateur introuvable.');
-      return;
-    }
-
-    const targetSocketId = targetUser.id;
-    const targetRoom = userChannels[targetSocketId] || defaultChannel;
-    const mutedSet = mutedUsersByRoom.get(targetRoom);
-
-    if (mutedSet && mutedSet.has(targetName)) {
-      mutedSet.delete(targetName);
-      io.to(targetSocketId).emit('unmuted');
-
-      io.to(targetRoom).emit('chat message', {
-        username: 'Système',
-        message: `${targetName} a été unmuté par ${user.username}`,
-        timestamp: new Date().toISOString(),
-        channel: targetRoom
-      });
-
-      console.log(`⚠️ ${user.username} a unmuté ${targetName} dans ${targetRoom}`);
-    } else {
-      socket.emit('error message', `${targetName} n'est pas muté dans ce salon.`);
-    }
-    return;
-  }
-
-
-
-case '/unban':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-  if (bannedUsers.has(targetName)) {
-    bannedUsers.delete(targetName);
-
-    // Salon de la cible
-    const targetRoom = userChannels[targetUser.id] || defaultChannel;
-
-    io.to(targetRoom).emit('chat message', {
-      username: 'Système',
-      message: `${targetName} a été débanni par ${user.username}`,
-      timestamp: new Date().toISOString(),
-      channel: targetRoom
-    });
-
-    console.log(`⚠️ ${user.username} a débanni ${targetName}`);
-  } else {
-    socket.emit('error message', `${targetName} n'est pas banni.`);
-  }
-  return;
-
+        case '/unban':
+          if (!targetUser) {
+            socket.emit('error message', 'Utilisateur introuvable.');
+            return;
+          }
+          if (bannedUsers.has(targetName)) {
+            bannedUsers.delete(targetName);
+            io.to(targetRoom).emit('server message', `${targetName} a été débanni par ${user.username}`);
+            console.log(`⚠️ ${user.username} a débanni ${targetName}`);
+          } else {
+            socket.emit('error message', `${targetName} n'est pas banni.`);
+          }
+          return;
 
         case '/addmodo':
 case '/addadmin':
@@ -593,7 +505,7 @@ case '/addadmin':
       tempMods.modos.add(targetName);
       // Supprimer du rôle admin temporaire si existant
       tempMods.admins.delete(targetName);
-      io.emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
+      io.to(targetRoom).emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
       console.log(`⚠️ ${user.username} a ajouté modo temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà modérateur.`);
@@ -603,7 +515,7 @@ case '/addadmin':
       tempMods.admins.add(targetName);
       // Supprimer du rôle modo temporaire si existant
       tempMods.modos.delete(targetName);
-      io.emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
+      io.to(targetRoom).emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
       console.log(`⚠️ ${user.username} a ajouté admin temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà administrateur.`);
@@ -672,7 +584,7 @@ case '/removeadmin':
   }
 
   fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-  io.emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
+  io.to(targetRoom).emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
   console.log(`⚠️ ${user.username} a retiré ${cmd === '/removemodo' ? 'modo' : 'admin'} ${targetName}`);
 
   if (users[targetName]) {
@@ -779,18 +691,6 @@ case '/removeadmin':
     const oldChannel = userChannels[socket.id] || defaultChannel;
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
-
-    const kicksMap = kickedUsersByRoom.get(newChannel);
-  if (kicksMap && kicksMap.has(user.username)) {
-    const expiration = kicksMap.get(user.username);
-    if (Date.now() < expiration) {
-      socket.emit('error', `Vous êtes expulsé temporairement de ce salon jusqu'à ${new Date(expiration).toLocaleTimeString()}.`);
-      return;  // Empêche l'entrée dans le salon
-    } else {
-      // Kick expiré, on supprime l'entrée
-      kicksMap.delete(user.username);
-    }
-  }
 
     if (!messageHistory[newChannel]) messageHistory[newChannel] = [];
     if (!roomUsers[newChannel]) roomUsers[newChannel] = [];
