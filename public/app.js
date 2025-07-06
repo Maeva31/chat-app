@@ -966,14 +966,33 @@ if (uploadInput && uploadButton) {
 
 // Affichage d’un fichier uploadé
 
-// Set global pour mémoriser les pseudos déjà mentionnés
 const displayedFileUsers = new Set();
+
+function insertMention(username) {
+  const input = document.getElementById('message-input');
+  if (!input) return;
+
+  const mention = '@' + username;
+
+  if (input.value.includes(mention)) return;
+
+  const start = input.selectionStart || 0;
+  const end = input.selectionEnd || 0;
+
+  const textBefore = input.value.substring(0, start);
+  const textAfter = input.value.substring(end);
+
+  input.value = textBefore + mention + ' ' + textAfter;
+
+  const newPos = start + mention.length + 1;
+  input.setSelectionRange(newPos, newPos);
+  input.focus();
+}
 
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
-  // Si on a déjà affiché un fichier pour ce pseudo, on ignore
   if (displayedFileUsers.has(username)) return;
   displayedFileUsers.add(username);
 
@@ -988,7 +1007,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   timeSpan.style.marginRight = '5px';
   wrapper.appendChild(timeSpan);
 
-  // Conteneur pseudo + icône
+  // Pseudo + icône
   const usernameContainer = document.createElement('span');
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
@@ -1020,13 +1039,13 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   clickableUsername.style.cursor = 'pointer';
 
   clickableUsername.addEventListener('click', () => {
-    insertMention(username);  // toujours possible d'insérer la mention plusieurs fois
+    insertMention(username);
   });
 
   usernameContainer.appendChild(clickableUsername);
   wrapper.appendChild(usernameContainer);
 
-  // Affichage fichier (image/audio/video/autre)
+  // Affichage du fichier
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
     img.src = `data:${mimetype};base64,${data}`;
@@ -1097,6 +1116,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 });
+
 }
 });
 
