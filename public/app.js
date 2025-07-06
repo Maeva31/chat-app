@@ -1011,24 +1011,29 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   // Ajout du pseudo cliquable
-  const clickableUsername = document.createElement('span');
-clickableUsername.textContent = username;
-clickableUsername.style.cursor = 'pointer';
+ function insertMention(username) {
+  const input = document.getElementById('message-input'); // Remplace 'message-input' par l'ID réel
+  if (!input) return;
 
-// Clic gauche : insérer la mention @username
-clickableUsername.addEventListener('click', () => {
-  insertMention(username); // Ajoute la mention dans l’input message
-});
+  const mention = '@' + username + ' ';
 
-// Clic droit : (optionnel) ouvrir MP ou autre, ou laisser vide
-clickableUsername.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  // Si tu veux, tu peux aussi faire handleUsernameClick ici
-  // handleUsernameClick(username);
-});
-  
-usernameContainer.appendChild(clickableUsername);
-wrapper.appendChild(usernameContainer);
+  // Position actuelle du curseur
+  const start = input.selectionStart || 0;
+  const end = input.selectionEnd || 0;
+
+  // Texte avant et après la sélection/cursor
+  const textBefore = input.value.substring(0, start);
+  const textAfter = input.value.substring(end);
+
+  input.value = textBefore + mention + textAfter;
+
+  // Remet le curseur juste après la mention
+  const newPos = start + mention.length;
+  input.setSelectionRange(newPos, newPos);
+
+  input.focus();
+}
+
 
 
   // Affichage selon type de fichier
