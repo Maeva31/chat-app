@@ -402,9 +402,6 @@ if (msg.username === 'Système') {
 
     newMessage.appendChild(messageText);
   } else if (messageText.textContent.trim() !== '') {
-    const separator = document.createElement('strong');
-    separator.textContent = ': ';
-    newMessage.appendChild(separator);
     newMessage.appendChild(messageText);
   }
 
@@ -1015,7 +1012,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.appendChild(document.createTextNode(username));
   wrapper.appendChild(usernameContainer);
 
- 
+  // Séparateur ": "
+  wrapper.appendChild(document.createTextNode(': '));
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
