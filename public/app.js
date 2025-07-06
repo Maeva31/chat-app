@@ -794,6 +794,18 @@ socket.on('kickedFromRoom', ({ room, message }) => {
 
   const roomLabel = document.getElementById('current-room-name');
   if (roomLabel) roomLabel.textContent = fallbackRoom;
+
+  // Réactiver ce salon après 1h30 (5400000 ms)
+  setTimeout(() => {
+    roomItems.forEach(item => {
+      const text = item.textContent?.trim() || '';
+      if (text.includes(room)) {
+        item.classList.remove('disabled');
+        item.removeAttribute('title');
+      }
+    });
+    showBanner(`⌛ Vous pouvez à nouveau accéder au salon ${room}.`, 'success');
+  }, 1.5 * 60 * 60 * 1000);
 });
 
 socket.on('muted', () => {
@@ -811,6 +823,7 @@ socket.on('error message', (msg) => {
 socket.on('no permission', () => {
   showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
 });
+
 
 
 
