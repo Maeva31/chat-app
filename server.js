@@ -398,8 +398,8 @@ io.on('connection', (socket) => {
   const targetName = args[1];
   const targetUser = Object.values(users).find(u => u.username === targetName);
 
-  // Déclarations nécessaires pour commandes locales
-  const userRoom = userChannels[socket.id] || defaultChannel;
+  // Ici, on supprime la deuxième déclaration de userRoom
+  // const userRoom = userChannels[socket.id] || defaultChannel;  <-- Supprimer cette ligne
   const now = Date.now();
 
   // --- GESTION COMMANDES LOCALES ---
