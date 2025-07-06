@@ -916,7 +916,7 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
   });
 });
 
-// --- Upload fichier (fusionné depuis upload.js) ---
+// --- Upload fichier ---
 const uploadInput = document.getElementById('file-input');    // input type="file"
 const uploadButton = document.getElementById('upload-btn');   // bouton 📎 ou autre
 
@@ -992,9 +992,6 @@ function insertMention(username) {
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
-
-  if (displayedFileUsers.has(username)) return;
-  displayedFileUsers.add(username);
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
