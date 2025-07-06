@@ -996,16 +996,15 @@ function appendToChat(element, forceScroll = false) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages || !element) return;
 
-  const wasAtBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 10;
-
   chatMessages.appendChild(element);
 
   requestAnimationFrame(() => {
-    if (forceScroll || wasAtBottom) {
+    if (forceScroll) {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     }
   });
 }
+
 
 
 
@@ -1133,7 +1132,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
 
-  appendToChat(wrapper, username === myUsername);
+  appendToChat(wrapper, true); // scroll forcé à chaque fichier/message
+
 
 });
 
