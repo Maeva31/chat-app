@@ -1075,7 +1075,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
       }
     });
 
-    wrapper.appendChild(link);
+    img.onload = () => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(link);
+
 
   } else if (mimetype.startsWith('audio/')) {
     const audio = document.createElement('audio');
@@ -1086,7 +1090,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     audio.style.borderRadius = '8px';
     audio.style.padding = '4px';
     audio.style.backgroundColor = '#f9f9f9';
-    wrapper.appendChild(audio);
+    audio.onloadeddata = () => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(audio);
+
 
   } else if (mimetype.startsWith('video/')) {
     const video = document.createElement('video');
@@ -1099,7 +1107,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     video.style.borderRadius = '8px';
     video.style.padding = '4px';
     video.style.backgroundColor = '#000';
-    wrapper.appendChild(video);
+    video.onloadeddata = () => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(video);
+
 
   } else {
     const link = document.createElement('a');
@@ -1107,7 +1119,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     link.download = filename;
     link.textContent = `📎 ${filename}`;
     link.target = '_blank';
-    wrapper.appendChild(link);
+    img.onload = () => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(link);
+
   }
 
   chatMessages.appendChild(wrapper);
