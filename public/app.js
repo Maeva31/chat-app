@@ -1002,11 +1002,14 @@ function appendToChat(element, forceScroll = false) {
   chatMessages.appendChild(element);
 
   if (forceScroll || isAtBottom) {
-    setTimeout(() => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    }, 50); // délai 50ms pour assurer le scroll
+    chatMessages.scrollTo({
+      top: chatMessages.scrollHeight,
+      behavior: 'smooth'
+    });
   }
 }
+
+
 
 
 
