@@ -1039,9 +1039,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     // Marquer ce pseudo comme déjà mentionné
     mentionedUsernames.add(username);
 
-    // Optionnel : changer style du pseudo pour indiquer qu'il est déjà mentionné
-    clickableUsername.style.opacity = '0.5';
-    clickableUsername.style.pointerEvents = 'none'; // désactive clics
+    // NE RIEN CHANGER AU STYLE DU PSEUDO
   }
 
   // Création du pseudo cliquable
@@ -1055,7 +1053,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   clickableUsername.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    // Si tu veux, tu peux gérer autre chose ici
+    // Autre gestion possible ici
   });
 
   usernameContainer.appendChild(clickableUsername);
