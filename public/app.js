@@ -762,7 +762,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     });
   }
 
-  // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
+   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
   socket.on('banned', () => {
     showBanner('🚫 Vous avez été banni du serveur.', 'error');
     socket.disconnect();
@@ -771,6 +771,17 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   socket.on('kicked', () => {
     showBanner('👢 Vous avez été expulsé du serveur.', 'error');
     socket.disconnect();
+  });
+
+  socket.on('kickedFromRoom', ({ room, message }) => {
+    showBanner(`👢 ${message}`, 'error');
+
+    const fallbackRoom = 'Général';
+    socket.emit('joinRoom', fallbackRoom);
+    localStorage.setItem('currentRoom', fallbackRoom);
+
+    const roomLabel = document.getElementById('current-room-name');
+    if (roomLabel) roomLabel.textContent = fallbackRoom;
   });
 
   socket.on('muted', () => {
@@ -788,6 +799,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   socket.on('no permission', () => {
     showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
   });
+
 
   // --- Début ajout mode invisible ---
 
