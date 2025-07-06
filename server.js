@@ -1010,24 +1010,8 @@ socket.on('disconnect', () => {
   } else {
     console.log(`❌ Déconnexion inconnue : ${socket.id}`);
   }
-}
+});
 
-  
-
-
-      for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
-        emitUserList(channel);
-      }
-
-      delete users[user.username];
-      delete userChannels[socket.id];
-
-      cleanupEmptyDynamicRooms();
-    } else {
-      console.log(`❌ Déconnexion inconnue : ${socket.id}`);
-    }
-  });
   
     socket.on('private message', ({ to, message, style, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
