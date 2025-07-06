@@ -11,7 +11,39 @@ document.addEventListener('DOMContentLoaded', () => {
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
 
-  let currentChannel = 'Général';  // Forcer le salon Général au chargement
+  /* let currentChannel = 'Général';  // Forcer le salon Général au chargement */
+
+  function getDefaultRoom() {
+  const savedRoom = localStorage.getItem('currentRoom') || 'Général';
+  
+  // Vérifier si savedRoom est banni
+  const banDataJSON = localStorage.getItem(`bannedRoom_${savedRoom}`);
+  if (banDataJSON) {
+    const banData = JSON.parse(banDataJSON);
+    if (banData.until > Date.now()) {
+      // Si banni, forcer "Général"
+      return 'Général';
+    } else {
+      // Ban expiré, nettoyage
+      localStorage.removeItem(`bannedRoom_${savedRoom}`);
+      return savedRoom;
+    }
+  } else {
+    return savedRoom;
+  }
+}
+
+let currentChannel = getDefaultRoom();
+localStorage.setItem('currentRoom', currentChannel);
+
+// Ensuite, join la room :
+socket.emit('joinRoom', currentChannel);
+
+// Et mettre à jour l'affichage par exemple :
+const roomLabel = document.getElementById('current-room-name');
+if (roomLabel) roomLabel.textContent = currentChannel;
+
+
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
