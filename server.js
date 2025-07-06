@@ -434,17 +434,17 @@ io.on('connection', (socket) => {
       localRoles[userRoom].bans.set(targetName, now + 3 * 60 * 60 * 1000); // 3h
       io.to(targetUser.id).emit('redirect', '/');
       setTimeout(() => io.sockets.sockets.get(targetUser.id)?.leave(userRoom), 500);
-      io.emit('server message', `${targetName} a été banni de ${userRoom} par ${user.username}`);
+      io.to(userRoom).emit('server message', `${targetName} a été banni de ${userRoom} par ${user.username}`);
       return;
 
     case '/mute':
       localRoles[userRoom].mutes.add(targetName);
-      io.emit('server message', `${targetName} a été muté dans ${userRoom}`);
+      io.to(userRoom).emit('server message', `${targetName} a été muté dans ${userRoom}`);
       return;
 
     case '/unmute':
       localRoles[userRoom].mutes.delete(targetName);
-      io.emit('server message', `${targetName} n'est plus muté dans ${userRoom}`);
+      io.to(userRoom).emit('server message', `${targetName} n'est plus muté dans ${userRoom}`);
       return;
 
     case '/addmodo':
@@ -453,14 +453,14 @@ io.on('connection', (socket) => {
         return;
       }
       localRoles[userRoom].modos.add(targetName);
-      io.emit('server message', `${targetName} est maintenant modo local de ${userRoom}`);
+      io.to(userRoom).emit('server message', `${targetName} est maintenant modo local de ${userRoom}`);
       return;
 
     case '/remove':
       // Kick local simple : on fait juste quitter le salon ciblé sans déconnexion ou redirection globale
       io.sockets.sockets.get(targetUser.id)?.leave(userRoom);
       io.to(targetUser.id).emit('removedFromRoom', userRoom);
-      io.emit('server message', `${targetName} a été retiré du salon ${userRoom} par ${user.username}`);
+      io.to(userRoom).emit('server message', `${targetName} a été retiré du salon ${userRoom} par ${user.username}`);
       return;
   }
 }
@@ -507,7 +507,7 @@ io.on('connection', (socket) => {
       setTimeout(() => {
         io.sockets.sockets.get(targetUser.id)?.disconnect(true);
       }, 1500);
-      io.emit('server message', `${targetName} a été banni par ${user.username}`);
+      io.to(userRoom).emit('server message', `${targetName} a été banni par ${user.username}`);
       console.log(`⚠️ ${user.username} a banni ${targetName}`);
       return;
 
@@ -529,7 +529,7 @@ io.on('connection', (socket) => {
       setTimeout(() => {
         io.sockets.sockets.get(targetUser.id)?.disconnect(true);
       }, 1500);
-      io.emit('server message', `${targetName} a été expulsé par ${user.username}`);
+      io.to(userRoom).emit('server message', `${targetName} a été expulsé par ${user.username}`);
       console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
       return;
 
@@ -548,7 +548,7 @@ io.on('connection', (socket) => {
       }
       mutedUsers.add(targetName);
       io.to(targetUser.id).emit('muted');
-      io.emit('server message', `${targetName} a été muté par ${user.username}`);
+      io.to(userRoom).emit('server message', `${targetName} a été muté par ${user.username}`);
       console.log(`⚠️ ${user.username} a muté ${targetName}`);
       return;
 
@@ -560,7 +560,7 @@ io.on('connection', (socket) => {
       if (mutedUsers.has(targetName)) {
         mutedUsers.delete(targetName);
         io.to(targetUser.id).emit('unmuted');
-        io.emit('server message', `${targetName} a été unmuté par ${user.username}`);
+        io.to(userRoom).emit('server message', `${targetName} a été unmuté par ${user.username}`);
         console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
       } else {
         socket.emit('error message', `${targetName} n'est pas muté.`);
@@ -574,7 +574,7 @@ io.on('connection', (socket) => {
       }
       if (bannedUsers.has(targetName)) {
         bannedUsers.delete(targetName);
-        io.emit('server message', `${targetName} a été débanni par ${user.username}`);
+        io.to(userRoom).emit('server message', `${targetName} a été débanni par ${user.username}`);
         console.log(`⚠️ ${user.username} a débanni ${targetName}`);
       } else {
         socket.emit('error message', `${targetName} n'est pas banni.`);
@@ -601,7 +601,7 @@ case '/addadmin':
       tempMods.modos.add(targetName);
       // Supprimer du rôle admin temporaire si existant
       tempMods.admins.delete(targetName);
-      io.emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
+      io.to(userRoom).emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
       console.log(`⚠️ ${user.username} a ajouté modo temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà modérateur.`);
@@ -611,7 +611,7 @@ case '/addadmin':
       tempMods.admins.add(targetName);
       // Supprimer du rôle modo temporaire si existant
       tempMods.modos.delete(targetName);
-      io.emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
+      io.to(userRoom).emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
       console.log(`⚠️ ${user.username} a ajouté admin temporaire ${targetName}`);
     } else {
       socket.emit('error message', `${targetName} est déjà administrateur.`);
@@ -680,7 +680,7 @@ case '/removeadmin':
   }
 
   fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-  io.emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
+  io.to(userRoom).emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
   console.log(`⚠️ ${user.username} a retiré ${cmd === '/removemodo' ? 'modo' : 'admin'} ${targetName}`);
 
   if (users[targetName]) {
