@@ -996,22 +996,16 @@ function appendToChat(element, forceScroll = false) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages || !element) return;
 
-  // Vérifie si on est tout en bas (±1px de tolérance)
-  const isAtBottom = Math.abs(chatMessages.scrollTop + chatMessages.clientHeight - chatMessages.scrollHeight) < 5;
+  // Vérifie si on est tout en bas avec une tolérance
+  const isAtBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 10;
 
   chatMessages.appendChild(element);
 
-  // Ajoute une petite attente pour que le DOM soit mis à jour avant le scroll
-  setTimeout(() => {
-    if (forceScroll || isAtBottom) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }
-  }, 10);
+  // Scroll instantané uniquement si on était déjà en bas ou si c’est un fichier envoyé par soi-même
+  if (forceScroll || isAtBottom) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 }
-
-
-
-
 
 
 
