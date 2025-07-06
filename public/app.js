@@ -279,7 +279,6 @@ function getYouTubeVideoId(url) {
   // Ajoute un message dans la zone de chat
 function addMessageToChat(msg) {
   if (msg.username === 'Système') {
-    // Ignore le message "est maintenant visible."
     if (/est maintenant visible\.$/i.test(msg.message)) return;
 
     const salonRegex = /salon\s+(.+)$/i;
@@ -355,7 +354,7 @@ function addMessageToChat(msg) {
 
   newMessage.appendChild(usernameSpan);
 
-  // Deux-points avec même couleur que le pseudo
+  // Deux-points : même couleur que pseudo (ou gris si Système)
   const separatorSpan = document.createElement('span');
   separatorSpan.textContent = ': ';
   separatorSpan.style.color = (msg.username === 'Système') ? '#888' : color;
