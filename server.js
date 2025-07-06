@@ -427,6 +427,17 @@ io.on('connection', (socket) => {
       return;
     }
 
+    if (!localRoles[targetUserRoom]) {
+  localRoles[targetUserRoom] = {
+    admins: new Set(),
+    modos: new Set(),
+    kicks: new Map(),
+    bans: new Map(),
+    mutes: new Set()
+  };
+}
+
+
     switch (cmd) {
       case '/kick':
         localRoles[targetUserRoom].kicks.set(targetName, now + 90 * 60 * 1000); // 1h30
