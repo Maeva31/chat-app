@@ -967,11 +967,15 @@ if (uploadInput && uploadButton) {
 // Affichage d’un fichier uploadé
 
 // Set global pour mémoriser les pseudos déjà mentionnés
-const mentionedUsernames = new Set();
+const displayedFileUsers = new Set();
 
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
+
+  // Si on a déjà affiché un fichier pour ce pseudo, on ignore
+  if (displayedFileUsers.has(username)) return;
+  displayedFileUsers.add(username);
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
@@ -984,7 +988,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   timeSpan.style.marginRight = '5px';
   wrapper.appendChild(timeSpan);
 
-  // Conteneur pour pseudo + icône
+  // Conteneur pseudo + icône
   const usernameContainer = document.createElement('span');
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
@@ -993,7 +997,6 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.position = 'relative';
   usernameContainer.style.top = '2px';
 
-  // Couleur du pseudo selon rôle / genre
   let color = 'white';
   if (role === 'admin') color = 'red';
   else if (role === 'modo') color = 'limegreen';
@@ -1001,7 +1004,6 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   else if (gender === 'Homme') color = 'dodgerblue';
   usernameContainer.style.color = color;
 
-  // Ajout de l’icône rôle
   if (role === 'admin' || role === 'modo') {
     const icon = createRoleIcon(role);
     if (icon) {
@@ -1013,53 +1015,18 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     }
   }
 
-  // Fonction insérant la mention @username dans l'input message
-  function insertMention(username) {
-    const input = document.getElementById('message-input');
-    if (!input) return;
-
-    // Ne pas réinsérer si déjà mentionné
-    if (mentionedUsernames.has(username)) return;
-
-    const mention = '@' + username + ' ';
-
-    const start = input.selectionStart || 0;
-    const end = input.selectionEnd || 0;
-
-    const textBefore = input.value.substring(0, start);
-    const textAfter = input.value.substring(end);
-
-    input.value = textBefore + mention + textAfter;
-
-    const newPos = start + mention.length;
-    input.setSelectionRange(newPos, newPos);
-
-    input.focus();
-
-    // Marquer ce pseudo comme déjà mentionné
-    mentionedUsernames.add(username);
-
-    // NE RIEN CHANGER AU STYLE DU PSEUDO
-  }
-
-  // Création du pseudo cliquable
   const clickableUsername = document.createElement('span');
   clickableUsername.textContent = username;
   clickableUsername.style.cursor = 'pointer';
 
   clickableUsername.addEventListener('click', () => {
-    insertMention(username);
-  });
-
-  clickableUsername.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    // Autre gestion possible ici
+    insertMention(username);  // toujours possible d'insérer la mention plusieurs fois
   });
 
   usernameContainer.appendChild(clickableUsername);
   wrapper.appendChild(usernameContainer);
 
-  // Affichage selon type de fichier
+  // Affichage fichier (image/audio/video/autre)
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
     img.src = `data:${mimetype};base64,${data}`;
