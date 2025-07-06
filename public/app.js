@@ -312,7 +312,7 @@ function addMessageToChat(msg) {
   usernameSpan.textContent = msg.username + ': ';  // <-- bien fermé et complet
   usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                        (msg.role === 'modo') ? 'Modérateur' : '';
-}
+
 
 
     // Icônes selon rôle
