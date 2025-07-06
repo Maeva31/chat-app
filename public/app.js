@@ -290,28 +290,44 @@ function addMessageToChat(msg) {
     }
   }
 
-  const chatMessages = document.getElementById('chat-messages');
-  if (!chatMessages) return;
+const chatMessages = document.getElementById('chat-messages');
+if (!chatMessages) return;
 
-  const newMessage = document.createElement('div');
-  const date = new Date(msg.timestamp);
-  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const newMessage = document.createElement('div');
+const date = new Date(msg.timestamp);
+const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  const usernameSpan = document.createElement('span');
-  const color = (msg.role === 'admin') ? 'red' :
-                (msg.role === 'modo') ? 'limegreen' :
-                getUsernameColor(msg.gender);
+const usernameSpan = document.createElement('span');
+const color = (msg.role === 'admin') ? 'red' :
+              (msg.role === 'modo') ? 'limegreen' :
+              getUsernameColor(msg.gender);
 
-  if (msg.username === 'Système') {
-    usernameSpan.textContent = msg.username;
-    usernameSpan.style.color = '#888';
-    usernameSpan.style.fontWeight = 'bold';
-  } else {
-    usernameSpan.classList.add('clickable-username');
-    usernameSpan.style.color = color;
-    usernameSpan.textContent = msg.username;
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                         (msg.role === 'modo') ? 'Modérateur' : '';
+// Si c’est un message système
+if (msg.username === 'Système') {
+  usernameSpan.textContent = msg.username + ': ';
+  usernameSpan.style.color = '#888';
+  usernameSpan.style.fontWeight = 'bold';
+} else {
+  usernameSpan.classList.add('clickable-username');
+  usernameSpan.style.color = color;
+  usernameSpan.textContent = msg.username + ': ';
+  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                       (msg.role === 'modo') ? 'Modérateur' : '';
+}
+
+const timeNode = document.createTextNode(`[${timeString}] `);
+newMessage.appendChild(timeNode);
+newMessage.appendChild(usernameSpan);
+
+// Tu continues ensuite avec l’affichage du message, par exemple :
+const messageText = document.createElement('span');
+messageText.innerHTML = msg.message; // attention à l'HTML potentiellement dangereux ici !
+newMessage.appendChild(messageText);
+
+// Puis ajoute le message dans le chat
+chatMessages.appendChild(newMessage);
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
