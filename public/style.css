@@ -840,30 +840,31 @@ button:focus {
 }
 
 .moderation-menu {
-  background: #1c1c1c;
+  background: #1f1f1f;
   border: 1px solid #666;
+  padding: 8px;
   border-radius: 8px;
-  padding: 6px;
-  box-shadow: 0 0 6px rgba(0,0,0,0.5);
-  position: absolute;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.5);
+  min-width: 130px;
 }
 
 .moderation-menu button {
+  display: block;
   background: #333;
   color: white;
   border: none;
-  margin: 3px 0;
-  padding: 5px 10px;
-  width: 100%;
+  margin: 4px 0;
+  padding: 6px 12px;
   cursor: pointer;
+  width: 100%;
   text-align: left;
+  border-radius: 4px;
+  font-size: 14px;
 }
 
 .moderation-menu button:hover {
   background: #555;
 }
-
-
 
 
 
