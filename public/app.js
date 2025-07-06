@@ -1014,9 +1014,15 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   // Séparateur ": "
 const separatorSpan = document.createElement('span');
-separatorSpan.textContent = ': ';
-separatorSpan.style.color = color; // ou même appliquer la même classe que le pseudo
+separatorSpan.textContent = ':';           // Deux-points collés au pseudo, sans espace après
+separatorSpan.style.color = color;         // Même couleur ou dégradé que le pseudo
 wrapper.appendChild(separatorSpan);
+
+// Ajout d'un espace au début du message pour séparer visuellement
+const messageSpan = document.createElement('span');
+messageSpan.textContent = ' ' + msg.message;  // espace avant le message
+wrapper.appendChild(messageSpan);
+
 
 
   // Affichage fichier selon mimetype
