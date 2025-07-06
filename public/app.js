@@ -874,7 +874,55 @@ socket.on('kickedFromRoom', ({ room, message, by }) => {
   }, banDurationMs);
 });
 
-// Interdire la tentative de rejoindre un salon banni localement
+// Fonction pour formater le temps restant en minutes
+function formatMinutes(ms) {
+  return Math.ceil(ms / 60000);
+}
+
+// Mise à jour de l'UI : griser les salons bannis et bloquer leur clic
+function updateBannedRoomsUI() {
+  const now = Date.now();
+  const roomItems = document.querySelectorAll('#channel-list .channel');
+
+  roomItems.forEach(item => {
+    const text = item.textContent?.trim() || '';
+    const roomName = text.replace('#', '').trim();
+
+    const banDataJSON = localStorage.getItem(`bannedRoom_${roomName}`);
+    if (banDataJSON) {
+      const banData = JSON.parse(banDataJSON);
+      const remaining = banData.until - now;
+      if (remaining > 0) {
+        item.classList.add('disabled');
+        item.title = `Vous avez été banni du salon par @${banData.by} (${formatMinutes(remaining)} minutes restantes)`;
+
+        // Supprime tous les événements click existants
+        const newItem = item.cloneNode(true);
+        item.parentNode.replaceChild(newItem, item);
+      } else {
+        // Ban expiré
+        item.classList.remove('disabled');
+        item.removeAttribute('title');
+        localStorage.removeItem(`bannedRoom_${roomName}`);
+      }
+    } else {
+      item.classList.remove('disabled');
+      item.removeAttribute('title');
+    }
+  });
+
+  // Réassigner uniquement les clics sur salons non bannis
+  document.querySelectorAll('#channel-list .channel:not(.disabled)').forEach(item => {
+    item.addEventListener('click', () => {
+      const roomName = item.textContent?.trim().replace('#', '').trim();
+      if (roomName) {
+        tryJoinRoom(roomName);
+      }
+    });
+  });
+}
+
+// Fonction pour tenter de rejoindre un salon en bloquant si banni
 function tryJoinRoom(roomName) {
   const banDataJSON = localStorage.getItem(`bannedRoom_${roomName}`);
   if (banDataJSON) {
@@ -884,6 +932,7 @@ function tryJoinRoom(roomName) {
       showBanner(`🚫 Vous avez été banni du salon par @${banData.by} (${formatMinutes(remaining)} minutes restantes)`, 'error');
       return; // Bloque la tentative
     } else {
+      // Ban expiré, nettoyage
       localStorage.removeItem(`bannedRoom_${roomName}`);
     }
   }
@@ -895,16 +944,55 @@ function tryJoinRoom(roomName) {
   if (roomLabel) roomLabel.textContent = roomName;
 }
 
-// Remplace les clics sur les salons par tryJoinRoom
-document.querySelectorAll('#channel-list .channel').forEach(item => {
-  item.addEventListener('click', () => {
-    const roomName = item.textContent?.trim().replace('#', '').trim();
-    if (roomName) tryJoinRoom(roomName);
-  });
+// Au chargement, on met à jour l'affichage des salons bannis
+updateBannedRoomsUI();
+
+// Mise à jour toutes les 30 secondes pour rafraîchir le décompte
+setInterval(updateBannedRoomsUI, 30000);
+
+// Gestion du kick temporaire avec stockage local et mise à jour UI
+socket.on('kickedFromRoom', ({ room, message, by }) => {
+  showBanner(`👢 ${message}`, 'error');
+
+  // Enregistrer la date de fin du ban local (1h30 = 5400000 ms)
+  const banDurationMs = 1.5 * 60 * 60 * 1000;
+  const until = Date.now() + banDurationMs;
+  localStorage.setItem(`bannedRoom_${room}`, JSON.stringify({ until, by }));
+
+  // Mise à jour immédiate de l'UI
+  updateBannedRoomsUI();
+
+  // Trouver un salon valide pour fallback
+  function getValidFallbackRoom() {
+    const allRooms = Array.from(document.querySelectorAll('#channel-list .channel')).map(el => el.textContent?.trim().replace('#', '').trim());
+    for (const r of allRooms) {
+      const banJSON = localStorage.getItem(`bannedRoom_${r}`);
+      if (!banJSON) return r; // Pas banni, on retourne ce salon
+      const banData = JSON.parse(banJSON);
+      if (banData.until <= Date.now()) {
+        localStorage.removeItem(`bannedRoom_${r}`);
+        return r; // Ban expiré, salon valide
+      }
+    }
+    return null; // Aucun salon valide
+  }
+
+  const fallbackRoom = getValidFallbackRoom();
+
+  if (!fallbackRoom) {
+    alert('Vous êtes banni de tous les salons disponibles. Veuillez contacter un administrateur.');
+    socket.disconnect();
+    return;
+  }
+
+  socket.emit('joinRoom', fallbackRoom);
+  localStorage.setItem('currentRoom', fallbackRoom);
+
+  const roomLabel = document.getElementById('current-room-name');
+  if (roomLabel) roomLabel.textContent = fallbackRoom;
 });
 
-// Les autres événements socket
-
+// Autres événements socket modération
 socket.on('banned', () => {
   showBanner('🚫 Vous avez été banni du serveur.', 'error');
   socket.disconnect();
@@ -930,8 +1018,6 @@ socket.on('error message', (msg) => {
 socket.on('no permission', () => {
   showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
 });
-
-
 
 
 
