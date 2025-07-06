@@ -395,7 +395,18 @@ if (msg.username === 'Système') {
     newMessage.appendChild(usernameSpan);
   }
 
- 
+  // Ajouter ":" + espace après le pseudo uniquement si message non vide
+  if (msg.username === 'Système') {
+    messageText.style.color = '#888';
+    messageText.style.fontStyle = 'italic';
+
+    newMessage.appendChild(messageText);
+  } else if (messageText.textContent.trim() !== '') {
+    const separator = document.createElement('strong');
+    separator.textContent = ': ';
+    newMessage.appendChild(separator);
+    newMessage.appendChild(messageText);
+  }
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
@@ -1004,8 +1015,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.appendChild(document.createTextNode(username));
   wrapper.appendChild(usernameContainer);
 
-  // Séparateur ": "
-  wrapper.appendChild(document.createTextNode(': '));
+ 
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
