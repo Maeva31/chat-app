@@ -442,35 +442,43 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
 
 
 case '/kick': {
-    if (!targetUser) {
-      socket.emit('error message', 'Utilisateur introuvable.');
-      return;
-    }
-
-    const targetSocketId = targetUser.id;
-    const targetRoom = userChannels[targetSocketId] || defaultChannel;
-
-    if (!kickedUsersByRoom.has(targetRoom)) kickedUsersByRoom.set(targetRoom, new Map());
-
-    const expiration = Date.now() + 90 * 60 * 1000; // 1h30 en ms
-    kickedUsersByRoom.get(targetRoom).set(targetName, expiration);
-
-    io.to(targetSocketId).emit('kicked');
-    io.to(targetSocketId).emit('redirect', 'https://maevakonnect.fr');
-    setTimeout(() => {
-      io.sockets.sockets.get(targetSocketId)?.disconnect(true);
-    }, 1500);
-
-    io.to(targetRoom).emit('chat message', {
-      username: 'Système',
-      message: `${targetName} a été expulsé par ${user.username}`,
-      timestamp: new Date().toISOString(),
-      channel: targetRoom
-    });
-
-    console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${targetRoom}`);
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
     return;
   }
+
+  const targetSocketId = targetUser.id;
+  const targetRoom = userChannels[targetSocketId] || defaultChannel;
+
+  if (!kickedUsersByRoom.has(targetRoom)) kickedUsersByRoom.set(targetRoom, new Map());
+
+  const expiration = Date.now() + 90 * 60 * 1000; // 1h30 en ms
+  kickedUsersByRoom.get(targetRoom).set(targetName, expiration);
+
+  // Retirer le socket du salon kické pour qu'il ne reçoive plus les messages
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
+  if (targetSocket) {
+    targetSocket.leave(targetRoom);
+
+    // On informe directement l'utilisateur kické
+    targetSocket.emit('kickedFromRoom', {
+      room: targetRoom,
+      message: `Vous avez été expulsé temporairement du salon ${targetRoom}. Veuillez changer de salon.`
+    });
+  }
+
+  // Message dans le salon pour signaler le kick
+  io.to(targetRoom).emit('chat message', {
+    username: 'Système',
+    message: `${targetName} a été expulsé par ${user.username}`,
+    timestamp: new Date().toISOString(),
+    channel: targetRoom
+  });
+
+  console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${targetRoom}`);
+
+  return;
+}
 
 
 
