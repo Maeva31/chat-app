@@ -24,6 +24,18 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 
+const mutedUsersByRoom = new Map();
+const kickedUsersByRoom = new Map();
+
+setInterval(() => {
+  for (const [room, kicksMap] of kickedUsersByRoom.entries()) {
+    for (const [username, expiration] of kicksMap.entries()) {
+      if (Date.now() > expiration) {
+        kicksMap.delete(username);
+        console.log(`Kick expiré pour ${username} dans ${room}`);
+      }
+    }
+
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
 try {
@@ -351,11 +363,12 @@ io.on('connection', (socket) => {
       return;
     }
 
-    if (mutedUsers.has(user.username)) {
-      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
-      // suppression de la redirection pour mute
-      return;
+    const mutedSet = mutedUsersByRoom.get(channel);
+    if (mutedSet && mutedSet.has(user.username)) {
+    socket.emit('error message', 'Vous êtes muté dans ce salon et ne pouvez pas envoyer de messages.');
+    return;
     }
+
 
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
@@ -424,7 +437,7 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
   return;
 
 
-  case '/kick':
+case '/kick':
   if (!targetUser) {
     socket.emit('error message', 'Utilisateur introuvable.');
     return;
@@ -437,22 +450,30 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
     socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
     return;
   }
-  io.to(targetUser.id).emit('kicked');
-  io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
+
+  const targetSocketId = targetUser.id;
+  const targetRoom = userChannels[targetSocketId] || defaultChannel;
+  if (!kickedUsersByRoom.has(targetRoom)) kickedUsersByRoom.set(targetRoom, new Map());
+
+  const expiration = Date.now() + 90 * 60 * 1000; // 1h30 en ms
+  kickedUsersByRoom.get(targetRoom).set(targetName, expiration);
+
+  io.to(targetSocketId).emit('kicked');
+  io.to(targetSocketId).emit('redirect', 'https://maevakonnect.fr');
   setTimeout(() => {
-    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+    io.sockets.sockets.get(targetSocketId)?.disconnect(true);
   }, 1500);
 
-  const targetKickRoom = userChannels[targetUser.id] || defaultChannel;
-  io.to(targetKickRoom).emit('chat message', {
+  io.to(targetRoom).emit('chat message', {
     username: 'Système',
     message: `${targetName} a été expulsé par ${user.username}`,
     timestamp: new Date().toISOString(),
-    channel: targetKickRoom
+    channel: targetRoom
   });
 
-  console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+  console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${targetRoom}`);
   return;
+
 
 
  case '/mute':
@@ -468,14 +489,21 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
     socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
     return;
   }
-  mutedUsers.add(targetName);
-  io.to(targetUser.id).emit('muted');
 
-  // Trouver le salon de la cible
+  // Récupère le salon actuel de la cible
   const targetSocketId = targetUser.id;
   const targetRoom = userChannels[targetSocketId] || defaultChannel;
 
-  // Émettre message système dans le salon de la cible
+  // Initialise la Map pour ce salon si besoin
+  if (!mutedUsersByRoom.has(targetRoom)) mutedUsersByRoom.set(targetRoom, new Set());
+
+  // Ajoute le pseudo dans le set des mutés de ce salon
+  mutedUsersByRoom.get(targetRoom).add(targetName);
+
+  // Envoie l’info de mute à la cible
+  io.to(targetUser.id).emit('muted');
+
+  // Message système dans le salon
   io.to(targetRoom).emit('chat message', {
     username: 'Système',
     message: `${targetName} a été muté par ${user.username}`,
@@ -483,21 +511,21 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
     channel: targetRoom
   });
 
-  console.log(`⚠️ ${user.username} a muté ${targetName}`);
+  console.log(`⚠️ ${user.username} a muté ${targetName} dans le salon ${targetRoom}`);
   return;
 
 
-        case '/unmute':
+
+  case '/unmute':
   if (!targetUser) {
     socket.emit('error message', 'Utilisateur introuvable.');
     return;
   }
-  if (mutedUsers.has(targetName)) {
-    mutedUsers.delete(targetName);
+  const targetRoom = userChannels[targetUser.id] || defaultChannel;
+  const mutedSet = mutedUsersByRoom.get(targetRoom);
+  if (mutedSet && mutedSet.has(targetName)) {
+    mutedSet.delete(targetName);
     io.to(targetUser.id).emit('unmuted');
-
-    // Salon de la cible
-    const targetRoom = userChannels[targetUser.id] || defaultChannel;
 
     io.to(targetRoom).emit('chat message', {
       username: 'Système',
@@ -505,12 +533,12 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
       timestamp: new Date().toISOString(),
       channel: targetRoom
     });
-
-    console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
+    console.log(`⚠️ ${user.username} a unmuté ${targetName} dans ${targetRoom}`);
   } else {
-    socket.emit('error message', `${targetName} n'est pas muté.`);
+    socket.emit('error message', `${targetName} n'est pas muté dans ce salon.`);
   }
   return;
+
 
 case '/unban':
   if (!targetUser) {
@@ -743,6 +771,18 @@ case '/removeadmin':
     const oldChannel = userChannels[socket.id] || defaultChannel;
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
+
+    const kicksMap = kickedUsersByRoom.get(newChannel);
+  if (kicksMap && kicksMap.has(user.username)) {
+    const expiration = kicksMap.get(user.username);
+    if (Date.now() < expiration) {
+      socket.emit('error', `Vous êtes expulsé temporairement de ce salon jusqu'à ${new Date(expiration).toLocaleTimeString()}.`);
+      return;  // Empêche l'entrée dans le salon
+    } else {
+      // Kick expiré, on supprime l'entrée
+      kicksMap.delete(user.username);
+    }
+  }
 
     if (!messageHistory[newChannel]) messageHistory[newChannel] = [];
     if (!roomUsers[newChannel]) roomUsers[newChannel] = [];
