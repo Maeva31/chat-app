@@ -401,7 +401,7 @@ function addMessageToChat(msg) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-
+  });
 
   // --- Ici la modification principale : ajout du span timeSpan ---
   const timeSpan = document.createElement('span');
