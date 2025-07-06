@@ -989,12 +989,22 @@ function insertMention(username) {
   input.focus();
 }
 
+function appendToChat(element) {
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages || !element) return;
+
+  const isAtBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 10;
+
+  chatMessages.appendChild(element);
+
+  if (isAtBottom) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
+}
+
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
-
-  // Vérifie si l'utilisateur était déjà en bas du chat
-  const shouldScroll = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 10;
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
@@ -1113,14 +1123,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     wrapper.appendChild(link);
   }
 
-  chatMessages.appendChild(wrapper);
-
-  // Scroll uniquement si l'utilisateur était déjà tout en bas
-  if (shouldScroll) {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }
+  appendToChat(wrapper);
 });
-
 
 }
 });
