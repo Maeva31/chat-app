@@ -2,6 +2,23 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
+  socket.on('user info', (data) => {
+  if (data && data.role) {
+    window.currentUserRole = data.role;
+    console.log('Rôle utilisateur défini:', window.currentUserRole);
+
+    const adminMenu = document.getElementById('admin-menu');
+    if (adminMenu) {
+      if (window.currentUserRole === 'admin') {
+        adminMenu.style.display = 'block';
+      } else {
+        adminMenu.style.display = 'none';
+      }
+    }
+  }
+});
+
+
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
 
