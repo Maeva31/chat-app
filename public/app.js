@@ -966,6 +966,9 @@ if (uploadInput && uploadButton) {
 
 // Affichage d’un fichier uploadé
 
+// Set global pour mémoriser les pseudos déjà mentionnés
+const mentionedUsernames = new Set();
+
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
@@ -988,7 +991,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.display = 'inline-flex';
   usernameContainer.style.alignItems = 'center';
   usernameContainer.style.position = 'relative';
-  usernameContainer.style.top = '2px'; // Ajuste le décalage vertical
+  usernameContainer.style.top = '2px';
 
   // Couleur du pseudo selon rôle / genre
   let color = 'white';
@@ -1015,6 +1018,9 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     const input = document.getElementById('message-input');
     if (!input) return;
 
+    // Ne pas réinsérer si déjà mentionné
+    if (mentionedUsernames.has(username)) return;
+
     const mention = '@' + username + ' ';
 
     const start = input.selectionStart || 0;
@@ -1029,6 +1035,13 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     input.setSelectionRange(newPos, newPos);
 
     input.focus();
+
+    // Marquer ce pseudo comme déjà mentionné
+    mentionedUsernames.add(username);
+
+    // Optionnel : changer style du pseudo pour indiquer qu'il est déjà mentionné
+    clickableUsername.style.opacity = '0.5';
+    clickableUsername.style.pointerEvents = 'none'; // désactive clics
   }
 
   // Création du pseudo cliquable
@@ -1036,15 +1049,13 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   clickableUsername.textContent = username;
   clickableUsername.style.cursor = 'pointer';
 
-  // Clic gauche : insérer la mention
   clickableUsername.addEventListener('click', () => {
     insertMention(username);
   });
 
-  // Clic droit : (optionnel) empêcher menu contextuel
   clickableUsername.addEventListener('contextmenu', (e) => {
     e.preventDefault();
-    // Tu peux ici appeler handleUsernameClick(username) si besoin
+    // Si tu veux, tu peux gérer autre chose ici
   });
 
   usernameContainer.appendChild(clickableUsername);
