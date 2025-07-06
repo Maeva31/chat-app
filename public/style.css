@@ -839,6 +839,11 @@ button:focus {
   border: none !important;
 }
 
+.channel.disabled {
+  pointer-events: none;
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 
 
 
