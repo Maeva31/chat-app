@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
   let bannerTimeoutId = null;
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
-  let myUsername = '';
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
@@ -526,7 +525,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 }
 
   // --- fin ajout ---
-  myUsername = username;
+
   modalError.style.display = 'none';
   socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
 }
@@ -706,7 +705,6 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   const savedPassword = localStorage.getItem('password'); // <-- ajout
 
   if (!hasSentUserInfo && savedUsername && savedAge) {
-    myUsername = savedUsername;
     socket.emit('set username', {
       username: savedUsername,
       gender: savedGender || 'non spécifié',
@@ -991,24 +989,6 @@ function insertMention(username) {
   input.focus();
 }
 
-
-function appendToChat(element, forceScroll = false) {
-  const chatMessages = document.getElementById('chat-messages');
-  if (!chatMessages || !element) return;
-
-  chatMessages.appendChild(element);
-
-  if (forceScroll) {
-    // Forcer le scroll une fois le DOM mis à jour
-    requestAnimationFrame(() => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-  }
-}
-
-
-
-
 socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
@@ -1130,13 +1110,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     wrapper.appendChild(link);
   }
 
-  console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
-
-  appendToChat(wrapper, true);
-
-
-
-
+  chatMessages.appendChild(wrapper);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
 });
 
 }
