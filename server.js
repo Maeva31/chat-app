@@ -1012,8 +1012,6 @@ socket.on('disconnect', () => {
   }
 });
 
-      }
-    }
 
   
 
