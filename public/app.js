@@ -1010,31 +1010,45 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     }
   }
 
-  // Ajout du pseudo cliquable
- function insertMention(username) {
-  const input = document.getElementById('message-input'); // Remplace 'message-input' par l'ID réel
-  if (!input) return;
+  // Fonction insérant la mention @username dans l'input message
+  function insertMention(username) {
+    const input = document.getElementById('message-input');
+    if (!input) return;
 
-  const mention = '@' + username + ' ';
+    const mention = '@' + username + ' ';
 
-  // Position actuelle du curseur
-  const start = input.selectionStart || 0;
-  const end = input.selectionEnd || 0;
+    const start = input.selectionStart || 0;
+    const end = input.selectionEnd || 0;
 
-  // Texte avant et après la sélection/cursor
-  const textBefore = input.value.substring(0, start);
-  const textAfter = input.value.substring(end);
+    const textBefore = input.value.substring(0, start);
+    const textAfter = input.value.substring(end);
 
-  input.value = textBefore + mention + textAfter;
+    input.value = textBefore + mention + textAfter;
 
-  // Remet le curseur juste après la mention
-  const newPos = start + mention.length;
-  input.setSelectionRange(newPos, newPos);
+    const newPos = start + mention.length;
+    input.setSelectionRange(newPos, newPos);
 
-  input.focus();
-}
+    input.focus();
+  }
 
+  // Création du pseudo cliquable
+  const clickableUsername = document.createElement('span');
+  clickableUsername.textContent = username;
+  clickableUsername.style.cursor = 'pointer';
 
+  // Clic gauche : insérer la mention
+  clickableUsername.addEventListener('click', () => {
+    insertMention(username);
+  });
+
+  // Clic droit : (optionnel) empêcher menu contextuel
+  clickableUsername.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    // Tu peux ici appeler handleUsernameClick(username) si besoin
+  });
+
+  usernameContainer.appendChild(clickableUsername);
+  wrapper.appendChild(usernameContainer);
 
   // Affichage selon type de fichier
   if (mimetype.startsWith('image/')) {
