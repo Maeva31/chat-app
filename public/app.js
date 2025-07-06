@@ -399,11 +399,9 @@ function addMessageToChat(msg) {
 
     newMessage.appendChild(messageText);
   } else if (messageText.textContent.trim() !== '') {
-    const separator = document.createElement('strong');
-    separator.textContent = ': ';
-    newMessage.appendChild(separator);
-    newMessage.appendChild(messageText);
-  }
+  newMessage.appendChild(messageText);
+}
+
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
