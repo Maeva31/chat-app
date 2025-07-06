@@ -25,12 +25,12 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 
-// Rôles locaux par salon (créateurs/admins locaux et modos locaux)
-let localAdminsByRoom = {}; // { roomName: Set<username> }
-let localModosByRoom = {};  // { roomName: Set<username> }
 
-// Stockage temporaire des sanctions locales : { roomName: { kicks: Map<username, DateExpiration>, bans: Map<username, DateExpiration>, mutes: Set<username> } }
-let localSanctions = {};
+
+// Rôles locaux par salon (créateurs/admins locaux et modos locaux)
+const localAdminsByRoom = {}; // { roomName: Set<username> }
+const localModosByRoom = {};  // { roomName: Set<username> }
+const localSanctions = {};    // { roomName: { kicks: Map, bans: Map, mutes: Set } }
 
 
 // Chargement des modérateurs
@@ -914,8 +914,15 @@ case '/removeadmin':
   };
 
   // === Ajout du créateur en admin local ===
-  localAdminsByRoom[newChannel].add(user.username);
-  users[user.username].localRole = { room: newChannel, role: 'admin' };
+ localAdminsByRoom[newChannel].add(user.username);
+users[user.username].localRole = { room: newChannel, role: 'admin' };
+
+console.log('Créateur du salon :', user.username);
+console.log('Objet user:', users[user.username]);
+console.log(`${user.username} devient admin local du salon ${newChannel}`);
+
+
+
 
   fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
   console.log(`🆕 Salon créé : ${newChannel}`);
