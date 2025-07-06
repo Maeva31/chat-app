@@ -2,23 +2,6 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  socket.on('user info', (data) => {
-  if (data && data.role) {
-    window.currentUserRole = data.role;
-    console.log('Rôle utilisateur défini:', window.currentUserRole);
-
-    const adminMenu = document.getElementById('admin-menu');
-    if (adminMenu) {
-      if (window.currentUserRole === 'admin') {
-        adminMenu.style.display = 'block';
-      } else {
-        adminMenu.style.display = 'none';
-      }
-    }
-  }
-});
-
-
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
 
@@ -129,21 +112,17 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-function updateUserList(users) {
+  function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
 
-  const validRoles = ['admin', 'modo', 'user'];
-
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
-
-    const rawRole = user?.role;
-    const role = validRoles.includes(rawRole) ? rawRole : 'user';
+    const role = user?.role || 'user';
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -152,7 +131,7 @@ function updateUserList(users) {
 
     li.innerHTML = `
       <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}" title="Âge: ${age}">${age}</div>
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
@@ -169,66 +148,9 @@ function updateUserList(users) {
       selectedUser = username;
     });
 
-    const genderSquare = li.querySelector('.gender-square');
-    genderSquare.addEventListener('dblclick', (e) => {
-      e.stopPropagation();
-      openModerationMenu(username, genderSquare);
-    });
-
     userList.appendChild(li);
   });
 }
-
-function openModerationMenu(targetUsername, anchorElement) {
-  closeModerationMenu();
-
-  const menu = document.createElement('div');
-  menu.className = 'moderation-menu';
-
-  const isAdmin = currentUserRole === 'admin';
-  const isModo = currentUserRole === 'modo';
-
-  const actions = [];
-
-  if (isAdmin || isModo) {
-    actions.push('mute', 'unmute', 'kick', 'ban');
-  }
-  if (isAdmin) {
-    actions.push('addadmin', 'addmodo', 'removeadmin', 'removemodo');
-  }
-
-  actions.forEach(action => {
-    const btn = document.createElement('button');
-    btn.textContent = '/' + action;
-    btn.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      input.value = `/${action} ${targetUsername}`;
-      input.focus();
-      closeModerationMenu();
-    });
-    menu.appendChild(btn);
-  });
-
-  const rect = anchorElement.getBoundingClientRect();
-  menu.style.position = 'absolute';
-  menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
-  menu.style.left = `${rect.left + window.scrollX}px`;
-  menu.style.zIndex = 9999;
-
-  document.body.appendChild(menu);
-
-  setTimeout(() => {
-    document.addEventListener('click', closeModerationMenu, { once: true });
-  }, 10);
-}
-
-function closeModerationMenu() {
-  const existing = document.querySelector('.moderation-menu');
-  if (existing) existing.remove();
-}
-
-
-
 
 
 function createRoleIcon(role) {
