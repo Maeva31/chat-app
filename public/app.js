@@ -309,7 +309,7 @@ function addMessageToChat(msg) {
   } else {
   usernameSpan.classList.add('clickable-username');
   usernameSpan.style.color = color;
-  usernameSpan.textContent = msg.username + ': '; // ← ajoute les deux-points ici
+  usernameSpan.textContent = msg.username + ': ';  // <-- bien fermé et complet
   usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                        (msg.role === 'modo') ? 'Modérateur' : '';
 }
