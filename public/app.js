@@ -125,7 +125,6 @@ function updateUserList(users) {
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
 
-    // Sécurisation du rôle : si rôle inconnu, on force à "user"
     const rawRole = user?.role;
     const role = validRoles.includes(rawRole) ? rawRole : 'user';
 
@@ -153,7 +152,6 @@ function updateUserList(users) {
       selectedUser = username;
     });
 
-    // MENU CONTEXTUEL sur double-clic sur le carré d'âge
     const genderSquare = li.querySelector('.gender-square');
     genderSquare.addEventListener('dblclick', (e) => {
       e.stopPropagation();
@@ -165,12 +163,11 @@ function updateUserList(users) {
 }
 
 function openModerationMenu(targetUsername, anchorElement) {
-  closeModerationMenu(); // Fermer le menu précédent
+  closeModerationMenu();
 
   const menu = document.createElement('div');
   menu.className = 'moderation-menu';
 
-  // Rôle de l'utilisateur connecté (défini globalement)
   const isAdmin = currentUserRole === 'admin';
   const isModo = currentUserRole === 'modo';
 
@@ -195,7 +192,6 @@ function openModerationMenu(targetUsername, anchorElement) {
     menu.appendChild(btn);
   });
 
-  // Positionner le menu sous l'élément cliqué
   const rect = anchorElement.getBoundingClientRect();
   menu.style.position = 'absolute';
   menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
@@ -204,7 +200,6 @@ function openModerationMenu(targetUsername, anchorElement) {
 
   document.body.appendChild(menu);
 
-  // Fermer le menu si clic ailleurs
   setTimeout(() => {
     document.addEventListener('click', closeModerationMenu, { once: true });
   }, 10);
@@ -215,25 +210,6 @@ function closeModerationMenu() {
   if (existing) existing.remove();
 }
 
-
-  // Positionnement
-  const rect = anchorElement.getBoundingClientRect();
-  menu.style.position = 'absolute';
-  menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
-  menu.style.left = `${rect.left + window.scrollX}px`;
-  menu.style.zIndex = 9999;
-  document.body.appendChild(menu);
-
-  // Fermer le menu si clic ailleurs
-  setTimeout(() => {
-    document.addEventListener('click', closeModerationMenu, { once: true });
-  }, 10);
-}
-
-function closeModerationMenu() {
-  const existing = document.querySelector('.moderation-menu');
-  if (existing) existing.remove();
-}
 
 
 
