@@ -10,8 +10,9 @@ import multer from 'multer';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  maxHttpBufferSize: 50 * 1024 * 1024 // 50 Mo
+  maxHttpBufferSize: 70 * 1024 * 1024 // 70 Mo pour marge
 });
+
 
 
 
