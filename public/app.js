@@ -991,23 +991,24 @@ function insertMention(username) {
   input.focus();
 }
 
-console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
 
 function appendToChat(element, forceScroll = false) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages || !element) return;
 
-  const isAtBottom = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 10;
+  // Vérifie si on est tout en bas (±1px de tolérance)
+  const isAtBottom = Math.abs(chatMessages.scrollTop + chatMessages.clientHeight - chatMessages.scrollHeight) < 5;
 
   chatMessages.appendChild(element);
 
-  if (forceScroll || isAtBottom) {
-    chatMessages.scrollTo({
-      top: chatMessages.scrollHeight,
-      behavior: 'smooth'
-    });
-  }
+  // Ajoute une petite attente pour que le DOM soit mis à jour avant le scroll
+  setTimeout(() => {
+    if (forceScroll || isAtBottom) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, 10);
 }
+
 
 
 
@@ -1134,6 +1135,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     link.target = '_blank';
     wrapper.appendChild(link);
   }
+
+  console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
 
   appendToChat(wrapper, username === myUsername);
 
