@@ -291,80 +291,93 @@ function addMessageToChat(msg) {
   }
 
   const chatMessages = document.getElementById('chat-messages');
-if (!chatMessages) return;
+  if (!chatMessages) return;
 
-const newMessage = document.createElement('div');
-const date = new Date(msg.timestamp);
-const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const newMessage = document.createElement('div');
+  const date = new Date(msg.timestamp);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-const usernameSpan = document.createElement('span');
+  const usernameSpan = document.createElement('span');
+  const color = (msg.role === 'admin') ? 'red' :
+                (msg.role === 'modo') ? 'limegreen' :
+                getUsernameColor(msg.gender);
 
-// Dégradé ou couleur selon rôle
-usernameSpan.classList.add('clickable-username');
-if (msg.role === 'admin') {
-  usernameSpan.classList.add('admin');
-} else if (msg.role === 'modo') {
-  usernameSpan.classList.add('modo');
-} else {
-  const color = getUsernameColor(msg.gender);
-  usernameSpan.style.color = color;
-}
+  if (msg.username === 'Système') {
+    usernameSpan.textContent = msg.username;
+    usernameSpan.style.color = '#888';
+    usernameSpan.style.fontWeight = 'bold';
+  } else {
+    usernameSpan.classList.add('clickable-username');
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = msg.username;
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
 
-// Gestion des messages système
-if (msg.username === 'Système') {
-  usernameSpan.style.color = '#888';
-  usernameSpan.style.fontWeight = 'bold';
-} else {
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
-}
+    // Icônes selon rôle
+    if (msg.role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.style.width = '17px';
+      icon.style.height = '15px';
+      icon.style.marginRight = '2px';
+      icon.style.verticalAlign = '-1px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    } else if (msg.role === 'modo') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
+      icon.style.marginRight = '1px';
+      icon.style.verticalAlign = '-2px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    }
 
-// Heure
-const timeNode = document.createTextNode(`[${timeString}] `);
-newMessage.appendChild(timeNode);
-newMessage.appendChild(usernameSpan);
+    // Clic pour mentionner
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
+  }
 
-// Message
-const messageText = document.createElement('span');
-messageText.innerHTML = msg.message; // attention XSS possible
-newMessage.appendChild(messageText);
+  function isYouTubeUrl(url) {
+    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
+  }
 
-// Ajout au chat
-chatMessages.appendChild(newMessage);
-chatMessages.scrollTop = chatMessages.scrollHeight;
+  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-// Icônes selon rôle
-if (msg.role === 'admin') {
-  const icon = document.createElement('img');
-  icon.src = '/diamond.ico';
-  icon.alt = 'Admin';
-  icon.title = 'Admin';
-  icon.style.width = '17px';
-  icon.style.height = '15px';
-  icon.style.marginRight = '2px';
-  icon.style.verticalAlign = '-1px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-} else if (msg.role === 'modo') {
-  const icon = document.createElement('img');
-  icon.src = '/favicon.ico';
-  icon.alt = 'Modérateur';
-  icon.title = 'Modérateur';
-  icon.style.width = '16px';
-  icon.style.height = '16px';
-  icon.style.marginRight = '1px';
-  icon.style.verticalAlign = '-2px';
-  usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-}
+  const messageText = document.createElement('span');
+  const style = msg.style || {};
+  messageText.style.color = style.color || '#fff';
+  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = style.font || 'Arial';
 
-// Clic pour mentionner
-usernameSpan.addEventListener('click', () => {
-  const input = document.getElementById('message-input');
-  const mention = `@${msg.username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-});
-
+  parts.forEach(part => {
+    if (/https?:\/\/[^\s]+/.test(part)) {
+      if (isYouTubeUrl(part)) {
+        return; // ignore dans texte, vidéo intégrée ailleurs
+      } else {
+        const a = document.createElement('a');
+        a.href = part;
+        a.textContent = part;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.color = style.color || '#00aaff';
+        a.style.textDecoration = 'underline';
+        messageText.appendChild(a);
+      }
+    } else {
+      if (part.trim() !== '') {
+        messageText.appendChild(document.createTextNode(part));
+      }
+    }
+  });
 
   // --- Ici la modification principale : ajout du span timeSpan ---
   const timeSpan = document.createElement('span');
@@ -972,7 +985,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   const usernameContainer = document.createElement('span');
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
-  /*usernameContainer.style.display = 'inline-flex';*/
+  usernameContainer.style.display = 'inline-flex';
   usernameContainer.style.alignItems = 'center'; // pour aligner verticalement icône + texte
 
   // Couleur selon rôle / genre
@@ -996,9 +1009,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   // Ajouter texte pseudo
-  usernameContainer.appendChild(document.createTextNode(username + ': '));
-wrapper.appendChild(usernameContainer);
+  usernameContainer.appendChild(document.createTextNode(username));
+  wrapper.appendChild(usernameContainer);
 
+  // Séparateur ": "
+  wrapper.appendChild(document.createTextNode(': '));
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
