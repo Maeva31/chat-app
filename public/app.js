@@ -997,11 +997,9 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   // Ajouter texte pseudo
-  usernameContainer.appendChild(document.createTextNode(username));
-  wrapper.appendChild(usernameContainer);
+  usernameContainer.appendChild(document.createTextNode(username + ': '));
+wrapper.appendChild(usernameContainer);
 
-  // Séparateur ": "
-  wrapper.appendChild(document.createTextNode(': '));
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
