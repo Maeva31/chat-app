@@ -993,6 +993,9 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
+  // Vérifie si l'utilisateur était déjà en bas du chat
+  const shouldScroll = chatMessages.scrollTop + chatMessages.clientHeight >= chatMessages.scrollHeight - 10;
+
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
 
@@ -1111,8 +1114,13 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   chatMessages.appendChild(wrapper);
-  
+
+  // Scroll uniquement si l'utilisateur était déjà tout en bas
+  if (shouldScroll) {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+  }
 });
+
 
 }
 });
