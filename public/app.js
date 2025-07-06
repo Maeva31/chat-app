@@ -213,6 +213,7 @@ function closeModerationMenu() {
 
 
 
+
 function createRoleIcon(role) {
   if (role === 'admin') {
     const icon = document.createElement('img');
