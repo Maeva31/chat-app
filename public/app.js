@@ -1002,22 +1002,24 @@ function appendToChat(element, forceScroll = false) {
 
   const media = element.querySelector('img, video');
   if (media) {
-    // Scroll quand média chargé
-    media.addEventListener('load', () => {
+    // On attend que le média soit prêt pour scroller doucement
+    const scrollToBottom = () => {
       element.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    });
-    media.addEventListener('loadeddata', () => {
-      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    });
-    // Sécurité : scroll au bout de 500ms quoi qu'il arrive
+      media.removeEventListener('load', scrollToBottom);
+      media.removeEventListener('loadeddata', scrollToBottom);
+    };
+    media.addEventListener('load', scrollToBottom);
+    media.addEventListener('loadeddata', scrollToBottom);
+
+    // Sécurité : scroll aussi après 500ms au cas où l'événement ne se déclenche pas
     setTimeout(() => {
       element.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 500);
   } else {
+    // Scroll immédiatement pour les messages sans média
     element.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 }
-
 
 
 
@@ -1145,7 +1147,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
 
-  appendToChat(wrapper, username === myUsername);
+  appendToChat(wrapper, true);
+
 
 
 
