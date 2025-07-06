@@ -1132,7 +1132,8 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
 
-  appendToChat(wrapper, true); // scroll forcé à chaque fichier/message
+  appendToChat(wrapper, username === myUsername);
+
 
 
 });
