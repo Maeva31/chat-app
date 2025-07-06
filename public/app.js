@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
   let bannerTimeoutId = null;
 
   let currentChannel = 'Général';  // Forcer le salon Général au chargement
+  let myUsername = '';
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
@@ -525,7 +526,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 }
 
   // --- fin ajout ---
-
+  myUsername = username;
   modalError.style.display = 'none';
   socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
 }
@@ -705,6 +706,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   const savedPassword = localStorage.getItem('password'); // <-- ajout
 
   if (!hasSentUserInfo && savedUsername && savedAge) {
+    myUsername = savedUsername;
     socket.emit('set username', {
       username: savedUsername,
       gender: savedGender || 'non spécifié',
