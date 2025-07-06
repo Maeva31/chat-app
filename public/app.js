@@ -762,43 +762,56 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     });
   }
 
-   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
-  socket.on('banned', () => {
-    showBanner('🚫 Vous avez été banni du serveur.', 'error');
-    socket.disconnect();
+// Modération - Banni, kické, mute, unmute, erreurs, pas de permission
+socket.on('banned', () => {
+  showBanner('🚫 Vous avez été banni du serveur.', 'error');
+  socket.disconnect();
+});
+
+socket.on('kicked', () => {
+  showBanner('👢 Vous avez été expulsé du serveur.', 'error');
+  socket.disconnect();
+});
+
+socket.on('kickedFromRoom', ({ room, message }) => {
+  showBanner(`👢 ${message}`, 'error');
+
+  // Désactive le salon temporairement dans la liste
+  const roomItems = document.querySelectorAll('#channel-list .channel');
+  roomItems.forEach(item => {
+    const text = item.textContent?.trim() || '';
+    if (text.includes(room)) {
+      item.classList.add('disabled');
+      // Facultatif : ajouter un tooltip
+      item.title = `Vous avez été expulsé temporairement de ${room}`;
+    }
   });
 
-  socket.on('kicked', () => {
-    showBanner('👢 Vous avez été expulsé du serveur.', 'error');
-    socket.disconnect();
-  });
+  // Rejoindre un salon par défaut
+  const fallbackRoom = 'Général';
+  socket.emit('joinRoom', fallbackRoom);
+  localStorage.setItem('currentRoom', fallbackRoom);
 
-  socket.on('kickedFromRoom', ({ room, message }) => {
-    showBanner(`👢 ${message}`, 'error');
+  const roomLabel = document.getElementById('current-room-name');
+  if (roomLabel) roomLabel.textContent = fallbackRoom;
+});
 
-    const fallbackRoom = 'Général';
-    socket.emit('joinRoom', fallbackRoom);
-    localStorage.setItem('currentRoom', fallbackRoom);
+socket.on('muted', () => {
+  showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
+});
 
-    const roomLabel = document.getElementById('current-room-name');
-    if (roomLabel) roomLabel.textContent = fallbackRoom;
-  });
+socket.on('unmuted', () => {
+  showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
+});
 
-  socket.on('muted', () => {
-    showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
-  });
+socket.on('error message', (msg) => {
+  showBanner(`❗ ${msg}`, 'error');
+});
 
-  socket.on('unmuted', () => {
-    showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
-  });
+socket.on('no permission', () => {
+  showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
+});
 
-  socket.on('error message', (msg) => {
-    showBanner(`❗ ${msg}`, 'error');
-  });
-
-  socket.on('no permission', () => {
-    showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
-  });
 
 
   // --- Début ajout mode invisible ---
