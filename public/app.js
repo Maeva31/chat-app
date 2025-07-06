@@ -164,7 +164,6 @@ function updateUserList(users) {
   });
 }
 
-
 function openModerationMenu(targetUsername, anchorElement) {
   closeModerationMenu(); // Fermer le menu précédent
 
@@ -195,6 +194,27 @@ function openModerationMenu(targetUsername, anchorElement) {
     });
     menu.appendChild(btn);
   });
+
+  // Positionner le menu sous l'élément cliqué
+  const rect = anchorElement.getBoundingClientRect();
+  menu.style.position = 'absolute';
+  menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+  menu.style.left = `${rect.left + window.scrollX}px`;
+  menu.style.zIndex = 9999;
+
+  document.body.appendChild(menu);
+
+  // Fermer le menu si clic ailleurs
+  setTimeout(() => {
+    document.addEventListener('click', closeModerationMenu, { once: true });
+  }, 10);
+}
+
+function closeModerationMenu() {
+  const existing = document.querySelector('.moderation-menu');
+  if (existing) existing.remove();
+}
+
 
   // Positionnement
   const rect = anchorElement.getBoundingClientRect();
