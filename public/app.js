@@ -986,7 +986,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
   usernameContainer.style.display = 'inline-flex';
-  usernameContainer.style.alignItems = 'center'; // pour aligner verticalement icône + texte
+  usernameContainer.style.alignItems = 'center'; // aligner icône + texte verticalement
 
   // Couleur selon rôle / genre
   let color = 'white';
@@ -996,9 +996,9 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   else if (gender === 'Homme') color = 'dodgerblue';
   usernameContainer.style.color = color;
 
-  // Ajouter icône selon rôle avec styles en ligne
+  // Ajouter icône selon rôle
   if (role === 'admin' || role === 'modo') {
-    const icon = createRoleIcon(role); // ta fonction qui crée l'élément <img> ou similaire
+    const icon = createRoleIcon(role);
     if (icon) {
       icon.style.width = '17px';
       icon.style.height = '15px';
@@ -1012,45 +1012,44 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.appendChild(document.createTextNode(username));
   wrapper.appendChild(usernameContainer);
 
-  // Séparateur ": "
-  /* wrapper.appendChild(document.createTextNode(': ')); */
+  // Décalage vertical du pseudo pour aligner avec l'heure (car fichier)
+  usernameContainer.style.position = 'relative';
+  usernameContainer.style.top = '2px'; // ajuste selon ce qui convient
 
   // Affichage fichier selon mimetype
- if (mimetype.startsWith('image/')) {
-  const img = document.createElement('img');
-  img.src = `data:${mimetype};base64,${data}`;
-  img.style.maxWidth = '100px';
-  img.style.cursor = 'pointer';
-  img.style.border = '2px solid #ccc';
-  img.style.borderRadius = '8px';
-  img.style.padding = '4px';
-  // img.style.backgroundColor = '#fff'; // <-- supprimé, plus de fond blanc
+  if (mimetype.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = `data:${mimetype};base64,${data}`;
+    img.style.maxWidth = '100px';
+    img.style.cursor = 'pointer';
+    img.style.border = '2px solid #ccc';
+    img.style.borderRadius = '8px';
+    img.style.padding = '4px';
 
-  const link = document.createElement('a');
-  link.href = '#';
-  link.style.cursor = 'pointer';
-  link.appendChild(img);
+    const link = document.createElement('a');
+    link.href = '#';
+    link.style.cursor = 'pointer';
+    link.appendChild(img);
 
-  link.addEventListener('click', (e) => {
-    e.preventDefault();
-    const newWindow = window.open();
-    if (newWindow) {
-      newWindow.document.write(`
-        <html>
-          <head><title>${filename}</title></head>
-          <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-            <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-          </body>
-        </html>
-      `);
-      newWindow.document.close();
-    } else {
-      alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
-    }
-  });
+    link.addEventListener('click', (e) => {
+      e.preventDefault();
+      const newWindow = window.open();
+      if (newWindow) {
+        newWindow.document.write(`
+          <html>
+            <head><title>${filename}</title></head>
+            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+              <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
+            </body>
+          </html>
+        `);
+        newWindow.document.close();
+      } else {
+        alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
+      }
+    });
 
-  wrapper.appendChild(link);
-
+    wrapper.appendChild(link);
 
   } else if (mimetype.startsWith('audio/')) {
     const audio = document.createElement('audio');
