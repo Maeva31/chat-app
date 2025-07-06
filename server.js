@@ -10,8 +10,9 @@ import multer from 'multer';
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
-  maxHttpBufferSize: 20e6 // autorise jusqu’à 20 Mo par message
+  maxHttpBufferSize: 50 * 1024 * 1024 // 50 Mo
 });
+
 
 
 const MAX_HISTORY = 10;
