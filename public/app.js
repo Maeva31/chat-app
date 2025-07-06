@@ -307,11 +307,13 @@ function addMessageToChat(msg) {
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
-    usernameSpan.classList.add('clickable-username');
-    usernameSpan.style.color = color;
-    usernameSpan.textContent = msg.username;
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                         (msg.role === 'modo') ? 'Modérateur' : '';
+  usernameSpan.classList.add('clickable-username');
+  usernameSpan.style.color = color;
+  usernameSpan.textContent = msg.username + ': '; // ← ajoute les deux-points ici
+  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                       (msg.role === 'modo') ? 'Modérateur' : '';
+}
+
 
     // Icônes selon rôle
     if (msg.role === 'admin') {
@@ -399,9 +401,11 @@ function addMessageToChat(msg) {
 
     newMessage.appendChild(messageText);
   } else if (messageText.textContent.trim() !== '') {
-  newMessage.appendChild(messageText);
-}
-
+    const separator = document.createElement('strong');
+    separator.textContent = ': ';
+    newMessage.appendChild(separator);
+    newMessage.appendChild(messageText);
+  }
 
   newMessage.classList.add('message');
   newMessage.dataset.username = msg.username;
