@@ -117,11 +117,11 @@ main {
   border-radius: 8px;
   transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
   animation: gradientThumb 10s ease infinite;
-  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
+  /* box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
 }
 
 #channel-list .channel.selected {
-  background-color: #444;
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
   color: white;
   font-weight: bold;
 }
@@ -838,8 +838,3 @@ button:focus {
   box-shadow: none !important;
   border: none !important;
 }
-
-
-
-
-
