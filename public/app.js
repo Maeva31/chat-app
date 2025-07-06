@@ -1009,19 +1009,20 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   // Ajouter texte pseudo
-  usernameContainer.appendChild(document.createTextNode(username));
-  wrapper.appendChild(usernameContainer);
+usernameContainer.appendChild(document.createTextNode(username));
+wrapper.appendChild(usernameContainer);
 
-  // Séparateur ": "
+// Séparateur ":" collé au pseudo, même couleur
 const separatorSpan = document.createElement('span');
 separatorSpan.textContent = ':';
-separatorSpan.style.color = color; // ou même appliquer la même classe que le pseudo
+separatorSpan.style.color = color; // même couleur que le pseudo
 wrapper.appendChild(separatorSpan);
 
 // Ajouter un espace avant le message ou contenu
 const messageSpan = document.createElement('span');
 messageSpan.textContent = ' ' + msg.message; // espace avant le message
 wrapper.appendChild(messageSpan);
+
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
