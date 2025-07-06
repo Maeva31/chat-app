@@ -112,7 +112,7 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
+function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -131,7 +131,7 @@ if (usernameInput && passwordInput) {
 
     li.innerHTML = `
       <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}" title="Âge: ${age}">${age}</div>
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
@@ -148,9 +148,67 @@ if (usernameInput && passwordInput) {
       selectedUser = username;
     });
 
+    // MENU CONTEXTUEL sur double-clic sur le carré d'âge
+    const genderSquare = li.querySelector('.gender-square');
+    genderSquare.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      openModerationMenu(username, genderSquare);
+    });
+
     userList.appendChild(li);
   });
 }
+
+function openModerationMenu(targetUsername, anchorElement) {
+  closeModerationMenu(); // Fermer le menu précédent
+
+  const menu = document.createElement('div');
+  menu.className = 'moderation-menu';
+
+  // Rôle de l'utilisateur connecté (défini globalement)
+  const isAdmin = currentUserRole === 'admin';
+  const isModo = currentUserRole === 'modo';
+
+  const actions = [];
+
+  if (isAdmin || isModo) {
+    actions.push('mute', 'unmute', 'kick', 'ban');
+  }
+  if (isAdmin) {
+    actions.push('addadmin', 'addmodo', 'removeadmin', 'removemodo');
+  }
+
+  actions.forEach(action => {
+    const btn = document.createElement('button');
+    btn.textContent = '/' + action;
+    btn.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      input.value = `/${action} ${targetUsername}`;
+      input.focus();
+      closeModerationMenu();
+    });
+    menu.appendChild(btn);
+  });
+
+  // Positionnement
+  const rect = anchorElement.getBoundingClientRect();
+  menu.style.position = 'absolute';
+  menu.style.top = `${rect.bottom + window.scrollY + 5}px`;
+  menu.style.left = `${rect.left + window.scrollX}px`;
+  menu.style.zIndex = 9999;
+  document.body.appendChild(menu);
+
+  // Fermer le menu si clic ailleurs
+  setTimeout(() => {
+    document.addEventListener('click', closeModerationMenu, { once: true });
+  }, 10);
+}
+
+function closeModerationMenu() {
+  const existing = document.querySelector('.moderation-menu');
+  if (existing) existing.remove();
+}
+
 
 
 function createRoleIcon(role) {
