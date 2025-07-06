@@ -991,6 +991,8 @@ function insertMention(username) {
   input.focus();
 }
 
+console.log('Fichier reçu de:', username, 'myUsername:', myUsername, 'forceScroll:', username === myUsername);
+
 function appendToChat(element, forceScroll = false) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages || !element) return;
