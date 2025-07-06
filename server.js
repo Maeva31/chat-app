@@ -437,107 +437,102 @@ if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
   return;
 
 
-case '/kick':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-  if (targetUser.username === user.username) {
-    socket.emit('error message', 'Vous ne pouvez pas vous expulser vous-même.');
-    return;
-  }
-  if (isUserModo && isTargetProtected) {
-    socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
-    return;
-  }
+case '/kick': {
+    if (!targetUser) {
+      socket.emit('error message', 'Utilisateur introuvable.');
+      return;
+    }
 
-  const targetSocketId = targetUser.id;
-  const targetRoom = userChannels[targetSocketId] || defaultChannel;
-  if (!kickedUsersByRoom.has(targetRoom)) kickedUsersByRoom.set(targetRoom, new Map());
+    const targetSocketId = targetUser.id;
+    const targetRoom = userChannels[targetSocketId] || defaultChannel;
 
-  const expiration = Date.now() + 90 * 60 * 1000; // 1h30 en ms
-  kickedUsersByRoom.get(targetRoom).set(targetName, expiration);
+    if (!kickedUsersByRoom.has(targetRoom)) kickedUsersByRoom.set(targetRoom, new Map());
 
-  io.to(targetSocketId).emit('kicked');
-  io.to(targetSocketId).emit('redirect', 'https://maevakonnect.fr');
-  setTimeout(() => {
-    io.sockets.sockets.get(targetSocketId)?.disconnect(true);
-  }, 1500);
+    const expiration = Date.now() + 90 * 60 * 1000; // 1h30 en ms
+    kickedUsersByRoom.get(targetRoom).set(targetName, expiration);
 
-  io.to(targetRoom).emit('chat message', {
-    username: 'Système',
-    message: `${targetName} a été expulsé par ${user.username}`,
-    timestamp: new Date().toISOString(),
-    channel: targetRoom
-  });
-
-  console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${targetRoom}`);
-  return;
-
-
-
- case '/mute':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-  if (targetUser.username === user.username) {
-    socket.emit('error message', 'Vous ne pouvez pas vous muter vous-même.');
-    return;
-  }
-  if (isUserModo && isTargetProtected) {
-    socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
-    return;
-  }
-
-  // Récupère le salon actuel de la cible
-  const targetSocketId = targetUser.id;
-  const targetRoom = userChannels[targetSocketId] || defaultChannel;
-
-  // Initialise la Map pour ce salon si besoin
-  if (!mutedUsersByRoom.has(targetRoom)) mutedUsersByRoom.set(targetRoom, new Set());
-
-  // Ajoute le pseudo dans le set des mutés de ce salon
-  mutedUsersByRoom.get(targetRoom).add(targetName);
-
-  // Envoie l’info de mute à la cible
-  io.to(targetUser.id).emit('muted');
-
-  // Message système dans le salon
-  io.to(targetRoom).emit('chat message', {
-    username: 'Système',
-    message: `${targetName} a été muté par ${user.username}`,
-    timestamp: new Date().toISOString(),
-    channel: targetRoom
-  });
-
-  console.log(`⚠️ ${user.username} a muté ${targetName} dans le salon ${targetRoom}`);
-  return;
-
-
-
-  case '/unmute':
-  if (!targetUser) {
-    socket.emit('error message', 'Utilisateur introuvable.');
-    return;
-  }
-  const targetRoom = userChannels[targetUser.id] || defaultChannel;
-  const mutedSet = mutedUsersByRoom.get(targetRoom);
-  if (mutedSet && mutedSet.has(targetName)) {
-    mutedSet.delete(targetName);
-    io.to(targetUser.id).emit('unmuted');
+    io.to(targetSocketId).emit('kicked');
+    io.to(targetSocketId).emit('redirect', 'https://maevakonnect.fr');
+    setTimeout(() => {
+      io.sockets.sockets.get(targetSocketId)?.disconnect(true);
+    }, 1500);
 
     io.to(targetRoom).emit('chat message', {
       username: 'Système',
-      message: `${targetName} a été unmuté par ${user.username}`,
+      message: `${targetName} a été expulsé par ${user.username}`,
       timestamp: new Date().toISOString(),
       channel: targetRoom
     });
-    console.log(`⚠️ ${user.username} a unmuté ${targetName} dans ${targetRoom}`);
-  } else {
-    socket.emit('error message', `${targetName} n'est pas muté dans ce salon.`);
+
+    console.log(`⚠️ ${user.username} a expulsé ${targetName} dans ${targetRoom}`);
+    return;
   }
-  return;
+
+
+
+ case '/mute': {
+    if (!targetUser) {
+      socket.emit('error message', 'Utilisateur introuvable.');
+      return;
+    }
+    if (targetUser.username === user.username) {
+      socket.emit('error message', 'Vous ne pouvez pas vous muter vous-même.');
+      return;
+    }
+    if (isUserModo && isTargetProtected) {
+      socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
+      return;
+    }
+
+    const targetSocketId = targetUser.id;
+    const targetRoom = userChannels[targetSocketId] || defaultChannel;
+
+    if (!mutedUsersByRoom.has(targetRoom)) mutedUsersByRoom.set(targetRoom, new Set());
+    mutedUsersByRoom.get(targetRoom).add(targetName);
+
+    io.to(targetSocketId).emit('muted');
+
+    io.to(targetRoom).emit('chat message', {
+      username: 'Système',
+      message: `${targetName} a été muté par ${user.username}`,
+      timestamp: new Date().toISOString(),
+      channel: targetRoom
+    });
+
+    console.log(`⚠️ ${user.username} a muté ${targetName} dans le salon ${targetRoom}`);
+    return;
+  }
+
+
+
+  case '/unmute': {
+    if (!targetUser) {
+      socket.emit('error message', 'Utilisateur introuvable.');
+      return;
+    }
+
+    const targetSocketId = targetUser.id;
+    const targetRoom = userChannels[targetSocketId] || defaultChannel;
+    const mutedSet = mutedUsersByRoom.get(targetRoom);
+
+    if (mutedSet && mutedSet.has(targetName)) {
+      mutedSet.delete(targetName);
+      io.to(targetSocketId).emit('unmuted');
+
+      io.to(targetRoom).emit('chat message', {
+        username: 'Système',
+        message: `${targetName} a été unmuté par ${user.username}`,
+        timestamp: new Date().toISOString(),
+        channel: targetRoom
+      });
+
+      console.log(`⚠️ ${user.username} a unmuté ${targetName} dans ${targetRoom}`);
+    } else {
+      socket.emit('error message', `${targetName} n'est pas muté dans ce salon.`);
+    }
+    return;
+  }
+
 
 
 case '/unban':
