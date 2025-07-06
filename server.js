@@ -1010,10 +1010,7 @@ socket.on('disconnect', () => {
   } else {
     console.log(`❌ Déconnexion inconnue : ${socket.id}`);
   }
-});
-
-
-    }
+}
 
   
 
