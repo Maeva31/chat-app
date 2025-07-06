@@ -122,6 +122,10 @@ main {
 
 #channel-list .channel.selected {
   background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 10s ease infinite;
   color: white;
   font-weight: bold;
 }
