@@ -118,11 +118,16 @@ function updateUserList(users) {
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
 
+  const validRoles = ['admin', 'modo', 'user'];
+
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+
+    // Sécurisation du rôle : si rôle inconnu, on force à "user"
+    const rawRole = user?.role;
+    const role = validRoles.includes(rawRole) ? rawRole : 'user';
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -158,6 +163,7 @@ function updateUserList(users) {
     userList.appendChild(li);
   });
 }
+
 
 function openModerationMenu(targetUsername, anchorElement) {
   closeModerationMenu(); // Fermer le menu précédent
