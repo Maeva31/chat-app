@@ -998,28 +998,12 @@ function appendToChat(element, forceScroll = false) {
 
   chatMessages.appendChild(element);
 
-  if (!forceScroll) return;
-
-  const media = element.querySelector('img, video');
-  if (media) {
-    // On attend que le média soit prêt pour scroller doucement
-    const scrollToBottom = () => {
-      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
-      media.removeEventListener('load', scrollToBottom);
-      media.removeEventListener('loadeddata', scrollToBottom);
-    };
-    media.addEventListener('load', scrollToBottom);
-    media.addEventListener('loadeddata', scrollToBottom);
-
-    // Sécurité : scroll aussi après 500ms au cas où l'événement ne se déclenche pas
-    setTimeout(() => {
-      element.scrollIntoView({ behavior: 'smooth', block: 'end' });
-    }, 500);
-  } else {
-    // Scroll immédiatement pour les messages sans média
-    element.scrollIntoView({ behavior: 'smooth', block: 'end' });
+  if (forceScroll) {
+    // Scroll instantané en bas sans animation
+    chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 }
+
 
 
 
