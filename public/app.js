@@ -279,7 +279,6 @@ function getYouTubeVideoId(url) {
   // Ajoute un message dans la zone de chat
 function addMessageToChat(msg) {
   if (msg.username === 'Système') {
-    // Ignore le message "est maintenant visible."
     if (/est maintenant visible\.$/i.test(msg.message)) return;
 
     const salonRegex = /salon\s+(.+)$/i;
@@ -352,12 +351,13 @@ function addMessageToChat(msg) {
       input.focus();
     });
   }
+
   newMessage.appendChild(usernameSpan);
 
-  // Ajouter les deux-points ":" avec la même couleur que le pseudo
+  // Deux-points : même couleur que pseudo (ou gris si Système)
   const separatorSpan = document.createElement('span');
   separatorSpan.textContent = ': ';
-  separatorSpan.style.color = color;
+  separatorSpan.style.color = (msg.username === 'Système') ? '#888' : color;
   newMessage.appendChild(separatorSpan);
 
   function isYouTubeUrl(url) {
@@ -375,23 +375,33 @@ function addMessageToChat(msg) {
 
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
-      } else {
-        const a = document.createElement('a');
-        a.href = part;
-        a.textContent = part;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff';
-        a.style.textDecoration = 'underline';
-        messageText.appendChild(a);
-      }
-    } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
+      if (isYouTubeUrl(part)) return;
+      const a = document.createElement('a');
+      a.href = part;
+      a.textContent = part;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.color = style.color || '#00aaff';
+      a.style.textDecoration = 'underline';
+      messageText.appendChild(a);
+    } else if (part.trim() !== '') {
+      messageText.appendChild(document.createTextNode(part));
     }
+  });
+
+  if (msg.username === 'Système') {
+    messageText.style.color = '#888';
+    messageText.style.fontStyle = 'italic';
+  }
+
+  newMessage.appendChild(messageText);
+  addYouTubeVideoIfAny(newMessage, msg.message);
+
+  chatMessages.appendChild(newMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+}
   });
 
   // --- Ici la modification principale : ajout du span timeSpan ---
