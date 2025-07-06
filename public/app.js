@@ -293,9 +293,6 @@ function addMessageToChat(msg) {
   if (!chatMessages) return;
 
   const newMessage = document.createElement('div');
-  newMessage.classList.add('message');
-  newMessage.dataset.username = msg.username;
-
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -307,13 +304,11 @@ function addMessageToChat(msg) {
   timeSpan.style.marginRight = '5px';
   newMessage.appendChild(timeSpan);
 
-  // Couleur selon rôle et genre
+  const usernameSpan = document.createElement('span');
   const color = (msg.role === 'admin') ? 'red' :
                 (msg.role === 'modo') ? 'limegreen' :
                 getUsernameColor(msg.gender);
 
-  // Pseudo
-  const usernameSpan = document.createElement('span');
   if (msg.username === 'Système') {
     usernameSpan.textContent = msg.username;
     usernameSpan.style.color = '#888';
@@ -365,12 +360,10 @@ function addMessageToChat(msg) {
   separatorSpan.style.color = (msg.username === 'Système') ? '#888' : color;
   newMessage.appendChild(separatorSpan);
 
-  // Fonction interne pour détecter liens YouTube
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
   }
 
-  // Découpage message pour détecter liens
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
   const messageText = document.createElement('span');
@@ -382,7 +375,7 @@ function addMessageToChat(msg) {
 
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) return; // On ignore le lien, vidéo sera intégrée ailleurs
+      if (isYouTubeUrl(part)) return;
       const a = document.createElement('a');
       a.href = part;
       a.textContent = part;
@@ -402,12 +395,14 @@ function addMessageToChat(msg) {
   }
 
   newMessage.appendChild(messageText);
-
   addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
+}
+  });
 
   // --- Ici la modification principale : ajout du span timeSpan ---
   const timeSpan = document.createElement('span');
