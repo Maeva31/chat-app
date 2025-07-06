@@ -1013,11 +1013,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   wrapper.appendChild(usernameContainer);
 
   // Séparateur ": "
- const separatorSpan = document.createElement('span');
-separatorSpan.style.color = color; // même couleur que pseudo
-separatorSpan.textContent = ': ';
-wrapper.appendChild(separatorSpan);
-
+  wrapper.appendChild(document.createTextNode(': '));
 
   // Affichage fichier selon mimetype
  if (mimetype.startsWith('image/')) {
