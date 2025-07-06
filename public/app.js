@@ -1009,7 +1009,19 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   // Ajouter texte pseudo
-  usernameContainer.appendChild(document.createTextNode(username));
+  const clickableUsername = document.createElement('span');
+clickableUsername.textContent = username;
+clickableUsername.style.cursor = 'pointer';
+clickableUsername.addEventListener('click', () => {
+  handleUsernameClick(username); // ta fonction existante
+});
+clickableUsername.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  insertMention(username); // ta fonction pour les @mentions
+});
+
+usernameContainer.appendChild(clickableUsername);
+
   wrapper.appendChild(usernameContainer);
 
   // Décalage vertical du pseudo pour aligner avec l'heure (car fichier)
