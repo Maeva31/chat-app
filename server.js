@@ -33,8 +33,10 @@ setInterval(() => {
       if (Date.now() > expiration) {
         kicksMap.delete(username);
         console.log(`Kick expiré pour ${username} dans ${room}`);
-      }
-    }
+            }
+  }
+}, 60 * 1000); // par exemple toutes les minutes
+
 
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
