@@ -1,3 +1,4 @@
+
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -313,6 +314,9 @@ io.on('connection', (socket) => {
     // Par défaut invisible = false, sauf si récupéré
     const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
+
+    socket.emit('user info', { role: userData.role });
+
 
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
