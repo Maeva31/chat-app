@@ -986,9 +986,11 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
   usernameContainer.style.display = 'inline-flex';
-  usernameContainer.style.alignItems = 'center'; // aligner icône + texte verticalement
+  usernameContainer.style.alignItems = 'center';
+  usernameContainer.style.position = 'relative';
+  usernameContainer.style.top = '2px'; // Ajuste le décalage vertical
 
-  // Couleur selon rôle / genre
+  // Couleur du pseudo selon rôle / genre
   let color = 'white';
   if (role === 'admin') color = 'red';
   else if (role === 'modo') color = 'limegreen';
@@ -996,7 +998,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   else if (gender === 'Homme') color = 'dodgerblue';
   usernameContainer.style.color = color;
 
-  // Ajouter icône selon rôle
+  // Ajout de l’icône rôle
   if (role === 'admin' || role === 'modo') {
     const icon = createRoleIcon(role);
     if (icon) {
@@ -1008,27 +1010,24 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     }
   }
 
-  // Ajouter texte pseudo
+  // Ajout du pseudo cliquable
   const clickableUsername = document.createElement('span');
-clickableUsername.textContent = username;
-clickableUsername.style.cursor = 'pointer';
-clickableUsername.addEventListener('click', () => {
-  handleUsernameClick(username); // ta fonction existante
-});
-clickableUsername.addEventListener('contextmenu', (e) => {
-  e.preventDefault();
-  insertMention(username); // ta fonction pour les @mentions
-});
+  clickableUsername.textContent = username;
+  clickableUsername.style.cursor = 'pointer';
 
-usernameContainer.appendChild(clickableUsername);
+  clickableUsername.addEventListener('click', () => {
+    handleUsernameClick(username); // MP
+  });
 
+  clickableUsername.addEventListener('contextmenu', (e) => {
+    e.preventDefault();
+    insertMention(username); // @mention
+  });
+
+  usernameContainer.appendChild(clickableUsername);
   wrapper.appendChild(usernameContainer);
 
-  // Décalage vertical du pseudo pour aligner avec l'heure (car fichier)
-  usernameContainer.style.position = 'relative';
-  usernameContainer.style.top = '2px'; // ajuste selon ce qui convient
-
-  // Affichage fichier selon mimetype
+  // Affichage selon type de fichier
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
     img.src = `data:${mimetype};base64,${data}`;
