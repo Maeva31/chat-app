@@ -386,18 +386,9 @@ io.on('connection', (socket) => {
     }
 
     // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
-    // --- IMPORTS ---
-import express from 'express';
-import http from 'http';
-import { Server } from 'socket.io';
-import fs from 'fs';
-import path from 'path';
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, {
-  maxHttpBufferSize: 20e6 // autorise jusqu’à 20 Mo par message
-});
+
+
 
 // --- DONNÉES ---
 const MAX_HISTORY = 10;
@@ -568,7 +559,7 @@ io.on('connection', (socket) => {
             return;
         }
       }
-
+    }
 
     const message = {
       username: user.username,
