@@ -15,14 +15,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getDefaultRoom() {
   const savedRoom = localStorage.getItem('currentRoom') || 'Général';
-  
+
   // Vérifier si savedRoom est banni
   const banDataJSON = localStorage.getItem(`bannedRoom_${savedRoom}`);
   if (banDataJSON) {
     const banData = JSON.parse(banDataJSON);
     if (banData.until > Date.now()) {
-      // Si banni, forcer "Général"
-      return 'Général';
+      // Si salon banni, essayer de trouver un salon non banni
+      const fallback = 'Général';
+      if (savedRoom === fallback) {
+        // Si Général est banni aussi, on retourne null => on devra gérer ça après
+        const fallbackBan = localStorage.getItem(`bannedRoom_${fallback}`);
+        if (fallbackBan) {
+          const fallbackBanData = JSON.parse(fallbackBan);
+          if (fallbackBanData.until > Date.now()) {
+            return null; // Aucun salon valide
+          }
+        }
+      }
+      return fallback;
     } else {
       // Ban expiré, nettoyage
       localStorage.removeItem(`bannedRoom_${savedRoom}`);
@@ -34,15 +45,19 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 let currentChannel = getDefaultRoom();
-localStorage.setItem('currentRoom', currentChannel);
 
-// Ensuite, join la room :
-socket.emit('joinRoom', currentChannel);
+if (!currentChannel) {
+  // Aucun salon valide : message d'erreur, bloquer la connexion ou autre
+  alert('Vous êtes banni de tous les salons disponibles. Veuillez contacter un administrateur.');
+  // Déconnecter socket, ou rediriger, etc.
+  socket.disconnect();
+} else {
+  localStorage.setItem('currentRoom', currentChannel);
+  socket.emit('joinRoom', currentChannel);
 
-// Et mettre à jour l'affichage par exemple :
-const roomLabel = document.getElementById('current-room-name');
-if (roomLabel) roomLabel.textContent = currentChannel;
-
+  const roomLabel = document.getElementById('current-room-name');
+  if (roomLabel) roomLabel.textContent = currentChannel;
+}
 
 
 const usernameInput = document.getElementById('username-input');
