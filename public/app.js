@@ -1000,27 +1000,24 @@ function appendToChat(element, forceScroll = false) {
 
   if (!forceScroll) return;
 
-  // Si l’élément contient une image ou une vidéo : attendre le chargement
   const media = element.querySelector('img, video');
   if (media) {
-    // Attendre que le média soit complètement chargé
+    // Scroll quand média chargé
     media.addEventListener('load', () => {
       element.scrollIntoView({ behavior: 'smooth', block: 'end' });
     });
-
     media.addEventListener('loadeddata', () => {
       element.scrollIntoView({ behavior: 'smooth', block: 'end' });
     });
-
-    // Sécurité : scroll quand même au bout de 500ms
+    // Sécurité : scroll au bout de 500ms quoi qu'il arrive
     setTimeout(() => {
       element.scrollIntoView({ behavior: 'smooth', block: 'end' });
     }, 500);
   } else {
-    // Pas d’image/vidéo => scroll direct
     element.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }
 }
+
 
 
 
