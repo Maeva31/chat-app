@@ -1012,20 +1012,24 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   // Ajout du pseudo cliquable
   const clickableUsername = document.createElement('span');
-  clickableUsername.textContent = username;
-  clickableUsername.style.cursor = 'pointer';
+clickableUsername.textContent = username;
+clickableUsername.style.cursor = 'pointer';
 
-  clickableUsername.addEventListener('click', () => {
-    handleUsernameClick(username); // MP
-  });
+// Clic gauche : insérer la mention @username
+clickableUsername.addEventListener('click', () => {
+  insertMention(username); // Ajoute la mention dans l’input message
+});
 
-  clickableUsername.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-    insertMention(username); // @mention
-  });
+// Clic droit : (optionnel) ouvrir MP ou autre, ou laisser vide
+clickableUsername.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  // Si tu veux, tu peux aussi faire handleUsernameClick ici
+  // handleUsernameClick(username);
+});
+  
+usernameContainer.appendChild(clickableUsername);
+wrapper.appendChild(usernameContainer);
 
-  usernameContainer.appendChild(clickableUsername);
-  wrapper.appendChild(usernameContainer);
 
   // Affichage selon type de fichier
   if (mimetype.startsWith('image/')) {
