@@ -1292,5 +1292,3 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }, 0);
 });
 });
-
-});
