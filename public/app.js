@@ -186,8 +186,64 @@ document.addEventListener('DOMContentLoaded', () => {
       e.stopPropagation();
     });
 
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
+    // --- AJOUT BOUTON UPLOAD FICHIER ---
+    // input type=file caché
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.style.display = 'none';
+
+    // bouton upload
+    const uploadBtn = document.createElement('button');
+    uploadBtn.textContent = '📎';
+    uploadBtn.title = 'Envoyer un fichier';
+    uploadBtn.style.fontSize = '20px';
+    uploadBtn.style.background = 'transparent';
+    uploadBtn.style.border = 'none';
+    uploadBtn.style.cursor = 'pointer';
+    uploadBtn.style.marginRight = '5px';
+
+    uploadBtn.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    fileInput.addEventListener('change', () => {
+      const file = fileInput.files[0];
+      if (!file) return;
+
+      const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
+
+      if (file.size > MAX_SIZE) {
+        alert('Le fichier est trop volumineux (max 50 Mo)');
+        fileInput.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const base64 = btoa(
+          new Uint8Array(reader.result)
+            .reduce((data, byte) => data + String.fromCharCode(byte), '')
+        );
+
+        socket.emit('upload private file', {
+          to: username,
+          filename: file.name,
+          mimetype: file.type,
+          data: base64,
+          timestamp: new Date().toISOString()
+        });
+
+        fileInput.value = '';
+      };
+
+      reader.readAsArrayBuffer(file);
+    });
+
+    // Assemblage inputBar avec nouveau bouton upload
+    inputBar.append(emojiBtn, emojiPicker, uploadBtn, fileInput, input, sendBtn);
+
+    // --- FIN AJOUT ---
 
     // Afficher localement le message envoyé
     sendBtn.onclick = () => {
@@ -201,9 +257,6 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-
-    // Assemblage inputBar
-    inputBar.append(emojiBtn, emojiPicker, input, sendBtn);
 
     // Assemblage fenêtre
     win.append(header, body, inputBar);
@@ -328,7 +381,127 @@ document.addEventListener('DOMContentLoaded', () => {
     appendPrivateMessage(body, from, message, role, gender);
   });
 
+  // ── 7) Réception d’un fichier privé ──
+  socket.on('private file', ({ from, filename, data, mimetype, timestamp, role, gender }) => {
+    const container = document.getElementById('private-chat-container');
+    if (!container) return;
+
+    let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+
+    // Ouvre la fenêtre si pas ouverte
+    if (!win) {
+      const userObj = userCache[from] || {};
+      openPrivateChat(from, userObj.role, userObj.gender);
+      win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+      if (!win) return;
+    }
+
+    const body = win.querySelector('.private-chat-body');
+
+    // Crée un conteneur message
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
+
+    // Pseudo + icône rôle
+    const who = document.createElement('span');
+    who.style.fontWeight = 'bold';
+    who.style.marginRight = '4px';
+    who.style.display = 'inline-flex';
+    who.style.alignItems = 'center';
+
+    // Priorité stricte rôle > genre
+    let userRole = role;
+    let userGender = gender;
+    if (!userRole || !userGender) {
+      const cachedUser = userCache[from];
+      if (cachedUser) {
+        userRole = userRole || cachedUser.role;
+        userGender = userGender || cachedUser.gender;
+      }
+    }
+    const icon = createRoleIcon(userRole);
+    if (icon) who.appendChild(icon);
+
+    const usernameText = document.createTextNode(from + ': ');
+    who.appendChild(usernameText);
+
+    if (userRole === 'admin') {
+      who.style.color = usernameColors.admin;
+    } else if (userRole === 'modo') {
+      who.style.color = usernameColors.modo;
+    } else {
+      who.style.color = usernameColors[userGender] || usernameColors.default;
+    }
+
+    msgDiv.appendChild(who);
+
+    // Affichage du fichier selon type mimetype
+    if (mimetype.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = `data:${mimetype};base64,${data}`;
+      img.style.maxWidth = '150px';
+      img.style.cursor = 'pointer';
+      img.style.border = '2px solid #ccc';
+      img.style.borderRadius = '8px';
+      img.style.padding = '4px';
+      // Clique pour ouvrir en grand
+      img.addEventListener('click', () => {
+        const newWin = window.open();
+        if (newWin) {
+          newWin.document.write(`
+            <html><head><title>${filename}</title></head>
+            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+            <img src="${img.src}" alt="${filename}" style="max-width:100vw;max-height:100vh;" />
+            </body></html>
+          `);
+          newWin.document.close();
+        } else {
+          alert('Impossible d’ouvrir un nouvel onglet. Vérifie le bloqueur de popups.');
+        }
+      });
+      msgDiv.appendChild(img);
+
+    } else if (mimetype.startsWith('audio/')) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = `data:${mimetype};base64,${data}`;
+      audio.style.marginTop = '4px';
+      audio.style.border = '2px solid #ccc';
+      audio.style.borderRadius = '8px';
+      audio.style.padding = '4px';
+      msgDiv.appendChild(audio);
+
+    } else if (mimetype.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.src = `data:${mimetype};base64,${data}`;
+      video.style.maxWidth = '300px';
+      video.style.maxHeight = '300px';
+      video.style.marginTop = '4px';
+      video.style.border = '2px solid #ccc';
+      video.style.borderRadius = '8px';
+      video.style.padding = '4px';
+      msgDiv.appendChild(video);
+
+    } else {
+      // Fichier générique : lien téléchargement
+      const link = document.createElement('a');
+      link.href = `data:${mimetype};base64,${data}`;
+      link.download = filename;
+      link.textContent = `📎 ${filename}`;
+      link.target = '_blank';
+      link.style.display = 'inline-block';
+      link.style.marginTop = '4px';
+      msgDiv.appendChild(link);
+    }
+
+    body.appendChild(msgDiv);
+    body.scrollTop = body.scrollHeight;
+  });
+
 });
+
+
 
 
 
