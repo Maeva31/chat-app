@@ -4,9 +4,29 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
+  let userCache = {};
+
   socket.on('user list', list => {
     users = list;
+    userCache = {};
+    list.forEach(u => {
+      userCache[u.username] = u;
+    });
     updateUserList(list);
+
+    // Met à jour les couleurs des fenêtres privées ouvertes (header)
+    const container = document.getElementById('private-chat-container');
+    if (container) {
+      const windows = container.querySelectorAll('.private-chat-window');
+      windows.forEach(win => {
+        const username = win.dataset.user;
+        const user = userCache[username];
+        const title = win.querySelector('.private-chat-header span');
+        if (user && title) {
+          title.style.color = usernameColors[user.role] || usernameColors[user.gender] || usernameColors.default;
+        }
+      });
+    }
   });
 
   // ── 2) Couleurs selon rôle/genre ──
@@ -27,6 +47,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (win) {
       container.appendChild(win);
       return;
+    }
+
+    // Si role/genre non passés, tente de récupérer depuis userCache
+    if (!role || !gender) {
+      const cachedUser = userCache[username];
+      if (cachedUser) {
+        role = role || cachedUser.role;
+        gender = gender || cachedUser.gender;
+      }
     }
 
     // Création de la fenêtre
@@ -186,29 +215,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   // Ajout role et gender en paramètres
-function appendPrivateMessage(bodyElem, from, text) {
-  const msgDiv = document.createElement('div');
-  msgDiv.style.margin = '4px 0';
-  const who = document.createElement('span');
-  who.textContent = from + ': ';
-  who.style.fontWeight = 'bold';
+  function appendPrivateMessage(bodyElem, from, text, role, gender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
+    const who = document.createElement('span');
+    who.textContent = from + ': ';
+    who.style.fontWeight = 'bold';
 
-  const userObj = users.find(u => u.username === from) || {};
-  who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+    // Priorité : role et gender passés, sinon cherche dans cache
+    let userRole = role;
+    let userGender = gender;
 
-  msgDiv.append(who, document.createTextNode(text));
-  bodyElem.appendChild(msgDiv);
-  bodyElem.scrollTop = bodyElem.scrollHeight;
-}
+    if (!userRole || !userGender) {
+      const cachedUser = userCache[from];
+      if (cachedUser) {
+        userRole = userRole || cachedUser.role;
+        userGender = userGender || cachedUser.gender;
+      }
+    }
 
+    who.style.color = usernameColors[userRole] || usernameColors[userGender] || usernameColors.default;
 
+    msgDiv.append(who, document.createTextNode(text));
+    bodyElem.appendChild(msgDiv);
+    bodyElem.scrollTop = bodyElem.scrollHeight;
+  }
 
   // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
     const username = span.textContent.trim();
-    const userObj = users.find(u => u.username === username);
+    const userObj = userCache[username];
     if (!userObj) return;
     openPrivateChat(username, userObj.role, userObj.gender);
   });
@@ -223,7 +261,7 @@ function appendPrivateMessage(bodyElem, from, text) {
     let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
     if (!win) {
-      const userObj = users.find(u => u.username === from) || {};
+      const userObj = userCache[from] || {};
       openPrivateChat(from, userObj.role, userObj.gender);
       win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
     }
@@ -231,17 +269,11 @@ function appendPrivateMessage(bodyElem, from, text) {
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
 
-    // Utilise role et gender reçus s’ils existent, sinon fallback liste users
-    appendPrivateMessage(
-      body,
-      from,
-      message,
-      role || (users.find(u => u.username === from) || {}).role,
-      gender || (users.find(u => u.username === from) || {}).gender
-    );
+    appendPrivateMessage(body, from, message, role, gender);
   });
 
 });
+
 
 
 
