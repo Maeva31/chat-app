@@ -182,14 +182,16 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
 
-  document.addEventListener('click', e => {
-    const span = e.target.closest('.clickable-username');
-    if (!span) return;
-    const username = span.textContent.trim();
-    const userObj = users.find(u => u.username === username);
-    if (!userObj) return;
-    openPrivateChat(username, userObj.role, userObj.gender);
-  });
+  document.addEventListener('dblclick', e => {
+  const span = e.target.closest('.clickable-username');
+  if (!span) return;
+  const username = span.textContent.trim();
+  if (username === me.username) return; // Empêche d'ouvrir sa propre fenêtre
+  const userObj = users.find(u => u.username === username);
+  if (!userObj) return;
+  openPrivateChat(username, userObj.role, userObj.gender);
+});
+
 
   socket.on('private message', ({ from, message }) => {
     const userObj = users.find(u => u.username === from) || {};
