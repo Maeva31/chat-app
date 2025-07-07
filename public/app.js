@@ -100,9 +100,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
     const who = document.createElement('span');
-    who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
-    msgDiv.append(who, document.createTextNode(text));
+
+    // N'affiche pas "moi:" devant les messages envoyés par soi-même
+    if (from === 'moi') {
+      msgDiv.textContent = text;
+    } else {
+      who.textContent = from + ': ';
+      // Couleur selon rôle/genre
+      const userObj = users.find(u => u.username === from) || {};
+      who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+      msgDiv.append(who, document.createTextNode(text));
+    }
     bodyElem.appendChild(msgDiv);
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
@@ -114,27 +123,30 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = span.textContent.trim();
     const userObj = users.find(u => u.username === username);
     if (!userObj) return;
+
+    // Ouvre la fenêtre privée de l'utilisateur cliqué
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
   // ── 6) Réception d'un message privé ──
   socket.on('private message', ({ from, message }) => {
-  // Cherche toutes les fenêtres privées ouvertes
-  const container = document.getElementById('private-chat-container');
-  const allWindows = container.querySelectorAll('.private-chat-window');
-  
-  if (allWindows.length === 0) {
-    // S’il n’y a aucune fenêtre privée ouverte, ouvre celle de l’expéditeur
-    const userObj = users.find(u => u.username === from) || {};
-    openPrivateChat(from, userObj.role, userObj.gender);
-  }
-  
-  // Ajoute TOUS les messages dans la première fenêtre privée ouverte (ou dans celle de l’expéditeur s’il n’y en avait aucune)
-  const win = container.querySelector('.private-chat-window');
-  if (!win) return;
-  const body = win.querySelector('.private-chat-body');
-  appendPrivateMessage(body, from, message);
-});
+    const container = document.getElementById('private-chat-container');
+    const allWindows = container.querySelectorAll('.private-chat-window');
+
+    if (allWindows.length === 0) {
+      // Aucune fenêtre privée ouverte, on ouvre celle de l'expéditeur
+      const userObj = users.find(u => u.username === from) || {};
+      openPrivateChat(from, userObj.role, userObj.gender);
+    }
+
+    // Ajoute TOUS les messages dans la première fenêtre privée ouverte (peu importe l'expéditeur)
+    const win = container.querySelector('.private-chat-window');
+    if (!win) return;
+    const body = win.querySelector('.private-chat-body');
+    appendPrivateMessage(body, from, message);
+  });
+
+
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
