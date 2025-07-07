@@ -1,3 +1,26 @@
+const socket = io();
+
+document.addEventListener('DOMContentLoaded', () => {
+
+
+  // ── 1) Stockage et mise à jour de la liste users ──
+  let users = [];
+  socket.on('user list', list => {
+    users = list;
+    updateUserList(list);
+  });
+
+  // ── 2) Couleurs selon rôle/genre ──
+  const usernameColors = {
+    admin: 'red',
+    modo: 'limegreen',
+    Homme: 'dodgerblue',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
+  
 function openPrivateChat(username, role, gender) {
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
@@ -176,7 +199,7 @@ function openPrivateChat(username, role, gender) {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-
+});
 
 
  const adminUsernames = ['MaEvA'];
