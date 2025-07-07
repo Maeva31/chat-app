@@ -1,1283 +1,1047 @@
-const socket = io();
+/* === RESET et correction hauteur sans scroll === */
+html, body {
+  margin: 0;
+  padding: 0;
+  /* overflow: hidden; /* Empêche tout scroll vertical */
+  overflow-x: hidden;
+  overflow-y: auto;
 
-document.addEventListener('DOMContentLoaded', () => {
+  height: 100%;
+  max-width: 100vw;   /* Empêche la largeur > fenêtre */
+  overflow-x: hidden; /* Empêche le scroll horizontal */
+}
+
+body {
+  font-family: Arial, "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif;
+  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+}
+
+/*==== scrollbar ====*/
+::-webkit-scrollbar {
+  width: 12px; /* Légèrement plus large pour une meilleure visibilité */
+  border-radius: 8px; /* Ajoute une petite courbure à la scrollbar */
+}
+
+::-webkit-scrollbar-track {
+  background: #111;
+  border-radius: 8px; /* Arrondi également la track */
+}
+
+::-webkit-scrollbar-thumb {
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 3s ease infinite;
+  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
+}
+
+@keyframes gradientThumb {
+  0% {
+    background-position: 400% 0;
+  }
+  50% {
+    background-position: 0 100%;
+  }
+  100% {
+    background-position: 400% 0;
+  }
+}
+
+/* === GENERAL === */
+main {
+  display: flex;
+  flex: 1 1 auto;
+  overflow: hidden;
+  margin-top: 40px; /* égal au top-bar */
+  height: calc(100vh - 40px);
+  min-width: 0;
+}
 
 
-  // ── 1) Stockage et mise à jour de la liste users ──
-  let users = [];
-  socket.on('user list', list => {
-    users = list;
-    updateUserList(list);
-  });
+#content-container {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  min-width: 0;
+}
 
-  // ── 2) Couleurs selon rôle/genre ──
-  const usernameColors = {
-    admin: 'red',
-    modo: 'limegreen',
-    Homme: 'dodgerblue',
-    Femme: '#f0f',
-    Autre: '#0ff',
-    'non spécifié': '#aaa',
-    default: '#aaa'
-  };
+/* === CHANNEL SIDEBAR (LEFT) === */
+#channel-sidebar {
+  flex: 0 0 240px;
+  min-width: 180px; /* Ajouté pour flexibilité */
+  max-width: 240px;
+  background: #222222b8;
+  padding: 1em;
+  border-right: 2px solid #333;
+  border-radius: 10px;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: relative;
+  min-width: 0;
+}
 
-  // ── 3) Ouvre ou remonte une fenêtre privée ──
-  function openPrivateChat(username, role, gender) {
-  const container = document.getElementById('private-chat-container');
-  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-  if (win) {
-    // Juste mettre la fenêtre au top sans la retirer/remettre
-    win.style.zIndex = parseInt(win.style.zIndex || 1000) + 1;
-    return;
+#channel-sidebar h3 {
+  margin-top: 0;
+  margin-bottom: 1em;
+  text-align: center;
+  color: #00ffff;
+}
+
+#channel-list {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 1em 0;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-bottom: 70px;
+  min-width: 0;
+}
+
+#channel-list .channel {
+  padding: 0.5em;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+  transition: 0.2s ease;
+}
+
+#channel-list .channel:hover {
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 10s ease infinite;
+  /* box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
+}
+
+#channel-list .channel.selected {
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 10s ease infinite;
+  color: white;
+  font-weight: bold;
+}
+
+/* === Création Salon Fixé en Bas === */
+#create-channel {
+  position: absolute;
+  bottom: 110px;
+  left: 1em;
+  right: 1em;
+  display: flex;
+  gap: 5px;
+  border-top: 1px solid #444;
+  background: #222222b8;
+  padding-top: 10px;
+  flex-wrap: nowrap;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+#create-channel input {
+  flex: 1;
+  min-width: 0;
+  padding: 0.5em;
+  border: none;
+  border-radius: 6px;
+  background-color: #121212;
+  color: white;
+  font-size: 1em;
+  box-sizing: border-box;
+
+  /* Désactiver la sélection */
+  user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+}
+
+#create-channel button {
+  flex-shrink: 0;
+  padding: 0.5em 0.8em;
+  border: none;
+  border-radius: 6px;
+  background-color: #444;
+  color: #fff;
+  cursor: pointer;
+  font-weight: bold;
+  font-size: 1em;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+
+#create-channel button:hover {
+  background: linear-gradient(
+    45deg,
+    rgba(251, 0, 255, 1),
+    rgba(0, 218, 222, 1),
+    rgba(251, 0, 255, 1),
+    rgba(0, 218, 222, 1)
+  );
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease;
+  animation: gradientThumb 10s ease infinite;
+  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6),
+              0 0 10px rgba(0, 218, 222, 0.6);
+  color: #fff;
+}
+
+@keyframes gradientThumb {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
+/* === CHAT CONTAINER (CENTER) === */
+#chat-container {
+  flex: 6 1 auto;
+  display: flex;
+  flex-direction: column;
+  padding: 1em;
+  min-width: 0;
+}
+
+.chat-messages {
+  flex: 1 1 auto;
+  min-height: 0; /* Important pour éviter le dépassement */
+  overflow-y: auto;
+  background: #222222b8;
+  padding: 1em;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.chat-messages .message {
+  margin-bottom: 1em;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  line-height: 1.4;
+  word-break: break-word;
+  animation: fadeInUp 0.3s ease;
+}
+
+#chat-input {
+  display: flex;
+  gap: 10px;
+  align-items: center;  /* centre verticalement */
+  width: 100%;
+  box-sizing: border-box;
+}
+
+#message-input {
+  flex: 1;              /* prend toute la place possible */
+  min-width: 0;         /* important en flexbox pour éviter débordement */
+  padding: 1em;
+  font-size: 1em;
+  border-radius: 5px;
+  border: none;
+  background-color: #121212;
+  color: white;
+  box-sizing: border-box;
+  /* facultatif: pour autoriser la zone texte à grandir verticalement si textarea */
+  resize: vertical;
+  max-height: 150px;
+}
+
+/* Le bouton reste sa taille mais ne rétrécit pas */
+#send-button {
+  padding: 0.5em 1em;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+/* Responsive : en petit écran, empile le champ et bouton */
+@media (max-width: 600px) {
+  #chat-input {
+    flex-direction: column;
+    gap: 8px;
   }
 
-    // Création de la fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
-
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
-    const title = document.createElement('span');
-    title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
-    header.append(title, closeBtn);
-
-    // Body et input
-    const body = document.createElement('div');
-    body.classList.add('private-chat-body');
-    const inputBar = document.createElement('div');
-    inputBar.classList.add('private-chat-input');
-    const input = document.createElement('input');
-    input.placeholder = 'Message…';
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
-    sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('private message', { to: username, message: text });
-      // Ne PAS afficher ton message envoyé dans la fenêtre
-      // appendPrivateMessage(body, 'moi', text);
-      input.value = '';
-    };
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
-
-    // Assemblage
-    win.append(header, body, inputBar);
-
-    // ─── Positionnement initial ───
-    win.style.position = 'absolute';
-    win.style.bottom = '20px';
-    win.style.right = '20px';
-
-    // ─── Drag & Drop avec limites pour rester visible ───
-    let isDragging = false, offsetX = 0, offsetY = 0;
-    header.style.cursor = 'move';
-    header.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - win.offsetLeft;
-      offsetY = e.clientY - win.offsetTop;
-      document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-
-      const newLeft = e.clientX - offsetX;
-      const newTop = e.clientY - offsetY;
-
-      const winWidth = win.offsetWidth;
-      const winHeight = win.offsetHeight;
-
-      const maxLeft = window.innerWidth - winWidth;
-      const maxTop = window.innerHeight - winHeight;
-
-      // Clamp les positions pour rester à l'intérieur de l'écran
-      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
-
-      win.style.left = clampedLeft + 'px';
-      win.style.top = clampedTop + 'px';
-      win.style.bottom = 'auto';
-      win.style.right = 'auto';
-    });
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        document.body.style.userSelect = '';
-      }
-    });
-
-    container.appendChild(win);
-  }
-
-  // ── 4) Ajoute un message dans la fenêtre privée ──
-  function appendPrivateMessage(bodyElem, from, text) {
-    // Ne rien afficher pour ses propres messages envoyés
-    if (from === 'moi') return;
-
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
-    const who = document.createElement('span');
-    who.textContent = from + ': ';
-    who.style.fontWeight = 'bold';
-
-    const userObj = users.find(u => u.username === from) || {};
-    who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
-
-    msgDiv.append(who, document.createTextNode(text));
-    bodyElem.appendChild(msgDiv);
-    bodyElem.scrollTop = bodyElem.scrollHeight;
-  }
-
-  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
-  document.addEventListener('click', e => {
-    const span = e.target.closest('.clickable-username');
-    if (!span) return;
-    const username = span.textContent.trim();
-    const userObj = users.find(u => u.username === username);
-    if (!userObj) return;
-    openPrivateChat(username, userObj.role, userObj.gender);
-  });
-
-  // ── 6) Réception d'un message privé ──
-  socket.on('private message', ({ from, message }) => {
-    const container = document.getElementById('private-chat-container');
-    const allWindows = container.querySelectorAll('.private-chat-window');
-
-    if (allWindows.length === 0) {
-      const userObj = users.find(u => u.username === from) || {};
-      openPrivateChat(from, userObj.role, userObj.gender);
-    }
-
-    const win = container.querySelector('.private-chat-window');
-    if (!win) return;
-    const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, from, message);
-  });
-});
-
-
- const adminUsernames = ['MaEvA'];
- const modoUsernames = ['DarkGirL'];
-
-
-  let selectedUser = null;
-  let hasSentUserInfo = false;
-  let initialLoadComplete = false;
-  let bannerTimeoutId = null;
-
-  let currentChannel = 'Général';  // Forcer le salon Général au chargement
-
-const usernameInput = document.getElementById('username-input');
-const passwordInput = document.getElementById('password-input');
-
-
-if (usernameInput && passwordInput) {
-  usernameInput.addEventListener('input', () => {
-  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
-  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-    passwordInput.style.display = 'block'; // afficher le mot de passe
-  } else {
-    passwordInput.style.display = 'none';  // cacher sinon
-    passwordInput.value = '';              // vider le mot de passe
-  }
-});
-
- const initialUsername = usernameInput.value.trim();
-  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
-    passwordInput.style.display = 'block';
+  #send-button {
+    width: 100%;
   }
 }
 
 
-  const genderColors = {
-    Homme: 'dodgerblue',
-    Femme: '#f0f',
-    Autre: '#0ff',
-    'non spécifié': '#aaa',
-    default: '#aaa'
-  };
+/* === USER LIST (RIGHT SIDEBAR) === */
+#user-list {
+  flex: 0 0 240px;
+  min-width: 180px; /* Ajouté */
+  max-width: 240px;
+  background: #222222b8;
+  padding: 1em;
+  border-left: 2px solid #333;
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;      /* Prend toute la hauteur disponible */
+  overflow-y: auto
+}
 
-  const channelEmojis = {
-    "Général": "💬",
-    "Musique": "🎧",
-    "Gaming": "🎮",
-    "Détente": "🌿"
-  };
+#users {
+  list-style: none;
+  padding: 0;
+}
 
-  // Affiche la modal si pas de pseudo
-  const savedUsername = localStorage.getItem('username');
-  if (!savedUsername) {
-    document.getElementById('myModal').style.display = 'block';
-  }
+#users li {
+  /* display: flex; */
+  align-items: center;
+  justify-content: flex-start;
+  gap: 0px;
+  /* padding: 4px 6px; */
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 100%;
+}
 
-  // Variables pour mode invisible
-  const invisibleBtn = document.getElementById('toggle-invisible-btn');
-  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
-  let isAdmin = false;
+.gender-square {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0; /* empêche de rétrécir */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+  background-color: #aaa;
+}
 
-  // Mets à jour le bouton (texte + couleur)
-  function updateInvisibleButton() {
-    if (!invisibleBtn) return;
-    invisibleBtn.textContent = `👻`;
-    invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
-    invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
+.age-span {
+  color: #000;
+}
 
-  }
+/* Ajustement du pseudo pour qu'il accepte 16 caractères sans couper */
+.username-span {
+  color: #000;
+  font-weight: bold;
+  font-size: 1.1em;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: initial;
+  flex: 1;
+  min-width: 0;
+}
 
-  if (invisibleBtn) {
-    if (invisibleMode) {
-      invisibleBtn.style.display = 'inline-block';
-      updateInvisibleButton();
-    } else {
-      invisibleBtn.style.display = 'none';
-    }
-  }
+#users li.selected {
+  background-color: #333;
+  border-left: 4px solid #00ffff;
+  padding-left: 6px;
+  border-radius: 5px;
+}
 
-  // Affiche une bannière temporaire (type = 'error' ou 'success')
-  function showBanner(message, type = 'error') {
-    if (!initialLoadComplete) return;
-    const banner = document.getElementById('error-banner');
-    const text = document.getElementById('error-banner-text');
-    if (!banner || !text) return;
+.clickable-username {
+  color: #00ffff;
+  font-weight: bold;
+  cursor: pointer;
+}
 
-    const prefix = type === 'success' ? '✅' : '❌';
-    text.textContent = `${prefix} ${message}`;
-    banner.style.display = 'flex';
-    banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+.clickable-username:hover {
+  text-decoration: none;
+  color: #ff00ff;
+}
 
-    if (bannerTimeoutId) clearTimeout(bannerTimeoutId);
-    bannerTimeoutId = setTimeout(() => {
-      banner.style.display = 'none';
-      bannerTimeoutId = null;
-    }, 5000);
-  }
+/* === MODAL === */
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000000;
+  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  animation: fadeIn 0.5s ease-in-out;
+}
 
-  // Couleur selon genre
-  function getUsernameColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
+.modal-content {
+  background: #1e1e1e;
+  padding: 2.5em;
+  border-radius: 15px;
+  text-align: center;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
+  border: 2px solid #444;
+  animation: popIn 0.4s ease;
+}
 
-  // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
-  function extractChannelName(text) {
-    text = text.replace(/\s*\(\d+\)$/, '').trim();
-    const parts = text.split('┊');
-    if (parts.length > 1) return parts[1].trim();
-    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-  }
+.modal-content h2 {
+  margin-bottom: 1em;
+  font-size: 1.8em;
+  color: #00ffff;
+}
 
-  // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
+.modal-content label {
+  display: block;
+  margin-top: 1em;
+  margin-bottom: 0.2em;
+  font-size: 1em;
+  color: #ccc;
+  text-align: left;
+}
 
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+.modal-content input,
+.modal-content select {
+  width: 100%;
+  padding: 0.8em;
+  margin-bottom: 1em;
+  border: none;
+  border-radius: 8px;
+  background-color: #2c2c2c;
+  color: white;
+  font-size: 1em;
+  transition: 0.3s ease;
+}
 
-    const li = document.createElement('li');
-    li.classList.add('user-item');
+.modal-content input:focus,
+.modal-content select:focus {
+  outline: none;
+  box-shadow: 0 0 10px #00ffff;
+  background-color: #353535;
+}
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+.modal-content button {
+  background: linear-gradient(to right, #00ffff, #ff00ff);
+  color: white;
+  border: none;
+  padding: 0.8em;
+  font-size: 1.1em;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
 
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
+.modal-content button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 15px #00ffff;
+}
 
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
+#modal-error {
+  margin-top: 0.5em;
+  font-size: 0.9em;
+  color: #ff4d4d;
+  display: none;
+}
 
-    const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
-
-    userList.appendChild(li);
-  });
+.modal-image {
+  display: block;
+  width: 50px;
+  height: 50px;
+  object-fit: cover; /* ou contain selon le rendu voulu */
+  margin: 0 auto 20px auto;
+  border-radius: 10px;
+  box-shadow: 0 0 15px #00ffff88;
 }
 
 
-function createRoleIcon(role) {
-  if (role === 'admin') {
-    const icon = document.createElement('img');
-    icon.src = '/diamond.ico'; // icône admin
-    icon.alt = 'Admin';
-    icon.title = 'Admin';
-    icon.classList.add('admin-icon');
-    return icon;
-  } else if (role === 'modo') {
-    const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // icône modo
-    icon.alt = 'Modérateur';
-    icon.title = 'Modérateur';
-    icon.classList.add('modo-icon');
-    return icon;
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  main {
+    flex-direction: column;
+    height: auto;
   }
-  return null;
+
+  #channel-sidebar,
+  #user-list {
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    border: none;
+    border-top: 2px solid #333;
+    border-radius: 0;
+    margin: 0;
+  }
+
+  #chat-container {
+    flex: none;
+    width: 100%;
+    padding: 0.5em;
+  }
+
+  #create-channel {
+    position: static;
+    margin-top: 1em;
+    background: none;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  #create-channel button {
+    width: 100%;
+  }
+}
+
+/* === ANIMATIONS === */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes popIn {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+input:focus,
+select:focus,
+textarea:focus,
+button:focus {
+  outline: none;
+  box-shadow: none;
+  border-color: transparent;
+}
+
+/* Bande supérieure fixe */
+#top-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: #111;
+  color: #00ffff;
+  text-align: center;
+  line-height: 40px;
+  font-weight: bold;
+  font-size: 1em;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.4);
+  z-index: 1001;
+}
+.system-message {
+  color: #888;
+  font-style: italic;
+  margin: 5px 0;
+  text-align: center;
+}
+.username-span.admin,
+.message .clickable-username.admin {
+  color: red;
+  font-weight: bold;
+  position: relative;
+}
+
+/* Pour l'icône "🔥" */
+.username-span.admin::after,
+.message .clickable-username.admin::after {
+  content: "🔥";
+  margin-left: 4px;
+  font-size: 0.9em;
+  vertical-align: middle;
+  color: red;
+}
+
+/* Optionnel : curseur pointer quand sur pseudo */
+.clickable-username {
+  cursor: pointer;
+}
+
+/* Optionnel : espace entre l'âge et le pseudo */
+.user-item .gender-square {
+    display: inline-block;
+    width: 20px;
+    height: 18px;
+    line-height: 19px;
+    text-align: center;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+    user-select: none;
+}
+
+/* Conteneur utilisateur */
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  /* Optionnel pour que le texte ne dépasse pas */
+  min-width: 0;
+}
+
+/* Zone icône rôle (admin/modo), largeur fixe */
+.user-item .role-icon {
+  width: 24px;  /* largeur fixe, à ajuster */
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Icône admin/mode centrée dans le conteneur */
+.user-item .role-icon img,
+.user-item .role-icon svg {
+  max-width: 20px;
+  max-height: 18px;
+  display: block;
+}
+
+/* Carré âge, largeur fixe */
+.user-item .age-square {
+  width: 22px;  /* même largeur que ton .gender-square ? */
+  height: 22px;
+  flex-shrink: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border-radius: 6px;
+  background-color: #aaa;
+  color: #000;
+  font-weight: bold;
+  font-size: 1em;
+}
+
+/* Pseudo, commence toujours après âge */
+.user-item .username-span {
+  flex: 1;
+  min-width: 0; /* Permet de shrink */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: #000;
+  font-weight: bold;
 }
 
 
- const logoutButton = document.getElementById('logoutButton');
+/* Texte laser */
+.texte-laser {
+  font-size: 15px;
+  font-weight: bold;
+  background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: laserTexteMenu 2s linear infinite;
+}
 
-const logoutModal = document.getElementById('logoutModal');
-const logoutConfirmBtn = document.getElementById('logoutConfirmBtn');
-const logoutCancelBtn = document.getElementById('logoutCancelBtn');
-
-function openLogoutModal() {
-  if (logoutModal) {
-    logoutModal.style.display = 'flex';
+@keyframes laserTexteMenu {
+  0% {
+    background-position: 0% 0%;
+  }
+  50% {
+    background-position: 100% 100%;
+  }
+  100% {
+    background-position: 0% 0%;
   }
 }
 
-function closeLogoutModal() {
-  if (logoutModal) {
-    logoutModal.style.display = 'none';
+/* Fin texte laser */
+
+/* Empêche le retour à la ligne entre le nom d'utilisateur et les icônes */
+.username-span {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px; /* petit espace entre nom et icône */
+  white-space: nowrap; /* empêche de passer à la ligne */
+}
+
+/* Icône admin */
+.admin-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+
+/* Icône modo */
+.modo-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
+@media (max-width: 400px) {
+  .admin-icon,
+  .modo-icon {
+    width: 12px;
+    height: 12px;
+    font-size: 12px;
   }
 }
 
-function performLogout() {
-  socket.emit('logout');
-  ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
-    localStorage.removeItem(key);
-  });
-  location.reload();
+#user-list {
+  display: flex;
+  flex-direction: column;
 }
 
-if (logoutButton) {
-  logoutButton.addEventListener('click', openLogoutModal);
+#user-list .texte-laser {
+  flex: 0 0 auto;
+  margin-bottom: 0px; /* ou 0 */
+  text-align: center;
+  white-space: nowrap;
+  width: 100%;
+  user-select: none;
 }
 
-if (logoutConfirmBtn) {
-  logoutConfirmBtn.addEventListener('click', () => {
-    closeLogoutModal();
-    performLogout();
-  });
+.control-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  padding: 6px 10px;
+  margin: 0 5px;
+  border-radius: 5px;
+  cursor: pointer;
 }
 
-if (logoutCancelBtn) {
-  logoutCancelBtn.addEventListener('click', closeLogoutModal);
+.control-button:hover {
+  background-color: #666;
 }
 
-// Pour fermer la modal si clic en dehors de la boîte blanche
-if (logoutModal) {
-  logoutModal.addEventListener('click', e => {
-    if (e.target === logoutModal) {
-      closeLogoutModal();
-    }
-  });
+#emoji-picker {
+  display: none; /* caché par défaut */
+  position: absolute;
+  bottom: 70px;
+  left: 10px;
+  background: #222; /* fond sombre */
+  border: 1px solid #444;
+  border-radius: 12px;
+  padding: 12px;
+  z-index: 1000;
+  max-width: 320px;
+  max-height: 240px;
+  overflow-y: auto;
+  box-shadow: 0 8px 16px rgba(0,0,0,0.6);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
 }
 
-// Extrait l'ID vidéo YouTube depuis une URL et retourne l'URL de la miniature
-function getYouTubeThumbnail(url) {
-  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  if (match) {
-    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-  }
-  return null;
+/* Style des emojis */
+#emoji-picker .emoji {
+  font-size: 26px;
+  cursor: pointer;
+  padding: 6px;
+  border-radius: 8px;
+  transition: background-color 0.3s, transform 0.2s;
+  user-select: none;
 }
 
-
-// Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
-function addYouTubeVideoIfAny(messageElement, messageText) {
-  const urlRegex = /(https?:\/\/[^\s]+)/g;
-  const urls = messageText.match(urlRegex);
-  if (!urls) return;
-
-  urls.forEach(url => {
-    const videoId = getYouTubeVideoId(url);
-    if (videoId) {
-      const wrapper = document.createElement('div');
-      wrapper.classList.add('youtube-wrapper');
-
-      const iframe = document.createElement('iframe');
-      // Supprimer largeur/hauteur fixes pour laisser le CSS gérer
-      // iframe.width = '480';
-      // iframe.height = '270';
-      iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
-      iframe.frameBorder = '0';
-      iframe.allow =
-        'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
-      iframe.allowFullscreen = true;
-
-      wrapper.appendChild(iframe);
-      messageElement.appendChild(wrapper);
-    }
-  });
+#emoji-picker .emoji:hover {
+  background-color: #555;
+  transform: scale(1.3);
+}
+.modal[style*="display: flex"] ~ #top-bar {
+  display: none !important;
+}
+.modal[style*="display: flex"] ~ #top-bar,
+.modal[style*="display: flex"] ~ #user-list,
+.modal[style*="display: flex"] ~ #chat-container {
+  display: none !important;
+}
+.user-item {
+  pointer-events: none; /* Empêche tout clic sur l’élément entier */
 }
 
-
-
-
-
-
-// Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
-function getYouTubeVideoId(url) {
-  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  return match ? match[1] : null;
+.user-item .clickable-username {
+  pointer-events: auto; /* Autorise le clic uniquement ici */
+  cursor: pointer;
 }
 
-
-
-  // Ajoute un message dans la zone de chat
-function addMessageToChat(msg) {
-  if (msg.username === 'Système') {
-    // Ignore le message "est maintenant visible."
-    if (/est maintenant visible\.$/i.test(msg.message)) return;
-
-    const salonRegex = /salon\s+(.+)$/i;
-    const match = salonRegex.exec(msg.message);
-    if (match && match[1]) {
-      const salonDuMessage = match[1].trim();
-      if (salonDuMessage !== currentChannel) return;
-    }
-  }
-
-  const chatMessages = document.getElementById('chat-messages');
-if (!chatMessages) return;
-
-const newMessage = document.createElement('div');
-const date = new Date(msg.timestamp);
-const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-const usernameSpan = document.createElement('span');
-const color = (msg.role === 'admin') ? 'red' :
-              (msg.role === 'modo') ? 'limegreen' :
-              getUsernameColor(msg.gender);
-
-if (msg.username === 'Système') {
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.style.color = '#888';
-  usernameSpan.style.fontWeight = 'bold';
-} else {
-  usernameSpan.classList.add('clickable-username');
-  usernameSpan.style.color = color;
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
-
-
-
-
-    // Icônes selon rôle
-    if (msg.role === 'admin') {
-      const icon = document.createElement('img');
-      icon.src = '/diamond.ico';
-      icon.alt = 'Admin';
-      icon.title = 'Admin';
-      icon.style.width = '17px';
-      icon.style.height = '15px';
-      icon.style.marginRight = '2px';
-      icon.style.verticalAlign = '-1px';
-      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-    } else if (msg.role === 'modo') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Modérateur';
-      icon.title = 'Modérateur';
-      icon.style.width = '16px';
-      icon.style.height = '16px';
-      icon.style.marginRight = '1px';
-      icon.style.verticalAlign = '-2px';
-      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-    }
-
-    // Clic pour mentionner
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-    });
-  }
-
-  function isYouTubeUrl(url) {
-    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
-  }
-
-  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
-
-  const messageText = document.createElement('span');
-  const style = msg.style || {};
-  messageText.style.color = style.color || '#fff';
-  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = style.font || 'Arial';
-
-  parts.forEach(part => {
-    if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
-      } else {
-        const a = document.createElement('a');
-        a.href = part;
-        a.textContent = part;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff';
-        a.style.textDecoration = 'underline';
-        messageText.appendChild(a);
-      }
-    } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
-    }
-  });
-
-  // --- Ici la modification principale : ajout du span timeSpan ---
-  const timeSpan = document.createElement('span');
-  timeSpan.textContent = timeString + ' ';
-  timeSpan.style.color = '#888';
-  timeSpan.style.fontStyle = 'italic';
-  timeSpan.style.marginRight = '5px';
-
-  newMessage.appendChild(timeSpan);
-
-  if (msg.username !== 'Système') {
-    newMessage.appendChild(usernameSpan);
-  }
-
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide
-  if (msg.username === 'Système') {
-    messageText.style.color = '#888';
-    messageText.style.fontStyle = 'italic';
-
-    newMessage.appendChild(messageText);
-  } else if (messageText.textContent.trim() !== '') {
-    newMessage.appendChild(messageText);
-  }
-
-  newMessage.classList.add('message');
-  newMessage.dataset.username = msg.username;
-
-  addYouTubeVideoIfAny(newMessage, msg.message);
-
-  chatMessages.appendChild(newMessage);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
+/* Responsive : ajuste automatiquement la taille en dessous de 500px */
+.youtube-wrapper {
+  width: 100%;        /* prend toute la largeur possible */
+  max-width: 640px;   /* ne dépasse pas 640px */
+  aspect-ratio: 16 / 9;
+  margin: 10px 0 10px 10px;
+  background-color: #222;
+  border: 3px solid #888;
+  border-radius: 6px;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
-  // Sélectionne visuellement un salon dans la liste
-  function selectChannelInUI(channelName) {
-    document.querySelectorAll('.channel').forEach(c => {
-      if (extractChannelName(c.textContent) === channelName) {
-        c.classList.add('selected');
-      } else {
-        c.classList.remove('selected');
-      }
-    });
-  }
+.youtube-wrapper iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 4px;
+  display: block;
+} 
 
-  // Quand on rejoint un salon côté serveur
-  socket.on('joinedRoom', (newChannel) => {
-    currentChannel = newChannel;
-    localStorage.setItem('currentChannel', newChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-    selectChannelInUI(newChannel);
-    selectedUser = null;
-    socket.emit('request history', newChannel);
-  });
+#content-container {
+  display: flex;
+  flex-direction: row;
+  flex: 1 1 auto;
+  overflow: hidden;
+  min-width: 0;
+  height: 100%;
+  padding-top: 40px; /* Ajout pour laisser la place à la top-bar */
+  box-sizing: border-box;
+}
 
-  // Clic sur un salon dans la liste
-  document.getElementById('channel-list').addEventListener('click', (e) => {
-    const target = e.target.closest('.channel');
-    if (!target) return;
-    const clickedChannel = extractChannelName(target.textContent);
-    if (!clickedChannel || clickedChannel === currentChannel) return;
+#channel-sidebar,
+#user-list {
+  height: calc(100vh - 40px); /* Hauteur sans la top bar */
+  margin-top: 15px;           
+}
 
-    currentChannel = clickedChannel;
-    localStorage.setItem('currentChannel', currentChannel);
-    socket.emit('joinRoom', currentChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-    selectChannelInUI(currentChannel);
-    selectedUser = null;
-  });
+.sprite-button {
+  width: 24px;
+  height: 24px;
+  background: url('/icon/starbis.gif') no-repeat top center;
+  background-size: 24px 48px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0;
+  position: relative;
+  left: -8px; /* décale vers la gauche */
+}
 
-  // Envoi message
-  function sendMessage() {
-    const input = document.getElementById('message-input');
-    if (!input) return;
-    const message = input.value.trim();
-    const username = localStorage.getItem('username');
-    if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
-    if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
+.sprite-button:hover {
+  background-position: 0 -24px;
+}
 
-    if (username) {
-      socket.emit('chat message', {
-        message,
-        timestamp: new Date().toISOString(),
-        style: loadSavedStyle() 
-      });
-      input.value = '';
-    }
-  }
+/* Pour désactiver les focus/outline si tu veux */
+.sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
 
-
-function submitUserInfo() {
-  const usernameInput = document.getElementById('username-input');
-  const passwordInput = document.getElementById('password-input'); // récupère le mot de passe
-  const genderSelect = document.getElementById('gender-select');
-  const ageInput = document.getElementById('age-input');
-  const modalError = document.getElementById('modal-error');
-
-  if (!usernameInput || !genderSelect || !ageInput || !modalError || !passwordInput) return;
-
-  const username = usernameInput.value.trim();
-  const gender = genderSelect.value;
-  const age = parseInt(ageInput.value.trim(), 10);
-  const password = passwordInput.value.trim();
-
-  if (!username || username.includes(' ') || username.length > 16) {
-    modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (isNaN(age) || age < 18 || age > 89) {
-    modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (!gender) {
-    modalError.textContent = "Veuillez sélectionner un genre.";
-    modalError.style.display = 'block';
-    return;
-  }
-
- if ((adminUsernames.includes(username) || modoUsernames.includes(username)) && password.length === 0) {
-  modalError.textContent = "Le mot de passe est obligatoire pour ce pseudo.";
-  modalError.style.display = 'block';
-  return;
+.sprite-button:focus,
+.sprite-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
 }
 
 
+/* MP */
 
-
-
-  
-  // --- Ajout stockage mot de passe ---
-  const usernameLower = username.toLowerCase();
-const adminUsernamesLower = adminUsernames.map(u => u.toLowerCase());
-const modoUsernamesLower = modoUsernames.map(u => u.toLowerCase());
-
-if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(usernameLower)) {
-  localStorage.setItem('password', password);
-} else {
-  localStorage.removeItem('password');
+/* Conteneur */
+#private-chat-container {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  z-index: 1100;
+  font-family: 'Orbitron', sans-serif;
+  user-select: none;
+  overflow: visible;
 }
 
-  // --- fin ajout ---
-
-  modalError.style.display = 'none';
-  socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
+/* Fenêtre */
+.private-chat-window {
+  background: linear-gradient(145deg, #0c002b 0%, #1a0055 100%);
+  border: 2px solid #8e44ad;
+  border-radius: 12px;
+  box-shadow:
+    0 0 8px #8e44ad,
+    0 0 16px #b266ff,
+    0 0 32px #b266ff;
+  width: 360px;
+  height: 380px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-size: 15px;
+  color: #d6a8ff;
+  resize: both;
+  overflow: auto;
+  position: absolute;
+  cursor: default;
+  animation: neon-glow 3.5s ease-in-out infinite;
+  transition: box-shadow 0.3s ease, transform 0.3s ease, height 0.3s ease;
 }
 
-
-  // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
-  socket.once('username accepted', ({ username, gender, age }) => {
-  localStorage.setItem('username', username);
-  localStorage.setItem('gender', gender);
-  localStorage.setItem('age', age);
-
-  document.getElementById('myModal').style.display = 'none';
- const chatWrapper = document.getElementById('chat-wrapper');
-if (chatWrapper) chatWrapper.style.display = 'block';
-else console.warn('⚠️ Élément #chat-wrapper introuvable');
-
-
-
-  socket.emit('joinRoom', currentChannel);
-  selectChannelInUI(currentChannel);
-
-  hasSentUserInfo = true;
-  initialLoadComplete = true;
-});
-
-
-  // Écouteurs socket divers
-  socket.on('username error', msg => showBanner(msg, 'error'));
-  socket.on('username exists', (username) => {
-    const modalError = document.getElementById('modal-error');
-    if (!modalError) return;
-    modalError.textContent = `❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.`;
-    modalError.style.display = 'block';
-  });
-
-  socket.on('chat history', (messages) => {
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-    chatMessages.innerHTML = '';
-    messages.forEach(addMessageToChat);
-  });
-
-  socket.on('chat message', addMessageToChat);
-  socket.on('server message', (msg) => {
-  const message = {
-    username: 'Système',
-    message: msg,
-    timestamp: new Date().toISOString()
-  };
-  addMessageToChat(message);
-});
-
-  socket.on('user list', updateUserList);
-
-  socket.on('room created', (newChannel) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
-
-    if (![...channelList.children].some(li => extractChannelName(li.textContent) === newChannel)) {
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
-      li.addEventListener('click', () => {
-        const clickedRoom = extractChannelName(li.textContent);
-        if (clickedRoom === currentChannel) return;
-        currentChannel = clickedRoom;
-        localStorage.setItem('currentChannel', currentChannel);
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        selectChannelInUI(currentChannel);
-        socket.emit('joinRoom', currentChannel);
-      });
-      channelList.appendChild(li);
-    }
-    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
-  });
-
-  socket.on('roomUserCounts', (counts) => {
-  const channelList = document.getElementById('channel-list');
-  if (!channelList) return;
-
-  [...channelList.children].forEach(li => {
-    const name = extractChannelName(li.textContent);
-    if (name && counts[name] !== undefined) {
-      const emoji = channelEmojis[name] || "💬";
-
-      // Au lieu de modifier textContent qui supprime les enfants, on met à jour un span dédié (à créer si absent)
-      let countSpan = li.querySelector('.user-count');
-      if (!countSpan) {
-        countSpan = document.createElement('span');
-        countSpan.classList.add('user-count');
-        li.appendChild(countSpan);
-      }
-
-      if (invisibleMode && name === currentChannel) {
-        countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
-      }
-    }
-  });
-});
-
-
-  socket.on('room list', (rooms) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
-    const previousChannel = currentChannel;
-
-    channelList.innerHTML = '';
-
-    rooms.forEach(channelName => {
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
-
-      li.addEventListener('click', () => {
-        const clickedRoom = extractChannelName(li.textContent);
-        if (clickedRoom === currentChannel) return;
-        currentChannel = clickedRoom;
-        localStorage.setItem('currentChannel', currentChannel);
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        selectChannelInUI(currentChannel);
-        socket.emit('joinRoom', currentChannel);
-      });
-
-      channelList.appendChild(li);
-    });
-
-    if (!rooms.includes(previousChannel)) {
-      currentChannel = 'Général';
-      localStorage.setItem('currentChannel', currentChannel);
-      socket.emit('joinRoom', currentChannel);
-      const chatMessages = document.getElementById('chat-messages');
-      if (chatMessages) chatMessages.innerHTML = '';
-    }
-
-    selectChannelInUI(currentChannel);
-  });
-
-  // Ping périodique
-  setInterval(() => {
-    socket.emit('ping');
-  }, 10000);
-
-  // Création nouveau salon
-  document.getElementById('create-channel-button').addEventListener('click', () => {
-    const input = document.getElementById('new-channel-name');
-    if (!input) return;
-    const newRoom = input.value.trim();
-    if (!newRoom || newRoom.length > 20 || /\s/.test(newRoom)) {
-      showBanner("Nom de salon invalide : pas d'espaces, max 20 caractères.", 'error');
-      return;
-    }
-    socket.emit('createRoom', newRoom);
-    input.value = '';
-    input.focus();
-  });
-
-  // Envoi message avec touche Entrée
-  document.getElementById('message-input').addEventListener('keypress', (e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      sendMessage();
-    }
-  });
-
-  socket.on('connect', () => {
-  const savedUsername = localStorage.getItem('username');
-  const savedGender = localStorage.getItem('gender');
-  const savedAge = localStorage.getItem('age');
-  const savedPassword = localStorage.getItem('password'); // <-- ajout
-
-  if (!hasSentUserInfo && savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || 'non spécifié',
-      age: savedAge,
-      invisible: invisibleMode,
-      password: savedPassword || ''  // <-- ajout
-    });
-    currentChannel = 'Général';
-    localStorage.setItem('currentChannel', currentChannel);
-    socket.emit('joinRoom', currentChannel);
-    selectChannelInUI(currentChannel);
-
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
-
-    if (invisibleMode) {
-      showBanner('Mode invisible activé (auto)', 'success');
-    }
-  }
-});
-
-  // Bouton validation pseudo
-  document.getElementById('username-submit').addEventListener('click', submitUserInfo);
-
-  // Emoji Picker
-  const emojiButton = document.getElementById('emoji-button');
-  const emojiPicker = document.getElementById('emoji-picker');
-  const messageInput = document.getElementById('message-input');
-
-  if (emojiPicker && emojiButton && messageInput) {
-    emojiPicker.style.display = 'none';
-
-    emojiButton.addEventListener('click', (e) => {
-      e.stopPropagation();
-      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
-    });
-
-    emojiPicker.querySelectorAll('.emoji').forEach(emoji => {
-      emoji.style.cursor = 'pointer';
-      emoji.style.fontSize = '22px';
-      emoji.style.margin = '5px';
-      emoji.addEventListener('click', () => {
-        messageInput.value += emoji.textContent;
-        messageInput.focus();
-        emojiPicker.style.display = 'none';
-      });
-    });
-
-    document.addEventListener('click', () => {
-      emojiPicker.style.display = 'none';
-    });
-
-    emojiPicker.addEventListener('click', e => {
-      e.stopPropagation();
-    });
-  }
-
-  // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
-  socket.on('banned', () => {
-    showBanner('🚫 Vous avez été banni du serveur.', 'error');
-    socket.disconnect();
-  });
-
-  socket.on('kicked', () => {
-    showBanner('👢 Vous avez été expulsé du serveur.', 'error');
-    socket.disconnect();
-  });
-
-  socket.on('muted', () => {
-    showBanner('🔇 Vous avez été muté et ne pouvez plus envoyer de messages.', 'error');
-  });
-
-  socket.on('unmuted', () => {
-    showBanner('🔊 Vous avez été unmuté, vous pouvez à nouveau envoyer des messages.', 'success');
-  });
-
-  socket.on('error message', (msg) => {
-    showBanner(`❗ ${msg}`, 'error');
-  });
-
-  socket.on('no permission', () => {
-    showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
-  });
-
-  // --- Début ajout mode invisible ---
-
-  if (invisibleBtn) {
-    invisibleBtn.addEventListener('click', () => {
-      invisibleMode = !invisibleMode;
-      updateInvisibleButton();
-
-      localStorage.setItem('invisibleMode', invisibleMode ? 'true' : 'false');
-
-      if (invisibleMode) {
-        socket.emit('chat message', { message: '/invisible on' });
-        showBanner('Mode invisible activé', 'success');
-        invisibleBtn.style.display = 'inline-block';
-      } else {
-        socket.emit('chat message', { message: '/invisible off' });
-        showBanner('Mode invisible désactivé', 'success');
-        if (!isAdmin) {
-          invisibleBtn.style.display = 'none';
-        }
-      }
-    });
-  }
-
-  // Mise à jour bouton mode invisible selon rôle
-  socket.on('user list', (users) => {
-  // Met à jour la liste des utilisateurs dans l'interface
-  updateUserList(users);
-
-  // Gestion bouton mode invisible pour admin avec mot de passe valide
-  const username = localStorage.getItem('username');
-  const userPassword = localStorage.getItem('password');
-  const isOnAddAdminPage = window.location.pathname === '/addadmin';
-
-  const me = users.find(u => u.username === username);
-
-  if (me && me.role === 'admin' && userPassword && userPassword.length > 0 && !isOnAddAdminPage) {
-    if (!isAdmin) isAdmin = true;
-    if (invisibleBtn) {
-      invisibleBtn.style.display = 'inline-block';
-      updateInvisibleButton();
-    }
-  } else {
-    if (isAdmin) {
-      isAdmin = false;
-      if (!invisibleMode && invisibleBtn) {
-        invisibleBtn.style.display = 'none';
-      }
-    }
-  }
-});
-
-
-
-  // --- Fin ajout mode invisible ---
-
- socket.on('redirect', (url) => {
-  console.log('Redirect demandé vers:', url);
-  if (typeof url === 'string' && url.length > 0) {
-    window.location.href = url;
-  }
-});
-
-const colorTextBtn = document.getElementById('color-text');
-const styleMenu = document.getElementById('style-menu');
-const styleColor = document.getElementById('style-color');
-const styleBold = document.getElementById('style-bold');
-const styleItalic = document.getElementById('style-italic');
-const styleFont = document.getElementById('style-font');
-
-const defaultStyle = {
-  color: '#ffffff',
-  bold: false,
-  italic: false,
-  font: 'Arial'
-};
-
-function loadSavedStyle() {
-  const saved = localStorage.getItem('chatStyle');
-  return saved ? JSON.parse(saved) : defaultStyle;
+/* Header */
+.private-chat-header {
+  background: linear-gradient(90deg, #4b0082, #8a2be2);
+  padding: 12px 16px;
+  font-weight: 800;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: grab;
+  user-select: none;
+  border-bottom: 2px solid #b266ff;
+  color: #d6a8ff;
+  text-shadow:
+    0 0 10px #b266ff,
+    0 0 20px #d6a8ff;
+  font-family: 'Orbitron', sans-serif;
 }
 
-function saveStyle(style) {
-  localStorage.setItem('chatStyle', JSON.stringify(style));
+.private-chat-header:active {
+  cursor: grabbing;
 }
 
-function applyStyleToInput(style) {
-  const input = document.getElementById('message-input');
-  if (!input) return;
-  input.style.color = style.color;
-  input.style.fontWeight = style.bold ? 'bold' : 'normal';
-  input.style.fontStyle = style.italic ? 'italic' : 'normal';
-  input.style.fontFamily = style.font;
+.private-chat-header span {
+  flex-grow: 1;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+  user-select: text;
 }
 
-const currentStyle = loadSavedStyle();
-styleColor.value = currentStyle.color;
-styleBold.checked = currentStyle.bold;
-styleItalic.checked = currentStyle.italic;
-styleFont.value = currentStyle.font;
-applyStyleToInput(currentStyle);
-
-// 🎨 toggle menu
-colorTextBtn.addEventListener('click', (e) => {
-  e.stopPropagation();
-  styleMenu.style.display = styleMenu.style.display === 'none' ? 'block' : 'none';
-});
-
-document.addEventListener('click', () => {
-  styleMenu.style.display = 'none';
-});
-
-styleMenu.addEventListener('click', e => e.stopPropagation());
-
-// Mise à jour et sauvegarde des styles
-[styleColor, styleBold, styleItalic, styleFont].forEach(el => {
-  el.addEventListener('input', () => {
-    const newStyle = {
-      color: styleColor.value,
-      bold: styleBold.checked,
-      italic: styleItalic.checked,
-      font: styleFont.value
-    };
-    saveStyle(newStyle);
-    applyStyleToInput(newStyle);
-  });
-});
-
-// --- Upload fichier ---
-const uploadInput = document.getElementById('file-input');    // input type="file"
-const uploadButton = document.getElementById('upload-btn');   // bouton 📎 ou autre
-
-if (uploadInput && uploadButton) {
-  uploadButton.addEventListener('click', () => {
-    uploadInput.click();
-  });
-
-  uploadInput.addEventListener('change', () => {
-    const file = uploadInput.files[0];
-    if (!file) return;
-
-    const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
-    if (file.size > MAX_SIZE) {
-      showBanner('Le fichier est trop volumineux (50 Mo max conseillés).', 'error');
-      uploadInput.value = ''; // reset input
-      return;
-    }
-
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const arrayBuffer = reader.result;
-
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer)
-          .reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-
-      socket.emit('upload file', {
-        filename: file.name,
-        mimetype: file.type,
-        data: base64,
-        channel: currentChannel,
-        timestamp: new Date().toISOString()
-      });
-
-      uploadInput.value = ''; // reset après l'envoi
-    };
-
-    reader.readAsArrayBuffer(file);
-  });
-}  // <-- fermeture du if uploadInput && uploadButton
-
-// Affichage d’un fichier uploadé
-
-const displayedFileUsers = new Set();
-
-function insertMention(username) {
-  const input = document.getElementById('message-input');
-  if (!input) return;
-
-  const mention = '@' + username;
-
-  if (input.value.includes(mention)) return;
-
-  const start = input.selectionStart || 0;
-  const end = input.selectionEnd || 0;
-
-  const textBefore = input.value.substring(0, start);
-  const textAfter = input.value.substring(end);
-
-  input.value = textBefore + mention + ' ' + textAfter;
-
-  const newPos = start + mention.length + 1;
-  input.setSelectionRange(newPos, newPos);
-  input.focus();
+.private-chat-header button {
+  background: transparent;
+  border: none;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #d6a8ff;
+  padding: 0 8px;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+  user-select: none;
+  filter: drop-shadow(0 0 2px #b266ff);
 }
 
-socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
-  const chatMessages = document.getElementById('chat-messages');
-  if (!chatMessages) return;
+.private-chat-header button:hover {
+  color: #fff;
+  text-shadow:
+    0 0 16px #fff,
+    0 0 24px #d6a8ff,
+    0 0 32px #b266ff;
+}
 
-  const wrapper = document.createElement('div');
-  wrapper.classList.add('message');
+/* Corps */
+.private-chat-body {
+  flex-grow: 1;
+  padding: 16px 18px;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #1a0030 0%, #10002a 100%);
+  border-bottom: 2px solid #8e44ad;
+  color: #c5a3ff;
+  font-size: 15px;
+  text-shadow:
+    0 0 4px #b266ff,
+    0 0 6px #d6a8ff;
+  word-break: break-word;
+}
 
-  // Timestamp
-  const timeSpan = document.createElement('span');
-  timeSpan.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
-  timeSpan.style.color = '#888';
-  timeSpan.style.fontStyle = 'italic';
-  timeSpan.style.marginRight = '5px';
-  wrapper.appendChild(timeSpan);
+/* Barre d'input */
+.private-chat-input {
+  display: flex;
+  padding: 14px 18px;
+  background: linear-gradient(90deg, #4b0082, #6a2bd9);
+  border-top: 2px solid #b266ff;
+  box-shadow: inset 0 0 8px #a97eff88;
+}
 
-  // Pseudo + icône
-  const usernameContainer = document.createElement('span');
-  usernameContainer.style.fontWeight = 'bold';
-  usernameContainer.style.marginRight = '4px';
-  usernameContainer.style.display = 'inline-flex';
-  usernameContainer.style.alignItems = 'center';
-  usernameContainer.style.position = 'relative';
-  usernameContainer.style.top = '2px';
+.private-chat-input input {
+  flex-grow: 1;
+  background: #23005f;
+  border: 1.8px solid #b266ff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 15px;
+  color: #ddd;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  text-shadow: 0 0 6px #d6a8ff;
+}
 
-  let color = 'white';
-  if (role === 'admin') color = 'red';
-  else if (role === 'modo') color = 'limegreen';
-  else if (gender === 'Femme') color = '#f0f';
-  else if (gender === 'Homme') color = 'dodgerblue';
-  usernameContainer.style.color = color;
+.private-chat-input input::placeholder {
+  color: #b9aaffcc;
+}
 
-  if (role === 'admin' || role === 'modo') {
-    const icon = createRoleIcon(role);
-    if (icon) {
-      icon.style.width = '17px';
-      icon.style.height = '15px';
-      icon.style.marginRight = '2px';
-      icon.style.verticalAlign = '-1px';
-      usernameContainer.appendChild(icon);
-    }
+.private-chat-input input:focus {
+  border-color: #d6a8ff;
+  box-shadow: 0 0 14px #d6a8ff;
+}
+
+.private-chat-input button {
+  margin-left: 14px;
+  background-color: #8a2be2;
+  border: none;
+  color: white;
+  padding: 10px 18px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 0 12px #d6a8ff;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.private-chat-input button:hover {
+  background-color: #b266ff;
+  box-shadow: 0 0 24px #e0bbff;
+}
+
+/* Curseur redimensionnement */
+.private-chat-window {
+  resize: both;
+  overflow: auto;
+}
+
+.private-chat-window::after {
+  content: "";
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  right: 4px;
+  bottom: 4px;
+  cursor: se-resize;
+  background:
+    linear-gradient(45deg, transparent 50%, #b266ff 50%),
+    linear-gradient(-45deg, transparent 50%, #b266ff 50%);
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: 10px 10px, 10px 10px;
+  pointer-events: none;
+  filter: drop-shadow(0 0 4px #b266ff);
+}
+
+/* Animation néon */
+@keyframes neon-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 6px #9b59b6,
+      0 0 12px #8e44ad,
+      0 0 24px #b266ff,
+      0 0 40px #b266ff;
+    color: #b266ff;
+    text-shadow:
+      0 0 6px #b266ff,
+      0 0 12px #d6a8ff;
   }
-
-  const clickableUsername = document.createElement('span');
-  clickableUsername.textContent = username;
-  clickableUsername.style.cursor = 'pointer';
-
-  clickableUsername.addEventListener('click', () => {
-    insertMention(username);
-  });
-
-  usernameContainer.appendChild(clickableUsername);
-  wrapper.appendChild(usernameContainer);
-
-  // Affichage du fichier
-  if (mimetype.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = `data:${mimetype};base64,${data}`;
-    img.style.maxWidth = '100px';
-    img.style.cursor = 'pointer';
-    img.style.border = '2px solid #ccc';
-    img.style.borderRadius = '8px';
-    img.style.padding = '4px';
-
-    const link = document.createElement('a');
-    link.href = '#';
-    link.style.cursor = 'pointer';
-    link.appendChild(img);
-
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.document.write(`
-          <html>
-            <head><title>${filename}</title></head>
-            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-              <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-            </body>
-          </html>
-        `);
-        newWindow.document.close();
-      } else {
-        alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
-      }
-    });
-
-    img.onload = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(link);
-
-  } else if (mimetype.startsWith('audio/')) {
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = `data:${mimetype};base64,${data}`;
-    audio.style.marginTop = '4px';
-    audio.style.border = '2px solid #ccc';
-    audio.style.borderRadius = '8px';
-    audio.style.padding = '4px';
-    audio.style.backgroundColor = '#f9f9f9';
-    audio.onloadeddata = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(audio);
-
-  } else if (mimetype.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = `data:${mimetype};base64,${data}`;
-    video.style.maxWidth = '300px';
-    video.style.maxHeight = '300px';
-    video.style.marginTop = '4px';
-    video.style.border = '2px solid #ccc';
-    video.style.borderRadius = '8px';
-    video.style.padding = '4px';
-    video.style.backgroundColor = '#000';
-    video.onloadeddata = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(video);
-
-  } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    wrapper.appendChild(link);
+  50% {
+    box-shadow:
+      0 0 12px #b266ff,
+      0 0 20px #9b59b6,
+      0 0 30px #b266ff,
+      0 0 50px #d6a8ff;
+    color: #d6a8ff;
+    text-shadow:
+      0 0 8px #d6a8ff,
+      0 0 14px #b266ff;
   }
-
-  chatMessages.appendChild(wrapper);
-  setTimeout(() => {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }, 0);
-});
+}
