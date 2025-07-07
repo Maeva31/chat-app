@@ -1,5 +1,7 @@
+const socket = io();
+
 document.addEventListener('DOMContentLoaded', () => {
-  const socket = io();
+
 
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
