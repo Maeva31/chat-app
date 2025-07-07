@@ -122,7 +122,7 @@ document.addEventListener('DOMContentLoaded', () => {
   function addPrivateMessage(fromUser, { fromSelf, message, timestamp }) {
     const container = document.getElementById('private-chat-container');
     if (!container) return;
-    let win = container.querySelector(.private-chat-window[data-user="${fromUser}"]);
+    let win = container.querySelector(`.private-chat-window[data-user="${fromUser}"]`);
     if (!win) {
       openPrivateChat(fromUser);
       win = container.querySelector(.private-chat-window[data-user="${fromUser}"]);
@@ -131,7 +131,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const messages = win.querySelector('.messages');
     const timeStr = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const msgElem = document.createElement('div');
-    msgElem.innerHTML = <span style="color:#888;font-size:11px;">${timeStr}</span><br><span style="color:${fromSelf ? '#0f0' : '#fff'}">${fromSelf ? 'Moi' : fromUser} :</span> ${message};
+    msgElem.innerHTML = `<span style="color:#888;font-size:11px;">${timeStr}</span><br><span style="color:${fromSelf ? '#0f0' : '#fff'}">${fromSelf ? 'Moi' : fromUser} :</span> ${message}`;
+
     msgElem.style.marginBottom = '4px';
 
     messages.appendChild(msgElem);
@@ -151,8 +152,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function move(e) {
       if (!dragging) return;
-      win.style.left = ${e.clientX - offsetX}px;
-      win.style.top = ${e.clientY - offsetY}px;
+      win.style.left = `${e.clientX - offsetX}px`;
+      win.style.top = `${e.clientY - offsetY}px`;
+
     }
 
     function stop() {
@@ -180,11 +182,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
-      li.innerHTML = 
-        <span class="role-icon"></span> 
-        <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-        <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-      ;
+      li.innerHTML = `
+  <span class="role-icon"></span> 
+  <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+  <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+`;
+
 
       const roleIconSpan = li.querySelector('.role-icon');
       const icon = createRoleIcon(role);
@@ -198,7 +201,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clickTimeout) clearTimeout(clickTimeout);
         clickTimeout = setTimeout(() => {
           const input = document.getElementById('message-input');
-          const mention = @${username} ;
+          const mention = `@${username} `;
           if (!input.value.includes(mention)) input.value = mention + input.value;
           input.focus();
           selectedUser = username;
@@ -286,7 +289,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!banner || !text) return;
 
     const prefix = type === 'success' ? '✅' : '❌';
-    text.textContent = ${prefix} ${message};
+    text.textContent = `${prefix} ${message}`;
     banner.style.display = 'flex';
     banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
 
@@ -571,7 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('username exists', (username) => {
     const modalError = document.getElementById('modal-error');
     if (!modalError) return;
-    modalError.textContent = ❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.;
+    modalError.textContent = `❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.`;
     modalError.style.display = 'block';
   });
 
@@ -601,7 +604,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = # ${emoji} ┊ ${newChannel} (0);
+      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
         if (clickedRoom === currentChannel) return;
@@ -1058,7 +1061,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Affichage du fichier selon type mimetype
     if (mimetype.startsWith('image/')) {
       const img = document.createElement('img');
-      img.src = data:${mimetype};base64,${data};
+      img.src = `data:${mimetype};base64,${data}`;
       img.style.maxWidth = '100px';
       img.style.cursor = 'pointer';
       img.style.border = '2px solid #ccc';
@@ -1074,14 +1077,15 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const newWindow = window.open();
         if (newWindow) {
-          newWindow.document.write(
-            <html>
-              <head><title>${filename}</title></head>
-              <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-                <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-              </body>
-            </html>
-          );
+         newWindow.document.write(`
+  <html>
+    <head><title>${filename}</title></head>
+    <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+      <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
+    </body>
+  </html>
+`);
+
           newWindow.document.close();
         } else {
           alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
@@ -1097,7 +1101,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (mimetype.startsWith('audio/')) {
       const audio = document.createElement('audio');
       audio.controls = true;
-      audio.src = data:${mimetype};base64,${data};
+      audio.src = `data:${mimetype};base64,${data}`;
       audio.style.marginTop = '4px';
       audio.style.border = '2px solid #ccc';
       audio.style.borderRadius = '8px';
@@ -1113,7 +1117,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (mimetype.startsWith('video/')) {
       const video = document.createElement('video');
       video.controls = true;
-      video.src = data:${mimetype};base64,${data};
+      video.src = `data:${mimetype};base64,${data}`;
       video.style.maxWidth = '300px';
       video.style.maxHeight = '300px';
       video.style.marginTop = '4px';
@@ -1130,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } else {
       const link = document.createElement('a');
-      link.href = data:${mimetype};base64,${data};
+      link.href = `data:${mimetype};base64,${data}`;
       link.download = filename;
       link.textContent = 📎 ${filename};
       link.target = '_blank';
