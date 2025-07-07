@@ -1116,10 +1116,7 @@ if (uploadInput && uploadButton) {
 
     reader.readAsArrayBuffer(file);
   });
-
-
-
-
+}  // <-- fermeture du if uploadInput && uploadButton
 
 // Affichage d’un fichier uploadé
 
@@ -1233,10 +1230,9 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     });
 
     img.onload = () => {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-wrapper.appendChild(link);
-
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    wrapper.appendChild(link);
 
   } else if (mimetype.startsWith('audio/')) {
     const audio = document.createElement('audio');
@@ -1248,10 +1244,9 @@ wrapper.appendChild(link);
     audio.style.padding = '4px';
     audio.style.backgroundColor = '#f9f9f9';
     audio.onloadeddata = () => {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-wrapper.appendChild(audio);
-
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    wrapper.appendChild(audio);
 
   } else if (mimetype.startsWith('video/')) {
     const video = document.createElement('video');
@@ -1265,10 +1260,9 @@ wrapper.appendChild(audio);
     video.style.padding = '4px';
     video.style.backgroundColor = '#000';
     video.onloadeddata = () => {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-wrapper.appendChild(video);
-
+      chatMessages.scrollTop = chatMessages.scrollHeight;
+    };
+    wrapper.appendChild(video);
 
   } else {
     const link = document.createElement('a');
@@ -1276,11 +1270,7 @@ wrapper.appendChild(video);
     link.download = filename;
     link.textContent = `📎 ${filename}`;
     link.target = '_blank';
-    img.onload = () => {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-wrapper.appendChild(link);
-
+    wrapper.appendChild(link);
   }
 
   chatMessages.appendChild(wrapper);
@@ -1288,8 +1278,3 @@ wrapper.appendChild(link);
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
 });
-
-}
-});
-
- 
