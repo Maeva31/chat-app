@@ -38,27 +38,38 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Header
     const header = document.createElement('div');
-    header.classList.add('private-chat-header');
-    const title = document.createElement('span');
-    title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const toggleBtn = document.createElement('button');
-toggleBtn.textContent = '−'; // signe moins = minimiser
+header.classList.add('private-chat-header');
+
+const title = document.createElement('span');
+title.textContent = username;
+title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
+
+const toggleBtn = document.createElement('button');
+toggleBtn.textContent = '−'; // Minimiser
 toggleBtn.title = "Minimiser/Agrandir la fenêtre";
 toggleBtn.onclick = () => {
   if (body.style.display !== 'none') {
     body.style.display = 'none';
     inputBar.style.display = 'none';
     toggleBtn.textContent = '+';
-    win.style.height = '40px'; // hauteur header seule
+    win.style.height = '40px'; // Hauteur header seule
   } else {
     body.style.display = 'block';
     inputBar.style.display = 'flex';
     toggleBtn.textContent = '−';
-    win.style.height = '380px'; // hauteur initiale
+    win.style.height = '380px'; // Hauteur initiale
   }
 };
-header.append(title, toggleBtn);
+
+const closeBtn = document.createElement('button');
+closeBtn.textContent = '×'; // Fermer
+closeBtn.title = "Fermer la fenêtre";
+closeBtn.onclick = () => {
+  container.removeChild(win);
+};
+
+header.append(title, toggleBtn, closeBtn);
+
 
     // Body et input
     const body = document.createElement('div');
