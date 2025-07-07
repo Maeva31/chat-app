@@ -214,6 +214,42 @@ io.on('connection', (socket) => {
     });
   });
 
+socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
+    const sender = Object.values(users).find(u => u.id === socket.id);
+    if (!sender) return;
+
+    const recipient = users[to];
+    if (!recipient) {
+      socket.emit('error message', `Utilisateur ${to} introuvable pour envoi de fichier privé.`);
+      return;
+    }
+
+    if (bannedUsers.has(sender.username)) {
+      socket.emit('error message', 'Vous êtes banni et ne pouvez pas envoyer de fichiers privés.');
+      return;
+    }
+
+    if (mutedUsers.has(sender.username)) {
+      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de fichiers privés.');
+      return;
+    }
+
+    const fileMsg = {
+      from: sender.username,
+      to,
+      filename,
+      mimetype,
+      data,
+      timestamp: timestamp || new Date().toISOString(),
+      role: sender.role,
+      gender: sender.gender,
+    };
+
+    // Envoi au destinataire
+    io.to(recipient.id).emit('private file', fileMsg);
+    // Écho au sender (pour affichage local)
+    socket.emit('private file', fileMsg);
+  });
 
 
  function logout(socket) {
