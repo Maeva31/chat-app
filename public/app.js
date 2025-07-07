@@ -19,71 +19,59 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // ── 3) Fonction pour créer / ouvrir la fenêtre privée globale ──
-  function openPrivateChatGlobal() {
+  // ── 3) Ouvre ou remonte une fenêtre privée ──
+  function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
-    let win = document.getElementById('private-chat-global');
+    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (win) {
-      container.appendChild(win); // remonte la fenêtre au-dessus
-      return win;
+      container.appendChild(win);
+      return;
     }
 
-    // Création de la fenêtre unique globale
+    // Création de la fenêtre
     win = document.createElement('div');
-    win.id = 'private-chat-global';
     win.classList.add('private-chat-window');
+    win.dataset.user = username;
 
-    // Header fixe
+    // Header
     const header = document.createElement('div');
     header.classList.add('private-chat-header');
-    header.textContent = 'Messages Privés';
+    const title = document.createElement('span');
+    title.textContent = username;
+    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
     closeBtn.onclick = () => container.removeChild(win);
-    header.appendChild(closeBtn);
+    header.append(title, closeBtn);
 
-    // Body unique pour tous les messages privés
+    // Body et input
     const body = document.createElement('div');
     body.classList.add('private-chat-body');
-
-    // Input + bouton envoyer
     const inputBar = document.createElement('div');
     inputBar.classList.add('private-chat-input');
     const input = document.createElement('input');
     input.placeholder = 'Message…';
-
-    // Par défaut, on envoie à personne (ou à un champ de texte, ou bien à la dernière personne)
-    // Pour simplifier, on envoie au dernier expéditeur reçu
-    let lastRecipient = null;
-
     const sendBtn = document.createElement('button');
     sendBtn.textContent = 'Envoyer';
     sendBtn.onclick = () => {
       const text = input.value.trim();
       if (!text) return;
-      if (!lastRecipient) {
-        alert('Aucun destinataire sélectionné. Envoie impossible.');
-        return;
-      }
-      socket.emit('private message', { to: lastRecipient, message: text });
+      socket.emit('private message', { to: username, message: text });
       appendPrivateMessage(body, 'moi', text);
       input.value = '';
     };
-    input.addEventListener('keypress', e => {
-      if (e.key === 'Enter') sendBtn.click();
-    });
-
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
     inputBar.append(input, sendBtn);
 
     // Assemblage
     win.append(header, body, inputBar);
 
-    // Positionnement (idem que ton code)
+    // ─── Positionnement initial ───
     win.style.position = 'absolute';
-    win.style.bottom = '20px';
-    win.style.right = '20px';
+    win.style.bottom   = '20px';
+    win.style.right    = '20px';
 
-    // Drag & Drop idem (simplifié ici)
+    // ─── Drag & Drop ───
     let isDragging = false, offsetX = 0, offsetY = 0;
     header.style.cursor = 'move';
     header.addEventListener('mousedown', e => {
@@ -95,7 +83,7 @@ document.addEventListener('DOMContentLoaded', () => {
     document.addEventListener('mousemove', e => {
       if (!isDragging) return;
       win.style.left = (e.clientX - offsetX) + 'px';
-      win.style.top = (e.clientY - offsetY) + 'px';
+      win.style.top  = (e.clientY - offsetY) + 'px';
     });
     document.addEventListener('mouseup', () => {
       if (isDragging) {
@@ -105,60 +93,48 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     container.appendChild(win);
-    return win;
   }
 
-  // ── 4) Ajoute un message dans la fenêtre privée globale ──
+  // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
-
     const who = document.createElement('span');
     who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
-
-    // Couleur selon rôle/genre si possible
-    const userObj = users.find(u => u.username === from) || {};
-    who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
-
     msgDiv.append(who, document.createTextNode(text));
     bodyElem.appendChild(msgDiv);
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
 
-  // ── 5) Clic sur un pseudo ouvre la fenêtre privée globale ──
+  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
     const username = span.textContent.trim();
-
-    // On ouvre juste la fenêtre globale
-    openPrivateChatGlobal();
-
-    // Optionnel: on peut afficher un message système indiquant avec qui on veut discuter
-    const win = document.getElementById('private-chat-global');
-    if (win) {
-      const body = win.querySelector('.private-chat-body');
-      appendPrivateMessage(body, 'Système', `Conversation ouverte avec ${username}`);
-    }
-
-    // Mettre à jour le destinataire pour l'envoi (via variable globale ici)
-    lastRecipient = username;
+    const userObj = users.find(u => u.username === username);
+    if (!userObj) return;
+    openPrivateChat(username, userObj.role, userObj.gender);
   });
 
   // ── 6) Réception d'un message privé ──
-  let lastRecipient = null; // variable globale pour le destinataire (celui à qui on envoie)
-
   socket.on('private message', ({ from, message }) => {
-    const win = openPrivateChatGlobal();
-    const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, from, message);
-
-    // Quand on reçoit un message d'un user, on peut automatiquement mettre à jour le destinataire
-    lastRecipient = from;
-  });
-
-
+  // Cherche toutes les fenêtres privées ouvertes
+  const container = document.getElementById('private-chat-container');
+  const allWindows = container.querySelectorAll('.private-chat-window');
+  
+  if (allWindows.length === 0) {
+    // S’il n’y a aucune fenêtre privée ouverte, ouvre celle de l’expéditeur
+    const userObj = users.find(u => u.username === from) || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+  }
+  
+  // Ajoute TOUS les messages dans la première fenêtre privée ouverte (ou dans celle de l’expéditeur s’il n’y en avait aucune)
+  const win = container.querySelector('.private-chat-window');
+  if (!win) return;
+  const body = win.querySelector('.private-chat-body');
+  appendPrivateMessage(body, from, message);
+});
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
