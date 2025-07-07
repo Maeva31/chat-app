@@ -58,6 +58,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
+      appendPrivateMessage(body, 'moi', text);
       input.value = '';
     };
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
@@ -112,7 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
-    if (from === 'moi') return; // Ne rien afficher pour ses propres messages envoyés
+    if (from === 'moi') {
+      // Style spécifique pour ses propres messages si besoin
+      // Sinon juste afficher comme les autres
+    }
 
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
@@ -141,20 +145,21 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── 6) Réception d'un message privé ──
   socket.on('private message', ({ from, message }) => {
     const container = document.getElementById('private-chat-container');
-    const allWindows = container.querySelectorAll('.private-chat-window');
+    let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
-    if (allWindows.length === 0) {
+    if (!win) {
       const userObj = users.find(u => u.username === from) || {};
       openPrivateChat(from, userObj.role, userObj.gender);
+      win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
     }
 
-    const win = container.querySelector('.private-chat-window');
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
 
 });
+
 
 
 
