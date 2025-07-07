@@ -23,7 +23,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const user = userCache[username];
         const title = win.querySelector('.private-chat-header span');
         if (user && title) {
-          title.style.color = usernameColors[user.role] || usernameColors[user.gender] || usernameColors.default;
+          title.style.color = (user.role === 'admin') ? usernameColors.admin
+                            : (user.role === 'modo') ? usernameColors.modo
+                            : (usernameColors[user.gender] || usernameColors.default);
         }
       });
     }
@@ -68,7 +70,9 @@ document.addEventListener('DOMContentLoaded', () => {
     header.classList.add('private-chat-header');
     const title = document.createElement('span');
     title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
+    title.style.color = (role === 'admin') ? usernameColors.admin
+                      : (role === 'modo') ? usernameColors.modo
+                      : (usernameColors[gender] || usernameColors.default);
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
     closeBtn.onclick = () => container.removeChild(win);
@@ -222,7 +226,7 @@ document.addEventListener('DOMContentLoaded', () => {
     who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
 
-    // Priorité : role et gender passés, sinon cherche dans cache
+    // Priorité stricte rôle > genre
     let userRole = role;
     let userGender = gender;
 
@@ -234,7 +238,13 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    who.style.color = usernameColors[userRole] || usernameColors[userGender] || usernameColors.default;
+    if (userRole === 'admin') {
+      who.style.color = usernameColors.admin;
+    } else if (userRole === 'modo') {
+      who.style.color = usernameColors.modo;
+    } else {
+      who.style.color = usernameColors[userGender] || usernameColors.default;
+    }
 
     msgDiv.append(who, document.createTextNode(text));
     bodyElem.appendChild(msgDiv);
@@ -273,6 +283,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
+
 
 
 
