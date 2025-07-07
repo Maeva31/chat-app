@@ -1,3 +1,7 @@
+const socket = io();
+
+document.addEventListener('DOMContentLoaded', () => {
+
 function openPrivateChat(username, role, gender) {
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
