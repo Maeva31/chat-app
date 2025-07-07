@@ -987,22 +987,3 @@ button:focus {
   background: #8f00ff;
 }
 
-/* Poignée de redimensionnement en bas à droite */
-.private-chat-window {
-  position: absolute; /* déjà ou à ajouter si besoin */
-  resize: none; /* on va gérer en JS, pas resize CSS */
-  overflow: hidden; /* éviter scrollbar native */
-}
-
-.resize-handle {
-  position: absolute;
-  width: 16px;
-  height: 16px;
-  right: 2px;
-  bottom: 2px;
-  cursor: nwse-resize; /* Curseur diagonale */
-  background: rgba(255, 255, 255, 0.3); /* visible, tu peux changer */
-  border-radius: 3px;
-  user-select: none;
-  z-index: 10;
-}
