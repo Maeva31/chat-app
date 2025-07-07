@@ -278,6 +278,9 @@ function getYouTubeVideoId(url) {
 
   // Ajoute un message dans la zone de chat
 function addMessageToChat(msg) {
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
+
   if (msg.username === 'Système') {
     // Ignore le message "est maintenant visible."
     if (/est maintenant visible\.$/i.test(msg.message)) return;
@@ -290,45 +293,65 @@ function addMessageToChat(msg) {
     }
   }
 
-const newMessage = document.createElement('div');
+  const newMessage = document.createElement('div');
 
-const timeSpan = document.createElement('span');
-timeSpan.textContent = `[${timeString}] `;
-timeSpan.style.color = '#888';
-timeSpan.style.fontStyle = 'italic';
-timeSpan.style.marginRight = '5px';
-newMessage.appendChild(timeSpan);
+  const date = new Date(msg.timestamp);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-newMessage.appendChild(usernameSpan);
-newMessage.appendChild(messageSpan);
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = `[${timeString}] `;
+  timeSpan.style.color = '#888';
+  timeSpan.style.fontStyle = 'italic';
+  timeSpan.style.marginRight = '5px';
 
-chatMessages.appendChild(newMessage);
-chatMessages.scrollTop = chatMessages.scrollHeight;
+  const usernameSpan = document.createElement('span');
+  const color = (msg.role === 'admin') ? 'red' :
+                (msg.role === 'modo') ? 'limegreen' :
+                getUsernameColor(msg.gender);
 
+  if (msg.username === 'Système') {
+    usernameSpan.textContent = msg.username + ': ';
+    usernameSpan.style.color = '#888';
+    usernameSpan.style.fontWeight = 'bold';
+  } else {
+    usernameSpan.classList.add('clickable-username');
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = msg.username + ': ';
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
 
+    // Clic pour mentionner
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
+  }
 
-  const chatMessages = document.getElementById('chat-messages');
-if (!chatMessages) return;
+  // Gestion du style gras si mention
+  const currentUsername = localStorage.getItem('username');
+  const isMentioned = msg.message?.includes(`@${currentUsername}`);
 
-const newMessage = document.createElement('div');
-const date = new Date(msg.timestamp);
-const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const messageSpan = document.createElement('span');
+  messageSpan.textContent = msg.message;
+  messageSpan.style.fontWeight = isMentioned ? 'bold' : (msg.style?.bold ? 'bold' : 'normal');
+  messageSpan.style.color = msg.style?.color || '#fff';
+  if (msg.style?.italic) messageSpan.style.fontStyle = 'italic';
+  if (msg.style?.font) messageSpan.style.fontFamily = msg.style.font;
 
-const usernameSpan = document.createElement('span');
-const color = (msg.role === 'admin') ? 'red' :
-              (msg.role === 'modo') ? 'limegreen' :
-              getUsernameColor(msg.gender);
+  // Ajout des éléments à newMessage
+  newMessage.appendChild(timeSpan);
+  newMessage.appendChild(usernameSpan);
+  newMessage.appendChild(messageSpan);
 
-if (msg.username === 'Système') {
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.style.color = '#888';
-  usernameSpan.style.fontWeight = 'bold';
-} else {
-  usernameSpan.classList.add('clickable-username');
-  usernameSpan.style.color = color;
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
+  newMessage.classList.add('message');
+  newMessage.dataset.username = msg.username;
+
+  chatMessages.appendChild(newMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 
 
 
