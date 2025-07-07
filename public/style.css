@@ -862,8 +862,8 @@ button:focus {
 .private-chat-window {
   background-color: #1e1e1e;
   color: #fff;
-  width: 260px;
-  height: 320px;
+  width: 400px;
+  height: 250px;
   border-radius: 8px;
   border: 1px solid #444;
   display: flex;
