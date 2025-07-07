@@ -11,7 +11,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
   let currentChannel = 'Général'; // Forcer salon Général au chargement
 
-  // --- FONCTIONS ---
+  // --- Variables globales ---
+
+  const genderColors = {
+    Homme: 'dodgerblue',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
+
+  const channelEmojis = {
+    "Général": "💬",
+    "Musique": "🎧",
+    "Gaming": "🎮",
+    "Détente": "🌿"
+  };
+
+  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+  let isAdmin = false;
+
+  // --- Fonctions utilitaires ---
+
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  function createRoleIcon(role) {
+    if (role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.classList.add('admin-icon');
+      return icon;
+    } else if (role === 'modo') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.classList.add('modo-icon');
+      return icon;
+    }
+    return null;
+  }
 
   function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
@@ -145,40 +188,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // --- Autres fonctions utiles, variables etc. ---
-  // (genre, emoji, updateUserList, createRoleIcon, etc.)
-
-  const genderColors = {
-    Homme: 'dodgerblue',
-    Femme: '#f0f',
-    Autre: '#0ff',
-    'non spécifié': '#aaa',
-    default: '#aaa'
-  };
-
-  function getUsernameColor(gender) {
-    return genderColors[gender] || genderColors.default;
-  }
-
-  function createRoleIcon(role) {
-    if (role === 'admin') {
-      const icon = document.createElement('img');
-      icon.src = '/diamond.ico';
-      icon.alt = 'Admin';
-      icon.title = 'Admin';
-      icon.classList.add('admin-icon');
-      return icon;
-    } else if (role === 'modo') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Modérateur';
-      icon.title = 'Modérateur';
-      icon.classList.add('modo-icon');
-      return icon;
-    }
-    return null;
-  }
-
   // Mise à jour de la liste utilisateurs avec ouverture MP au double clic
   function updateUserList(users) {
     const userList = document.getElementById('users');
@@ -227,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // --- Événements Socket.IO ---
+  // --- GESTION ÉVÉNEMENTS SOCKET.IO ---
 
   socket.on('private message', ({ from, message, timestamp }) => {
     addPrivateMessage(from, {
