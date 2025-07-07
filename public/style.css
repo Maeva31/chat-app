@@ -847,85 +847,104 @@ button:focus {
 /* Priver */
 
 /* Conteneur global des fenêtres privées */
-.private-chat-container {
+#private-chat-container {
   position: fixed;
   bottom: 10px;
   right: 10px;
   display: flex;
+  flex-direction: row-reverse;
   gap: 10px;
   z-index: 1000;
+  pointer-events: none; /* permet de ne pas bloquer les clics globaux */
 }
 
 /* Fenêtre de conversation privée */
 .private-chat-window {
-  background-color: #111;
+  background-color: #1e1e1e;
   color: #fff;
   width: 250px;
-  min-width: 200px;
-  min-height: 150px;
-  max-width: 90vw;
-  max-height: 90vh;
+  height: 300px;
+  border: 1px solid #444;
+  border-radius: 8px;
   display: flex;
   flex-direction: column;
-  border: 1px solid #333;
-  border-radius: 8px;
-  overflow: auto;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.7);
-  resize: both;
-  position: absolute;
-  left: 20px;
-  top: 80px;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.7);
+  pointer-events: auto; /* réactive les clics sur les fenêtres */
 }
 
-/* En‑tête de la fenêtre (titre + bouton fermer) */
+/* En-tête */
 .private-chat-header {
-  background-color: #444;
+  background-color: #333;
   color: #fff;
-  padding: 6px 8px;
   font-weight: bold;
+  padding: 6px 10px;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  user-select: none;
-  cursor: move;
+  border-bottom: 1px solid #444;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
+
+/* Bouton de fermeture */
 .private-chat-header button {
-  background: transparent;
+  background: none;
+  color: #fff;
   border: none;
-  color: white;
   font-size: 16px;
   cursor: pointer;
-  margin-left: 6px;
 }
 
-/* Corps des messages */
+/* Zone de messages */
 .private-chat-body {
-  flex: 1;
-  padding: 6px 8px;
+  flex-grow: 1;
   overflow-y: auto;
-  font-size: 0.9em;
+  padding: 8px;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
-/* Zone de saisie */
+/* Barre de saisie */
 .private-chat-input {
-  border-top: 1px solid #333;
-  padding: 6px 8px;
   display: flex;
+  border-top: 1px solid #444;
+  background-color: #222;
+  padding: 6px;
+  border-bottom-left-radius: 8px;
+  border-bottom-right-radius: 8px;
 }
+
 .private-chat-input input {
-  flex: 1;
-  background: #222;
+  flex-grow: 1;
+  padding: 4px 6px;
+  border: 1px solid #555;
+  background-color: #111;
   color: #fff;
-  border: none;
+  border-radius: 4px;
+  font-size: 14px;
   outline: none;
 }
+
 .private-chat-input button {
   margin-left: 6px;
-  background: #444;
+  background-color: #555;
   color: #fff;
   border: none;
+  border-radius: 4px;
   padding: 4px 8px;
   cursor: pointer;
-  border-radius: 4px;
+  transition: background 0.2s;
 }
 
+.private-chat-input button:hover {
+  background-color: #777;
+}
+
+/* Messages */
+.private-chat-body div {
+  margin-bottom: 6px;
+}
+
+.private-chat-body span {
+  font-weight: bold;
+}
