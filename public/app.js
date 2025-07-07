@@ -1,96 +1,134 @@
+
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-let users = [];
+document.addEventListener('DOMContentLoaded', () => {
+  const socket = io();
+
+  // ── 1) Stockage et mise à jour de la liste users ──
+  let users = [];
   socket.on('user list', list => {
     users = list;
     updateUserList(list);
   });
 
-  // Couleurs en fonction du rôle ou genre
-const usernameColors = {
-  admin: 'red',
-  modo: 'limegreen',
-  Homme: 'dodgerblue',
-  Femme: '#f0f',
-  Autre: '#0ff',
-  'non spécifié': '#aaa',
-  default: '#aaa'
-};
-
-function openPrivateChat(username, role, gender) {
-  const container = document.getElementById('private-chat-container');
-  let win = container.querySelector(.private-chat-window[data-user="${username}"]);
-  if (win) {
-    container.appendChild(win);
-    return;
-  }
-  win = document.createElement('div');
-  win.classList.add('private-chat-window');
-  win.dataset.user = username;
-  const header = document.createElement('div');
-  header.classList.add('private-chat-header');
-  const title = document.createElement('span');
-  title.textContent = username;
-  title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
-  closeBtn.onclick = () => container.removeChild(win);
-  header.append(title, closeBtn);
-  const body = document.createElement('div');
-  body.classList.add('private-chat-body');
-  const inputBar = document.createElement('div');
-  inputBar.classList.add('private-chat-input');
-  const input = document.createElement('input');
-  input.placeholder = 'Message…';
-  const sendBtn = document.createElement('button');
-  sendBtn.textContent = 'Envoyer';
-  sendBtn.onclick = () => {
-    const text = input.value.trim();
-    if (!text) return;
-    socket.emit('private message', { to: username, message: text });
-    appendPrivateMessage(body, 'moi', text);
-    input.value = '';
+  // ── 2) Couleurs selon rôle/genre ──
+  const usernameColors = {
+    admin: 'red',
+    modo: 'limegreen',
+    Homme: 'dodgerblue',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
   };
-  input.addEventListener('keypress', e => {
-    if (e.key === 'Enter') sendBtn.click();
+
+  // ── 3) Ouvre ou remonte une fenêtre privée ──
+  function openPrivateChat(username, role, gender) {
+    const container = document.getElementById('private-chat-container');
+    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (win) {
+      container.appendChild(win);
+      return;
+    }
+
+    // Création de la fenêtre
+    win = document.createElement('div');
+    win.classList.add('private-chat-window');
+    win.dataset.user = username;
+
+    // Header
+    const header = document.createElement('div');
+    header.classList.add('private-chat-header');
+    const title = document.createElement('span');
+    title.textContent = username;
+    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '×';
+    closeBtn.onclick = () => container.removeChild(win);
+    header.append(title, closeBtn);
+
+    // Body et input
+    const body = document.createElement('div');
+    body.classList.add('private-chat-body');
+    const inputBar = document.createElement('div');
+    inputBar.classList.add('private-chat-input');
+    const input = document.createElement('input');
+    input.placeholder = 'Message…';
+    const sendBtn = document.createElement('button');
+    sendBtn.textContent = 'Envoyer';
+    sendBtn.onclick = () => {
+      const text = input.value.trim();
+      if (!text) return;
+      socket.emit('private message', { to: username, message: text });
+      appendPrivateMessage(body, 'moi', text);
+      input.value = '';
+    };
+    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+    inputBar.append(input, sendBtn);
+
+    // Assemblage
+    win.append(header, body, inputBar);
+
+    // ─── Positionnement initial ───
+    win.style.position = 'absolute';
+    win.style.bottom   = '20px';
+    win.style.right    = '20px';
+
+    // ─── Drag & Drop ───
+    let isDragging = false, offsetX = 0, offsetY = 0;
+    header.style.cursor = 'move';
+    header.addEventListener('mousedown', e => {
+      isDragging = true;
+      offsetX = e.clientX - win.offsetLeft;
+      offsetY = e.clientY - win.offsetTop;
+      document.body.style.userSelect = 'none';
+    });
+    document.addEventListener('mousemove', e => {
+      if (!isDragging) return;
+      win.style.left = (e.clientX - offsetX) + 'px';
+      win.style.top  = (e.clientY - offsetY) + 'px';
+    });
+    document.addEventListener('mouseup', () => {
+      if (isDragging) {
+        isDragging = false;
+        document.body.style.userSelect = '';
+      }
+    });
+
+    container.appendChild(win);
+  }
+
+  // ── 4) Ajoute un message dans la fenêtre privée ──
+  function appendPrivateMessage(bodyElem, from, text) {
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
+    const who = document.createElement('span');
+    who.textContent = from + ': ';
+    who.style.fontWeight = 'bold';
+    msgDiv.append(who, document.createTextNode(text));
+    bodyElem.appendChild(msgDiv);
+    bodyElem.scrollTop = bodyElem.scrollHeight;
+  }
+
+  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
+  document.addEventListener('click', e => {
+    const span = e.target.closest('.clickable-username');
+    if (!span) return;
+    const username = span.textContent.trim();
+    const userObj = users.find(u => u.username === username);
+    if (!userObj) return;
+    openPrivateChat(username, userObj.role, userObj.gender);
   });
-  inputBar.append(input, sendBtn);
-  win.append(header, body, inputBar);
-  container.appendChild(win);
-}
 
-function appendPrivateMessage(bodyElem, from, text) {
-  const msgDiv = document.createElement('div');
-  msgDiv.style.margin = '4px 0';
-  const who = document.createElement('span');
-  who.textContent = from + ': ';
-  who.style.fontWeight = 'bold';
-  msgDiv.append(who, document.createTextNode(text));
-  bodyElem.appendChild(msgDiv);
-  bodyElem.scrollTop = bodyElem.scrollHeight;
-}
-
-// Clic sur un pseudo pour ouvrir la fenêtre privée
-document.addEventListener('click', e => {
-  const span = e.target.closest('.clickable-username');
-  if (!span) return;
-  const username = span.textContent.trim();
-  const userObj = users.find(u => u.username === username);
-  if (!userObj) return;
-  openPrivateChat(username, userObj.role, userObj.gender);
-});
-
-// Réception d'un message privé
-socket.on('private message', ({ from, message }) => {
-  const userObj = users.find(u => u.username === from) || {};
-  openPrivateChat(from, userObj.role, userObj.gender);
-  const win = document.querySelector(.private-chat-window[data-user="${from}"]);
-  const body = win.querySelector('.private-chat-body');
-  appendPrivateMessage(body, from, message);
-});
-
-  
+  // ── 6) Réception d'un message privé ──
+  socket.on('private message', ({ from, message }) => {
+    const userObj = users.find(u => u.username === from) || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+    const win = document.querySelector(`.private-chat-window[data-user="${from}"]`);
+    const body = win.querySelector('.private-chat-body');
+    appendPrivateMessage(body, from, message);
+  });
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
@@ -154,7 +192,7 @@ if (usernameInput && passwordInput) {
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
-    invisibleBtn.textContent = 👻;
+    invisibleBtn.textContent = `👻`;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
     invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
 
@@ -177,7 +215,7 @@ if (usernameInput && passwordInput) {
     if (!banner || !text) return;
 
     const prefix = type === 'success' ? '✅' : '❌';
-    text.textContent = ${prefix} ${message};
+    text.textContent = `${prefix} ${message}`;
     banner.style.display = 'flex';
     banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
 
@@ -201,7 +239,6 @@ if (usernameInput && passwordInput) {
     return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
   }
 
-  
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
   const userList = document.getElementById('users');
@@ -220,11 +257,11 @@ if (usernameInput && passwordInput) {
 
     const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
-    li.innerHTML = 
+    li.innerHTML = `
       <span class="role-icon"></span> 
       <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    ;
+    `;
 
     const roleIconSpan = li.querySelector('.role-icon');
     const icon = createRoleIcon(role);
@@ -233,7 +270,7 @@ if (usernameInput && passwordInput) {
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = @${username} ;
+      const mention = `@${username} `;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
       selectedUser = username;
@@ -319,7 +356,7 @@ function getYouTubeThumbnail(url) {
   const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
   const match = url.match(regExp);
   if (match) {
-    return https://img.youtube.com/vi/${match[1]}/hqdefault.jpg;
+    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
   }
   return null;
 }
@@ -341,7 +378,7 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
       // Supprimer largeur/hauteur fixes pour laisser le CSS gérer
       // iframe.width = '480';
       // iframe.height = '270';
-      iframe.src = https://www.youtube.com/embed/${videoId}?controls=1;
+      iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
       iframe.frameBorder = '0';
       iframe.allow =
         'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
@@ -433,7 +470,7 @@ if (msg.username === 'Système') {
     // Clic pour mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      const mention = @${msg.username} ;
+      const mention = `@${msg.username} `;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
@@ -648,7 +685,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   socket.on('username exists', (username) => {
     const modalError = document.getElementById('modal-error');
     if (!modalError) return;
-    modalError.textContent = ❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.;
+    modalError.textContent = `❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.`;
     modalError.style.display = 'block';
   });
 
@@ -679,7 +716,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = # ${emoji} ┊ ${newChannel} (0);
+      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
         if (clickedRoom === currentChannel) return;
@@ -692,7 +729,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       });
       channelList.appendChild(li);
     }
-    showBanner(Salon "${newChannel}" créé avec succès !, 'success');
+    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
   });
 
   socket.on('roomUserCounts', (counts) => {
@@ -714,10 +751,10 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
       if (invisibleMode && name === currentChannel) {
         countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = # ${emoji} ┊ ${name} ;
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
       } else {
-        countSpan.textContent =  (${counts[name]});
-        li.firstChild.textContent = # ${emoji} ┊ ${name} ;
+        countSpan.textContent = ` (${counts[name]})`;
+        li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
       }
     }
   });
@@ -735,7 +772,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = # ${emoji} ┊ ${channelName} (0);
+      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
 
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
@@ -873,7 +910,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   });
 
   socket.on('error message', (msg) => {
-    showBanner(❗ ${msg}, 'error');
+    showBanner(`❗ ${msg}`, 'error');
   });
 
   socket.on('no permission', () => {
@@ -1136,7 +1173,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   // Affichage du fichier
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
-    img.src = data:${mimetype};base64,${data};
+    img.src = `data:${mimetype};base64,${data}`;
     img.style.maxWidth = '100px';
     img.style.cursor = 'pointer';
     img.style.border = '2px solid #ccc';
@@ -1152,14 +1189,14 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
       e.preventDefault();
       const newWindow = window.open();
       if (newWindow) {
-        newWindow.document.write(
+        newWindow.document.write(`
           <html>
             <head><title>${filename}</title></head>
             <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
               <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
             </body>
           </html>
-        );
+        `);
         newWindow.document.close();
       } else {
         alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
@@ -1175,7 +1212,7 @@ wrapper.appendChild(link);
   } else if (mimetype.startsWith('audio/')) {
     const audio = document.createElement('audio');
     audio.controls = true;
-    audio.src = data:${mimetype};base64,${data};
+    audio.src = `data:${mimetype};base64,${data}`;
     audio.style.marginTop = '4px';
     audio.style.border = '2px solid #ccc';
     audio.style.borderRadius = '8px';
@@ -1190,7 +1227,7 @@ wrapper.appendChild(audio);
   } else if (mimetype.startsWith('video/')) {
     const video = document.createElement('video');
     video.controls = true;
-    video.src = data:${mimetype};base64,${data};
+    video.src = `data:${mimetype};base64,${data}`;
     video.style.maxWidth = '300px';
     video.style.maxHeight = '300px';
     video.style.marginTop = '4px';
@@ -1206,9 +1243,9 @@ wrapper.appendChild(video);
 
   } else {
     const link = document.createElement('a');
-    link.href = data:${mimetype};base64,${data};
+    link.href = `data:${mimetype};base64,${data}`;
     link.download = filename;
-    link.textContent = 📎 ${filename};
+    link.textContent = `📎 ${filename}`;
     link.target = '_blank';
     img.onload = () => {
   chatMessages.scrollTop = chatMessages.scrollHeight;
@@ -1225,3 +1262,5 @@ wrapper.appendChild(link);
 
 }
 });
+
+ 
