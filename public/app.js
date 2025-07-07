@@ -69,10 +69,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ─── Positionnement initial ───
     win.style.position = 'absolute';
-    win.style.bottom   = '20px';
-    win.style.right    = '20px';
+    win.style.bottom = '20px';
+    win.style.right = '20px';
 
-    // ─── Drag & Drop ───
+    // ─── Drag & Drop avec limites pour rester visible ───
     let isDragging = false, offsetX = 0, offsetY = 0;
     header.style.cursor = 'move';
     header.addEventListener('mousedown', e => {
@@ -83,8 +83,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('mousemove', e => {
       if (!isDragging) return;
-      win.style.left = (e.clientX - offsetX) + 'px';
-      win.style.top  = (e.clientY - offsetY) + 'px';
+
+      const newLeft = e.clientX - offsetX;
+      const newTop = e.clientY - offsetY;
+
+      const winWidth = win.offsetWidth;
+      const winHeight = win.offsetHeight;
+
+      const maxLeft = window.innerWidth - winWidth;
+      const maxTop = window.innerHeight - winHeight;
+
+      // Clamp les positions pour rester à l'intérieur de l'écran
+      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
+      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
+
+      win.style.left = clampedLeft + 'px';
+      win.style.top = clampedTop + 'px';
+      win.style.bottom = 'auto';
+      win.style.right = 'auto';
     });
     document.addEventListener('mouseup', () => {
       if (isDragging) {
@@ -140,7 +156,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-}  
+});
+
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
