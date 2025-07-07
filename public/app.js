@@ -176,7 +176,7 @@ function openPrivateChat(username, role, gender) {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-});
+
 
 
  const adminUsernames = ['MaEvA'];
