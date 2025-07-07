@@ -57,108 +57,81 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // === Fonction openPrivateChat version petite fenêtre flottante ===
+
   function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    if (!container) return;
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
 
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win); // Remonter la fenêtre au-dessus
-      return;
-    }
-
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
-    win.style.position = 'absolute';
-    win.style.top = `${100 + Math.random() * 200}px`;
-    win.style.left = `${100 + Math.random() * 200}px`;
-    win.style.width = '250px';     // largeur réduite
-    win.style.height = '150px';    // hauteur réduite
-    win.style.backgroundColor = '#222';
-    win.style.border = '1px solid #555';
-    win.style.borderRadius = '8px';
-    win.style.display = 'flex';
-    win.style.flexDirection = 'column';
-    win.style.zIndex = 1000;
-    win.style.color = 'white';
-    win.style.fontSize = '12px';   // police plus petite
-    win.style.userSelect = 'none';
-
-    const header = document.createElement('div');
-    header.classList.add('header');
-    header.style.backgroundColor = '#333';
-    header.style.padding = '4px 8px';
-    header.style.cursor = 'move';
-    header.style.userSelect = 'none';
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.textContent = `MP avec ${username}`;
-
-    const closeBtn = document.createElement('span');
-    closeBtn.textContent = '×';
-    closeBtn.style.cursor = 'pointer';
-    closeBtn.style.fontWeight = 'bold';
-    closeBtn.style.fontSize = '18px';
-    closeBtn.style.lineHeight = '18px';
-    closeBtn.style.marginLeft = '8px';
-    closeBtn.addEventListener('click', () => container.removeChild(win));
-    header.appendChild(closeBtn);
-
-    const messages = document.createElement('div');
-    messages.classList.add('messages');
-    messages.style.flex = '1';
-    messages.style.padding = '6px';
-    messages.style.overflowY = 'auto';
-    messages.style.backgroundColor = '#111';
-
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.placeholder = 'Message privé...';
-    input.style.padding = '6px';
-    input.style.border = 'none';
-    input.style.outline = 'none';
-    input.style.fontSize = '12px';
-    input.style.backgroundColor = '#333';
-    input.style.color = 'white';
-
-    input.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter' && input.value.trim()) {
-        const msg = input.value.trim();
-        socket.emit('private message', {
-          to: username,
-          message: msg,
-          timestamp: new Date().toISOString()
-        });
-        addPrivateMessage(username, { fromSelf: true, message: msg, timestamp: new Date().toISOString() });
-        input.value = '';
-      }
-    });
-
-    win.appendChild(header);
-    win.appendChild(messages);
-    win.appendChild(input);
-    container.appendChild(win);
-
-    makeDraggable(win, header);
+  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (win) {
+    container.appendChild(win); // Remonte la fenêtre au-dessus
+    return;
   }
+
+  win = document.createElement('div');
+  win.classList.add('private-chat-window');
+  win.dataset.user = username;
+
+  // Position initiale visible aléatoire
+  win.style.top = `${100 + Math.random() * 200}px`;
+  win.style.left = `${100 + Math.random() * 200}px`;
+
+  const header = document.createElement('div');
+  header.classList.add('header');
+  header.textContent = `MP avec ${username}`;
+
+  const closeBtn = document.createElement('span');
+  closeBtn.classList.add('close-btn');
+  closeBtn.textContent = '×';
+  closeBtn.title = "Fermer";
+  closeBtn.addEventListener('click', () => container.removeChild(win));
+  header.appendChild(closeBtn);
+
+  const messages = document.createElement('div');
+  messages.classList.add('messages');
+
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.placeholder = 'Message privé...';
+
+  input.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter' && input.value.trim()) {
+      const msg = input.value.trim();
+      socket.emit('private message', {
+        to: username,
+        message: msg,
+        timestamp: new Date().toISOString()
+      });
+      addPrivateMessage(username, { fromSelf: true, message: msg, timestamp: new Date().toISOString() });
+      input.value = '';
+    }
+  });
+
+  win.appendChild(header);
+  win.appendChild(messages);
+  win.appendChild(input);
+
+  container.appendChild(win);
+
+  makeDraggable(win, header);
+}
+
 
   // --- Fin openPrivateChat ---
 
   function addPrivateMessage(fromUser, { fromSelf, message, timestamp }) {
     const container = document.getElementById('private-chat-container');
     if (!container) return;
-    let win = container.querySelector(`.private-chat-window[data-user="${fromUser}"]`);
+    let win = container.querySelector(.private-chat-window[data-user="${fromUser}"]);
     if (!win) {
       openPrivateChat(fromUser);
-      win = container.querySelector(`.private-chat-window[data-user="${fromUser}"]`);
+      win = container.querySelector(.private-chat-window[data-user="${fromUser}"]);
     }
 
     const messages = win.querySelector('.messages');
     const timeStr = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const msgElem = document.createElement('div');
-    msgElem.innerHTML = `<span style="color:#888;font-size:11px;">${timeStr}</span><br><span style="color:${fromSelf ? '#0f0' : '#fff'}">${fromSelf ? 'Moi' : fromUser} :</span> ${message}`;
+    msgElem.innerHTML = <span style="color:#888;font-size:11px;">${timeStr}</span><br><span style="color:${fromSelf ? '#0f0' : '#fff'}">${fromSelf ? 'Moi' : fromUser} :</span> ${message};
     msgElem.style.marginBottom = '4px';
 
     messages.appendChild(msgElem);
@@ -178,8 +151,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function move(e) {
       if (!dragging) return;
-      win.style.left = `${e.clientX - offsetX}px`;
-      win.style.top = `${e.clientY - offsetY}px`;
+      win.style.left = ${e.clientX - offsetX}px;
+      win.style.top = ${e.clientY - offsetY}px;
     }
 
     function stop() {
@@ -207,11 +180,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
-      li.innerHTML = `
+      li.innerHTML = 
         <span class="role-icon"></span> 
         <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
         <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-      `;
+      ;
 
       const roleIconSpan = li.querySelector('.role-icon');
       const icon = createRoleIcon(role);
@@ -225,7 +198,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (clickTimeout) clearTimeout(clickTimeout);
         clickTimeout = setTimeout(() => {
           const input = document.getElementById('message-input');
-          const mention = `@${username} `;
+          const mention = @${username} ;
           if (!input.value.includes(mention)) input.value = mention + input.value;
           input.focus();
           selectedUser = username;
@@ -291,7 +264,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
-    invisibleBtn.textContent = `👻`;
+    invisibleBtn.textContent = 👻;
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
     invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
   }
@@ -313,7 +286,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!banner || !text) return;
 
     const prefix = type === 'success' ? '✅' : '❌';
-    text.textContent = `${prefix} ${message}`;
+    text.textContent = ${prefix} ${message};
     banner.style.display = 'flex';
     banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
 
@@ -395,7 +368,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Clic pour mentionner
       usernameSpan.addEventListener('click', () => {
         const input = document.getElementById('message-input');
-        const mention = `@${msg.username} `;
+        const mention = @${msg.username} ;
         if (!input.value.includes(mention)) input.value = mention + input.value;
         input.focus();
       });
@@ -598,7 +571,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('username exists', (username) => {
     const modalError = document.getElementById('modal-error');
     if (!modalError) return;
-    modalError.textContent = `❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.`;
+    modalError.textContent = ❌ Le nom "${username}" est déjà utilisé. Choisissez-en un autre.;
     modalError.style.display = 'block';
   });
 
@@ -628,7 +601,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[newChannel] || "🆕";
-      li.textContent = `# ${emoji} ┊ ${newChannel} (0)`;
+      li.textContent = # ${emoji} ┊ ${newChannel} (0);
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
         if (clickedRoom === currentChannel) return;
@@ -641,7 +614,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       channelList.appendChild(li);
     }
-    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
+    showBanner(Salon "${newChannel}" créé avec succès !, 'success');
   });
 
   socket.on('roomUserCounts', (counts) => {
@@ -662,10 +635,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (invisibleMode && name === currentChannel) {
           countSpan.textContent = '';  // Pas de nombre si invisible
-          li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+          li.firstChild.textContent = # ${emoji} ┊ ${name} ;
         } else {
-          countSpan.textContent = ` (${counts[name]})`;
-          li.firstChild.textContent = `# ${emoji} ┊ ${name} `;
+          countSpan.textContent =  (${counts[name]});
+          li.firstChild.textContent = # ${emoji} ┊ ${name} ;
         }
       }
     });
@@ -682,7 +655,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const li = document.createElement('li');
       li.classList.add('channel');
       const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+      li.textContent = # ${emoji} ┊ ${channelName} (0);
 
       li.addEventListener('click', () => {
         const clickedRoom = extractChannelName(li.textContent);
@@ -820,7 +793,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   socket.on('error message', (msg) => {
-    showBanner(`❗ ${msg}`, 'error');
+    showBanner(❗ ${msg}, 'error');
   });
 
   socket.on('no permission', () => {
@@ -1085,7 +1058,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Affichage du fichier selon type mimetype
     if (mimetype.startsWith('image/')) {
       const img = document.createElement('img');
-      img.src = `data:${mimetype};base64,${data}`;
+      img.src = data:${mimetype};base64,${data};
       img.style.maxWidth = '100px';
       img.style.cursor = 'pointer';
       img.style.border = '2px solid #ccc';
@@ -1101,14 +1074,14 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         const newWindow = window.open();
         if (newWindow) {
-          newWindow.document.write(`
+          newWindow.document.write(
             <html>
               <head><title>${filename}</title></head>
               <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
                 <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
               </body>
             </html>
-          `);
+          );
           newWindow.document.close();
         } else {
           alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
@@ -1124,7 +1097,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (mimetype.startsWith('audio/')) {
       const audio = document.createElement('audio');
       audio.controls = true;
-      audio.src = `data:${mimetype};base64,${data}`;
+      audio.src = data:${mimetype};base64,${data};
       audio.style.marginTop = '4px';
       audio.style.border = '2px solid #ccc';
       audio.style.borderRadius = '8px';
@@ -1140,7 +1113,7 @@ document.addEventListener('DOMContentLoaded', () => {
     } else if (mimetype.startsWith('video/')) {
       const video = document.createElement('video');
       video.controls = true;
-      video.src = `data:${mimetype};base64,${data}`;
+      video.src = data:${mimetype};base64,${data};
       video.style.maxWidth = '300px';
       video.style.maxHeight = '300px';
       video.style.marginTop = '4px';
@@ -1157,9 +1130,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     } else {
       const link = document.createElement('a');
-      link.href = `data:${mimetype};base64,${data}`;
+      link.href = data:${mimetype};base64,${data};
       link.download = filename;
-      link.textContent = `📎 ${filename}`;
+      link.textContent = 📎 ${filename};
       link.target = '_blank';
       wrapper.appendChild(link);
     }
@@ -1190,7 +1163,7 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.classList.add('youtube-wrapper');
 
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
+        iframe.src = https://www.youtube.com/embed/${videoId}?controls=1;
         iframe.frameBorder = '0';
         iframe.allow =
           'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
@@ -1201,5 +1174,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-});
+}); 
