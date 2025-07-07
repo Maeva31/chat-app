@@ -1,170 +1,6 @@
-const socket = io();
+
 document.addEventListener('DOMContentLoaded', () => {
-
-  // ── 1) Stockage et mise à jour de la liste users ──
-  let users = [];
-  socket.on('user list', list => {
-    users = list;
-    updateUserList(list);
-  });
-
-  // ── 2) Couleurs selon rôle/genre ──
-  const usernameColors = {
-    admin: 'red',
-    modo: 'limegreen',
-    Homme: 'dodgerblue',
-    Femme: '#f0f',
-    Autre: '#0ff',
-    'non spécifié': '#aaa',
-    default: '#aaa'
-  };
-
-  // ── 3) Ouvre ou remonte une fenêtre privée ──
-  function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
-    }
-
-    // Création de la fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
-
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
-    const title = document.createElement('span');
-    title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => win.remove();
-    header.append(title, closeBtn);
-
-    // Body et input
-    const body = document.createElement('div');
-    body.classList.add('private-chat-body');
-    const inputBar = document.createElement('div');
-    inputBar.classList.add('private-chat-input');
-    const input = document.createElement('input');
-    input.placeholder = 'Message…';
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
-    sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('private message', { to: username, message: text });
-      input.value = '';
-    };
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
-
-    // Assemblage
-    win.append(header, body, inputBar);
-
-    // ─── Positionnement initial ───
-    win.style.position = 'absolute';
-    win.style.top = '100px';
-    win.style.left = '100px';
-
-    // ─── Drag & Drop ───
-    let isDragging = false, offsetX = 0, offsetY = 0;
-    header.style.cursor = 'move';
-    header.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - win.offsetLeft;
-      offsetY = e.clientY - win.offsetTop;
-      document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      win.style.left = (e.clientX - offsetX) + 'px';
-      win.style.top  = (e.clientY - offsetY) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        document.body.style.userSelect = '';
-      }
-    });
-
-    container.appendChild(win);
-  }
-
-  window.openPrivateChat = openPrivateChat;
-
-  // 🎯 Ouvre le MP au clic droit sur un pseudo dans le chat central
-document.addEventListener('contextmenu', e => {
-  const span = e.target.closest('.clickable-username');
-  if (!span || !span.dataset.username) return;
-
-  e.preventDefault(); // empêche le menu contextuel par défaut
-
-  const username = span.dataset.username.trim();
-  const cleanUsername = username.normalize('NFC');
-  const userObj = users.find(u => u.username === cleanUsername);
-  if (!userObj) return;
-
-  openPrivateChat(cleanUsername, userObj.role, userObj.gender);
-});
-
-
-  // ── 4) Ajoute un message dans la fenêtre privée ──
-  function appendPrivateMessage(bodyElem, from, text) {
-    // Ne rien afficher pour ses propres messages envoyés
-    if (from === 'moi') return;
-
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
-    const who = document.createElement('span');
-    who.textContent = from + ': ';
-    who.style.fontWeight = 'bold';
-
-    const userObj = users.find(u => u.username === from) || {};
-    who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
-
-    msgDiv.append(who, document.createTextNode(text));
-    bodyElem.appendChild(msgDiv);
-    bodyElem.scrollTop = bodyElem.scrollHeight;
-  }
-
-  // ── 5) Double clic sur un pseudo pour ouvrir la fenêtre ──
-  document.addEventListener('dblclick', e => {
-  const userItem = e.target.closest('.user-item');
-  if (!userItem) return;
-
-  const span = userItem.querySelector('.clickable-username');
-  if (!span) return;
-
-  const username = span.textContent.trim();
-  const cleanUsername = username.normalize('NFC');
-  const userObj = users.find(u => u.username === cleanUsername);
-  if (!userObj) return;
-
-  openPrivateChat(cleanUsername, userObj.role, userObj.gender);
-});
-
-  // ── 6) Réception d'un message privé ──
-  socket.on('private message', ({ from, message }) => {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-    const userObj = users.find(u => u.username === from) || {};
-
-    if (!win) {
-      openPrivateChat(from, userObj.role, userObj.gender);
-      win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-    }
-
-    if (!win) return;
-    const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, from, message);
-  });
-  });
-
-
+  const socket = io();
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
@@ -304,15 +140,13 @@ if (usernameInput && passwordInput) {
     if (icon) roleIconSpan.appendChild(icon);
 
     const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', (e) => {
-  if (e.detail > 1) return; // ⛔️ Ignore le double-clic pour ne pas interférer avec MP
-  const input = document.getElementById('message-input');
-  const mention = `@${username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-  selectedUser = username;
-});
-
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
 
     userList.appendChild(li);
   });
@@ -476,10 +310,8 @@ if (msg.username === 'Système') {
   usernameSpan.classList.add('clickable-username');
   usernameSpan.style.color = color;
   usernameSpan.textContent = msg.username + ': ';
-usernameSpan.dataset.username = msg.username;
-usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                     (msg.role === 'modo') ? 'Modérateur' : '';
-
+  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                       (msg.role === 'modo') ? 'Modérateur' : '';
 
 
 
@@ -508,15 +340,13 @@ usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
     }
 
     // Clic pour mentionner
-    usernameSpan.addEventListener('click', (e) => {
-  if (e.detail > 1) return; // Ignore les double-clics
-
-  const input = document.getElementById('message-input');
-  const mention = `@${msg.username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-});
-
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
+  }
 
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
@@ -1129,7 +959,10 @@ if (uploadInput && uploadButton) {
 
     reader.readAsArrayBuffer(file);
   });
-}  // <-- fermeture du if uploadInput && uploadButton
+
+
+
+
 
 // Affichage d’un fichier uploadé
 
@@ -1243,9 +1076,10 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     });
 
     img.onload = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(link);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(link);
+
 
   } else if (mimetype.startsWith('audio/')) {
     const audio = document.createElement('audio');
@@ -1257,9 +1091,10 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     audio.style.padding = '4px';
     audio.style.backgroundColor = '#f9f9f9';
     audio.onloadeddata = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(audio);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(audio);
+
 
   } else if (mimetype.startsWith('video/')) {
     const video = document.createElement('video');
@@ -1273,9 +1108,10 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     video.style.padding = '4px';
     video.style.backgroundColor = '#000';
     video.onloadeddata = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(video);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(video);
+
 
   } else {
     const link = document.createElement('a');
@@ -1283,12 +1119,20 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     link.download = filename;
     link.textContent = `📎 ${filename}`;
     link.target = '_blank';
-    wrapper.appendChild(link);
+    img.onload = () => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+};
+wrapper.appendChild(link);
+
   }
 
   chatMessages.appendChild(wrapper);
-    setTimeout(() => {
+  setTimeout(() => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
 });
+
 }
+});
+
+ 
