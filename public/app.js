@@ -153,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
       openPrivateChat(from, userObj.role, userObj.gender);
     }
 
-    const win = container.querySelector('.private-chat-window');
+    const win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
