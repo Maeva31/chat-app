@@ -304,13 +304,15 @@ if (usernameInput && passwordInput) {
     if (icon) roleIconSpan.appendChild(icon);
 
     const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
+    usernameSpan.addEventListener('click', (e) => {
+  if (e.detail > 1) return; // ⛔️ Ignore le double-clic pour ne pas interférer avec MP
+  const input = document.getElementById('message-input');
+  const mention = `@${username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+  selectedUser = username;
+});
+
 
     userList.appendChild(li);
   });
