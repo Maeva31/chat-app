@@ -14,11 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     updateUserList(list);
 
-    // Met à jour les couleurs des fenêtres privées ouvertes (header)
+    // Mise à jour couleurs fenêtres privées
     const container = document.getElementById('private-chat-container');
     if (container) {
-      const windows = container.querySelectorAll('.private-chat-window');
-      windows.forEach(win => {
+      container.querySelectorAll('.private-chat-window').forEach(win => {
         const username = win.dataset.user;
         const user = userCache[username];
         const title = win.querySelector('.private-chat-header span.username-text');
@@ -42,11 +41,11 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // Fonction utilitaire pour créer une icône selon le rôle
+  // Création icône selon rôle
   function createRoleIcon(role) {
     if (role === 'admin') {
       const icon = document.createElement('img');
-      icon.src = '/diamond.ico'; // adapte le chemin si besoin
+      icon.src = '/diamond.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
       icon.style.width = '17px';
@@ -56,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
       return icon;
     } else if (role === 'modo') {
       const icon = document.createElement('img');
-      icon.src = '/favicon.ico'; // adapte le chemin si besoin
+      icon.src = '/favicon.ico';
       icon.alt = 'Modérateur';
       icon.title = 'Modérateur';
       icon.style.width = '16px';
@@ -67,7 +66,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return null;
   }
-  
+
   // ── 3) Ouvre ou remonte une fenêtre privée ──
   function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
@@ -77,7 +76,6 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
-    // Si role/genre non passés, tente de récupérer depuis userCache
     if (!role || !gender) {
       const cachedUser = userCache[username];
       if (cachedUser) {
@@ -86,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // Création de la fenêtre
+    // Création fenêtre
     win = document.createElement('div');
     win.classList.add('private-chat-window');
     win.dataset.user = username;
@@ -95,11 +93,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const header = document.createElement('div');
     header.classList.add('private-chat-header');
 
-    // Icône rôle
     const icon = createRoleIcon(role);
     if (icon) header.appendChild(icon);
 
-    // Pseudo en span distinct (pour mise à jour couleur plus simple)
     const title = document.createElement('span');
     title.classList.add('username-text');
     title.textContent = username;
@@ -113,19 +109,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     header.append(title, closeBtn);
 
-    // Body et input
+    // Body
     const body = document.createElement('div');
     body.classList.add('private-chat-body');
 
-    // Barre d'input avec emoji picker
+    // Barre d'input
     const inputBar = document.createElement('div');
     inputBar.classList.add('private-chat-input');
-    inputBar.style.position = 'relative'; // Pour positionner le picker
+    inputBar.style.position = 'relative';
 
     const input = document.createElement('input');
     input.placeholder = 'Message…';
 
-    // Bouton emoji
+    // Boutons emoji & upload
     const emojiBtn = document.createElement('button');
     emojiBtn.textContent = '😊';
     emojiBtn.title = 'Insérer un émoji';
@@ -135,13 +131,12 @@ document.addEventListener('DOMContentLoaded', () => {
     emojiBtn.style.cursor = 'pointer';
     emojiBtn.style.marginRight = '5px';
 
-    // Emoji picker (conteneur)
     const emojiPicker = document.createElement('div');
     emojiPicker.classList.add('emoji-picker');
     emojiPicker.style.display = 'none';
     emojiPicker.style.position = 'absolute';
     emojiPicker.style.bottom = '40px';
-    emojiPicker.style.left = '0px';
+    emojiPicker.style.left = '0';
     emojiPicker.style.background = '#222';
     emojiPicker.style.padding = '8px';
     emojiPicker.style.borderRadius = '8px';
@@ -150,9 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
     emojiPicker.style.maxWidth = '200px';
     emojiPicker.style.flexWrap = 'wrap';
 
-    // Liste d'émojis à afficher dans le picker
     const emojis = ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶'];
-
     emojis.forEach(e => {
       const span = document.createElement('span');
       span.textContent = e;
@@ -170,29 +163,22 @@ document.addEventListener('DOMContentLoaded', () => {
       emojiPicker.appendChild(span);
     });
 
-    // Toggle affichage picker emoji au clic bouton
     emojiBtn.addEventListener('click', e => {
       e.stopPropagation();
-      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
+      emojiPicker.style.display = (emojiPicker.style.display === 'none') ? 'flex' : 'none';
     });
 
-    // Clic hors picker ferme le picker
     document.addEventListener('click', () => {
       emojiPicker.style.display = 'none';
     });
 
-    // Empêche la fermeture au clic dans le picker
-    emojiPicker.addEventListener('click', e => {
-      e.stopPropagation();
-    });
+    emojiPicker.addEventListener('click', e => e.stopPropagation());
 
-    // --- AJOUT BOUTON UPLOAD FICHIER ---
-    // input type=file caché
+    // Upload fichier
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.style.display = 'none';
 
-    // bouton upload
     const uploadBtn = document.createElement('button');
     uploadBtn.textContent = '📎';
     uploadBtn.title = 'Envoyer un fichier';
@@ -202,148 +188,130 @@ document.addEventListener('DOMContentLoaded', () => {
     uploadBtn.style.cursor = 'pointer';
     uploadBtn.style.marginRight = '5px';
 
-    uploadBtn.addEventListener('click', () => {
-      fileInput.click();
-    });
+    uploadBtn.addEventListener('click', () => fileInput.click());
 
     fileInput.addEventListener('change', () => {
-  const file = fileInput.files[0];
-  if (!file) return;
+      const file = fileInput.files[0];
+      if (!file) return;
 
-  const MAX_SIZE = 50 * 1024 * 1024;
-  if (file.size > MAX_SIZE) {
-    alert('Le fichier est trop volumineux (max 50 Mo)');
-    fileInput.value = '';
-    return;
-  }
+      const MAX_SIZE = 50 * 1024 * 1024;
+      if (file.size > MAX_SIZE) {
+        alert('Le fichier est trop volumineux (max 50 Mo)');
+        fileInput.value = '';
+        return;
+      }
 
-  const reader = new FileReader();
+      const reader = new FileReader();
 
-  reader.onload = () => {
-    const arrayBuffer = reader.result;
-    const base64 = btoa(
-      new Uint8Array(arrayBuffer)
-        .reduce((data, byte) => data + String.fromCharCode(byte), '')
-    );
+      reader.onload = () => {
+        const arrayBuffer = reader.result;
+        const base64 = btoa(new Uint8Array(arrayBuffer).reduce((data, byte) => data + String.fromCharCode(byte), ''));
 
-    socket.emit('upload private file', {
-      to: username,
-      filename: file.name,
-      mimetype: file.type,
-      data: base64,
-      timestamp: new Date().toISOString()
+        socket.emit('upload private file', {
+          to: username,
+          filename: file.name,
+          mimetype: file.type,
+          data: base64,
+          timestamp: new Date().toISOString()
+        });
+
+        // Affichage local
+        const myUsername = localStorage.getItem('username') || 'moi';
+        let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+        if (!win) {
+          openPrivateChat(username);
+          win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+          if (!win) return;
+        }
+        const body = win.querySelector('.private-chat-body');
+
+        const me = userCache[myUsername] || { role: 'user', gender: 'non spécifié' };
+        const color = (me.role === 'admin') ? usernameColors.admin
+                   : (me.role === 'modo') ? usernameColors.modo
+                   : (usernameColors[me.gender] || usernameColors.default);
+
+        const msgDiv = document.createElement('div');
+        msgDiv.style.margin = '4px 0';
+
+        const who = document.createElement('span');
+        who.style.fontWeight = 'bold';
+        who.style.marginRight = '4px';
+        who.style.display = 'inline-flex';
+        who.style.alignItems = 'center';
+
+        const icon = createRoleIcon(me.role);
+        if (icon) who.appendChild(icon);
+
+        who.appendChild(document.createTextNode(myUsername + ': '));
+        who.style.color = color;
+
+        msgDiv.appendChild(who);
+
+        if (file.type.startsWith('image/')) {
+          const img = document.createElement('img');
+          img.src = `data:${file.type};base64,${base64}`;
+          img.style.maxWidth = '150px';
+          img.style.cursor = 'pointer';
+          img.style.border = '2px solid #ccc';
+          img.style.borderRadius = '8px';
+          img.style.padding = '4px';
+          img.addEventListener('click', () => {
+            const newWin = window.open();
+            if (newWin) {
+              newWin.document.write(`
+                <html><head><title>${file.name}</title></head>
+                <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+                <img src="${img.src}" alt="${file.name}" style="max-width:100vw;max-height:100vh;" />
+                </body></html>
+              `);
+              newWin.document.close();
+            }
+          });
+          msgDiv.appendChild(img);
+
+        } else if (file.type.startsWith('audio/')) {
+          const audio = document.createElement('audio');
+          audio.controls = true;
+          audio.src = `data:${file.type};base64,${base64}`;
+          audio.style.marginTop = '4px';
+          audio.style.border = '2px solid #ccc';
+          audio.style.borderRadius = '8px';
+          audio.style.padding = '4px';
+          audio.style.backgroundColor = '#f9f9f9';
+          msgDiv.appendChild(audio);
+
+        } else if (file.type.startsWith('video/')) {
+          const video = document.createElement('video');
+          video.controls = true;
+          video.src = `data:${file.type};base64,${base64}`;
+          video.style.maxWidth = '300px';
+          video.style.maxHeight = '300px';
+          video.style.marginTop = '4px';
+          video.style.border = '2px solid #ccc';
+          video.style.borderRadius = '8px';
+          video.style.padding = '4px';
+          video.style.backgroundColor = '#000';
+          msgDiv.appendChild(video);
+
+        } else {
+          const link = document.createElement('a');
+          link.href = `data:${file.type};base64,${base64}`;
+          link.download = file.name;
+          link.textContent = `📎 ${file.name}`;
+          link.target = '_blank';
+          msgDiv.appendChild(link);
+        }
+
+        body.appendChild(msgDiv);
+        body.scrollTop = body.scrollHeight;
+
+        fileInput.value = '';
+      };
+
+      reader.readAsArrayBuffer(file);
     });
 
-    // Affichage local
-    const myUsername = localStorage.getItem('username') || 'moi';
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (!win) {
-      openPrivateChat(username);
-      win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-      if (!win) return;
-    }
-    const body = win.querySelector('.private-chat-body');
-
-// Récupère les infos utilisateur
-const me = userCache[myUsername] || { role: 'user', gender: 'non spécifié' };
-const color = (me.role === 'admin') ? usernameColors.admin
-           : (me.role === 'modo') ? usernameColors.modo
-           : (usernameColors[me.gender] || usernameColors.default);
-
-// Création du message affichant le fichier
-const msgDiv = document.createElement('div');
-msgDiv.style.margin = '4px 0';
-
-const who = document.createElement('span');
-who.style.fontWeight = 'bold';
-who.style.marginRight = '4px';
-who.style.display = 'inline-flex';
-who.style.alignItems = 'center';
-
-const icon = createRoleIcon(me.role); // Utilise le vrai rôle de l'utilisateur
-if (icon) who.appendChild(icon);
-
-const usernameText = document.createTextNode(myUsername + ': ');
-who.appendChild(usernameText);
-
-who.style.color = color;
-
-
-
-
-
-    msgDiv.appendChild(who);
-
-    // Affichage selon type mimetype
-    if (file.type.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.src = `data:${file.type};base64,${base64}`;
-      img.style.maxWidth = '150px';
-      img.style.cursor = 'pointer';
-      img.style.border = '2px solid #ccc';
-      img.style.borderRadius = '8px';
-      img.style.padding = '4px';
-
-      img.addEventListener('click', () => {
-        const newWin = window.open();
-        if (newWin) {
-          newWin.document.write(`
-            <html><head><title>${file.name}</title></head>
-            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-            <img src="${img.src}" alt="${file.name}" style="max-width:100vw;max-height:100vh;" />
-            </body></html>
-          `);
-          newWin.document.close();
-        }
-      });
-
-      msgDiv.appendChild(img);
-
-    } else if (file.type.startsWith('audio/')) {
-      const audio = document.createElement('audio');
-      audio.controls = true;
-      audio.src = `data:${file.type};base64,${base64}`;
-      audio.style.marginTop = '4px';
-      audio.style.border = '2px solid #ccc';
-      audio.style.borderRadius = '8px';
-      audio.style.padding = '4px';
-      audio.style.backgroundColor = '#f9f9f9';
-      msgDiv.appendChild(audio);
-
-    } else if (file.type.startsWith('video/')) {
-      const video = document.createElement('video');
-      video.controls = true;
-      video.src = `data:${file.type};base64,${base64}`;
-      video.style.maxWidth = '300px';
-      video.style.maxHeight = '300px';
-      video.style.marginTop = '4px';
-      video.style.border = '2px solid #ccc';
-      video.style.borderRadius = '8px';
-      video.style.padding = '4px';
-      video.style.backgroundColor = '#000';
-      msgDiv.appendChild(video);
-
-    } else {
-      const link = document.createElement('a');
-      link.href = `data:${file.type};base64,${base64}`;
-      link.download = file.name;
-      link.textContent = `📎 ${file.name}`;
-      link.target = '_blank';
-      msgDiv.appendChild(link);
-    }
-
-    body.appendChild(msgDiv);
-    body.scrollTop = body.scrollHeight;
-
-    fileInput.value = ''; // Reset input
-  };
-
-  reader.readAsArrayBuffer(file);
-});
-
-
-    // Assemblage inputBar avec nouveau bouton upload
+    // Bouton envoyer
     const sendBtn = document.createElement('button');
     sendBtn.textContent = 'Envoyer';
     sendBtn.title = 'Envoyer le message';
@@ -351,70 +319,52 @@ who.style.color = color;
     sendBtn.style.marginLeft = '5px';
     sendBtn.style.padding = '4px 8px';
 
-    inputBar.append(emojiBtn, emojiPicker, uploadBtn, fileInput, input, sendBtn);
+    // Assemblage inputBar : emoji avant upload
+    inputBar.append(emojiBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
 
-    sendBtn.onclick = () => {
-  const text = input.value.trim();
-  if (!text) return;
-  socket.emit('private message', { to: username, message: text });
-  const myUsername = localStorage.getItem('username') || 'moi';
-  appendPrivateMessage(body, myUsername, text);
-  input.value = '';
-};
-
-
-    // --- FIN AJOUT ---
-
-    // Afficher localement le message envoyé
     sendBtn.onclick = () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
       const myUsername = localStorage.getItem('username') || 'moi';
       appendPrivateMessage(body, myUsername, text);
-
       input.value = '';
     };
 
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+    input.addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendBtn.click();
+    });
 
     // Assemblage fenêtre
     win.append(header, body, inputBar);
 
-    // Positionnement initial
+    // Position initiale et drag & drop
     win.style.position = 'absolute';
     win.style.bottom = '20px';
     win.style.right = '20px';
 
-    // --- Drag & Drop ---
     let isDragging = false, offsetX = 0, offsetY = 0;
     header.style.cursor = 'move';
+
     header.addEventListener('mousedown', e => {
       isDragging = true;
       offsetX = e.clientX - win.offsetLeft;
       offsetY = e.clientY - win.offsetTop;
       document.body.style.userSelect = 'none';
     });
+
     document.addEventListener('mousemove', e => {
       if (!isDragging) return;
-
       const newLeft = e.clientX - offsetX;
       const newTop = e.clientY - offsetY;
-
-      const winWidth = win.offsetWidth;
-      const winHeight = win.offsetHeight;
-
-      const maxLeft = window.innerWidth - winWidth;
-      const maxTop = window.innerHeight - winHeight;
-
-      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
-
-      win.style.left = clampedLeft + 'px';
-      win.style.top = clampedTop + 'px';
+      const maxLeft = window.innerWidth - win.offsetWidth;
+      const maxTop = window.innerHeight - win.offsetHeight;
+      win.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+      win.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
       win.style.bottom = 'auto';
       win.style.right = 'auto';
     });
+
     document.addEventListener('mouseup', () => {
       if (isDragging) {
         isDragging = false;
@@ -426,19 +376,16 @@ who.style.color = color;
   }
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
-  // Ajout role et gender en paramètres
   function appendPrivateMessage(bodyElem, from, text, role, gender) {
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
 
-    // Span pseudo (bold + couleur + icône)
     const who = document.createElement('span');
     who.style.fontWeight = 'bold';
     who.style.marginRight = '4px';
     who.style.display = 'inline-flex';
     who.style.alignItems = 'center';
 
-    // Priorité stricte rôle > genre
     let userRole = role;
     let userGender = gender;
 
@@ -450,27 +397,21 @@ who.style.color = color;
       }
     }
 
-    // Icône si admin ou modo
     const icon = createRoleIcon(userRole);
     if (icon) who.appendChild(icon);
 
-    const usernameText = document.createTextNode(from + ': ');
-    who.appendChild(usernameText);
+    who.appendChild(document.createTextNode(from + ': '));
 
-    if (userRole === 'admin') {
-      who.style.color = usernameColors.admin;
-    } else if (userRole === 'modo') {
-      who.style.color = usernameColors.modo;
-    } else {
-      who.style.color = usernameColors[userGender] || usernameColors.default;
-    }
+    who.style.color = userRole === 'admin' ? usernameColors.admin
+                  : userRole === 'modo' ? usernameColors.modo
+                  : (usernameColors[userGender] || usernameColors.default);
 
     msgDiv.append(who, document.createTextNode(text));
     bodyElem.appendChild(msgDiv);
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
 
-  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
+  // ── 5) Clic pseudo ouvre la fenêtre privée ──
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
@@ -480,8 +421,7 @@ who.style.color = color;
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
-  // ── 6) Réception d'un message privé ──
-  // On attend role et gender dans l’objet message reçu du serveur
+  // ── 6) Réception message privé ──
   socket.on('private message', ({ from, message, role, gender }) => {
     const myUsername = localStorage.getItem('username');
     if (from === myUsername) return;
@@ -494,23 +434,20 @@ who.style.color = color;
       openPrivateChat(from, userObj.role, userObj.gender);
       win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
     }
-
     if (!win) return;
-    const body = win.querySelector('.private-chat-body');
 
+    const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message, role, gender);
   });
 
-  // ── 7) Réception d’un fichier privé ──
+  // ── 7) Réception fichier privé ──
   socket.on('private file', ({ from, filename, data, mimetype, timestamp, role, gender }) => {
     const myUsername = localStorage.getItem('username');
-if (from === myUsername) return;
+    if (from === myUsername) return;
     const container = document.getElementById('private-chat-container');
     if (!container) return;
 
     let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-
-    // Ouvre la fenêtre si pas ouverte
     if (!win) {
       const userObj = userCache[from] || {};
       openPrivateChat(from, userObj.role, userObj.gender);
@@ -520,18 +457,15 @@ if (from === myUsername) return;
 
     const body = win.querySelector('.private-chat-body');
 
-    // Crée un conteneur message
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
 
-    // Pseudo + icône rôle
     const who = document.createElement('span');
     who.style.fontWeight = 'bold';
     who.style.marginRight = '4px';
     who.style.display = 'inline-flex';
     who.style.alignItems = 'center';
 
-    // Priorité stricte rôle > genre
     let userRole = role;
     let userGender = gender;
     if (!userRole || !userGender) {
@@ -541,23 +475,18 @@ if (from === myUsername) return;
         userGender = userGender || cachedUser.gender;
       }
     }
+
     const icon = createRoleIcon(userRole);
     if (icon) who.appendChild(icon);
 
-    const usernameText = document.createTextNode(from + ': ');
-    who.appendChild(usernameText);
-
-    if (userRole === 'admin') {
-      who.style.color = usernameColors.admin;
-    } else if (userRole === 'modo') {
-      who.style.color = usernameColors.modo;
-    } else {
-      who.style.color = usernameColors[userGender] || usernameColors.default;
-    }
+    who.appendChild(document.createTextNode(from + ': '));
+    who.style.color = userRole === 'admin' ? usernameColors.admin
+                 : userRole === 'modo' ? usernameColors.modo
+                 : (usernameColors[userGender] || usernameColors.default);
 
     msgDiv.appendChild(who);
 
-    // Affichage du fichier selon type mimetype
+    // Affichage fichier
     if (mimetype.startsWith('image/')) {
       const img = document.createElement('img');
       img.src = `data:${mimetype};base64,${data}`;
@@ -566,7 +495,6 @@ if (from === myUsername) return;
       img.style.border = '2px solid #ccc';
       img.style.borderRadius = '8px';
       img.style.padding = '4px';
-      // Clique pour ouvrir en grand
       img.addEventListener('click', () => {
         const newWin = window.open();
         if (newWin) {
@@ -606,7 +534,6 @@ if (from === myUsername) return;
       msgDiv.appendChild(video);
 
     } else {
-      // Fichier générique : lien téléchargement
       const link = document.createElement('a');
       link.href = `data:${mimetype};base64,${data}`;
       link.download = filename;
@@ -622,6 +549,7 @@ if (from === myUsername) return;
   });
 
 });
+
 
 
 
