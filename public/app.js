@@ -26,8 +26,14 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.zIndex = maxZIndex;
   }
 
-function openPrivateChat(username, role, gender) {
+  function openPrivateChat(username, role, gender) {
+  console.log('openPrivateChat appelé pour :', username);
   const container = document.getElementById('private-chat-container');
+  if (!container) {
+    console.error('Erreur : #private-chat-container introuvable');
+    return;
+  }
+
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
   if (win) {
     bringToFront(win);
