@@ -82,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     emojiPicker.style.maxWidth = '200px';
     emojiPicker.style.flexWrap = 'wrap';
 
-    // Liste d'émojis à afficher dans le picker (tu peux ajouter/modifier)
+    // Liste d'émojis à afficher dans le picker
     const emojis = ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶'];
 
     emojis.forEach(e => {
@@ -183,7 +183,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
-  function appendPrivateMessage(bodyElem, from, text) {
+  // Ajout role et gender en paramètres
+  function appendPrivateMessage(bodyElem, from, text, role, gender) {
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
     const who = document.createElement('span');
@@ -193,8 +194,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (from === 'moi') {
       who.style.color = 'green';
     } else {
-      const userObj = users.find(u => u.username === from) || {};
-      who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+      who.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
     }
 
     msgDiv.append(who, document.createTextNode(text));
@@ -213,7 +213,8 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // ── 6) Réception d'un message privé ──
-  socket.on('private message', ({ from, message }) => {
+  // On attend role et gender dans l’objet message reçu du serveur
+  socket.on('private message', ({ from, message, role, gender }) => {
     const myUsername = localStorage.getItem('username');
     if (from === myUsername) return;
 
@@ -228,9 +229,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, from, message);
+
+    // Utilise role et gender reçus s’ils existent, sinon fallback liste users
+    appendPrivateMessage(
+      body,
+      from,
+      message,
+      role || (users.find(u => u.username === from) || {}).role,
+      gender || (users.find(u => u.username === from) || {}).gender
+    );
   });
-  });
+
+});
+
 
 
 
