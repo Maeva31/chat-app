@@ -54,13 +54,16 @@ document.addEventListener('DOMContentLoaded', () => {
     input.placeholder = 'Message…';
     const sendBtn = document.createElement('button');
     sendBtn.textContent = 'Envoyer';
+
+    // Modification ici: afficher localement le message envoyé
     sendBtn.onclick = () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
-      appendPrivateMessage(body, 'moi', text);
+      appendPrivateMessage(body, 'moi', text);  // Affichage local direct
       input.value = '';
     };
+
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
     inputBar.append(input, sendBtn);
 
@@ -113,19 +116,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
-    if (from === 'moi') {
-      // Style spécifique pour ses propres messages si besoin
-      // Sinon juste afficher comme les autres
-    }
-
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
     const who = document.createElement('span');
     who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
 
-    const userObj = users.find(u => u.username === from) || {};
-    who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+    if (from === 'moi') {
+      who.style.color = 'green'; // Couleur spéciale pour tes messages
+    } else {
+      const userObj = users.find(u => u.username === from) || {};
+      who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+    }
 
     msgDiv.append(who, document.createTextNode(text));
     bodyElem.appendChild(msgDiv);
@@ -144,6 +146,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 6) Réception d'un message privé ──
   socket.on('private message', ({ from, message }) => {
+    const myUsername = localStorage.getItem('username');
+    if (from === myUsername) return; // Ne pas afficher ses propres messages (déjà affichés localement)
+
     const container = document.getElementById('private-chat-container');
     let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
@@ -159,6 +164,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
+
 
 
 
