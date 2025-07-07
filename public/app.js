@@ -386,7 +386,7 @@ function addMessageToChat(msg) {
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
-  }
+
 
     // Vérifie si le message contient une mention du pseudo actuel
   const currentUsername = localStorage.getItem('username');
