@@ -843,6 +843,38 @@ button:focus {
   border: none !important;
 }
 
+/* Nouveau bouton fermeture, classe différente */
+.close-sprite-button {
+  width: 24px;
+  height: 24px;
+  background: url('https://chat-app-91ml.onrender.com/icon/croix.gif') no-repeat center center;
+  background-size: contain;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0;
+  position: relative;
+  left: 0; /* enlever décalage pour éviter hors écran */
+  user-select: none;
+}
+.close-sprite-button:hover {
+  filter: brightness(1.2); /* effet léger au hover */
+}
+
+/* Désactivation des focus/outline */
+.close-sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.close-sprite-button:focus,
+.close-sprite-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
 
 /* MP */
 
@@ -955,34 +987,20 @@ button:focus {
   background: #8f00ff;
 }
 
-/* Nouveau bouton fermeture, classe différente */
-.close-sprite-button {
-  width: 24px;
-  height: 24px;
-  background: url('https://chat-app-91ml.onrender.com/icon/croix.gif') no-repeat center center;
-  background-size: contain;
-  border: none;
-  cursor: pointer;
-  display: inline-block;
-  padding: 0;
-  position: relative;
-  left: 0; /* enlever décalage pour éviter hors écran */
-  user-select: none;
-}
-.close-sprite-button:hover {
-  filter: brightness(1.2); /* effet léger au hover */
+/* Poignée de redimensionnement en bas à droite */
+.private-chat-window {
+  position: absolute; /* déjà ou à ajouter si besoin */
+  resize: none; /* on va gérer en JS, pas resize CSS */
+  overflow: hidden; /* éviter scrollbar native */
 }
 
-/* Désactivation des focus/outline */
-.close-sprite-button {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
-}
-
-.close-sprite-button:focus,
-.close-sprite-button:active {
-  outline: none !important;
-  box-shadow: none !important;
-  border: none !important;
+.resize-handle {
+  width: 15px;
+  height: 15px;
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  cursor: nwse-resize;
+  background: transparent;
+  z-index: 10001;
 }
