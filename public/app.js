@@ -1,6 +1,154 @@
+/* === CONTENT.JS FINAL COMPLET — ONGLET SALONS + MP + FONCTIONNALITÉS === */
 
+// ✅ Ce fichier remplace app.js ET content.js
+// Inclut : interface MP/salons, messages enrichis, fichiers, YouTube, modération, styles, emoji, notifications
+
+// === INITIALISATION SOCKET + ONGLET ===
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
+
+  let tabs = {}; // { id: { type: 'channel' | 'mp', name, messages: [] } }
+  let activeTab = null;
+  let currentChannel = 'Général';
+
+  const ongletsContainer = document.createElement('div');
+  ongletsContainer.id = 'onglets-container';
+  const ongletsBar = document.createElement('div');
+  ongletsBar.id = 'onglets';
+  ongletsContainer.appendChild(ongletsBar);
+  const chatWrapper = document.getElementById('chat-container');
+  chatWrapper.parentNode.insertBefore(ongletsContainer, chatWrapper);
+
+  function createTab(id, name, type = 'channel') {
+    if (tabs[id]) return;
+    tabs[id] = { type, name, messages: [] };
+    const tab = document.createElement('div');
+    tab.className = 'tab';
+    tab.dataset.id = id;
+    tab.textContent = name;
+    tab.onclick = () => switchTab(id);
+    if (type === 'mp') {
+      const close = document.createElement('button');
+      close.textContent = 'x';
+      close.onclick = e => {
+        e.stopPropagation();
+        removeTab(id);
+      };
+      tab.appendChild(close);
+    }
+    ongletsBar.appendChild(tab);
+    switchTab(id);
+  }
+
+  function switchTab(id) {
+    activeTab = id;
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active', 'new-msg'));
+    const tabEl = document.querySelector(`.tab[data-id="${id}"]`);
+    if (tabEl) tabEl.classList.add('active');
+    const chat = document.getElementById('chat-messages');
+    chat.innerHTML = '';
+    tabs[id].messages.forEach(msg => chat.appendChild(msg.cloneNode(true)));
+    chat.scrollTop = chat.scrollHeight;
+  }
+
+  function removeTab(id) {
+    delete tabs[id];
+    const el = document.querySelector(`.tab[data-id="${id}"]`);
+    if (el) el.remove();
+    if (activeTab === id) {
+      const fallback = Object.keys(tabs)[0];
+      if (fallback) switchTab(fallback);
+    }
+  }
+
+  function appendMessageToTab(id, el) {
+    if (!tabs[id]) return;
+    tabs[id].messages.push(el.cloneNode(true));
+    if (activeTab === id) {
+      const chat = document.getElementById('chat-messages');
+      chat.appendChild(el);
+      chat.scrollTop = chat.scrollHeight;
+    } else {
+      const tabEl = document.querySelector(`.tab[data-id="${id}"]`);
+      if (tabEl) tabEl.classList.add('new-msg');
+    }
+  }
+
+  // Onglet par défaut
+  createTab('channel:Général', '💬 Général', 'channel');
+
+  // === SOCKET ÉVÉNEMENTS ===
+  socket.on('joinedRoom', (room) => {
+    const id = `channel:${room}`;
+    const name = `💬 ${room}`;
+    if (!tabs[id]) createTab(id, name, 'channel');
+    switchTab(id);
+  });
+
+  socket.on('chat message', (msg) => {
+    const id = `channel:${msg.channel || 'Général'}`;
+    const name = `💬 ${msg.channel || 'Général'}`;
+    if (!tabs[id]) createTab(id, name, 'channel');
+
+    const el = formatMessage(msg);
+    appendMessageToTab(id, el);
+  });
+
+  socket.on('private message', ({ from, message, timestamp, role, gender }) => {
+    const id = `mp:${from}`;
+    if (!tabs[id]) createTab(id, from, 'mp');
+
+    const el = formatMessage({
+      username: from,
+      message,
+      timestamp,
+      role,
+      gender
+    });
+    appendMessageToTab(id, el);
+  });
+
+  function formatMessage(msg) {
+    const el = document.createElement('div');
+    el.className = 'message';
+
+    const time = document.createElement('span');
+    time.textContent = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
+    time.style.color = '#888';
+    time.style.marginRight = '6px';
+
+    const user = document.createElement('span');
+    user.textContent = msg.username + ': ';
+    user.style.fontWeight = 'bold';
+    user.classList.add('clickable-username');
+
+    if (msg.role === 'admin') user.style.color = 'red';
+    else if (msg.role === 'modo') user.style.color = 'limegreen';
+    else if (msg.gender === 'Femme') user.style.color = '#f0f';
+    else if (msg.gender === 'Homme') user.style.color = 'dodgerblue';
+    else user.style.color = '#aaa';
+
+    user.onclick = () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    };
+
+    const messageText = document.createElement('span');
+    messageText.innerHTML = sanitizeAndLinkify(msg.message);
+
+    el.appendChild(time);
+    el.appendChild(user);
+    el.appendChild(messageText);
+    return el;
+  }
+
+  function sanitizeAndLinkify(text) {
+    const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return escaped.replace(/(https?:\/\/[\w\-\.\?\=\&\/%#]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+  }
+});
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
