@@ -147,6 +147,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 
+window.openPrivateChat = openPrivateChat;
 
 
 
