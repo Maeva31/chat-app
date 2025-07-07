@@ -129,14 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
   openPrivateChat(cleanUsername, userObj.role, userObj.gender);
 });
 
-    if (!span) return;
-    const username = span.textContent.trim();
-    const cleanUsername = username.normalize('NFC');
-    const userObj = users.find(u => u.username === cleanUsername);
-    if (!userObj) return;
-    openPrivateChat(cleanUsername, userObj.role, userObj.gender);
-  });
-
   // ── 6) Réception d'un message privé ──
   socket.on('private message', ({ from, message }) => {
     const container = document.getElementById('private-chat-container');
@@ -151,6 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
+  });
   });
 
 
