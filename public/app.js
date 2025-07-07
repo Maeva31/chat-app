@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // Création icône selon rôle
+  // ── Création icône selon rôle ──
   function createRoleIcon(role) {
     if (role === 'admin') {
       const icon = document.createElement('img');
@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
       icon.style.width = '17px';
       icon.style.height = '15px';
       icon.style.marginRight = '6px';
-      icon.style.verticalAlign = '-3px';
+      icon.style.verticalAlign = 'middle';
       return icon;
     } else if (role === 'modo') {
       const icon = document.createElement('img');
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       icon.style.width = '16px';
       icon.style.height = '16px';
       icon.style.marginRight = '6px';
-      icon.style.verticalAlign = '-3px';
+      icon.style.verticalAlign = 'middle';
       return icon;
     }
     return null;
@@ -299,6 +299,8 @@ document.addEventListener('DOMContentLoaded', () => {
           link.download = file.name;
           link.textContent = `📎 ${file.name}`;
           link.target = '_blank';
+          link.style.display = 'inline-block';
+          link.style.marginTop = '4px';
           msgDiv.appendChild(link);
         }
 
@@ -549,6 +551,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
+
 
 
 
