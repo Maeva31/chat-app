@@ -188,7 +188,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Mise à jour de la liste utilisateurs avec ouverture MP au double clic
+  // Mise à jour de la liste utilisateurs avec gestion correcte clic/dblclick
   function updateUserList(users) {
     const userList = document.getElementById('users');
     if (!userList) return;
@@ -218,17 +218,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const usernameSpan = li.querySelector('.username-span');
 
-      // Clic simple : mention
+      // Gestion clic simple / double clic différenciée
+      let clickTimeout = null;
       usernameSpan.addEventListener('click', () => {
-        const input = document.getElementById('message-input');
-        const mention = `@${username} `;
-        if (!input.value.includes(mention)) input.value = mention + input.value;
-        input.focus();
-        selectedUser = username;
+        if (clickTimeout) clearTimeout(clickTimeout);
+        clickTimeout = setTimeout(() => {
+          const input = document.getElementById('message-input');
+          const mention = `@${username} `;
+          if (!input.value.includes(mention)) input.value = mention + input.value;
+          input.focus();
+          selectedUser = username;
+          clickTimeout = null;
+        }, 250);
       });
 
-      // Double clic : ouvre fenêtre privée
       usernameSpan.addEventListener('dblclick', () => {
+        if (clickTimeout) {
+          clearTimeout(clickTimeout);
+          clickTimeout = null;
+        }
         openPrivateChat(username, role, gender);
       });
 
@@ -254,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if (usernameInput && passwordInput) {
     usernameInput.addEventListener('input', () => {
-      const val = usernameInput.value.trim(); 
+      const val = usernameInput.value.trim();
       if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
         passwordInput.style.display = 'block';
       } else {
