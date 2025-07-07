@@ -2,15 +2,18 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
-
-  // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
-  socket.on('user list', list => {
-    users = list;
-    updateUserList(list);
-  });
+  let privateChats = {}; // clé = username, valeur = tableau de messages {from, text}
+  let currentChatUser = null;
 
-  // ── 2) Couleurs selon rôle/genre ──
+  // Références UI
+  const container = document.getElementById('private-chat-container');
+  const tabHeader = document.getElementById('tab-header');
+  const tabContent = document.getElementById('tab-content');
+  const input = document.getElementById('private-message-input');
+  const sendBtn = document.getElementById('send-private-message');
+
+  // Couleurs selon rôle/genre (ton objet)
   const usernameColors = {
     admin: 'red',
     modo: 'limegreen',
@@ -21,103 +24,102 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // ── 3) Ouvre ou remonte une fenêtre privée ──
+  // Mise à jour liste users (ton code existant)
+  socket.on('user list', list => {
+    users = list;
+  });
+
+  // Ouvre ou crée un onglet pour un utilisateur
   function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
+    if (!privateChats[username]) {
+      privateChats[username] = [];
     }
-
-    // Création de la fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
-
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
-    const title = document.createElement('span');
-    title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
-    header.append(title, closeBtn);
-
-    // Body et input
-    const body = document.createElement('div');
-    body.classList.add('private-chat-body');
-    const inputBar = document.createElement('div');
-    inputBar.classList.add('private-chat-input');
-    const input = document.createElement('input');
-    input.placeholder = 'Message…';
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
-    sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('private message', { to: username, message: text });
-      // Ne PAS afficher ton message envoyé dans la fenêtre
-      // appendPrivateMessage(body, 'moi', text);
-      input.value = '';
-    };
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
-
-    // Assemblage
-    win.append(header, body, inputBar);
-
-    // ─── Positionnement initial ───
-    win.style.position = 'absolute';
-    win.style.bottom   = '20px';
-    win.style.right    = '20px';
-
-    // ─── Drag & Drop ───
-    let isDragging = false, offsetX = 0, offsetY = 0;
-    header.style.cursor = 'move';
-    header.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - win.offsetLeft;
-      offsetY = e.clientY - win.offsetTop;
-      document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-      win.style.left = (e.clientX - offsetX) + 'px';
-      win.style.top  = (e.clientY - offsetY) + 'px';
-    });
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        document.body.style.userSelect = '';
-      }
-    });
-
-    container.appendChild(win);
+    currentChatUser = username;
+    renderTabs();
+    renderMessages();
+    container.style.display = 'flex'; // afficher la fenêtre si cachée
   }
 
-  // ── 4) Ajoute un message dans la fenêtre privée ──
-  function appendPrivateMessage(bodyElem, from, text) {
-    // Ne rien afficher pour ses propres messages envoyés
-    if (from === 'moi') return;
+  // Render onglets
+  function renderTabs() {
+    tabHeader.innerHTML = '';
+    Object.keys(privateChats).forEach(username => {
+      const tab = document.createElement('div');
+      tab.textContent = username;
+      tab.style.padding = '6px 12px';
+      tab.style.cursor = 'pointer';
+      tab.style.borderBottom = username === currentChatUser ? '2px solid #4CAF50' : '2px solid transparent';
+      tab.style.color = usernameColors[getUserRoleOrGender(username)] || usernameColors.default;
+      tab.style.userSelect = 'none';
 
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
-    const who = document.createElement('span');
-    who.textContent = from + ': ';
-    who.style.fontWeight = 'bold';
+      // Clic pour changer d’onglet
+      tab.addEventListener('click', () => {
+        currentChatUser = username;
+        renderTabs();
+        renderMessages();
+      });
 
-    const userObj = users.find(u => u.username === from) || {};
-    who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+      // Double clic pour fermer l’onglet
+      tab.addEventListener('dblclick', () => {
+        delete privateChats[username];
+        if (currentChatUser === username) {
+          const keys = Object.keys(privateChats);
+          currentChatUser = keys.length ? keys[0] : null;
+        }
+        renderTabs();
+        renderMessages();
+        if (Object.keys(privateChats).length === 0) container.style.display = 'none';
+      });
 
-    msgDiv.append(who, document.createTextNode(text));
-    bodyElem.appendChild(msgDiv);
-    bodyElem.scrollTop = bodyElem.scrollHeight;
+      tabHeader.appendChild(tab);
+    });
   }
 
-  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
+  // Obtenir rôle ou genre d’un utilisateur pour couleur
+  function getUserRoleOrGender(username) {
+    const u = users.find(u => u.username === username) || {};
+    return u.role || u.gender || 'default';
+  }
+
+  // Render messages dans l’onglet courant
+  function renderMessages() {
+    tabContent.innerHTML = '';
+    if (!currentChatUser) return;
+
+    privateChats[currentChatUser].forEach(({ from, text }) => {
+      const msgDiv = document.createElement('div');
+      msgDiv.style.margin = '4px 0';
+
+      const who = document.createElement('span');
+      who.textContent = from + ': ';
+      who.style.fontWeight = 'bold';
+      who.style.color = usernameColors[getUserRoleOrGender(from)] || usernameColors.default;
+
+      msgDiv.appendChild(who);
+      msgDiv.appendChild(document.createTextNode(text));
+
+      tabContent.appendChild(msgDiv);
+    });
+
+    tabContent.scrollTop = tabContent.scrollHeight;
+  }
+
+  // Envoi message privé
+  function sendMessage() {
+    const text = input.value.trim();
+    if (!text || !currentChatUser) return;
+    socket.emit('private message', { to: currentChatUser, message: text });
+    // Ajoute localement ton message (depuis "moi")
+    if (!privateChats[currentChatUser]) privateChats[currentChatUser] = [];
+    privateChats[currentChatUser].push({ from: 'moi', text });
+    input.value = '';
+    renderMessages();
+  }
+
+  sendBtn.addEventListener('click', sendMessage);
+  input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
+
+  // Clic sur pseudo pour ouvrir conversation
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
@@ -127,21 +129,20 @@ document.addEventListener('DOMContentLoaded', () => {
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
-  // ── 6) Réception d'un message privé ──
+  // Réception message privé
   socket.on('private message', ({ from, message }) => {
-    const container = document.getElementById('private-chat-container');
-    const allWindows = container.querySelectorAll('.private-chat-window');
+    if (!privateChats[from]) privateChats[from] = [];
+    privateChats[from].push({ from, text: message });
 
-    if (allWindows.length === 0) {
-      const userObj = users.find(u => u.username === from) || {};
-      openPrivateChat(from, userObj.role, userObj.gender);
+    if (!currentChatUser) {
+      currentChatUser = from;
+      container.style.display = 'flex';
     }
 
-    const win = container.querySelector('.private-chat-window');
-    if (!win) return;
-    const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, from, message);
+    renderTabs();
+    renderMessages();
   });
+
 });
 
 
