@@ -42,10 +42,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const title = document.createElement('span');
     title.textContent = username;
     title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
-    header.append(title, closeBtn);
+    const toggleBtn = document.createElement('button');
+toggleBtn.textContent = '−'; // signe moins = minimiser
+toggleBtn.title = "Minimiser/Agrandir la fenêtre";
+toggleBtn.onclick = () => {
+  if (body.style.display !== 'none') {
+    body.style.display = 'none';
+    inputBar.style.display = 'none';
+    toggleBtn.textContent = '+';
+    win.style.height = '40px'; // hauteur header seule
+  } else {
+    body.style.display = 'block';
+    inputBar.style.display = 'flex';
+    toggleBtn.textContent = '−';
+    win.style.height = '380px'; // hauteur initiale
+  }
+};
+header.append(title, toggleBtn);
 
     // Body et input
     const body = document.createElement('div');
