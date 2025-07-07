@@ -207,38 +207,134 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     fileInput.addEventListener('change', () => {
-      const file = fileInput.files[0];
-      if (!file) return;
+  const file = fileInput.files[0];
+  if (!file) return;
 
-      const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
+  const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
 
-      if (file.size > MAX_SIZE) {
-        alert('Le fichier est trop volumineux (max 50 Mo)');
-        fileInput.value = '';
-        return;
-      }
+  if (file.size > MAX_SIZE) {
+    alert('Le fichier est trop volumineux (max 50 Mo)');
+    fileInput.value = '';
+    return;
+  }
 
-      const reader = new FileReader();
+  const reader = new FileReader();
 
-      reader.onload = () => {
-        const base64 = btoa(
-          new Uint8Array(reader.result)
-            .reduce((data, byte) => data + String.fromCharCode(byte), '')
-        );
+  reader.onload = () => {
+    const arrayBuffer = reader.result;
 
-        socket.emit('upload private file', {
-          to: username,
-          filename: file.name,
-          mimetype: file.type,
-          data: base64,
-          timestamp: new Date().toISOString()
-        });
+    // Conversion en base64
+    const base64 = btoa(
+      new Uint8Array(arrayBuffer)
+        .reduce((data, byte) => data + String.fromCharCode(byte), '')
+    );
 
-        fileInput.value = '';
-      };
-
-      reader.readAsArrayBuffer(file);
+    // Envoi au serveur
+    socket.emit('upload private file', {
+      to: username,
+      filename: file.name,
+      mimetype: file.type,
+      data: base64,
+      timestamp: new Date().toISOString()
     });
+
+    // Affichage local dans la fenêtre privée
+    const myUsername = localStorage.getItem('username') || 'moi';
+    const container = document.getElementById('private-chat-container');
+    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (!win) {
+      openPrivateChat(username);
+      win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+      if (!win) return; // Si pas de fenêtre, on arrête
+    }
+    const body = win.querySelector('.private-chat-body');
+
+    // Création du message affichant le fichier
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
+
+    const who = document.createElement('span');
+    who.style.fontWeight = 'bold';
+    who.style.marginRight = '4px';
+    who.style.display = 'inline-flex';
+    who.style.alignItems = 'center';
+
+    const icon = createRoleIcon('user'); // Ici 'user' car c’est toi-même
+    if (icon) who.appendChild(icon);
+
+    const usernameText = document.createTextNode(myUsername + ': ');
+    who.appendChild(usernameText);
+    who.style.color = usernameColors.default;
+
+    msgDiv.appendChild(who);
+
+    // Affichage selon type mimetype
+    if (file.type.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = `data:${file.type};base64,${base64}`;
+      img.style.maxWidth = '150px';
+      img.style.cursor = 'pointer';
+      img.style.border = '2px solid #ccc';
+      img.style.borderRadius = '8px';
+      img.style.padding = '4px';
+
+      img.addEventListener('click', () => {
+        const newWin = window.open();
+        if (newWin) {
+          newWin.document.write(`
+            <html><head><title>${file.name}</title></head>
+            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+            <img src="${img.src}" alt="${file.name}" style="max-width:100vw;max-height:100vh;" />
+            </body></html>
+          `);
+          newWin.document.close();
+        }
+      });
+
+      msgDiv.appendChild(img);
+
+    } else if (file.type.startsWith('audio/')) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = `data:${file.type};base64,${base64}`;
+      audio.style.marginTop = '4px';
+      audio.style.border = '2px solid #ccc';
+      audio.style.borderRadius = '8px';
+      audio.style.padding = '4px';
+      audio.style.backgroundColor = '#f9f9f9';
+      msgDiv.appendChild(audio);
+
+    } else if (file.type.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.src = `data:${file.type};base64,${base64}`;
+      video.style.maxWidth = '300px';
+      video.style.maxHeight = '300px';
+      video.style.marginTop = '4px';
+      video.style.border = '2px solid #ccc';
+      video.style.borderRadius = '8px';
+      video.style.padding = '4px';
+      video.style.backgroundColor = '#000';
+      msgDiv.appendChild(video);
+
+    } else {
+      const link = document.createElement('a');
+      link.href = `data:${file.type};base64,${base64}`;
+      link.download = file.name;
+      link.textContent = `📎 ${file.name}`;
+      link.target = '_blank';
+      msgDiv.appendChild(link);
+    }
+
+    body.appendChild(msgDiv);
+    body.scrollTop = body.scrollHeight;
+
+    fileInput.value = ''; // Reset input
+  };
+
+  reader.readAsArrayBuffer(file);
+});
+
 
     // Assemblage inputBar avec nouveau bouton upload
     const sendBtn = document.createElement('button');
