@@ -22,13 +22,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── 3) Ouvre ou remonte une fenêtre privée ──
   function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
-    if (!container) {
-      console.error('Conteneur #private-chat-container introuvable dans le DOM');
-      return;
-    }
     let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (win) {
-      // Remonte la fenêtre existante en fin de liste (au premier plan)
       container.appendChild(win);
       return;
     }
@@ -46,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
     title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
-    closeBtn.title = 'Fermer la fenêtre privée';
     closeBtn.onclick = () => container.removeChild(win);
     header.append(title, closeBtn);
 
@@ -72,12 +66,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Assemblage
     win.append(header, body, inputBar);
 
-    // ── Suppression du positionnement absolu pour flex dans le conteneur ──
-    // win.style.position = 'absolute';
-    // win.style.bottom   = '20px';
-    // win.style.right    = '20px';
+    // ─── Positionnement initial ───
+    win.style.position = 'absolute';
+    win.style.bottom   = '20px';
+    win.style.right    = '20px';
 
-    // ── Drag & Drop (optionnel, laisse si tu veux garder ce comportement) ──
+    // ─── Drag & Drop ───
     let isDragging = false, offsetX = 0, offsetY = 0;
     header.style.cursor = 'move';
     header.addEventListener('mousedown', e => {
@@ -88,7 +82,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     document.addEventListener('mousemove', e => {
       if (!isDragging) return;
-      win.style.position = 'absolute'; // nécessaire ici pour déplacer
       win.style.left = (e.clientX - offsetX) + 'px';
       win.style.top  = (e.clientY - offsetY) + 'px';
     });
@@ -114,8 +107,8 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
 
-  // ── 5) Double-clic sur un pseudo pour ouvrir la fenêtre privée ──
-  document.addEventListener('dblclick', e => {
+  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
+  document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
     const username = span.textContent.trim();
@@ -124,131 +117,126 @@ document.addEventListener('DOMContentLoaded', () => {
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
-  // ── 6) Clic simple pour insérer une mention dans la zone message ──
-  // (ce listener est déjà dans updateUserList au moment de créer chaque pseudo)
-
-  // ── 7) Réception d'un message privé ──
+  // ── 6) Réception d'un message privé ──
   socket.on('private message', ({ from, message }) => {
     const userObj = users.find(u => u.username === from) || {};
     openPrivateChat(from, userObj.role, userObj.gender);
     const win = document.querySelector(`.private-chat-window[data-user="${from}"]`);
-    if (!win) return;
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
 
-  // … autres handlers (updateUserList, addMessageToChat, etc.) …
+ const adminUsernames = ['MaEvA'];
+ const modoUsernames = ['DarkGirL'];
 
-  // —————— Fonctions et variables hors DOMContentLoaded ——————
-  // Définies en global ou dans un autre fichier comme dans ton code initial.
 
-});
+  let selectedUser = null;
+  let hasSentUserInfo = false;
+  let initialLoadComplete = false;
+  let bannerTimeoutId = null;
 
-// —————— Variables et fonctions hors DOMContentLoaded ——————
-
-const adminUsernames = ['MaEvA'];
-const modoUsernames = ['DarkGirL'];
-
-let selectedUser = null;
-let hasSentUserInfo = false;
-let initialLoadComplete = false;
-let bannerTimeoutId = null;
-
-let currentChannel = 'Général';  // Forcer le salon Général au chargement
+  let currentChannel = 'Général';  // Forcer le salon Général au chargement
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
 
+
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
-    const val = usernameInput.value.trim();
-    if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-      passwordInput.style.display = 'block';
-    } else {
-      passwordInput.style.display = 'none';
-      passwordInput.value = '';
-    }
-  });
+  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
+  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+    passwordInput.style.display = 'block'; // afficher le mot de passe
+  } else {
+    passwordInput.style.display = 'none';  // cacher sinon
+    passwordInput.value = '';              // vider le mot de passe
+  }
+});
 
-  const initialUsername = usernameInput.value.trim();
+ const initialUsername = usernameInput.value.trim();
   if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
     passwordInput.style.display = 'block';
   }
 }
 
-const genderColors = {
-  Homme: 'dodgerblue',
-  Femme: '#f0f',
-  Autre: '#0ff',
-  'non spécifié': '#aaa',
-  default: '#aaa'
-};
 
-const channelEmojis = {
-  "Général": "💬",
-  "Musique": "🎧",
-  "Gaming": "🎮",
-  "Détente": "🌿"
-};
+  const genderColors = {
+    Homme: 'dodgerblue',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
 
-// Affiche la modal si pas de pseudo
-const savedUsername = localStorage.getItem('username');
-if (!savedUsername) {
-  const modal = document.getElementById('myModal');
-  if(modal) modal.style.display = 'block';
-}
+  const channelEmojis = {
+    "Général": "💬",
+    "Musique": "🎧",
+    "Gaming": "🎮",
+    "Détente": "🌿"
+  };
 
-// Variables pour mode invisible
-const invisibleBtn = document.getElementById('toggle-invisible-btn');
-let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
-let isAdmin = false;
-
-function updateInvisibleButton() {
-  if (!invisibleBtn) return;
-  invisibleBtn.textContent = `👻`;
-  invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
-  invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
-}
-
-if (invisibleBtn) {
-  if (invisibleMode) {
-    invisibleBtn.style.display = 'inline-block';
-    updateInvisibleButton();
-  } else {
-    invisibleBtn.style.display = 'none';
+  // Affiche la modal si pas de pseudo
+  const savedUsername = localStorage.getItem('username');
+  if (!savedUsername) {
+    document.getElementById('myModal').style.display = 'block';
   }
-}
 
-function showBanner(message, type = 'error') {
-  if (!initialLoadComplete) return;
-  const banner = document.getElementById('error-banner');
-  const text = document.getElementById('error-banner-text');
-  if (!banner || !text) return;
+  // Variables pour mode invisible
+  const invisibleBtn = document.getElementById('toggle-invisible-btn');
+  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+  let isAdmin = false;
 
-  const prefix = type === 'success' ? '✅' : '❌';
-  text.textContent = `${prefix} ${message}`;
-  banner.style.display = 'flex';
-  banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+  // Mets à jour le bouton (texte + couleur)
+  function updateInvisibleButton() {
+    if (!invisibleBtn) return;
+    invisibleBtn.textContent = `👻`;
+    invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
+    invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
 
-  if (bannerTimeoutId) clearTimeout(bannerTimeoutId);
-  bannerTimeoutId = setTimeout(() => {
-    banner.style.display = 'none';
-    bannerTimeoutId = null;
-  }, 5000);
-}
+  }
 
-function getUsernameColor(gender) {
-  return genderColors[gender] || genderColors.default;
-}
+  if (invisibleBtn) {
+    if (invisibleMode) {
+      invisibleBtn.style.display = 'inline-block';
+      updateInvisibleButton();
+    } else {
+      invisibleBtn.style.display = 'none';
+    }
+  }
 
-function extractChannelName(text) {
-  text = text.replace(/\s*\(\d+\)$/, '').trim();
-  const parts = text.split('┊');
-  if (parts.length > 1) return parts[1].trim();
-  return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-}
+  // Affiche une bannière temporaire (type = 'error' ou 'success')
+  function showBanner(message, type = 'error') {
+    if (!initialLoadComplete) return;
+    const banner = document.getElementById('error-banner');
+    const text = document.getElementById('error-banner-text');
+    if (!banner || !text) return;
 
-function updateUserList(users) {
+    const prefix = type === 'success' ? '✅' : '❌';
+    text.textContent = `${prefix} ${message}`;
+    banner.style.display = 'flex';
+    banner.style.backgroundColor = type === 'success' ? '#4CAF50' : '#f44336';
+
+    if (bannerTimeoutId) clearTimeout(bannerTimeoutId);
+    bannerTimeoutId = setTimeout(() => {
+      banner.style.display = 'none';
+      bannerTimeoutId = null;
+    }, 5000);
+  }
+
+  // Couleur selon genre
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
+  function extractChannelName(text) {
+    text = text.replace(/\s*\(\d+\)$/, '').trim();
+    const parts = text.split('┊');
+    if (parts.length > 1) return parts[1].trim();
+    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
+  }
+
+  // Met à jour la liste des utilisateurs affichée
+  function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -278,7 +266,6 @@ function updateUserList(users) {
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
-      if (!input) return;
       const mention = `@${username} `;
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
@@ -288,7 +275,6 @@ function updateUserList(users) {
     userList.appendChild(li);
   });
 }
-
 
 
 function createRoleIcon(role) {
