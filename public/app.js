@@ -1,19 +1,20 @@
 
-document.addEventListener('DOMContentLoaded', () => {
+
+  document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
- const adminUsernames = ['MaEvA'];
- const modoUsernames = ['DarkGirL'];
-
+  const adminUsernames = ['MaEvA'];
+  const modoUsernames = ['DarkGirL'];
 
   let selectedUser = null;
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
+  let currentChannel = 'Général';
 
-  let currentChannel = 'Général';  // Forcer le salon Général au chargement
-
-   const container = document.getElementById('private-chat-container');
+  // ➕ Ajout des fonctions MP ci-dessous :
+  function openPrivateChat(username, role, gender) {
+    const container = document.getElementById('private-chat-container');
     let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (win) {
       container.appendChild(win);
@@ -117,6 +118,7 @@ document.addEventListener('DOMContentLoaded', () => {
       timestamp
     });
   });
+
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
