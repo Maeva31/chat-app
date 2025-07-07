@@ -845,112 +845,164 @@ button:focus {
 
 /* MP */
 
-/* Conteneur des fenêtres privées */
 #private-chat-container {
   position: fixed;
   bottom: 10px;
   right: 10px;
   z-index: 1000;
-  /* largeur max à ajuster selon besoin */
-  max-width: 320px;
-  font-family: Arial, sans-serif;
+  max-width: 400px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   user-select: none;
+  /* éviter scroll quand on redimensionne */
+  overflow: visible;
 }
 
 /* Fenêtre de chat privée */
 .private-chat-window {
-  background: #fff;
-  border: 1px solid #ccc;
-  border-radius: 6px;
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
-  width: 300px;
+  background: #0a0a14;
+  border: 2px solid #8a2be2; /* violet */
+  border-radius: 8px;
+  box-shadow:
+    0 0 8px #8a2be2,
+    0 0 20px #b266ff,
+    0 0 30px #b266ff;
+  width: 320px;
+  height: 350px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   font-size: 14px;
+  color: #eee;
+  resize: both;
+  overflow: auto;
+  position: absolute; /* obligatoire pour déplacer */
+  cursor: default;
 }
 
 /* Header avec titre et bouton fermer */
 .private-chat-header {
-  background: #f0f0f0;
-  padding: 8px 10px;
-  font-weight: bold;
+  background: #1a0a3a;
+  padding: 10px 14px;
+  font-weight: 700;
   display: flex;
   justify-content: space-between;
   align-items: center;
   cursor: move;
   user-select: none;
-  border-bottom: 1px solid #ddd;
+  border-bottom: 1px solid #8a2be2;
+  color: #b266ff;
+  text-shadow: 0 0 8px #b266ff;
 }
 
 .private-chat-header span {
   flex-grow: 1;
+  font-size: 16px;
+  letter-spacing: 0.04em;
 }
 
 .private-chat-header button {
   background: transparent;
   border: none;
-  font-size: 18px;
+  font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  color: #888;
-  padding: 0 4px;
-  transition: color 0.2s ease;
+  color: #b266ff;
+  padding: 0 6px;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
 }
 
 .private-chat-header button:hover {
-  color: #f33;
+  color: #d6a8ff;
+  text-shadow: 0 0 12px #d6a8ff;
 }
 
 /* Corps du chat, scrollable */
 .private-chat-body {
   flex-grow: 1;
-  padding: 10px;
+  padding: 12px 14px;
   overflow-y: auto;
-  max-height: 200px;
-  background: #fafafa;
-  border-bottom: 1px solid #ddd;
+  background: #0a0a14;
+  border-bottom: 1px solid #8a2be2;
+  color: #ddd;
+  font-size: 14px;
+  text-shadow: 0 0 2px #b266ff;
+  word-break: break-word;
 }
 
 /* Messages */
 .private-chat-body div {
-  margin-bottom: 6px;
-  word-wrap: break-word;
+  margin-bottom: 8px;
 }
 
 /* Barre d'input et bouton */
 .private-chat-input {
   display: flex;
-  padding: 8px 10px;
-  background: #f9f9f9;
+  padding: 10px 14px;
+  background: #1a0a3a;
+  border-top: 1px solid #8a2be2;
+  box-shadow: inset 0 0 8px #b266ff88;
 }
 
 .private-chat-input input {
   flex-grow: 1;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 6px 8px;
+  background: #120049;
+  border: 1.5px solid #b266ff;
+  border-radius: 6px;
+  padding: 8px 12px;
   font-size: 14px;
+  color: #ddd;
   outline: none;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.3s ease;
+  text-shadow: 0 0 3px #d3b3ff;
+}
+
+.private-chat-input input::placeholder {
+  color: #b9aaffcc;
 }
 
 .private-chat-input input:focus {
-  border-color: #007bff;
+  border-color: #d6a8ff;
+  box-shadow: 0 0 10px #d6a8ff;
 }
 
 .private-chat-input button {
-  margin-left: 8px;
-  background-color: #007bff;
+  margin-left: 10px;
+  background-color: #8a2be2;
   border: none;
   color: white;
-  padding: 6px 12px;
-  border-radius: 4px;
+  padding: 8px 16px;
+  border-radius: 6px;
   cursor: pointer;
   font-weight: 600;
-  transition: background-color 0.2s ease;
+  font-size: 14px;
+  box-shadow: 0 0 8px #d6a8ff;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .private-chat-input button:hover {
-  background-color: #0056b3;
+  background-color: #b266ff;
+  box-shadow: 0 0 16px #e0bbff;
+}
+
+/* Curseur redimensionnement coin bas droit */
+.private-chat-window {
+  resize: both;
+  overflow: auto;
+}
+
+.private-chat-window::after {
+  content: "";
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  right: 2px;
+  bottom: 2px;
+  cursor: se-resize;
+  background:
+    linear-gradient(45deg, transparent 50%, #b266ff 50%),
+    linear-gradient(-45deg, transparent 50%, #b266ff 50%);
+  background-repeat: no-repeat;
+  background-position: bottom right;
+  background-size: 8px 8px, 8px 8px;
+  pointer-events: none;
 }
