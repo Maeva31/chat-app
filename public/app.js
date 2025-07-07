@@ -21,7 +21,7 @@ document.addEventListener('DOMContentLoaded', () => {
       windows.forEach(win => {
         const username = win.dataset.user;
         const user = userCache[username];
-        const title = win.querySelector('.private-chat-header span');
+        const title = win.querySelector('.private-chat-header span.username-text');
         if (user && title) {
           title.style.color = (user.role === 'admin') ? usernameColors.admin
                             : (user.role === 'modo') ? usernameColors.modo
@@ -41,6 +41,32 @@ document.addEventListener('DOMContentLoaded', () => {
     'non spécifié': '#aaa',
     default: '#aaa'
   };
+
+  // Fonction utilitaire pour créer une icône selon le rôle
+  function createRoleIcon(role) {
+    if (role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico'; // adapte le chemin si besoin
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.style.width = '17px';
+      icon.style.height = '15px';
+      icon.style.marginRight = '6px';
+      icon.style.verticalAlign = 'middle';
+      return icon;
+    } else if (role === 'modo') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico'; // adapte le chemin si besoin
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
+      icon.style.marginRight = '6px';
+      icon.style.verticalAlign = 'middle';
+      return icon;
+    }
+    return null;
+  }
   
   // ── 3) Ouvre ou remonte une fenêtre privée ──
   function openPrivateChat(username, role, gender) {
@@ -68,14 +94,23 @@ document.addEventListener('DOMContentLoaded', () => {
     // Header
     const header = document.createElement('div');
     header.classList.add('private-chat-header');
+
+    // Icône rôle
+    const icon = createRoleIcon(role);
+    if (icon) header.appendChild(icon);
+
+    // Pseudo en span distinct (pour mise à jour couleur plus simple)
     const title = document.createElement('span');
+    title.classList.add('username-text');
     title.textContent = username;
     title.style.color = (role === 'admin') ? usernameColors.admin
                       : (role === 'modo') ? usernameColors.modo
                       : (usernameColors[gender] || usernameColors.default);
+
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
     closeBtn.onclick = () => container.removeChild(win);
+
     header.append(title, closeBtn);
 
     // Body et input
@@ -222,9 +257,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function appendPrivateMessage(bodyElem, from, text, role, gender) {
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
+
+    // Span pseudo (bold + couleur + icône)
     const who = document.createElement('span');
-    who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
+    who.style.marginRight = '4px';
+    who.style.display = 'inline-flex';
+    who.style.alignItems = 'center';
 
     // Priorité stricte rôle > genre
     let userRole = role;
@@ -237,6 +276,13 @@ document.addEventListener('DOMContentLoaded', () => {
         userGender = userGender || cachedUser.gender;
       }
     }
+
+    // Icône si admin ou modo
+    const icon = createRoleIcon(userRole);
+    if (icon) who.appendChild(icon);
+
+    const usernameText = document.createTextNode(from + ': ');
+    who.appendChild(usernameText);
 
     if (userRole === 'admin') {
       who.style.color = usernameColors.admin;
@@ -283,6 +329,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
+
 
 
 
