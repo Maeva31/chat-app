@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
- function openPrivateChat(username, role, gender) {
+  function openPrivateChat(username, role, gender) {
   const container = document.getElementById('private-chat-container');
   if (!container) {
     console.error('Erreur : #private-chat-container introuvable');
@@ -209,7 +209,7 @@ document.addEventListener('DOMContentLoaded', () => {
       openPrivateChat(from, userObj.role, userObj.gender);
     }
 
-    const win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+    const win = container.querySelector('.private-chat-window');
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
