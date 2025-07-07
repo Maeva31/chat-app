@@ -298,79 +298,144 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Extraction nom canal depuis texte
   function extractChannelName(text) {
-    text = text.replace(/\s*\(\d+\)$/, '').trim();
-    const parts = text.split('┊');
-    if (parts.length > 1) return parts[1].trim();
-    return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
-  }
+  // Retire la partie entre parenthèses à la fin et autres décorations pour ne garder que le nom
+  return text.replace(/\s*\(\d+\)$/, '').split('┊')[1]?.trim() || text.trim();
+}
+
 
   // Ajout message dans zone chat
   function addMessageToChat(msg) {
-    if (msg.username === 'Système') {
-      if (/est maintenant visible\.$/i.test(msg.message)) return;
+  if (msg.username === 'Système') {
+    if (/est maintenant visible\.$/i.test(msg.message)) return;
 
-      const salonRegex = /salon\s+(.+)$/i;
-      const match = salonRegex.exec(msg.message);
-      if (match && match[1]) {
-        const salonDuMessage = match[1].trim();
-        if (salonDuMessage !== currentChannel) return;
-      }
+    const salonRegex = /salon\s+(.+)$/i;
+    const match = salonRegex.exec(msg.message);
+    if (match && match[1]) {
+      const salonDuMessage = match[1].trim();
+      if (salonDuMessage !== currentChannel) return;
+    }
+  }
+
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
+
+  const newMessage = document.createElement('div');
+  const date = new Date(msg.timestamp);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const usernameSpan = document.createElement('span');
+  const color = (msg.role === 'admin') ? 'red' :
+                (msg.role === 'modo') ? 'limegreen' :
+                getUsernameColor(msg.gender);
+
+  if (msg.username === 'Système') {
+    usernameSpan.textContent = msg.username + ': ';
+    usernameSpan.style.color = '#888';
+    usernameSpan.style.fontWeight = 'bold';
+  } else {
+    usernameSpan.classList.add('clickable-username');
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = msg.username + ': ';
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
+
+    // Icônes rôle
+    if (msg.role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.style.width = '17px';
+      icon.style.height = '15px';
+      icon.style.marginRight = '2px';
+      icon.style.verticalAlign = '-1px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+    } else if (msg.role === 'modo') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.style.width = '16px';
+      icon.style.height = '16px';
+      icon.style.marginRight = '1px';
+      icon.style.verticalAlign = '-2px';
+      usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     }
 
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
+    // Clic mention
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
+  }
 
-    const newMessage = document.createElement('div');
-    const date = new Date(msg.timestamp);
-    const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  function isYouTubeUrl(url) {
+    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
+  }
 
-    const usernameSpan = document.createElement('span');
-    const color = (msg.role === 'admin') ? 'red' :
-                  (msg.role === 'modo') ? 'limegreen' :
-                  getUsernameColor(msg.gender);
+  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-    if (msg.username === 'Système') {
-      usernameSpan.textContent = msg.username + ': ';
-      usernameSpan.style.color = '#888';
-      usernameSpan.style.fontWeight = 'bold';
+  const messageText = document.createElement('span');
+  const style = msg.style || {};
+  messageText.style.color = style.color || '#fff';
+  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = style.font || 'Arial';
+
+  parts.forEach(part => {
+    if (/https?:\/\/[^\s]+/.test(part)) {
+      if (isYouTubeUrl(part)) {
+        // Ignore le lien YouTube dans le texte, la vidéo sera intégrée ailleurs
+        return;
+      } else {
+        const a = document.createElement('a');
+        a.href = part;
+        a.textContent = part;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.color = style.color || '#00aaff';
+        a.style.textDecoration = 'underline';
+        messageText.appendChild(a);
+      }
     } else {
-      usernameSpan.classList.add('clickable-username');
-      usernameSpan.style.color = color;
-      usernameSpan.textContent = msg.username + ': ';
-      usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                           (msg.role === 'modo') ? 'Modérateur' : '';
-
-      // Icônes rôle
-      if (msg.role === 'admin') {
-        const icon = document.createElement('img');
-        icon.src = '/diamond.ico';
-        icon.alt = 'Admin';
-        icon.title = 'Admin';
-        icon.style.width = '17px';
-        icon.style.height = '15px';
-        icon.style.marginRight = '2px';
-        icon.style.verticalAlign = '-1px';
-        usernameSpan.insertBefore(icon, usernameSpan.firstChild);
-      } else if (msg.role === 'modo') {
-        const icon = document.createElement('img');
-        icon.src = '/favicon.ico';
-        icon.alt = 'Modérateur';
-        icon.title = 'Modérateur';
-        icon.style.width = '16px';
-        icon.style.height = '16px';
-        icon.style.marginRight = '1px';
-        icon.style.verticalAlign = '-2px';
-        usernameSpan.insertBefore(icon, usernameSpan.firstChild);
+      if (part.trim() !== '') {
+        messageText.appendChild(document.createTextNode(part));
       }
-
-      // Clic mention
-      usernameSpan.addEventListener('click', () => {
-        const input = document.getElementById('message-input');
-        const mention = `@${msg.username} `;
-        if (!input.value.includes(mention)) input.value = mention + input.value;
-        input.focus();
-      });
     }
+  });
+
+  // Ajout du timestamp en italique
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = timeString + ' ';
+  timeSpan.style.color = '#888';
+  timeSpan.style.fontStyle = 'italic';
+  timeSpan.style.marginRight = '5px';
+
+  newMessage.appendChild(timeSpan);
+
+  if (msg.username !== 'Système') {
+    newMessage.appendChild(usernameSpan);
+  }
+
+  if (msg.username === 'Système') {
+    messageText.style.color = '#888';
+    messageText.style.fontStyle = 'italic';
+    newMessage.appendChild(messageText);
+  } else if (messageText.textContent.trim() !== '') {
+    newMessage.appendChild(messageText);
+  }
+
+  newMessage.classList.add('message');
+  newMessage.dataset.username = msg.username;
+
+  addYouTubeVideoIfAny(newMessage, msg.message);
+
+  chatMessages.appendChild(newMessage);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
 
     function isYouTubeUrl(url) {
       return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
