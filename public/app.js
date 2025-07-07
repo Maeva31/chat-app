@@ -204,8 +204,7 @@ window.openPrivateChat = openPrivateChat;
 });
 
 
- const adminUsernames = ['MaEvA'];
- const adminUsernames = ['rookie'];
+ const adminUsernames = ['MaEvA','rookie'];
  const modoUsernames = ['DarkGirL'];
 
 
