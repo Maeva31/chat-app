@@ -13,7 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const input = document.getElementById('private-message-input');
   const sendBtn = document.getElementById('send-private-message');
 
-  // Couleurs selon rôle/genre (ton objet)
+  // Couleurs selon rôle/genre
   const usernameColors = {
     admin: 'red',
     modo: 'limegreen',
@@ -24,9 +24,14 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // Mise à jour liste users (ton code existant)
+  // Mise à jour liste users
   socket.on('user list', list => {
     users = list;
+
+    // Si aucun chat ouvert, ouvrir automatiquement le premier utilisateur disponible
+    if (!currentChatUser && users.length > 0) {
+      openPrivateChat(users[0].username, users[0].role, users[0].gender);
+    }
   });
 
   // Ouvre ou crée un onglet pour un utilisateur
@@ -38,12 +43,21 @@ document.addEventListener('DOMContentLoaded', () => {
     renderTabs();
     renderMessages();
     container.style.display = 'flex'; // afficher la fenêtre si cachée
+    input.focus(); // mettre le focus dans l'input pour taper immédiatement
   }
 
   // Render onglets
   function renderTabs() {
     tabHeader.innerHTML = '';
-    Object.keys(privateChats).forEach(username => {
+
+    const usernames = Object.keys(privateChats);
+    if (usernames.length === 0) {
+      container.style.display = 'none'; // cacher la fenêtre si aucun chat
+      currentChatUser = null;
+      return;
+    }
+
+    usernames.forEach(username => {
       const tab = document.createElement('div');
       tab.textContent = username;
       tab.style.padding = '6px 12px';
@@ -54,21 +68,28 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Clic pour changer d’onglet
       tab.addEventListener('click', () => {
-        currentChatUser = username;
-        renderTabs();
-        renderMessages();
+        if (currentChatUser !== username) {
+          currentChatUser = username;
+          renderTabs();
+          renderMessages();
+          input.focus();
+        }
       });
 
       // Double clic pour fermer l’onglet
       tab.addEventListener('dblclick', () => {
         delete privateChats[username];
         if (currentChatUser === username) {
-          const keys = Object.keys(privateChats);
-          currentChatUser = keys.length ? keys[0] : null;
+          const remainingUsers = Object.keys(privateChats);
+          currentChatUser = remainingUsers.length ? remainingUsers[0] : null;
         }
         renderTabs();
         renderMessages();
-        if (Object.keys(privateChats).length === 0) container.style.display = 'none';
+        if (!currentChatUser) {
+          container.style.display = 'none'; // cacher si plus d'onglet
+        } else {
+          input.focus();
+        }
       });
 
       tabHeader.appendChild(tab);
@@ -114,12 +135,13 @@ document.addEventListener('DOMContentLoaded', () => {
     privateChats[currentChatUser].push({ from: 'moi', text });
     input.value = '';
     renderMessages();
+    input.focus();
   }
 
   sendBtn.addEventListener('click', sendMessage);
   input.addEventListener('keypress', e => { if (e.key === 'Enter') sendMessage(); });
 
-  // Clic sur pseudo pour ouvrir conversation
+  // Clic sur pseudo pour ouvrir conversation (dans ta liste utilisateurs, pseudos avec class clickable-username)
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
@@ -134,13 +156,15 @@ document.addEventListener('DOMContentLoaded', () => {
     if (!privateChats[from]) privateChats[from] = [];
     privateChats[from].push({ from, text: message });
 
-    if (!currentChatUser) {
+    // Afficher la conversation reçue (changer currentChatUser) pour que l'utilisateur voit le nouveau message
+    if (currentChatUser !== from) {
       currentChatUser = from;
       container.style.display = 'flex';
     }
 
     renderTabs();
     renderMessages();
+    input.focus();
   });
 
 });
