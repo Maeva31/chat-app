@@ -94,6 +94,8 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(win);
   }
 
+  window.openPrivateChat = openPrivateChat;
+
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
     // Ne rien afficher pour ses propres messages envoyés
@@ -145,11 +147,6 @@ document.addEventListener('DOMContentLoaded', () => {
     appendPrivateMessage(body, from, message);
   });
   });
-
-
-window.openPrivateChat = openPrivateChat;
-
-
 
 
 
