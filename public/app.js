@@ -34,8 +34,12 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+    console.log('openPrivateChat appelé pour :', username);
+  console.log('Container size:', container.offsetWidth, container.offsetHeight);
+
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
   if (win) {
+    console.log('Window size:', win.offsetWidth, win.offsetHeight);
     bringToFront(win);
     win.style.display = 'flex';
     return;
@@ -96,11 +100,14 @@ document.addEventListener('DOMContentLoaded', () => {
   win.style.height = '380px';
 
   // Position initiale (droite-bas)
-  const leftPos = window.innerWidth - win.offsetWidth - 20;
+container.appendChild(win);
+
+const leftPos = window.innerWidth - win.offsetWidth - 20;
 const topPos = window.innerHeight - win.offsetHeight - 20;
 
 win.style.left = Math.max(leftPos, 0) + 'px';
 win.style.top = Math.max(topPos, 0) + 'px';
+
 
 
 
