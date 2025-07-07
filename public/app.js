@@ -23,12 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
   function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
-    }
+  const container = document.getElementById('private-chat-container');
+  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (win) {
+    // Juste mettre la fenêtre au top sans la retirer/remettre
+    win.style.zIndex = parseInt(win.style.zIndex || 1000) + 1;
+    return;
+  }
 
     // Création de la fenêtre
     win = document.createElement('div');
