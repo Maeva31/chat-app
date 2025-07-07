@@ -1045,3 +1045,23 @@ button:focus {
       0 0 14px #b266ff;
   }
 }
+.private-chat-header button {
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  color: #d6a8ff;
+  padding: 0 6px;
+  transition: color 0.3s ease, text-shadow 0.3s ease;
+  user-select: none;
+  filter: drop-shadow(0 0 2px #b266ff);
+}
+
+.private-chat-header button:hover {
+  color: #fff;
+  text-shadow:
+    0 0 16px #fff,
+    0 0 24px #d6a8ff,
+    0 0 32px #b266ff;
+}
