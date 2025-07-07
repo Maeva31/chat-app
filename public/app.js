@@ -22,97 +22,153 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
-  function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
-    }
-
-    // Création de la fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
-
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
-    const title = document.createElement('span');
-    title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
-    header.append(title, closeBtn);
-
-    // Body et input
-    const body = document.createElement('div');
-    body.classList.add('private-chat-body');
-    const inputBar = document.createElement('div');
-    inputBar.classList.add('private-chat-input');
-    const input = document.createElement('input');
-    input.placeholder = 'Message…';
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
-    sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('private message', { to: username, message: text });
-      // Ne PAS afficher ton message envoyé dans la fenêtre
-      // appendPrivateMessage(body, 'moi', text);
-      input.value = '';
-    };
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
-
-    // Assemblage
-    win.append(header, body, inputBar);
-
-    // ─── Positionnement initial ───
-    win.style.position = 'absolute';
-    win.style.bottom = '20px';
-    win.style.right = '20px';
-
-    // ─── Drag & Drop avec limites pour rester visible ───
-    let isDragging = false, offsetX = 0, offsetY = 0;
-    header.style.cursor = 'move';
-    header.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - win.offsetLeft;
-      offsetY = e.clientY - win.offsetTop;
-      document.body.style.userSelect = 'none';
-    });
-    document.addEventListener('mousemove', e => {
-      if (!isDragging) return;
-
-      const newLeft = e.clientX - offsetX;
-      const newTop = e.clientY - offsetY;
-
-      const winWidth = win.offsetWidth;
-      const winHeight = win.offsetHeight;
-
-      const maxLeft = window.innerWidth - winWidth;
-      const maxTop = window.innerHeight - winHeight;
-
-      // Clamp les positions pour rester à l'intérieur de l'écran
-      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
-
-      win.style.left = clampedLeft + 'px';
-      win.style.top = clampedTop + 'px';
-      win.style.bottom = 'auto';
-      win.style.right = 'auto';
-    });
-    document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        document.body.style.userSelect = '';
-      }
-    });
-
-    container.appendChild(win);
+ function openPrivateChat(username, role, gender) {
+  const container = document.getElementById('private-chat-container');
+  if (!container) {
+    console.error('Erreur : #private-chat-container introuvable');
+    return;
   }
+
+  // Si la fenêtre existe déjà, on la remet en avant et on arrête
+  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (win) {
+    container.appendChild(win); // remonte dans le DOM (au-dessus)
+    return;
+  }
+
+  // Création de la fenêtre
+  win = document.createElement('div');
+  win.classList.add('private-chat-window');
+  win.dataset.user = username;
+
+  // Header
+  const header = document.createElement('div');
+  header.classList.add('private-chat-header');
+  header.style.cursor = 'move'; // indique qu'on peut déplacer
+
+  const title = document.createElement('span');
+  title.textContent = username;
+  const usernameColors = {
+    admin: 'red',
+    modo: 'limegreen',
+    Homme: 'dodgerblue',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
+  title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
+
+  // Bouton fermeture
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.title = 'Fermer la fenêtre';
+  closeBtn.style.background = 'none';
+  closeBtn.style.border = 'none';
+  closeBtn.style.color = '#f55';
+  closeBtn.style.fontSize = '20px';
+  closeBtn.style.cursor = 'pointer';
+  closeBtn.style.marginLeft = 'auto';
+  closeBtn.onclick = () => container.removeChild(win);
+
+  header.append(title, closeBtn);
+
+  // Body
+  const body = document.createElement('div');
+  body.classList.add('private-chat-body');
+
+  // Input + bouton envoyer
+  const inputBar = document.createElement('div');
+  inputBar.classList.add('private-chat-input');
+
+  const input = document.createElement('input');
+  input.placeholder = 'Message…';
+
+  const sendBtn = document.createElement('button');
+  sendBtn.textContent = 'Envoyer';
+
+  sendBtn.onclick = () => {
+    const text = input.value.trim();
+    if (!text) return;
+    socket.emit('private message', { to: username, message: text });
+    input.value = '';
+  };
+
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendBtn.click();
+  });
+
+  inputBar.append(input, sendBtn);
+
+  // Assemblage de la fenêtre
+  win.append(header, body, inputBar);
+
+  // Styles de base
+  win.style.position = 'absolute';
+  win.style.width = '360px';
+  win.style.height = '380px';
+
+  // Position initiale : bas à droite (calculé en left/top)
+  const marginRight = 20;
+  const marginBottom = 20;
+
+  const left = window.innerWidth - 360 - marginRight;
+  const top = window.innerHeight - 380 - marginBottom;
+
+  win.style.left = left + 'px';
+  win.style.top = top + 'px';
+
+  // Important : ne PAS définir bottom et right
+  win.style.bottom = 'auto';
+  win.style.right = 'auto';
+
+  // Drag & Drop
+  let isDragging = false;
+  let offsetX = 0;
+  let offsetY = 0;
+
+  header.addEventListener('mousedown', (e) => {
+    // Ne pas drag si on clique sur bouton fermer
+    if (e.target === closeBtn) return;
+
+    isDragging = true;
+    offsetX = e.clientX - win.offsetLeft;
+    offsetY = e.clientY - win.offsetTop;
+    document.body.style.userSelect = 'none';
+  });
+
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+
+    let newLeft = e.clientX - offsetX;
+    let newTop = e.clientY - offsetY;
+
+    // Clamp pour rester visible dans la fenêtre
+    const maxLeft = window.innerWidth - win.offsetWidth;
+    const maxTop = window.innerHeight - win.offsetHeight;
+
+    newLeft = Math.max(0, Math.min(newLeft, maxLeft));
+    newTop = Math.max(0, Math.min(newTop, maxTop));
+
+    win.style.left = newLeft + 'px';
+    win.style.top = newTop + 'px';
+
+    // On enlève bottom/right si jamais défini (sécurité)
+    win.style.bottom = 'auto';
+    win.style.right = 'auto';
+  });
+
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      document.body.style.userSelect = '';
+    }
+  });
+
+  // Ajout dans le container
+  container.appendChild(win);
+}
+
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
