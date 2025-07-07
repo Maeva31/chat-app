@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-
+});
 
 
  const adminUsernames = ['MaEvA'];
