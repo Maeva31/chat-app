@@ -210,8 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const file = fileInput.files[0];
   if (!file) return;
 
-  const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
-
+  const MAX_SIZE = 50 * 1024 * 1024;
   if (file.size > MAX_SIZE) {
     alert('Le fichier est trop volumineux (max 50 Mo)');
     fileInput.value = '';
@@ -222,14 +221,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
   reader.onload = () => {
     const arrayBuffer = reader.result;
-
-    // Conversion en base64
     const base64 = btoa(
       new Uint8Array(arrayBuffer)
         .reduce((data, byte) => data + String.fromCharCode(byte), '')
     );
 
-    // Envoi au serveur
     socket.emit('upload private file', {
       to: username,
       filename: file.name,
@@ -238,39 +234,43 @@ document.addEventListener('DOMContentLoaded', () => {
       timestamp: new Date().toISOString()
     });
 
-    // Affichage local dans la fenêtre privée
+    // Affichage local
     const myUsername = localStorage.getItem('username') || 'moi';
     const container = document.getElementById('private-chat-container');
     let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (!win) {
       openPrivateChat(username);
       win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-      if (!win) return; // Si pas de fenêtre, on arrête
+      if (!win) return;
     }
     const body = win.querySelector('.private-chat-body');
 
-    // Création du message affichant le fichier
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
-
-    const who = document.createElement('span');
-    who.style.fontWeight = 'bold';
-    who.style.marginRight = '4px';
-    who.style.display = 'inline-flex';
-    who.style.alignItems = 'center';
-
-    const icon = createRoleIcon('user'); // Ici 'user' car c’est toi-même
-    if (icon) who.appendChild(icon);
-
-    const usernameText = document.createTextNode(myUsername + ': ');
-    who.appendChild(usernameText);
-    const myUsername = localStorage.getItem('username') || 'moi';
+// Récupère les infos utilisateur
 const me = userCache[myUsername] || { role: 'user', gender: 'non spécifié' };
 const color = (me.role === 'admin') ? usernameColors.admin
            : (me.role === 'modo') ? usernameColors.modo
            : (usernameColors[me.gender] || usernameColors.default);
 
+// Création du message affichant le fichier
+const msgDiv = document.createElement('div');
+msgDiv.style.margin = '4px 0';
+
+const who = document.createElement('span');
+who.style.fontWeight = 'bold';
+who.style.marginRight = '4px';
+who.style.display = 'inline-flex';
+who.style.alignItems = 'center';
+
+const icon = createRoleIcon(me.role); // Utilise le vrai rôle de l'utilisateur
+if (icon) who.appendChild(icon);
+
+const usernameText = document.createTextNode(myUsername + ': ');
+who.appendChild(usernameText);
+
 who.style.color = color;
+
+
+
 
 
     msgDiv.appendChild(who);
