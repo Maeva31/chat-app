@@ -103,11 +103,17 @@ header.append(title, toggleBtn, closeBtn);
     let isDragging = false, offsetX = 0, offsetY = 0;
     header.style.cursor = 'move';
     header.addEventListener('mousedown', e => {
-      isDragging = true;
-      offsetX = e.clientX - win.offsetLeft;
-      offsetY = e.clientY - win.offsetTop;
-      document.body.style.userSelect = 'none';
-    });
+  // Si cible est le span (titre) ou un bouton, ne pas draguer
+  if (e.target.tagName.toLowerCase() === 'span' || e.target.tagName.toLowerCase() === 'button') {
+    return; // ignore drag
+  }
+  isDragging = true;
+  offsetX = e.clientX - win.offsetLeft;
+  offsetY = e.clientY - win.offsetTop;
+  document.body.style.userSelect = 'none';
+  header.style.cursor = 'grabbing';
+});
+
     document.addEventListener('mousemove', e => {
       if (!isDragging) return;
 
@@ -130,11 +136,12 @@ header.append(title, toggleBtn, closeBtn);
       win.style.right = 'auto';
     });
     document.addEventListener('mouseup', () => {
-      if (isDragging) {
-        isDragging = false;
-        document.body.style.userSelect = '';
-      }
-    });
+  if (isDragging) {
+    isDragging = false;
+    document.body.style.userSelect = '';
+    header.style.cursor = 'grab'; // reviens au curseur initial
+  }
+});
 
     container.appendChild(win);
   }
