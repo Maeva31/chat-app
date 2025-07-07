@@ -846,33 +846,30 @@ button:focus {
 
 /* MP */
 
-html, body {
-  height: 100%;
-  margin: 0;
-  padding: 0;
-}
-
-#private-chat-container {
-  position: fixed;
-  bottom: 10px;
-  right: 10px;
-  z-index: 1100;
+.private-chat-header {
+  background-color: #3b007d;
+  color: #e0b3ff;
+  padding: 10px;
+  cursor: grab;
   user-select: none;
-  overflow: visible;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top-left-radius: 12px;
+  border-top-right-radius: 12px;
+  font-weight: bold;
+  font-size: 1.1em;
 }
 
-.private-chat-window {
-  position: absolute;
-  width: 360px;
-  height: 380px;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(145deg, #0c002b, #1a0055);
-  border: 2px solid #8e44ad;
-  border-radius: 12px;
+.private-chat-header button {
+  background: transparent;
+  border: none;
   color: #d6a8ff;
-  box-shadow: 0 0 8px #8e44ad, 0 0 16px #b266ff;
-  resize: both;
-  overflow: auto;
-  cursor: default;
+  font-size: 1.3em;
+  cursor: pointer;
+  padding: 0 5px;
+}
+
+.private-chat-header button:hover {
+  color: #ff00ff;
 }
