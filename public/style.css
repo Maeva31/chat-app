@@ -842,3 +842,71 @@ button:focus {
   box-shadow: none !important;
   border: none !important;
 }
+
+
+/* Priver */
+
+/* Conteneur global des fenêtres privées */
+.private-chat-container {
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  display: flex;
+  gap: 10px;
+  z-index: 1000;
+}
+
+/* Fenêtre de conversation privée */
+.private-chat-window {
+  background-color: #111;
+  color: #fff;
+  width: 250px;
+  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #333;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.7);
+}
+
+/* En‑tête de la fenêtre (titre + bouton fermer) */
+.private-chat-header {
+  background-color: #222;
+  padding: 6px 8px;
+  font-weight: bold;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+/* Corps des messages */
+.private-chat-body {
+  flex: 1;
+  padding: 6px 8px;
+  overflow-y: auto;
+  font-size: 0.9em;
+}
+
+/* Zone de saisie */
+.private-chat-input {
+  border-top: 1px solid #333;
+  padding: 6px 8px;
+  display: flex;
+}
+.private-chat-input input {
+  flex: 1;
+  background: #222;
+  color: #fff;
+  border: none;
+  outline: none;
+}
+.private-chat-input button {
+  margin-left: 6px;
+  background: #444;
+  color: #fff;
+  border: none;
+  padding: 4px 8px;
+  cursor: pointer;
+  border-radius: 4px;
+}
