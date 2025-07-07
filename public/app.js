@@ -71,51 +71,6 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.bottom = '20px';
     win.style.right = '20px';
 
-    // --- Création poignée de redimensionnement (coin inférieur droit) ---
-    const resizeHandle = document.createElement('div');
-    resizeHandle.classList.add('resize-handle');
-    win.appendChild(resizeHandle);
-
-    let isResizing = false;
-    let lastDownX = 0;
-    let lastDownY = 0;
-
-    resizeHandle.addEventListener('mousedown', e => {
-      e.preventDefault();
-      isResizing = true;
-      lastDownX = e.clientX;
-      lastDownY = e.clientY;
-      document.body.style.userSelect = 'none';
-    });
-
-    document.addEventListener('mousemove', e => {
-      if (!isResizing) return;
-
-      const dx = e.clientX - lastDownX;
-      const dy = e.clientY - lastDownY;
-
-      const newWidth = win.offsetWidth + dx;
-      const newHeight = win.offsetHeight + dy;
-
-      const minWidth = 200;
-      const minHeight = 150;
-      const maxWidth = window.innerWidth * 0.9;
-      const maxHeight = window.innerHeight * 0.9;
-
-      win.style.width = Math.min(Math.max(newWidth, minWidth), maxWidth) + 'px';
-      win.style.height = Math.min(Math.max(newHeight, minHeight), maxHeight) + 'px';
-
-      lastDownX = e.clientX;
-      lastDownY = e.clientY;
-    });
-
-    document.addEventListener('mouseup', () => {
-      if (isResizing) {
-        isResizing = false;
-        document.body.style.userSelect = '';
-      }
-    });
-
     // --- Drag & Drop ---
     let isDragging = false, offsetX = 0, offsetY = 0;
     header.style.cursor = 'move';
@@ -200,6 +155,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
 });
+
 
 
 
