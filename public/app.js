@@ -96,8 +96,12 @@ document.addEventListener('DOMContentLoaded', () => {
   win.style.height = '380px';
 
   // Position initiale (droite-bas)
-  win.style.left = (window.innerWidth - 380 - 20) + 'px';
-  win.style.top = (window.innerHeight - 380 - 20) + 'px';
+  const leftPos = Math.min(window.innerWidth - 380 - 20, window.innerWidth - 400);
+const topPos = Math.min(window.innerHeight - 380 - 20, window.innerHeight - 400);
+
+win.style.left = Math.max(leftPos, 0) + 'px';
+win.style.top = Math.max(topPos, 0) + 'px';
+
 
   bringToFront(win);
 
@@ -201,6 +205,7 @@ window.openPrivateChat = openPrivateChat;
 
 
  const adminUsernames = ['MaEvA'];
+ const adminUsernames = ['rookie'];
  const modoUsernames = ['DarkGirL'];
 
 
