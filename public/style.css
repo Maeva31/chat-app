@@ -902,8 +902,8 @@ button:focus {
   font-family: Arial, sans-serif;
   user-select: none;
 
-  max-height: 250px;  /* Hauteur max fixée pour limiter la taille */
-  width: 330px;       /* Largeur fixe, ajustable */
+  max-height: 300px;  /* Hauteur max fixée pour limiter la taille */
+  width: 400px;       /* Largeur fixe, ajustable */
 }
 
 /* Header de la fenêtre privée */
