@@ -885,6 +885,7 @@ button:focus {
   color: white;
   user-select: none;
   cursor: move;
+  border-radius: 6px;
 }
 
 /* Bouton fermer */
