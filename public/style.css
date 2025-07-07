@@ -870,8 +870,8 @@ button:focus {
   font-family: Arial, sans-serif;
   user-select: none;
 
-  max-height: 400px;  /* Hauteur max fixée pour limiter la taille */
-  width: 300px;       /* Largeur fixe, ajustable */
+  max-height: 250px;  /* Hauteur max fixée pour limiter la taille */
+  width: 330px;       /* Largeur fixe, ajustable */
 }
 
 /* Header de la fenêtre privée */
@@ -952,3 +952,4 @@ button:focus {
 .private-chat-input button:hover {
   background: #8f00ff;
 }
+
