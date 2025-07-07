@@ -1,7 +1,3 @@
-
-document.addEventListener('DOMContentLoaded', () => {
-  const socket = io();
-
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
@@ -129,6 +125,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
+
+  // … le reste de vos handlers (updateUserList, addMessageToChat, salons, envoi de message public, etc.) …
+
+});
+
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
