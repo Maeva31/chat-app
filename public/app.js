@@ -56,6 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
+  // === Fonction openPrivateChat version petite fenêtre flottante ===
   function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
     if (!container) return;
@@ -72,20 +73,22 @@ document.addEventListener('DOMContentLoaded', () => {
     win.style.position = 'absolute';
     win.style.top = `${100 + Math.random() * 200}px`;
     win.style.left = `${100 + Math.random() * 200}px`;
+    win.style.width = '250px';     // largeur réduite
+    win.style.height = '150px';    // hauteur réduite
     win.style.backgroundColor = '#222';
     win.style.border = '1px solid #555';
     win.style.borderRadius = '8px';
-    win.style.width = '300px';
-    win.style.height = '350px';
     win.style.display = 'flex';
     win.style.flexDirection = 'column';
     win.style.zIndex = 1000;
     win.style.color = 'white';
+    win.style.fontSize = '12px';   // police plus petite
+    win.style.userSelect = 'none';
 
     const header = document.createElement('div');
     header.classList.add('header');
     header.style.backgroundColor = '#333';
-    header.style.padding = '6px 10px';
+    header.style.padding = '4px 8px';
     header.style.cursor = 'move';
     header.style.userSelect = 'none';
     header.style.display = 'flex';
@@ -94,29 +97,29 @@ document.addEventListener('DOMContentLoaded', () => {
     header.textContent = `MP avec ${username}`;
 
     const closeBtn = document.createElement('span');
-    closeBtn.classList.add('close-btn');
     closeBtn.textContent = '×';
     closeBtn.style.cursor = 'pointer';
     closeBtn.style.fontWeight = 'bold';
-    closeBtn.style.fontSize = '20px';
+    closeBtn.style.fontSize = '18px';
+    closeBtn.style.lineHeight = '18px';
+    closeBtn.style.marginLeft = '8px';
     closeBtn.addEventListener('click', () => container.removeChild(win));
     header.appendChild(closeBtn);
 
     const messages = document.createElement('div');
     messages.classList.add('messages');
     messages.style.flex = '1';
-    messages.style.padding = '8px';
+    messages.style.padding = '6px';
     messages.style.overflowY = 'auto';
     messages.style.backgroundColor = '#111';
-    messages.style.fontSize = '14px';
 
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = 'Message privé...';
-    input.style.padding = '8px';
+    input.style.padding = '6px';
     input.style.border = 'none';
     input.style.outline = 'none';
-    input.style.fontSize = '14px';
+    input.style.fontSize = '12px';
     input.style.backgroundColor = '#333';
     input.style.color = 'white';
 
@@ -128,11 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
           message: msg,
           timestamp: new Date().toISOString()
         });
-        addPrivateMessage(username, {
-          fromSelf: true,
-          message: msg,
-          timestamp: new Date().toISOString()
-        });
+        addPrivateMessage(username, { fromSelf: true, message: msg, timestamp: new Date().toISOString() });
         input.value = '';
       }
     });
@@ -144,6 +143,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     makeDraggable(win, header);
   }
+
+  // --- Fin openPrivateChat ---
 
   function addPrivateMessage(fromUser, { fromSelf, message, timestamp }) {
     const container = document.getElementById('private-chat-container');
