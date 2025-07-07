@@ -845,59 +845,104 @@ button:focus {
 
 /* MP */
 
+@keyframes neon-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 6px #9b59b6,
+      0 0 12px #8e44ad,
+      0 0 24px #b266ff,
+      0 0 40px #b266ff;
+    color: #b266ff;
+    text-shadow:
+      0 0 6px #b266ff,
+      0 0 12px #d6a8ff;
+  }
+  50% {
+    box-shadow:
+      0 0 12px #b266ff,
+      0 0 20px #9b59b6,
+      0 0 30px #b266ff,
+      0 0 50px #d6a8ff;
+    color: #d6a8ff;
+    text-shadow:
+      0 0 8px #d6a8ff,
+      0 0 14px #b266ff;
+  }
+}
+
 #private-chat-container {
   position: fixed;
   bottom: 10px;
   right: 10px;
-  z-index: 1000;
-  max-width: 400px;
-  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  z-index: 1100;
+  max-width: 480px;
+  font-family: 'Orbitron', sans-serif;
   user-select: none;
-  /* éviter scroll quand on redimensionne */
   overflow: visible;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* Fenêtre de chat privée */
 .private-chat-window {
-  background: #0a0a14;
-  border: 2px solid #8a2be2; /* violet */
-  border-radius: 8px;
+  background: linear-gradient(145deg, #0c002b 0%, #1a0055 100%);
+  border: 2px solid #8e44ad;
+  border-radius: 12px;
   box-shadow:
-    0 0 8px #8a2be2,
-    0 0 20px #b266ff,
-    0 0 30px #b266ff;
-  width: 320px;
-  height: 350px;
+    0 0 8px #8e44ad,
+    0 0 16px #b266ff,
+    0 0 32px #b266ff;
+  width: 360px;
+  height: 380px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  font-size: 14px;
-  color: #eee;
+  font-size: 15px;
+  color: #d6a8ff;
   resize: both;
   overflow: auto;
-  position: absolute; /* obligatoire pour déplacer */
+  position: absolute;
   cursor: default;
+  animation: neon-glow 3.5s ease-in-out infinite;
+  transition: box-shadow 0.3s ease, transform 0.3s ease;
 }
 
-/* Header avec titre et bouton fermer */
+.private-chat-window:hover {
+  box-shadow:
+    0 0 20px #d6a8ff,
+    0 0 40px #b266ff,
+    0 0 60px #d6a8ff;
+  transform: scale(1.02);
+  z-index: 1200;
+}
+
 .private-chat-header {
-  background: #1a0a3a;
-  padding: 10px 14px;
-  font-weight: 700;
+  background: linear-gradient(90deg, #4b0082, #8a2be2);
+  padding: 12px 16px;
+  font-weight: 800;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  cursor: move;
+  cursor: grab;
   user-select: none;
-  border-bottom: 1px solid #8a2be2;
-  color: #b266ff;
-  text-shadow: 0 0 8px #b266ff;
+  border-bottom: 2px solid #b266ff;
+  color: #d6a8ff;
+  text-shadow:
+    0 0 10px #b266ff,
+    0 0 20px #d6a8ff;
+  position: relative;
+  box-shadow: inset 0 2px 6px #5a00b7;
+  font-family: 'Orbitron', sans-serif;
+}
+
+.private-chat-header:active {
+  cursor: grabbing;
 }
 
 .private-chat-header span {
   flex-grow: 1;
-  font-size: 16px;
-  letter-spacing: 0.04em;
+  font-size: 18px;
+  letter-spacing: 0.05em;
+  user-select: text;
 }
 
 .private-chat-header button {
@@ -906,54 +951,78 @@ button:focus {
   font-size: 22px;
   line-height: 1;
   cursor: pointer;
-  color: #b266ff;
-  padding: 0 6px;
+  color: #d6a8ff;
+  padding: 0 8px;
   transition: color 0.3s ease, text-shadow 0.3s ease;
+  user-select: none;
+  filter: drop-shadow(0 0 2px #b266ff);
 }
 
 .private-chat-header button:hover {
-  color: #d6a8ff;
-  text-shadow: 0 0 12px #d6a8ff;
+  color: #fff;
+  text-shadow:
+    0 0 16px #fff,
+    0 0 24px #d6a8ff,
+    0 0 32px #b266ff;
 }
 
-/* Corps du chat, scrollable */
+/* Corps du chat */
 .private-chat-body {
   flex-grow: 1;
-  padding: 12px 14px;
+  padding: 16px 18px;
   overflow-y: auto;
-  background: #0a0a14;
-  border-bottom: 1px solid #8a2be2;
-  color: #ddd;
-  font-size: 14px;
-  text-shadow: 0 0 2px #b266ff;
+  background: linear-gradient(135deg, #1a0030 0%, #10002a 100%);
+  border-bottom: 2px solid #8e44ad;
+  color: #c5a3ff;
+  font-size: 15px;
+  text-shadow:
+    0 0 4px #b266ff,
+    0 0 6px #d6a8ff;
   word-break: break-word;
+  scrollbar-width: thin;
+  scrollbar-color: #8a2be2 #1a0030;
+}
+
+.private-chat-body::-webkit-scrollbar {
+  width: 8px;
+}
+
+.private-chat-body::-webkit-scrollbar-track {
+  background: #1a0030;
+  border-radius: 4px;
+}
+
+.private-chat-body::-webkit-scrollbar-thumb {
+  background-color: #8a2be2;
+  border-radius: 4px;
 }
 
 /* Messages */
 .private-chat-body div {
-  margin-bottom: 8px;
+  margin-bottom: 10px;
+  line-height: 1.3em;
 }
 
-/* Barre d'input et bouton */
+/* Barre d'input */
 .private-chat-input {
   display: flex;
-  padding: 10px 14px;
-  background: #1a0a3a;
-  border-top: 1px solid #8a2be2;
-  box-shadow: inset 0 0 8px #b266ff88;
+  padding: 14px 18px;
+  background: linear-gradient(90deg, #4b0082, #6a2bd9);
+  border-top: 2px solid #b266ff;
+  box-shadow: inset 0 0 8px #a97eff88;
 }
 
 .private-chat-input input {
   flex-grow: 1;
-  background: #120049;
-  border: 1.5px solid #b266ff;
-  border-radius: 6px;
-  padding: 8px 12px;
-  font-size: 14px;
+  background: #23005f;
+  border: 1.8px solid #b266ff;
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 15px;
   color: #ddd;
   outline: none;
-  transition: border-color 0.3s ease;
-  text-shadow: 0 0 3px #d3b3ff;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  text-shadow: 0 0 6px #d6a8ff;
 }
 
 .private-chat-input input::placeholder {
@@ -962,26 +1031,26 @@ button:focus {
 
 .private-chat-input input:focus {
   border-color: #d6a8ff;
-  box-shadow: 0 0 10px #d6a8ff;
+  box-shadow: 0 0 14px #d6a8ff;
 }
 
 .private-chat-input button {
-  margin-left: 10px;
+  margin-left: 14px;
   background-color: #8a2be2;
   border: none;
   color: white;
-  padding: 8px 16px;
-  border-radius: 6px;
+  padding: 10px 18px;
+  border-radius: 8px;
   cursor: pointer;
-  font-weight: 600;
-  font-size: 14px;
-  box-shadow: 0 0 8px #d6a8ff;
+  font-weight: 700;
+  font-size: 15px;
+  box-shadow: 0 0 12px #d6a8ff;
   transition: background-color 0.3s ease, box-shadow 0.3s ease;
 }
 
 .private-chat-input button:hover {
   background-color: #b266ff;
-  box-shadow: 0 0 16px #e0bbff;
+  box-shadow: 0 0 24px #e0bbff;
 }
 
 /* Curseur redimensionnement coin bas droit */
@@ -993,16 +1062,17 @@ button:focus {
 .private-chat-window::after {
   content: "";
   position: absolute;
-  width: 20px;
-  height: 20px;
-  right: 2px;
-  bottom: 2px;
+  width: 22px;
+  height: 22px;
+  right: 4px;
+  bottom: 4px;
   cursor: se-resize;
   background:
     linear-gradient(45deg, transparent 50%, #b266ff 50%),
     linear-gradient(-45deg, transparent 50%, #b266ff 50%);
   background-repeat: no-repeat;
   background-position: bottom right;
-  background-size: 8px 8px, 8px 8px;
+  background-size: 10px 10px, 10px 10px;
   pointer-events: none;
+  filter: drop-shadow(0 0 4px #b266ff);
 }
