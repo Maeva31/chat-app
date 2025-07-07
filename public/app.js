@@ -1106,7 +1106,7 @@ if (uploadInput && uploadButton) {
 
     reader.readAsArrayBuffer(file);
   });
-
+}
 
 
 
@@ -1276,6 +1276,7 @@ chatMessages.appendChild(wrapper);
 setTimeout(() => {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }, 0);
+});
 });
 
  /* Fin du code */
