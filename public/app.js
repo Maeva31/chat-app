@@ -1,7 +1,4 @@
-/* === CONTENT.JS FINAL COMPLET — ONGLET SALONS + MP + FONCTIONNALITÉS === */
 
-// ✅ Ce fichier remplace app.js ET content.js
-// Inclut : interface MP/salons, messages enrichis, fichiers, YouTube, modération, styles, emoji, notifications
 
 // === INITIALISATION SOCKET + ONGLET ===
 document.addEventListener('DOMContentLoaded', () => {
@@ -146,9 +143,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function sanitizeAndLinkify(text) {
     const escaped = text.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    return escaped.replace(/(https?:\/\/[\w\-\.\?\=\&\/%#]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
+    return escaped.replace(/(https?:\/\/[\w\-\.\?\=\&\/\%#]+)/g, '<a href="$1" target="_blank" rel="noopener">$1</a>');
   }
 });
+
 
  const adminUsernames = ['MaEvA'];
  const modoUsernames = ['DarkGirL'];
@@ -1261,18 +1259,19 @@ wrapper.appendChild(audio);
 wrapper.appendChild(video);
 
 
-  } else {
+    } else {
     const link = document.createElement('a');
     link.href = `data:${mimetype};base64,${data}`;
     link.download = filename;
     link.textContent = `📎 ${filename}`;
     link.target = '_blank';
-    img.onload = () => {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-wrapper.appendChild(link);
-
+    link.style.display = 'inline-block';
+    link.style.marginTop = '4px';
+    link.style.color = '#00aaff';
+    link.style.textDecoration = 'underline';
+    wrapper.appendChild(link);
   }
+
 
   chatMessages.appendChild(wrapper);
   setTimeout(() => {
@@ -1283,4 +1282,4 @@ wrapper.appendChild(link);
 }
 });
 
- 
+ /* Fin du code */
