@@ -113,14 +113,15 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
 
-  // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
-  document.addEventListener('click', e => {
+  // ── 5) Double clic sur un pseudo pour ouvrir la fenêtre ──
+  document.addEventListener('dblclick', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
     const username = span.textContent.trim();
-    const userObj = users.find(u => u.username === username);
+    const cleanUsername = username.normalize('NFC');
+    const userObj = users.find(u => u.username === cleanUsername);
     if (!userObj) return;
-    openPrivateChat(username, userObj.role, userObj.gender);
+    openPrivateChat(cleanUsername, userObj.role, userObj.gender);
   });
 
   // ── 6) Réception d'un message privé ──
@@ -139,6 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     appendPrivateMessage(body, from, message);
   });
 });
+
 
 
 
