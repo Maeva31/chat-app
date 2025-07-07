@@ -1290,5 +1290,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     setTimeout(() => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
-}
+});
+});
+
 });
