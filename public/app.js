@@ -51,7 +51,7 @@ document.addEventListener('DOMContentLoaded', () => {
       icon.style.width = '17px';
       icon.style.height = '15px';
       icon.style.marginRight = '6px';
-      icon.style.verticalAlign = 'middle';
+      icon.style.verticalAlign = '-3px';
       return icon;
     } else if (role === 'modo') {
       const icon = document.createElement('img');
@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
       icon.style.width = '16px';
       icon.style.height = '16px';
       icon.style.marginRight = '6px';
-      icon.style.verticalAlign = 'middle';
+      icon.style.verticalAlign = '-3px';
       return icon;
     }
     return null;
