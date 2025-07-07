@@ -22,57 +22,70 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
-  function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
-    }
+function openPrivateChat(username, role, gender) {
+  const container = document.getElementById('private-chat-container');
+  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (win) {
+    container.appendChild(win);
+    return;
+  }
 
-    // Création de la fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
+  // Création de la fenêtre
+  win = document.createElement('div');
+  win.classList.add('private-chat-window');
+  win.dataset.user = username;
 
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
-    const title = document.createElement('span');
-    title.textContent = username;
-    title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
-    header.append(title, closeBtn);
+  // Header
+  const header = document.createElement('div');
+  header.classList.add('private-chat-header');
 
-    // Body et input
-    const body = document.createElement('div');
-    body.classList.add('private-chat-body');
-    const inputBar = document.createElement('div');
-    inputBar.classList.add('private-chat-input');
-    const input = document.createElement('input');
-    input.placeholder = 'Message…';
-    const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
-    sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('private message', { to: username, message: text });
-      // Ne PAS afficher ton message envoyé dans la fenêtre
-      // appendPrivateMessage(body, 'moi', text);
-      input.value = '';
-    };
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
+  const title = document.createElement('span');
+  title.textContent = username;
+  title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
 
-    // Assemblage
-    win.append(header, body, inputBar);
+  // Bouton fermeture stylé
+  const closeBtn = document.createElement('button');
+  closeBtn.classList.add('close-sprite-button');
+  closeBtn.title = "Fermer la fenêtre";
+  closeBtn.addEventListener('click', () => {
+    if (win.parentElement) win.parentElement.removeChild(win);
+  });
 
-    // ─── Positionnement initial ───
-    win.style.position = 'absolute';
-    win.style.bottom = '20px';
-    win.style.right = '20px';
+  // Ajout au header
+  header.append(title, closeBtn);
+
+  // Body et input
+  const body = document.createElement('div');
+  body.classList.add('private-chat-body');
+
+  const inputBar = document.createElement('div');
+  inputBar.classList.add('private-chat-input');
+
+  const input = document.createElement('input');
+  input.placeholder = 'Message…';
+
+  const sendBtn = document.createElement('button');
+  sendBtn.textContent = 'Envoyer';
+  sendBtn.onclick = () => {
+    const text = input.value.trim();
+    if (!text) return;
+    socket.emit('private message', { to: username, message: text });
+    input.value = '';
+  };
+
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendBtn.click();
+  });
+
+  inputBar.append(input, sendBtn);
+
+  // Assemblage
+  win.append(header, body, inputBar);
+
+  // Positionnement initial
+  win.style.position = 'absolute';
+  win.style.bottom = '20px';
+  win.style.right = '20px';
 
     // ─── Drag & Drop avec limites pour rester visible ───
     let isDragging = false, offsetX = 0, offsetY = 0;
