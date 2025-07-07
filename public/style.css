@@ -971,3 +971,21 @@ button:focus {
 .private-chat-input button:hover {
   background-color: #888;
 }
+/* Header : curseur 'move' */
+.private-chat-header {
+  cursor: move; /* déplaçable */
+}
+
+/* Fenêtre : curseur par défaut (normal) */
+.private-chat-window {
+  cursor: default;
+  resize: both;        /* active le redimensionnement */
+  overflow: auto;      /* important pour le resize */
+  min-width: 300px;    /* largeur mini */
+  min-height: 150px;   /* hauteur mini */
+}
+
+/* Évite que le curseur change sur les enfants du header */
+.private-chat-header * {
+  cursor: inherit;
+}
