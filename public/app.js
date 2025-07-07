@@ -281,10 +281,9 @@ function addMessageToChat(msg) {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
+  // Filtrage pour les messages système liés aux salons
   if (msg.username === 'Système') {
-    // Ignore le message "est maintenant visible."
     if (/est maintenant visible\.$/i.test(msg.message)) return;
-
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
     if (match && match[1]) {
@@ -298,12 +297,14 @@ function addMessageToChat(msg) {
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+  // Span temps
   const timeSpan = document.createElement('span');
   timeSpan.textContent = `[${timeString}] `;
   timeSpan.style.color = '#888';
   timeSpan.style.fontStyle = 'italic';
   timeSpan.style.marginRight = '5px';
 
+  // Span username
   const usernameSpan = document.createElement('span');
   const color = (msg.role === 'admin') ? 'red' :
                 (msg.role === 'modo') ? 'limegreen' :
@@ -320,43 +321,7 @@ function addMessageToChat(msg) {
     usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                          (msg.role === 'modo') ? 'Modérateur' : '';
 
-    // Clic pour mentionner
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-    });
-  }
-
-  // Gestion du style gras si mention
-  const currentUsername = localStorage.getItem('username');
-  const isMentioned = msg.message?.includes(`@${currentUsername}`);
-
-  const messageSpan = document.createElement('span');
-  messageSpan.textContent = msg.message;
-  messageSpan.style.fontWeight = isMentioned ? 'bold' : (msg.style?.bold ? 'bold' : 'normal');
-  messageSpan.style.color = msg.style?.color || '#fff';
-  if (msg.style?.italic) messageSpan.style.fontStyle = 'italic';
-  if (msg.style?.font) messageSpan.style.fontFamily = msg.style.font;
-
-  // Ajout des éléments à newMessage
-  newMessage.appendChild(timeSpan);
-  newMessage.appendChild(usernameSpan);
-  newMessage.appendChild(messageSpan);
-
-  newMessage.classList.add('message');
-  newMessage.dataset.username = msg.username;
-
-  chatMessages.appendChild(newMessage);
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-}
-
-
-
-
-
-    // Icônes selon rôle
+    // Icônes rôle
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/diamond.ico';
@@ -386,77 +351,57 @@ function addMessageToChat(msg) {
       if (!input.value.includes(mention)) input.value = mention + input.value;
       input.focus();
     });
+  }
 
-
-    // Vérifie si le message contient une mention du pseudo actuel
+  // Gestion des mentions
   const currentUsername = localStorage.getItem('username');
   const isMentioned = msg.message?.includes(`@${currentUsername}`);
 
+  // Construction message avec style et lien
+  const messageSpan = document.createElement('span');
+  const style = msg.style || {};
+  messageSpan.style.color = style.color || '#fff';
+  messageSpan.style.fontWeight = isMentioned ? 'bold' : (style.bold ? 'bold' : 'normal');
+  messageSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageSpan.style.fontFamily = style.font || 'Arial';
 
-  function isYouTubeUrl(url) {
-    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
+  if (isMentioned) {
+    messageSpan.style.backgroundColor = '#3c361f';
+    messageSpan.style.padding = '2px 4px';
+    messageSpan.style.borderRadius = '4px';
   }
 
+  // Découpe message pour liens cliquables
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
-
-
-const messageText = document.createElement('span');
-const style = msg.style || {};
-messageText.style.color = style.color || '#fff';
-messageText.style.fontWeight = isMentioned ? 'bold' : (style.bold ? 'bold' : 'normal');
-messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-messageText.style.fontFamily = style.font || 'Arial';
-
-if (isMentioned) {
-  messageText.style.backgroundColor = '#3c361f';
-  messageText.style.padding = '2px 4px';
-  messageText.style.borderRadius = '4px';
-}
-
-
-
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
-      } else {
-        const a = document.createElement('a');
-        a.href = part;
-        a.textContent = part;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff';
-        a.style.textDecoration = 'underline';
-        messageText.appendChild(a);
+      if (/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(part)) {
+        // ignore, vidéo intégrée ailleurs
+        return;
       }
-    } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
+      const a = document.createElement('a');
+      a.href = part;
+      a.textContent = part;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.color = style.color || '#00aaff';
+      a.style.textDecoration = 'underline';
+      messageSpan.appendChild(a);
+    } else if (part.trim() !== '') {
+      messageSpan.appendChild(document.createTextNode(part));
     }
   });
 
-  // --- Ici la modification principale : ajout du span timeSpan ---
-  const timeSpan = document.createElement('span');
-  timeSpan.textContent = timeString + ' ';
-  timeSpan.style.color = '#888';
-  timeSpan.style.fontStyle = 'italic';
-  timeSpan.style.marginRight = '5px';
-
+  // Ajout des éléments dans newMessage
   newMessage.appendChild(timeSpan);
+  if (msg.username !== 'Système') newMessage.appendChild(usernameSpan);
 
-  if (msg.username !== 'Système') {
-    newMessage.appendChild(usernameSpan);
-  }
-
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide
   if (msg.username === 'Système') {
-    messageText.style.color = '#888';
-    messageText.style.fontStyle = 'italic';
-
-    newMessage.appendChild(messageText);
-  } else if (messageText.textContent.trim() !== '') {
-    newMessage.appendChild(messageText);
+    messageSpan.style.color = '#888';
+    messageSpan.style.fontStyle = 'italic';
+    newMessage.appendChild(messageSpan);
+  } else if (messageSpan.textContent.trim() !== '') {
+    newMessage.appendChild(messageSpan);
   }
 
   newMessage.classList.add('message');
@@ -467,102 +412,6 @@ if (isMentioned) {
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-  // Sélectionne visuellement un salon dans la liste
-  function selectChannelInUI(channelName) {
-    document.querySelectorAll('.channel').forEach(c => {
-      if (extractChannelName(c.textContent) === channelName) {
-        c.classList.add('selected');
-      } else {
-        c.classList.remove('selected');
-      }
-    });
-  }
-
-  // Quand on rejoint un salon côté serveur
-  socket.on('joinedRoom', (newChannel) => {
-    currentChannel = newChannel;
-    localStorage.setItem('currentChannel', newChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-    selectChannelInUI(newChannel);
-    selectedUser = null;
-    socket.emit('request history', newChannel);
-  });
-
-  // Clic sur un salon dans la liste
-  document.getElementById('channel-list').addEventListener('click', (e) => {
-    const target = e.target.closest('.channel');
-    if (!target) return;
-    const clickedChannel = extractChannelName(target.textContent);
-    if (!clickedChannel || clickedChannel === currentChannel) return;
-
-    currentChannel = clickedChannel;
-    localStorage.setItem('currentChannel', currentChannel);
-    socket.emit('joinRoom', currentChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-    selectChannelInUI(currentChannel);
-    selectedUser = null;
-  });
-
-  // Envoi message
-  function sendMessage() {
-    const input = document.getElementById('message-input');
-    if (!input) return;
-    const message = input.value.trim();
-    const username = localStorage.getItem('username');
-    if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
-    if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
-
-    if (username) {
-      socket.emit('chat message', {
-        message,
-        timestamp: new Date().toISOString(),
-        style: loadSavedStyle() 
-      });
-      input.value = '';
-    }
-  }
-
-
-function submitUserInfo() {
-  const usernameInput = document.getElementById('username-input');
-  const passwordInput = document.getElementById('password-input'); // récupère le mot de passe
-  const genderSelect = document.getElementById('gender-select');
-  const ageInput = document.getElementById('age-input');
-  const modalError = document.getElementById('modal-error');
-
-  if (!usernameInput || !genderSelect || !ageInput || !modalError || !passwordInput) return;
-
-  const username = usernameInput.value.trim();
-  const gender = genderSelect.value;
-  const age = parseInt(ageInput.value.trim(), 10);
-  const password = passwordInput.value.trim();
-
-  if (!username || username.includes(' ') || username.length > 16) {
-    modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (isNaN(age) || age < 18 || age > 89) {
-    modalError.textContent = "L'âge doit être un nombre entre 18 et 89.";
-    modalError.style.display = 'block';
-    return;
-  }
-  if (!gender) {
-    modalError.textContent = "Veuillez sélectionner un genre.";
-    modalError.style.display = 'block';
-    return;
-  }
-
- if ((adminUsernames.includes(username) || modoUsernames.includes(username)) && password.length === 0) {
-  modalError.textContent = "Le mot de passe est obligatoire pour ce pseudo.";
-  modalError.style.display = 'block';
-  return;
-}
-
-
 
 
 
