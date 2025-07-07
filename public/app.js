@@ -1261,7 +1261,6 @@ wrapper.appendChild(link);
   }, 0);
 });
 
-}
-});
+
 
  
