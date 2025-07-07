@@ -1,7 +1,3 @@
-
-document.addEventListener('DOMContentLoaded', () => {
-  const socket = io();
-
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
