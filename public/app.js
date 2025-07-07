@@ -81,7 +81,6 @@ document.addEventListener('DOMContentLoaded', () => {
     emojiPicker.style.zIndex = '1000';
     emojiPicker.style.maxWidth = '200px';
     emojiPicker.style.flexWrap = 'wrap';
-    emojiPicker.style.display = 'flex';
 
     // Liste d'émojis à afficher dans le picker (tu peux ajouter/modifier)
     const emojis = ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶'];
