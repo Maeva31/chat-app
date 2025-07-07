@@ -506,13 +506,15 @@ usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
     }
 
     // Clic pour mentionner
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-    });
-  }
+    usernameSpan.addEventListener('click', (e) => {
+  if (e.detail > 1) return; // Ignore les double-clics
+
+  const input = document.getElementById('message-input');
+  const mention = `@${msg.username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
+
 
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
