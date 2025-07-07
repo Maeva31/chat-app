@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let win = container.querySelector(`.private-chat-window[data-user="${fromUser}"]`);
     if (!win) {
       openPrivateChat(fromUser);
-      win = container.querySelector(.private-chat-window[data-user="${fromUser}"]);
+      win = container.querySelector(`.private-chat-window[data-user="${fromUser}"]`);
     }
 
     const messages = win.querySelector('.messages');
@@ -267,7 +267,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
-    invisibleBtn.textContent = 👻;
+    invisibleBtn.textContent = '👻';
     invisibleBtn.style.backgroundColor = invisibleMode ? '#4CAF50' : '#f44336';
     invisibleBtn.title = invisibleMode ? 'Mode Invisible activé' : 'Mode Invisible désactivé';
   }
@@ -371,7 +371,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Clic pour mentionner
       usernameSpan.addEventListener('click', () => {
         const input = document.getElementById('message-input');
-        const mention = @${msg.username} ;
+        const mention = `@${msg.username} `;
         if (!input.value.includes(mention)) input.value = mention + input.value;
         input.focus();
       });
@@ -617,62 +617,74 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       channelList.appendChild(li);
     }
-    showBanner(Salon "${newChannel}" créé avec succès !, 'success');
+    showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
   });
 
-  socket.on('roomUserCounts', (counts) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
+ socket.on('roomUserCounts', (counts) => {
+  const channelList = document.getElementById('channel-list');
+  if (!channelList) return;
 
-    [...channelList.children].forEach(li => {
-      const name = extractChannelName(li.textContent);
-      if (name && counts[name] !== undefined) {
-        const emoji = channelEmojis[name] || "💬";
+  [...channelList.children].forEach(li => {
+    const name = extractChannelName(li.textContent);
+    if (name && counts[name] !== undefined) {
+      const emoji = channelEmojis[name] || "💬";
 
-        let countSpan = li.querySelector('.user-count');
-        if (!countSpan) {
-          countSpan = document.createElement('span');
-          countSpan.classList.add('user-count');
-          li.appendChild(countSpan);
-        }
-
-        if (invisibleMode && name === currentChannel) {
-          countSpan.textContent = '';  // Pas de nombre si invisible
-          li.firstChild.textContent = # ${emoji} ┊ ${name} ;
-        } else {
-          countSpan.textContent =  (${counts[name]});
-          li.firstChild.textContent = # ${emoji} ┊ ${name} ;
-        }
+      let countSpan = li.querySelector('.user-count');
+      if (!countSpan) {
+        countSpan = document.createElement('span');
+        countSpan.classList.add('user-count');
+        li.appendChild(countSpan);
       }
+
+      if (invisibleMode && name === currentChannel) {
+        countSpan.textContent = '';  // Pas de nombre si invisible
+        li.firstChild.textContent = `# ${emoji} ┊ ${name}`;
+      } else {
+        countSpan.textContent = ` (${counts[name]})`;
+        li.firstChild.textContent = `# ${emoji} ┊ ${name}`;
+      }
+    }
+  });
+});
+
+socket.on('room list', (rooms) => {
+  const channelList = document.getElementById('channel-list');
+  if (!channelList) return;
+  const previousChannel = currentChannel;
+
+  channelList.innerHTML = '';
+
+  rooms.forEach(channelName => {
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    const emoji = channelEmojis[channelName] || "💬";
+    li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+
+    li.addEventListener('click', () => {
+      const clickedRoom = extractChannelName(li.textContent);
+      if (clickedRoom === currentChannel) return;
+      currentChannel = clickedRoom;
+      localStorage.setItem('currentChannel', currentChannel);
+      const chatMessages = document.getElementById('chat-messages');
+      if (chatMessages) chatMessages.innerHTML = '';
+      selectChannelInUI(currentChannel);
+      socket.emit('joinRoom', currentChannel);
     });
+
+    channelList.appendChild(li);
   });
 
-  socket.on('room list', (rooms) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
-    const previousChannel = currentChannel;
+  if (!rooms.includes(previousChannel)) {
+    currentChannel = 'Général';
+    localStorage.setItem('currentChannel', currentChannel);
+    socket.emit('joinRoom', currentChannel);
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) chatMessages.innerHTML = '';
+  }
 
-    channelList.innerHTML = '';
+  selectChannelInUI(currentChannel);
+});
 
-    rooms.forEach(channelName => {
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = # ${emoji} ┊ ${channelName} (0);
-
-      li.addEventListener('click', () => {
-        const clickedRoom = extractChannelName(li.textContent);
-        if (clickedRoom === currentChannel) return;
-        currentChannel = clickedRoom;
-        localStorage.setItem('currentChannel', currentChannel);
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        selectChannelInUI(currentChannel);
-        socket.emit('joinRoom', currentChannel);
-      });
-
-      channelList.appendChild(li);
-    });
 
     if (!rooms.includes(previousChannel)) {
       currentChannel = 'Général';
@@ -796,7 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   socket.on('error message', (msg) => {
-    showBanner(❗ ${msg}, 'error');
+    showBanner(`❗ ${msg}`, 'error');
   });
 
   socket.on('no permission', () => {
@@ -1136,7 +1148,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const link = document.createElement('a');
       link.href = `data:${mimetype};base64,${data}`;
       link.download = filename;
-      link.textContent = 📎 ${filename};
+      link.textContent = `📎 ${filename}`;
       link.target = '_blank';
       wrapper.appendChild(link);
     }
@@ -1167,7 +1179,7 @@ document.addEventListener('DOMContentLoaded', () => {
         wrapper.classList.add('youtube-wrapper');
 
         const iframe = document.createElement('iframe');
-        iframe.src = https://www.youtube.com/embed/${videoId}?controls=1;
+        iframe.src = `https://www.youtube.com/embed/${videoId}?controls=1`;
         iframe.frameBorder = '0';
         iframe.allow =
           'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture';
@@ -1178,4 +1190,4 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-}); 
+/* Fin de code */
