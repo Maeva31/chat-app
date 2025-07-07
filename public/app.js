@@ -496,6 +496,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 7) Réception d’un fichier privé ──
   socket.on('private file', ({ from, filename, data, mimetype, timestamp, role, gender }) => {
+    const myUsername = localStorage.getItem('username');
+if (from === myUsername) return;
     const container = document.getElementById('private-chat-container');
     if (!container) return;
 
