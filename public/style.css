@@ -995,12 +995,14 @@ button:focus {
 }
 
 .resize-handle {
-  width: 15px;
-  height: 15px;
   position: absolute;
-  bottom: 0;
-  right: 0;
-  cursor: nwse-resize;
-  background: transparent;
-  z-index: 10001;
+  width: 16px;
+  height: 16px;
+  right: 2px;
+  bottom: 2px;
+  cursor: nwse-resize; /* Curseur diagonale */
+  background: rgba(255, 255, 255, 0.3); /* visible, tu peux changer */
+  border-radius: 3px;
+  user-select: none;
+  z-index: 10;
 }
