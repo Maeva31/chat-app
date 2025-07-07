@@ -290,6 +290,13 @@ function addMessageToChat(msg) {
     }
   }
 
+  newMessage.append(`[${timeString}] `);
+newMessage.appendChild(usernameSpan);
+newMessage.appendChild(messageSpan);
+chatMessages.appendChild(newMessage);
+chatMessages.scrollTop = chatMessages.scrollHeight;
+
+
   const chatMessages = document.getElementById('chat-messages');
 if (!chatMessages) return;
 
@@ -348,18 +355,34 @@ if (msg.username === 'Système') {
     });
   }
 
+    // Vérifie si le message contient une mention du pseudo actuel
+  const currentUsername = localStorage.getItem('username');
+  const isMentioned = msg.message?.includes(`@${currentUsername}`);
+
+
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
   }
 
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-  const messageText = document.createElement('span');
-  const style = msg.style || {};
-  messageText.style.color = style.color || '#fff';
-  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = style.font || 'Arial';
+const currentUsername = localStorage.getItem('username');
+const isMentioned = msg.message?.includes(`@${currentUsername}`);
+
+const messageText = document.createElement('span');
+const style = msg.style || {};
+messageText.style.color = style.color || '#fff';
+messageText.style.fontWeight = isMentioned ? 'bold' : (style.bold ? 'bold' : 'normal');
+messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+messageText.style.fontFamily = style.font || 'Arial';
+
+if (isMentioned) {
+  messageText.style.backgroundColor = '#3c361f';
+  messageText.style.padding = '2px 4px';
+  messageText.style.borderRadius = '4px';
+}
+
+
 
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
