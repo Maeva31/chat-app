@@ -115,7 +115,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 5) Double clic sur un pseudo pour ouvrir la fenêtre ──
   document.addEventListener('dblclick', e => {
-    const span = e.target.closest('.clickable-username');
+  const userItem = e.target.closest('.user-item');
+  if (!userItem) return;
+
+  const span = userItem.querySelector('.clickable-username');
+  if (!span) return;
+
+  const username = span.textContent.trim();
+  const cleanUsername = username.normalize('NFC');
+  const userObj = users.find(u => u.username === cleanUsername);
+  if (!userObj) return;
+
+  openPrivateChat(cleanUsername, userObj.role, userObj.gender);
+});
+
     if (!span) return;
     const username = span.textContent.trim();
     const cleanUsername = username.normalize('NFC');
