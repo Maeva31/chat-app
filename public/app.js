@@ -1243,43 +1243,38 @@ wrapper.appendChild(audio);
 
 
   } else if (mimetype.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = `data:${mimetype};base64,${data}`;
-    video.style.maxWidth = '300px';
-    video.style.maxHeight = '300px';
-    video.style.marginTop = '4px';
-    video.style.border = '2px solid #ccc';
-    video.style.borderRadius = '8px';
-    video.style.padding = '4px';
-    video.style.backgroundColor = '#000';
-    video.onloadeddata = () => {
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-};
-wrapper.appendChild(video);
-
-
-    } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    link.style.display = 'inline-block';
-    link.style.marginTop = '4px';
-    link.style.color = '#00aaff';
-    link.style.textDecoration = 'underline';
-    wrapper.appendChild(link);
-  }
-
-
-  chatMessages.appendChild(wrapper);
-  setTimeout(() => {
+  const video = document.createElement('video');
+  video.controls = true;
+  video.src = `data:${mimetype};base64,${data}`;
+  video.style.maxWidth = '300px';
+  video.style.maxHeight = '300px';
+  video.style.marginTop = '4px';
+  video.style.border = '2px solid #ccc';
+  video.style.borderRadius = '8px';
+  video.style.padding = '4px';
+  video.style.backgroundColor = '#000';
+  video.onloadeddata = () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
-  }, 0);
-});
+  };
+  wrapper.appendChild(video);
 
+} else {
+  const link = document.createElement('a');
+  link.href = `data:${mimetype};base64,${data}`;
+  link.download = filename;
+  link.textContent = `📎 ${filename}`;
+  link.target = '_blank';
+  link.style.display = 'inline-block';
+  link.style.marginTop = '4px';
+  link.style.color = '#00aaff';
+  link.style.textDecoration = 'underline';
+  wrapper.appendChild(link);
 }
+
+chatMessages.appendChild(wrapper);
+setTimeout(() => {
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}, 0);
 });
 
  /* Fin du code */
