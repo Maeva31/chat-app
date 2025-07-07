@@ -955,3 +955,35 @@ button:focus {
   background: #8f00ff;
 }
 
+/* Nouveau bouton fermeture, classe différente */
+.close-sprite-button {
+  width: 24px;
+  height: 24px;
+  background: url('/icon/starbis.gif') no-repeat top center;
+  background-size: 24px 48px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0;
+  position: relative;
+  left: -8px; /* décale vers la gauche */
+  user-select: none;
+}
+
+.close-sprite-button:hover {
+  background-position: 0 -24px;
+}
+
+/* Désactivation des focus/outline */
+.close-sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.close-sprite-button:focus,
+.close-sprite-button:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
