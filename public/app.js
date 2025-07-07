@@ -57,7 +57,8 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
-      appendPrivateMessage(body, 'moi', text);
+      // Ne PAS afficher ton message envoyé dans la fenêtre
+      // appendPrivateMessage(body, 'moi', text);
       input.value = '';
     };
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
@@ -97,21 +98,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
+    // Ne rien afficher pour ses propres messages envoyés
+    if (from === 'moi') return;
+
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '4px 0';
     const who = document.createElement('span');
+    who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
 
-    // N'affiche pas "moi:" devant les messages envoyés par soi-même
-    if (from === 'moi') {
-      msgDiv.textContent = text;
-    } else {
-      who.textContent = from + ': ';
-      // Couleur selon rôle/genre
-      const userObj = users.find(u => u.username === from) || {};
-      who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
-      msgDiv.append(who, document.createTextNode(text));
-    }
+    const userObj = users.find(u => u.username === from) || {};
+    who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
+
+    msgDiv.append(who, document.createTextNode(text));
     bodyElem.appendChild(msgDiv);
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
@@ -123,8 +122,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const username = span.textContent.trim();
     const userObj = users.find(u => u.username === username);
     if (!userObj) return;
-
-    // Ouvre la fenêtre privée de l'utilisateur cliqué
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
@@ -134,12 +131,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const allWindows = container.querySelectorAll('.private-chat-window');
 
     if (allWindows.length === 0) {
-      // Aucune fenêtre privée ouverte, on ouvre celle de l'expéditeur
       const userObj = users.find(u => u.username === from) || {};
       openPrivateChat(from, userObj.role, userObj.gender);
     }
 
-    // Ajoute TOUS les messages dans la première fenêtre privée ouverte (peu importe l'expéditeur)
     const win = container.querySelector('.private-chat-window');
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
