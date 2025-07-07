@@ -959,7 +959,7 @@ button:focus {
 .close-sprite-button {
   width: 24px;
   height: 24px;
-  background: url('/icon/starbis.gif') no-repeat top center;
+  background: url('/icon/croix.gif') no-repeat top center;
   background-size: 24px 48px;
   border: none;
   cursor: pointer;
