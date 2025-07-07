@@ -959,19 +959,18 @@ button:focus {
 .close-sprite-button {
   width: 24px;
   height: 24px;
-  background: url('https://chat-app-91ml.onrender.com/icon/croix.gif') no-repeat top center;
-  background-size: 24px 48px;
+  background: url('https://chat-app-91ml.onrender.com/icon/croix.gif') no-repeat center center;
+  background-size: contain;
   border: none;
   cursor: pointer;
   display: inline-block;
   padding: 0;
   position: relative;
-  left: -8px; /* décale vers la gauche */
+  left: 0; /* enlever décalage pour éviter hors écran */
   user-select: none;
 }
-
 .close-sprite-button:hover {
-  background-position: 0 -24px;
+  filter: brightness(1.2); /* effet léger au hover */
 }
 
 /* Désactivation des focus/outline */
