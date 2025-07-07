@@ -48,26 +48,95 @@ document.addEventListener('DOMContentLoaded', () => {
     // Body et input
     const body = document.createElement('div');
     body.classList.add('private-chat-body');
+
+    // Barre d'input avec emoji picker
     const inputBar = document.createElement('div');
     inputBar.classList.add('private-chat-input');
+    inputBar.style.position = 'relative'; // Pour positionner le picker
+
     const input = document.createElement('input');
     input.placeholder = 'Message…';
+
+    // Bouton emoji
+    const emojiBtn = document.createElement('button');
+    emojiBtn.textContent = '😊';
+    emojiBtn.title = 'Insérer un émoji';
+    emojiBtn.style.fontSize = '20px';
+    emojiBtn.style.background = 'transparent';
+    emojiBtn.style.border = 'none';
+    emojiBtn.style.cursor = 'pointer';
+    emojiBtn.style.marginRight = '5px';
+
+    // Emoji picker (conteneur)
+    const emojiPicker = document.createElement('div');
+    emojiPicker.classList.add('emoji-picker');
+    emojiPicker.style.display = 'none';
+    emojiPicker.style.position = 'absolute';
+    emojiPicker.style.bottom = '40px';
+    emojiPicker.style.left = '0px';
+    emojiPicker.style.background = '#222';
+    emojiPicker.style.padding = '8px';
+    emojiPicker.style.borderRadius = '8px';
+    emojiPicker.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+    emojiPicker.style.zIndex = '1000';
+    emojiPicker.style.maxWidth = '200px';
+    emojiPicker.style.flexWrap = 'wrap';
+    emojiPicker.style.display = 'flex';
+
+    // Liste d'émojis à afficher dans le picker (tu peux ajouter/modifier)
+    const emojis = ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶'];
+
+    emojis.forEach(e => {
+      const span = document.createElement('span');
+      span.textContent = e;
+      span.style.cursor = 'pointer';
+      span.style.fontSize = '22px';
+      span.style.margin = '4px';
+      span.addEventListener('click', () => {
+        const start = input.selectionStart;
+        const end = input.selectionEnd;
+        input.value = input.value.slice(0, start) + e + input.value.slice(end);
+        input.selectionStart = input.selectionEnd = start + e.length;
+        input.focus();
+        emojiPicker.style.display = 'none';
+      });
+      emojiPicker.appendChild(span);
+    });
+
+    // Toggle affichage picker emoji au clic bouton
+    emojiBtn.addEventListener('click', e => {
+      e.stopPropagation();
+      emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'flex' : 'none';
+    });
+
+    // Clic hors picker ferme le picker
+    document.addEventListener('click', () => {
+      emojiPicker.style.display = 'none';
+    });
+
+    // Empêche la fermeture au clic dans le picker
+    emojiPicker.addEventListener('click', e => {
+      e.stopPropagation();
+    });
+
     const sendBtn = document.createElement('button');
     sendBtn.textContent = 'Envoyer';
 
-    // Modification ici: afficher localement le message envoyé
+    // Afficher localement le message envoyé
     sendBtn.onclick = () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
-      appendPrivateMessage(body, 'moi', text);  // Affichage local direct
+      appendPrivateMessage(body, 'moi', text);
       input.value = '';
     };
 
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
 
-    // Assemblage
+    // Assemblage inputBar
+    inputBar.append(emojiBtn, emojiPicker, input, sendBtn);
+
+    // Assemblage fenêtre
     win.append(header, body, inputBar);
 
     // Positionnement initial
@@ -123,7 +192,7 @@ document.addEventListener('DOMContentLoaded', () => {
     who.style.fontWeight = 'bold';
 
     if (from === 'moi') {
-      who.style.color = 'green'; // Couleur spéciale pour tes messages
+      who.style.color = 'green';
     } else {
       const userObj = users.find(u => u.username === from) || {};
       who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
@@ -147,7 +216,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── 6) Réception d'un message privé ──
   socket.on('private message', ({ from, message }) => {
     const myUsername = localStorage.getItem('username');
-    if (from === myUsername) return; // Ne pas afficher ses propres messages (déjà affichés localement)
+    if (from === myUsername) return;
 
     const container = document.getElementById('private-chat-container');
     let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
@@ -162,8 +231,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-
-});
+  });
 
 
 
