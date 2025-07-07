@@ -941,7 +941,7 @@ button:focus {
   flex: 1;
   padding: 10px;
   overflow-y: auto; /* Barre de défilement verticale */
-  background: #5f30bd99;
+  background: #5f30bde6;
   font-size: 0.9em;
   line-height: 1.3;
   color: #ddd;
