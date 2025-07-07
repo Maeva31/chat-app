@@ -846,49 +846,53 @@ button:focus {
 /* MP */
 
 .private-chat-window {
-  position: absolute;
-  width: 250px;
-  background: #222;
-  border: 2px solid #888;
+  background-color: #222;
+  border: 1px solid #555;
   border-radius: 8px;
-  z-index: 999;
-  padding: 5px;
-  box-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+  width: 300px;
+  height: 180px;
+  position: absolute;
   color: white;
-  font-family: Arial;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  box-shadow: 0 0 10px #000000bb;
+  user-select: none;
 }
 
 .private-chat-window .header {
-  background: #444;
-  padding: 4px;
+  background-color: #333;
+  padding: 6px 10px;
   cursor: move;
-  font-weight: bold;
-  text-align: center;
-}
-
-.private-chat-window .close-btn {
-  position: absolute;
-  right: 8px;
-  top: 4px;
-  cursor: pointer;
+  user-select: none;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-weight: bold;
 }
 
 .private-chat-window .messages {
-  height: 150px;
+  flex: 1;
+  background-color: #111;
   overflow-y: auto;
-  background: #111;
-  margin-top: 5px;
-  padding: 5px;
+  padding: 8px;
+  margin: 4px;
   border-radius: 4px;
   font-size: 13px;
+  color: #eee;
 }
 
-.private-chat-window input {
-  width: calc(100% - 10px);
-  margin-top: 5px;
-  padding: 4px;
-  border-radius: 4px;
+.private-chat-window input[type="text"] {
+  padding: 8px;
   border: none;
   outline: none;
+  font-size: 14px;
+  background-color: #333;
+  color: white;
+  border-radius: 0 0 8px 8px;
+  width: 100%;
+  box-sizing: border-box;
+  user-select: text;
+  cursor: text;
 }
