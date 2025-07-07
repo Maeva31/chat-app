@@ -910,3 +910,17 @@ button:focus {
   cursor: pointer;
   border-radius: 4px;
 }
+
+.private-chat-window {
+  resize: both;
+  overflow: auto;
+  min-width: 200px;
+  min-height: 100px;
+  max-width: 80vw;
+  max-height: 80vh;
+}
+
+.private-chat-header {
+  user-select: none;
+}
+
