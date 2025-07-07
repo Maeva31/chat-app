@@ -1291,3 +1291,4 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
 });
+});
