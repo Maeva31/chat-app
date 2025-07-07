@@ -1,13 +1,16 @@
 
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
-  // ── 1) Stockage et mise à jour de la liste users ──
+   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   socket.on('user list', list => {
     users = list;
     updateUserList(list);
   });
+
+  // Récupère le pseudo local pour empêcher de s’ouvrir soi-même
+  const me = { username: localStorage.getItem('username') };
 
   // ── 2) Couleurs selon rôle/genre ──
   const usernameColors = {
@@ -22,10 +25,13 @@
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
   function openPrivateChat(username, role, gender) {
+    // n’ouvre pas si c’est soi-même
+    if (username === me.username) return;
+
     const container = document.getElementById('private-chat-container');
     let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (win) {
-      container.appendChild(win);
+      container.appendChild(win); // remonte en front
       return;
     }
 
@@ -37,21 +43,74 @@
     // Header
     const header = document.createElement('div');
     header.classList.add('private-chat-header');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.padding = '4px';
+    header.style.background = '#444';
+    header.style.color = '#fff';
+
     const title = document.createElement('span');
     title.textContent = username;
     title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
+
+    // Minimize / restore
+    const minBtn = document.createElement('button');
+    minBtn.textContent = '–';
+    minBtn.title = 'Réduire/agrandir';
+    minBtn.onclick = () => {
+      if (body.style.display !== 'none') {
+        body.style.display = 'none';
+        inputBar.style.display = 'none';
+      } else {
+        body.style.display = 'block';
+        inputBar.style.display = 'flex';
+      }
+    };
+
+    // Close
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
+    closeBtn.title = 'Fermer';
     closeBtn.onclick = () => container.removeChild(win);
-    header.append(title, closeBtn);
 
-    // Body et input
+    const controls = document.createElement('div');
+    controls.append(minBtn, closeBtn);
+    controls.style.display = 'flex';
+    controls.style.gap = '4px';
+
+    header.append(title, controls);
+
+    // Body
     const body = document.createElement('div');
     body.classList.add('private-chat-body');
+    body.style.padding = '4px';
+    body.style.height = '150px';
+    body.style.overflowY = 'auto';
+    body.style.background = '#222';
+    body.style.color = '#eee';
+
+    // Input + emoji + send
     const inputBar = document.createElement('div');
     inputBar.classList.add('private-chat-input');
+    inputBar.style.display = 'flex';
+    inputBar.style.gap = '4px';
+    inputBar.style.padding = '4px';
+    inputBar.style.background = '#333';
+
+    const emojiBtn = document.createElement('button');
+    emojiBtn.textContent = '😊';
+    emojiBtn.title = 'Émoji';
+    emojiBtn.onclick = () => {
+      // (simple exemple : insère un smile)
+      input.value += '😊';
+      input.focus();
+    };
+
     const input = document.createElement('input');
     input.placeholder = 'Message…';
+    input.style.flex = '1';
+
     const sendBtn = document.createElement('button');
     sendBtn.textContent = 'Envoyer';
     sendBtn.onclick = () => {
@@ -62,15 +121,21 @@
       input.value = '';
     };
     input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
-    inputBar.append(input, sendBtn);
 
-    // Assemblage
+    inputBar.append(emojiBtn, input, sendBtn);
+
+    // Assemble
     win.append(header, body, inputBar);
 
     // ─── Positionnement initial ───
     win.style.position = 'absolute';
-    win.style.bottom   = '20px';
-    win.style.right    = '20px';
+    win.style.left     = '20px';
+    win.style.top      = '20px';
+    win.style.width    = '250px';
+    win.style.height   = '250px';
+    win.style.border   = '1px solid #666';
+    win.style.background = '#111';
+    win.style.boxShadow  = '2px 2px 8px rgba(0,0,0,0.7)';
 
     // ─── Drag & Drop ───
     let isDragging = false, offsetX = 0, offsetY = 0;
@@ -99,7 +164,7 @@
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
     const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
+    msgDiv.style.margin = '2px 0';
     const who = document.createElement('span');
     who.textContent = from + ': ';
     who.style.fontWeight = 'bold';
@@ -122,10 +187,11 @@
   socket.on('private message', ({ from, message }) => {
     const userObj = users.find(u => u.username === from) || {};
     openPrivateChat(from, userObj.role, userObj.gender);
-    const win = document.querySelector(`.private-chat-window[data-user="${from}"]`);
+    const win  = document.querySelector(`.private-chat-window[data-user="${from}"]`);
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
+
   
 
  const adminUsernames = ['MaEvA'];
