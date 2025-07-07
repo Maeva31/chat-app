@@ -1,6 +1,4 @@
-
-
-  document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
   const adminUsernames = ['MaEvA'];
@@ -10,39 +8,75 @@
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
-  let currentChannel = 'Général';
 
-  // ➕ Ajout des fonctions MP ci-dessous :
+  let currentChannel = 'Général'; // Forcer salon Général au chargement
+
+  // --- FONCTIONS ---
+
   function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
+    if (!container) return;
+
     let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (win) {
-      container.appendChild(win);
+      container.appendChild(win); // Remonter la fenêtre au-dessus
       return;
     }
 
     win = document.createElement('div');
     win.classList.add('private-chat-window');
     win.dataset.user = username;
+    win.style.position = 'absolute';
     win.style.top = `${100 + Math.random() * 200}px`;
     win.style.left = `${100 + Math.random() * 200}px`;
+    win.style.backgroundColor = '#222';
+    win.style.border = '1px solid #555';
+    win.style.borderRadius = '8px';
+    win.style.width = '300px';
+    win.style.height = '350px';
+    win.style.display = 'flex';
+    win.style.flexDirection = 'column';
+    win.style.zIndex = 1000;
+    win.style.color = 'white';
 
     const header = document.createElement('div');
     header.classList.add('header');
+    header.style.backgroundColor = '#333';
+    header.style.padding = '6px 10px';
+    header.style.cursor = 'move';
+    header.style.userSelect = 'none';
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
     header.textContent = `MP avec ${username}`;
 
     const closeBtn = document.createElement('span');
     closeBtn.classList.add('close-btn');
     closeBtn.textContent = '×';
+    closeBtn.style.cursor = 'pointer';
+    closeBtn.style.fontWeight = 'bold';
+    closeBtn.style.fontSize = '20px';
     closeBtn.addEventListener('click', () => container.removeChild(win));
     header.appendChild(closeBtn);
 
     const messages = document.createElement('div');
     messages.classList.add('messages');
+    messages.style.flex = '1';
+    messages.style.padding = '8px';
+    messages.style.overflowY = 'auto';
+    messages.style.backgroundColor = '#111';
+    messages.style.fontSize = '14px';
 
     const input = document.createElement('input');
     input.type = 'text';
     input.placeholder = 'Message privé...';
+    input.style.padding = '8px';
+    input.style.border = 'none';
+    input.style.outline = 'none';
+    input.style.fontSize = '14px';
+    input.style.backgroundColor = '#333';
+    input.style.color = 'white';
+
     input.addEventListener('keypress', (e) => {
       if (e.key === 'Enter' && input.value.trim()) {
         const msg = input.value.trim();
@@ -70,6 +104,7 @@
 
   function addPrivateMessage(fromUser, { fromSelf, message, timestamp }) {
     const container = document.getElementById('private-chat-container');
+    if (!container) return;
     let win = container.querySelector(`.private-chat-window[data-user="${fromUser}"]`);
     if (!win) {
       openPrivateChat(fromUser);
@@ -110,7 +145,90 @@
     }
   }
 
-  // Réception message privé
+  // --- Autres fonctions utiles, variables etc. ---
+  // (genre, emoji, updateUserList, createRoleIcon, etc.)
+
+  const genderColors = {
+    Homme: 'dodgerblue',
+    Femme: '#f0f',
+    Autre: '#0ff',
+    'non spécifié': '#aaa',
+    default: '#aaa'
+  };
+
+  function getUsernameColor(gender) {
+    return genderColors[gender] || genderColors.default;
+  }
+
+  function createRoleIcon(role) {
+    if (role === 'admin') {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico';
+      icon.alt = 'Admin';
+      icon.title = 'Admin';
+      icon.classList.add('admin-icon');
+      return icon;
+    } else if (role === 'modo') {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur';
+      icon.classList.add('modo-icon');
+      return icon;
+    }
+    return null;
+  }
+
+  // Mise à jour de la liste utilisateurs avec ouverture MP au double clic
+  function updateUserList(users) {
+    const userList = document.getElementById('users');
+    if (!userList) return;
+    userList.innerHTML = '';
+    if (!Array.isArray(users)) return;
+
+    users.forEach(user => {
+      const username = user?.username || 'Inconnu';
+      const age = user?.age || '?';
+      const gender = user?.gender || 'non spécifié';
+      const role = user?.role || 'user';
+
+      const li = document.createElement('li');
+      li.classList.add('user-item');
+
+      const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+
+      li.innerHTML = `
+        <span class="role-icon"></span> 
+        <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+        <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+      `;
+
+      const roleIconSpan = li.querySelector('.role-icon');
+      const icon = createRoleIcon(role);
+      if (icon) roleIconSpan.appendChild(icon);
+
+      const usernameSpan = li.querySelector('.username-span');
+
+      // Clic simple : mention
+      usernameSpan.addEventListener('click', () => {
+        const input = document.getElementById('message-input');
+        const mention = `@${username} `;
+        if (!input.value.includes(mention)) input.value = mention + input.value;
+        input.focus();
+        selectedUser = username;
+      });
+
+      // Double clic : ouvre fenêtre privée
+      usernameSpan.addEventListener('dblclick', () => {
+        openPrivateChat(username, role, gender);
+      });
+
+      userList.appendChild(li);
+    });
+  }
+
+  // --- Événements Socket.IO ---
+
   socket.on('private message', ({ from, message, timestamp }) => {
     addPrivateMessage(from, {
       fromSelf: false,
@@ -119,6 +237,7 @@
     });
   });
 
+  socket.on('user list', updateUserList);
 
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
@@ -247,6 +366,8 @@ if (usernameInput && passwordInput) {
     if (icon) roleIconSpan.appendChild(icon);
 
     const usernameSpan = li.querySelector('.username-span');
+    
+    // Clic simple : mention
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${username} `;
@@ -255,9 +376,15 @@ if (usernameInput && passwordInput) {
       selectedUser = username;
     });
 
+    // Double-clic : ouvrir MP
+    usernameSpan.addEventListener('dblclick', () => {
+      openPrivateChat(username, role, gender);
+    });
+
     userList.appendChild(li);
   });
 }
+
 
 
 function createRoleIcon(role) {
