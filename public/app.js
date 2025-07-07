@@ -44,6 +44,8 @@ document.addEventListener('DOMContentLoaded', () => {
   win = document.createElement('div');
   win.classList.add('private-chat-window');
   win.dataset.user = username;
+  win.style.display = 'flex';
+
 
   // Header
   const header = document.createElement('div');
