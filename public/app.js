@@ -264,7 +264,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const usernameText = document.createTextNode(myUsername + ': ');
     who.appendChild(usernameText);
-    who.style.color = usernameColors.default;
+    const myUsername = localStorage.getItem('username') || 'moi';
+const me = userCache[myUsername] || { role: 'user', gender: 'non spécifié' };
+const color = (me.role === 'admin') ? usernameColors.admin
+           : (me.role === 'modo') ? usernameColors.modo
+           : (usernameColors[me.gender] || usernameColors.default);
+
+who.style.color = color;
+
 
     msgDiv.appendChild(who);
 
