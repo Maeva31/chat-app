@@ -915,12 +915,13 @@ button:focus {
   resize: both;
   overflow: auto;
   min-width: 200px;
-  min-height: 100px;
-  max-width: 80vw;
-  max-height: 80vh;
+  min-height: 150px;
+  max-width: 90vw;
+  max-height: 90vh;
 }
 
 .private-chat-header {
   user-select: none;
+  background: #444;
+  color: #fff;
 }
-
