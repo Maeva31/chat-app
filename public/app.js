@@ -1,14 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
   const socket = io();
 
+  // Liste des utilisateurs mise à jour via socket
   let users = [];
   socket.on('user list', list => {
     users = list;
-    updateUserList(list);
+    updateUserList(list); // ta fonction de mise à jour visuelle
   });
 
+  // Récupère le pseudo actuel dans le localStorage (valeur vide sinon)
   const me = { username: localStorage.getItem('username') || '' };
 
+  // Couleurs selon rôle ou genre
   const usernameColors = {
     admin: 'red',
     modo: 'limegreen',
@@ -19,22 +22,29 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
+  // Ouvre ou remonte une fenêtre privée
   function openPrivateChat(username, role, gender) {
     if (username === me.username) return; // Empêche d'ouvrir sa propre fenêtre
 
     const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win); // remonter au front
+    if (!container) {
+      console.error('Container private-chat-container introuvable !');
       return;
     }
 
-    // Création fenêtre
+    // Si fenêtre existe déjà, remonte-la en front
+    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (win) {
+      container.appendChild(win);
+      return;
+    }
+
+    // Création de la fenêtre
     win = document.createElement('div');
     win.classList.add('private-chat-window');
     win.dataset.user = username;
 
-    // Header
+    // Header avec titre + boutons réduire et fermer
     const header = document.createElement('div');
     header.classList.add('private-chat-header');
     header.style.display = 'flex';
@@ -50,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
     title.textContent = username;
     title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
 
-    // Bouton réduire / agrandir
+    // Bouton réduire/agrandir
     const minBtn = document.createElement('button');
     minBtn.textContent = '–';
     minBtn.title = 'Réduire/agrandir';
@@ -58,7 +68,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (body.style.display !== 'none') {
         body.style.display = 'none';
         inputBar.style.display = 'none';
-        win.style.height = 'auto'; // pour éviter trop grand en réduit
+        win.style.height = 'auto'; // évite que ça reste trop grand réduit
       } else {
         body.style.display = 'block';
         inputBar.style.display = 'flex';
@@ -88,7 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
     body.style.background = '#222';
     body.style.color = '#eee';
 
-    // Barre saisie + emoji + bouton envoyer
+    // Barre saisie + bouton emoji + bouton envoyer
     const inputBar = document.createElement('div');
     inputBar.classList.add('private-chat-input');
     inputBar.style.display = 'flex';
@@ -117,31 +127,35 @@ document.addEventListener('DOMContentLoaded', () => {
       appendPrivateMessage(body, 'moi', text);
       input.value = '';
     };
-    input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+    input.addEventListener('keypress', e => {
+      if (e.key === 'Enter') sendBtn.click();
+    });
 
     inputBar.append(emojiBtn, input, sendBtn);
 
-    // Assemblage
+    // Assemblage complet
     win.append(header, body, inputBar);
 
-    // Styles de la fenêtre
-    win.style.position = 'absolute';
-    win.style.left = '20px';
-    win.style.top = '20px';
-    win.style.width = '250px';
-    win.style.height = '250px';
-    win.style.border = '1px solid #666';
-    win.style.background = '#111';
-    win.style.boxShadow = '2px 2px 8px rgba(0,0,0,0.7)';
-    win.style.resize = 'both';
-    win.style.overflow = 'auto';
-    win.style.minWidth = '200px';
-    win.style.minHeight = '150px';
-    win.style.maxWidth = '90vw';
-    win.style.maxHeight = '90vh';
-    win.style.zIndex = 1000;
+    // Style fenêtre
+    Object.assign(win.style, {
+      position: 'absolute',
+      left: '20px',
+      top: '20px',
+      width: '250px',
+      height: '250px',
+      border: '1px solid #666',
+      background: '#111',
+      boxShadow: '2px 2px 8px rgba(0,0,0,0.7)',
+      resize: 'both',
+      overflow: 'auto',
+      minWidth: '200px',
+      minHeight: '150px',
+      maxWidth: '90vw',
+      maxHeight: '90vh',
+      zIndex: 1000,
+    });
 
-    // Drag & drop (gestion par fenêtre individuelle)
+    // Drag & drop fenêtre (drag sur le header)
     let isDragging = false;
     let offsetX = 0;
     let offsetY = 0;
@@ -172,6 +186,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.appendChild(win);
   }
 
+  // Ajoute un message dans la fenêtre privée
   function appendPrivateMessage(bodyElem, from, text) {
     const msgDiv = document.createElement('div');
     msgDiv.style.margin = '2px 0';
@@ -183,16 +198,18 @@ document.addEventListener('DOMContentLoaded', () => {
     bodyElem.scrollTop = bodyElem.scrollHeight;
   }
 
+  // Ouvre fenêtre privée au clic sur un pseudo (sauf soi-même)
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
     const username = span.textContent.trim();
-    if (username === me.username) return; // Empêche d'ouvrir sa propre fenêtre
+    if (username === me.username) return;
     const userObj = users.find(u => u.username === username);
     if (!userObj) return;
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
+  // Réception d'un message privé depuis le serveur
   socket.on('private message', ({ from, message }) => {
     const userObj = users.find(u => u.username === from) || {};
     openPrivateChat(from, userObj.role, userObj.gender);
@@ -202,41 +219,38 @@ document.addEventListener('DOMContentLoaded', () => {
     appendPrivateMessage(body, from, message);
   });
 
-
-
-  
-
- const adminUsernames = ['MaEvA'];
- const modoUsernames = ['DarkGirL'];
-
+  // --- Gestion du mot de passe d'admin/mode ---
+  const adminUsernames = ['MaEvA'];
+  const modoUsernames = ['DarkGirL'];
 
   let selectedUser = null;
   let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
 
-  let currentChannel = 'Général';  // Forcer le salon Général au chargement
+  let currentChannel = 'Général'; // Forcer salon général au chargement
 
-const usernameInput = document.getElementById('username-input');
-const passwordInput = document.getElementById('password-input');
+  const usernameInput = document.getElementById('username-input');
+  const passwordInput = document.getElementById('password-input');
 
+  if (usernameInput && passwordInput) {
+    usernameInput.addEventListener('input', () => {
+      const val = usernameInput.value.trim();
+      if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+        passwordInput.style.display = 'block';
+      } else {
+        passwordInput.style.display = 'none';
+        passwordInput.value = '';
+      }
+    });
 
-if (usernameInput && passwordInput) {
-  usernameInput.addEventListener('input', () => {
-  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
-  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-    passwordInput.style.display = 'block'; // afficher le mot de passe
-  } else {
-    passwordInput.style.display = 'none';  // cacher sinon
-    passwordInput.value = '';              // vider le mot de passe
+    // Affichage initial
+    const initialUsername = usernameInput.value.trim();
+    if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
+      passwordInput.style.display = 'block';
+    }
   }
-});
 
- const initialUsername = usernameInput.value.trim();
-  if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
-    passwordInput.style.display = 'block';
-  }
-}
 
 
   const genderColors = {
