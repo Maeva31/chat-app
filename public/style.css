@@ -989,3 +989,76 @@ button:focus {
 .private-chat-header * {
   cursor: inherit;
 }
+/* Styles onglets */
+#tab-header {
+  display: flex;
+  border-bottom: 1px solid #444;
+  overflow-x: auto;
+  user-select: none;
+}
+
+#tab-header > div {
+  position: relative;
+  padding: 6px 24px 6px 12px;
+  cursor: pointer;
+  white-space: nowrap;
+  border-bottom: 2px solid transparent;
+  display: flex;
+  align-items: center;
+  color: #aaa;
+  font-weight: normal;
+}
+
+#tab-header > div.active {
+  border-bottom-color: #4CAF50;
+  color: #4CAF50;
+  font-weight: bold;
+}
+
+/* Croix de fermeture onglet */
+.tab-close-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-weight: bold;
+  color: #888;
+  cursor: pointer;
+  user-select: none;
+}
+
+.tab-close-btn:hover {
+  color: red;
+}
+
+/* Style général fenêtre privée */
+#private-chat-container {
+  display: none;
+  position: fixed;
+  bottom: 10px;
+  right: 10px;
+  width: 400px;
+  height: 300px;
+  background: #1e1e1e;
+  border: 1px solid #444;
+  border-radius: 8px;
+  color: white;
+  flex-direction: column;
+  box-shadow: 0 0 12px rgba(0,0,0,0.8);
+  user-select:none;
+  z-index:1000;
+  overflow: hidden;
+}
+
+/* Pour la barre de titre / drag */
+#private-chat-dragbar {
+  background: #333;
+  padding: 6px 10px;
+  cursor: move;
+  user-select:none;
+  font-weight: bold;
+  color: #ddd;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
