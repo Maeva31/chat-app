@@ -82,25 +82,10 @@ document.addEventListener('DOMContentLoaded', () => {
       document.body.style.userSelect = 'none';
     });
     document.addEventListener('mousemove', e => {
-  if (!isDragging) return;
-
-  const newLeft = e.clientX - offsetX;
-  const newTop = e.clientY - offsetY;
-
-  const winWidth = win.offsetWidth;
-  const winHeight = win.offsetHeight;
-
-  const maxLeft = window.innerWidth - winWidth;
-  const maxTop = window.innerHeight - winHeight;
-
-  // Clamp les positions pour rester à l'intérieur de l'écran
-  const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-  const clampedTop = Math.max(0, Math.min(newTop, maxTop));
-
-  win.style.left = clampedLeft + 'px';
-  win.style.top = clampedTop + 'px';
-});
-
+      if (!isDragging) return;
+      win.style.left = (e.clientX - offsetX) + 'px';
+      win.style.top  = (e.clientY - offsetY) + 'px';
+    });
     document.addEventListener('mouseup', () => {
       if (isDragging) {
         isDragging = false;
@@ -155,7 +140,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-}
+
 
 
  const adminUsernames = ['MaEvA'];
