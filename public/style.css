@@ -842,3 +842,53 @@ button:focus {
   box-shadow: none !important;
   border: none !important;
 }
+
+/* MP */
+
+.private-chat-window {
+  position: absolute;
+  width: 250px;
+  background: #222;
+  border: 2px solid #888;
+  border-radius: 8px;
+  z-index: 999;
+  padding: 5px;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.7);
+  color: white;
+  font-family: Arial;
+}
+
+.private-chat-window .header {
+  background: #444;
+  padding: 4px;
+  cursor: move;
+  font-weight: bold;
+  text-align: center;
+}
+
+.private-chat-window .close-btn {
+  position: absolute;
+  right: 8px;
+  top: 4px;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.private-chat-window .messages {
+  height: 150px;
+  overflow-y: auto;
+  background: #111;
+  margin-top: 5px;
+  padding: 5px;
+  border-radius: 4px;
+  font-size: 13px;
+}
+
+.private-chat-window input {
+  width: calc(100% - 10px);
+  margin-top: 5px;
+  padding: 4px;
+  border-radius: 4px;
+  border: none;
+  outline: none;
+}
