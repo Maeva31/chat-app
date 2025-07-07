@@ -2,14 +2,16 @@ function openPrivateChat(username, role, gender) {
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
   if (win) {
-    container.appendChild(win);
+    container.appendChild(win); // Remonter au premier plan
     return;
   }
 
+  // Création de la fenêtre
   win = document.createElement('div');
   win.classList.add('private-chat-window');
   win.dataset.user = username;
 
+  // Header
   const header = document.createElement('div');
   header.classList.add('private-chat-header');
   const title = document.createElement('span');
@@ -17,12 +19,12 @@ function openPrivateChat(username, role, gender) {
   title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
   const closeBtn = document.createElement('button');
   closeBtn.textContent = '×';
-
-  closeBtn.onclick = () => container.removeChild(win);
-  closeBtn.addEventListener('mousedown', e => e.stopPropagation());
-
+  closeBtn.title = 'Fermer la conversation privée';
+  closeBtn.onclick = () => container.removeChild(win); // ⬅️ Correctement défini ici
+  closeBtn.addEventListener('mousedown', e => e.stopPropagation()); // Évite conflit drag
   header.append(title, closeBtn);
 
+  // Body et input
   const body = document.createElement('div');
   body.classList.add('private-chat-body');
   const inputBar = document.createElement('div');
@@ -37,56 +39,51 @@ function openPrivateChat(username, role, gender) {
     socket.emit('private message', { to: username, message: text });
     input.value = '';
   };
-  input.addEventListener('keypress', e => { if (e.key === 'Enter') sendBtn.click(); });
+  input.addEventListener('keypress', e => {
+    if (e.key === 'Enter') sendBtn.click();
+  });
   inputBar.append(input, sendBtn);
 
+  // Assemblage
   win.append(header, body, inputBar);
 
+  // Position initiale
   win.style.position = 'absolute';
   win.style.bottom = '20px';
   win.style.right = '20px';
-  win.style.left = 'auto';
-  win.style.top = 'auto';
 
+  // Drag & drop
   let isDragging = false, offsetX = 0, offsetY = 0;
   header.style.cursor = 'move';
-
   header.addEventListener('mousedown', e => {
     isDragging = true;
     offsetX = e.clientX - win.offsetLeft;
     offsetY = e.clientY - win.offsetTop;
     document.body.style.userSelect = 'none';
+  });
 
-    function onMouseMove(e) {
-      if (!isDragging) return;
+  document.addEventListener('mousemove', e => {
+    if (!isDragging) return;
 
-      const newLeft = e.clientX - offsetX;
-      const newTop = e.clientY - offsetY;
+    const newLeft = e.clientX - offsetX;
+    const newTop = e.clientY - offsetY;
 
-      const winWidth = win.offsetWidth;
-      const winHeight = win.offsetHeight;
+    const winWidth = win.offsetWidth;
+    const winHeight = win.offsetHeight;
+    const maxLeft = window.innerWidth - winWidth;
+    const maxTop = window.innerHeight - winHeight;
 
-      const maxLeft = window.innerWidth - winWidth;
-      const maxTop = window.innerHeight - winHeight;
+    win.style.left = Math.max(0, Math.min(newLeft, maxLeft)) + 'px';
+    win.style.top = Math.max(0, Math.min(newTop, maxTop)) + 'px';
+    win.style.bottom = 'auto';
+    win.style.right = 'auto';
+  });
 
-      const clampedLeft = Math.max(0, Math.min(newLeft, maxLeft));
-      const clampedTop = Math.max(0, Math.min(newTop, maxTop));
-
-      win.style.left = clampedLeft + 'px';
-      win.style.top = clampedTop + 'px';
-      win.style.bottom = 'auto';
-      win.style.right = 'auto';
-    }
-
-    function onMouseUp() {
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
       isDragging = false;
       document.body.style.userSelect = '';
-      document.removeEventListener('mousemove', onMouseMove);
-      document.removeEventListener('mouseup', onMouseUp);
     }
-
-    document.addEventListener('mousemove', onMouseMove);
-    document.addEventListener('mouseup', onMouseUp);
   });
 
   container.appendChild(win);
@@ -137,7 +134,7 @@ function openPrivateChat(username, role, gender) {
     const body = win.querySelector('.private-chat-body');
     appendPrivateMessage(body, from, message);
   });
-});
+
 
 
 
