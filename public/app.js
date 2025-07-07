@@ -96,11 +96,13 @@ document.addEventListener('DOMContentLoaded', () => {
   win.style.height = '380px';
 
   // Position initiale (droite-bas)
-  const leftPos = Math.min(window.innerWidth - 380 - 20, window.innerWidth - 400);
-const topPos = Math.min(window.innerHeight - 380 - 20, window.innerHeight - 400);
+  const leftPos = window.innerWidth - win.offsetWidth - 20;
+const topPos = window.innerHeight - win.offsetHeight - 20;
 
 win.style.left = Math.max(leftPos, 0) + 'px';
 win.style.top = Math.max(topPos, 0) + 'px';
+
+
 
 
   bringToFront(win);
