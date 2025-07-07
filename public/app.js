@@ -290,11 +290,21 @@ function addMessageToChat(msg) {
     }
   }
 
-  newMessage.append(`[${timeString}] `);
+const newMessage = document.createElement('div');
+
+const timeSpan = document.createElement('span');
+timeSpan.textContent = `[${timeString}] `;
+timeSpan.style.color = '#888';
+timeSpan.style.fontStyle = 'italic';
+timeSpan.style.marginRight = '5px';
+newMessage.appendChild(timeSpan);
+
 newMessage.appendChild(usernameSpan);
 newMessage.appendChild(messageSpan);
+
 chatMessages.appendChild(newMessage);
 chatMessages.scrollTop = chatMessages.scrollHeight;
+
 
 
   const chatMessages = document.getElementById('chat-messages');
