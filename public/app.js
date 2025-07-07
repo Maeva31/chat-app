@@ -241,7 +241,24 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Assemblage inputBar avec nouveau bouton upload
+    const sendBtn = document.createElement('button');
+    sendBtn.textContent = 'Envoyer';
+    sendBtn.title = 'Envoyer le message';
+    sendBtn.style.cursor = 'pointer';
+    sendBtn.style.marginLeft = '5px';
+    sendBtn.style.padding = '4px 8px';
+
     inputBar.append(emojiBtn, emojiPicker, uploadBtn, fileInput, input, sendBtn);
+
+    sendBtn.onclick = () => {
+  const text = input.value.trim();
+  if (!text) return;
+  socket.emit('private message', { to: username, message: text });
+  const myUsername = localStorage.getItem('username') || 'moi';
+  appendPrivateMessage(body, myUsername, text);
+  input.value = '';
+};
+
 
     // --- FIN AJOUT ---
 
