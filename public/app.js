@@ -126,7 +126,9 @@ document.addEventListener('DOMContentLoaded', () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
-      appendPrivateMessage(body, 'moi', text);
+      const myUsername = localStorage.getItem('username') || 'moi';
+      appendPrivateMessage(body, myUsername, text);
+
       input.value = '';
     };
 
@@ -184,23 +186,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   // Ajout role et gender en paramètres
-  function appendPrivateMessage(bodyElem, from, text, role, gender) {
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
-    const who = document.createElement('span');
-    who.textContent = from + ': ';
-    who.style.fontWeight = 'bold';
+function appendPrivateMessage(bodyElem, from, text) {
+  const msgDiv = document.createElement('div');
+  msgDiv.style.margin = '4px 0';
+  const who = document.createElement('span');
+  who.textContent = from + ': ';
+  who.style.fontWeight = 'bold';
 
-    if (from === 'moi') {
-      who.style.color = 'green';
-    } else {
-      who.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
-    }
+  const userObj = users.find(u => u.username === from) || {};
+  who.style.color = usernameColors[userObj.role] || usernameColors[userObj.gender] || usernameColors.default;
 
-    msgDiv.append(who, document.createTextNode(text));
-    bodyElem.appendChild(msgDiv);
-    bodyElem.scrollTop = bodyElem.scrollHeight;
-  }
+  msgDiv.append(who, document.createTextNode(text));
+  bodyElem.appendChild(msgDiv);
+  bodyElem.scrollTop = bodyElem.scrollHeight;
+}
+
+
 
   // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
   document.addEventListener('click', e => {
