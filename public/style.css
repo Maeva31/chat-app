@@ -846,6 +846,12 @@ button:focus {
 
 /* MP */
 
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
 #private-chat-container {
   position: fixed;
   bottom: 10px;
