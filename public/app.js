@@ -96,6 +96,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   window.openPrivateChat = openPrivateChat;
 
+  // 🎯 Ouvre le MP au clic droit sur un pseudo dans le chat central
+document.addEventListener('contextmenu', e => {
+  const span = e.target.closest('.clickable-username');
+  if (!span || !span.dataset.username) return;
+
+  e.preventDefault(); // empêche le menu contextuel par défaut
+
+  const username = span.dataset.username.trim();
+  const cleanUsername = username.normalize('NFC');
+  const userObj = users.find(u => u.username === cleanUsername);
+  if (!userObj) return;
+
+  openPrivateChat(cleanUsername, userObj.role, userObj.gender);
+});
+
+
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text) {
     // Ne rien afficher pour ses propres messages envoyés
@@ -458,8 +474,10 @@ if (msg.username === 'Système') {
   usernameSpan.classList.add('clickable-username');
   usernameSpan.style.color = color;
   usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
+usernameSpan.dataset.username = msg.username;
+usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                     (msg.role === 'modo') ? 'Modérateur' : '';
+
 
 
 
