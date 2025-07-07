@@ -366,8 +366,6 @@ if (msg.username === 'Système') {
 
   const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
 
-const currentUsername = localStorage.getItem('username');
-const isMentioned = msg.message?.includes(`@${currentUsername}`);
 
 const messageText = document.createElement('span');
 const style = msg.style || {};
