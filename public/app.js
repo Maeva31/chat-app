@@ -7,8 +7,8 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUserList(list);
   });
 
-  // Récupérer le pseudo local, trim + lowercase pour comparaison fiable
-  const me = { username: (localStorage.getItem('username') || '').trim().toLowerCase() };
+  // On conserve le pseudo pour info mais pas de blocage
+  const me = { username: (localStorage.getItem('username') || '').trim() };
 
   const usernameColors = {
     admin: 'red',
@@ -20,15 +20,9 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  function openPrivateChat(usernameRaw, role, gender) {
-    const username = usernameRaw.trim().toLowerCase();
-    if (username === me.username) {
-      console.log('Tentative ouverture fenêtre privée avec soi-même bloquée');
-      return; // Empêche d'ouvrir sa propre fenêtre
-    }
-
+  function openPrivateChat(username, role, gender) {
     const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${usernameRaw}"]`);
+    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
     if (win) {
       container.appendChild(win); // remonter au front
       return;
@@ -37,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Création fenêtre
     win = document.createElement('div');
     win.classList.add('private-chat-window');
-    win.dataset.user = usernameRaw;
+    win.dataset.user = username;
 
     // Header
     const header = document.createElement('div');
@@ -52,7 +46,7 @@ document.addEventListener('DOMContentLoaded', () => {
     header.style.userSelect = 'none';
 
     const title = document.createElement('span');
-    title.textContent = usernameRaw;
+    title.textContent = username;
     title.style.color = usernameColors[role] || usernameColors[gender] || usernameColors.default;
 
     // Bouton réduire / agrandir
@@ -63,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (body.style.display !== 'none') {
         body.style.display = 'none';
         inputBar.style.display = 'none';
-        win.style.height = 'auto'; // éviter trop grand en réduit
+        win.style.height = 'auto';
       } else {
         body.style.display = 'block';
         inputBar.style.display = 'flex';
@@ -118,7 +112,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sendBtn.onclick = () => {
       const text = input.value.trim();
       if (!text) return;
-      socket.emit('private message', { to: usernameRaw, message: text });
+      socket.emit('private message', { to: username, message: text });
       appendPrivateMessage(body, 'moi', text);
       input.value = '';
     };
@@ -191,30 +185,22 @@ document.addEventListener('DOMContentLoaded', () => {
   document.addEventListener('click', e => {
     const span = e.target.closest('.clickable-username');
     if (!span) return;
-    const usernameRaw = span.textContent.trim();
-    const username = usernameRaw.toLowerCase();
-    console.log('Clique sur pseudo:', usernameRaw, 'Moi:', me.username);
-    if (username === me.username) {
-      console.log('Ouverture fenêtre privée refusée car c\'est soi-même');
-      return;
-    }
-    const userObj = users.find(u => (u.username || '').trim().toLowerCase() === username);
-    if (!userObj) {
-      console.log('Utilisateur non trouvé:', usernameRaw);
-      return;
-    }
-    openPrivateChat(usernameRaw, userObj.role, userObj.gender);
+    const username = span.textContent.trim();
+    const userObj = users.find(u => u.username === username);
+    if (!userObj) return;
+    openPrivateChat(username, userObj.role, userObj.gender);
   });
 
   socket.on('private message', ({ from, message }) => {
-    const fromNormalized = (from || '').trim();
-    const userObj = users.find(u => (u.username || '').trim() === fromNormalized) || {};
-    openPrivateChat(fromNormalized, userObj.role, userObj.gender);
-    const win = document.querySelector(`.private-chat-window[data-user="${fromNormalized}"]`);
+    const userObj = users.find(u => u.username === from) || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+    const win = document.querySelector(`.private-chat-window[data-user="${from}"]`);
     if (!win) return;
     const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, fromNormalized, message);
+    appendPrivateMessage(body, from, message);
   });
+
+
 
 
 
