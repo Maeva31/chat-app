@@ -220,28 +220,24 @@ document.addEventListener('DOMContentLoaded', () => {
   // ── 4) Ajoute un message dans la fenêtre privée ──
   // Ajout role et gender en paramètres
   function appendPrivateMessage(bodyElem, from, text, role, gender) {
-  const msgDiv = document.createElement('div');
-  msgDiv.style.margin = '4px 0';
-  const who = document.createElement('span');
-  who.textContent = from + ': ';
-  who.style.fontWeight = 'bold';
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
+    const who = document.createElement('span');
+    who.textContent = from + ': ';
+    who.style.fontWeight = 'bold';
 
-  // Priorité stricte rôle > genre
-  let userRole = role;
-  let userGender = gender;
+    // Priorité stricte rôle > genre
+    let userRole = role;
+    let userGender = gender;
 
-  if (!userRole || !userGender) {
-    const cachedUser = userCache[from];
-    if (cachedUser) {
-      userRole = userRole || cachedUser.role;
-      userGender = userGender || cachedUser.gender;
+    if (!userRole || !userGender) {
+      const cachedUser = userCache[from];
+      if (cachedUser) {
+        userRole = userRole || cachedUser.role;
+        userGender = userGender || cachedUser.gender;
+      }
     }
-  }
 
-  // SI c'est toi ET mode invisible activé => couleur grise
-  if (from === myUsername && invisibleMode) {
-    who.style.color = usernameColors.default;
-  } else {
     if (userRole === 'admin') {
       who.style.color = usernameColors.admin;
     } else if (userRole === 'modo') {
@@ -249,13 +245,11 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       who.style.color = usernameColors[userGender] || usernameColors.default;
     }
+
+    msgDiv.append(who, document.createTextNode(text));
+    bodyElem.appendChild(msgDiv);
+    bodyElem.scrollTop = bodyElem.scrollHeight;
   }
-
-  msgDiv.append(who, document.createTextNode(text));
-  bodyElem.appendChild(msgDiv);
-  bodyElem.scrollTop = bodyElem.scrollHeight;
-}
-
 
   // ── 5) Clic sur un pseudo pour ouvrir la fenêtre ──
   document.addEventListener('click', e => {
