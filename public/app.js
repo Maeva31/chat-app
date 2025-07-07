@@ -56,66 +56,65 @@ document.addEventListener('DOMContentLoaded', () => {
     return null;
   }
 
-  // === Fonction openPrivateChat version petite fenêtre flottante ===
+  // --- Fonction openPrivateChat ---
 
   function openPrivateChat(username, role, gender) {
-  const container = document.getElementById('private-chat-container');
-  if (!container) return;
+    const container = document.getElementById('private-chat-container');
+    if (!container) return;
 
-  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-  if (win) {
-    container.appendChild(win); // Remonte la fenêtre au-dessus
-    return;
-  }
-
-  win = document.createElement('div');
-  win.classList.add('private-chat-window');
-  win.dataset.user = username;
-
-  // Position initiale visible aléatoire
-  win.style.top = `${100 + Math.random() * 200}px`;
-  win.style.left = `${100 + Math.random() * 200}px`;
-
-  const header = document.createElement('div');
-  header.classList.add('header');
-  header.textContent = `MP avec ${username}`;
-
-  const closeBtn = document.createElement('span');
-  closeBtn.classList.add('close-btn');
-  closeBtn.textContent = '×';
-  closeBtn.title = "Fermer";
-  closeBtn.addEventListener('click', () => container.removeChild(win));
-  header.appendChild(closeBtn);
-
-  const messages = document.createElement('div');
-  messages.classList.add('messages');
-
-  const input = document.createElement('input');
-  input.type = 'text';
-  input.placeholder = 'Message privé...';
-
-  input.addEventListener('keypress', (e) => {
-    if (e.key === 'Enter' && input.value.trim()) {
-      const msg = input.value.trim();
-      socket.emit('private message', {
-        to: username,
-        message: msg,
-        timestamp: new Date().toISOString()
-      });
-      addPrivateMessage(username, { fromSelf: true, message: msg, timestamp: new Date().toISOString() });
-      input.value = '';
+    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (win) {
+      container.appendChild(win); // Remonte la fenêtre au-dessus
+      return;
     }
-  });
 
-  win.appendChild(header);
-  win.appendChild(messages);
-  win.appendChild(input);
+    win = document.createElement('div');
+    win.classList.add('private-chat-window');
+    win.dataset.user = username;
 
-  container.appendChild(win);
+    // Position initiale visible aléatoire
+    win.style.top = `${100 + Math.random() * 200}px`;
+    win.style.left = `${100 + Math.random() * 200}px`;
 
-  makeDraggable(win, header);
-}
+    const header = document.createElement('div');
+    header.classList.add('header');
+    header.textContent = `MP avec ${username}`;
 
+    const closeBtn = document.createElement('span');
+    closeBtn.classList.add('close-btn');
+    closeBtn.textContent = '×';
+    closeBtn.title = "Fermer";
+    closeBtn.addEventListener('click', () => container.removeChild(win));
+    header.appendChild(closeBtn);
+
+    const messages = document.createElement('div');
+    messages.classList.add('messages');
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = 'Message privé...';
+
+    input.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter' && input.value.trim()) {
+        const msg = input.value.trim();
+        socket.emit('private message', {
+          to: username,
+          message: msg,
+          timestamp: new Date().toISOString()
+        });
+        addPrivateMessage(username, { fromSelf: true, message: msg, timestamp: new Date().toISOString() });
+        input.value = '';
+      }
+    });
+
+    win.appendChild(header);
+    win.appendChild(messages);
+    win.appendChild(input);
+
+    container.appendChild(win);
+
+    makeDraggable(win, header);
+  }
 
   // --- Fin openPrivateChat ---
 
@@ -132,7 +131,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeStr = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const msgElem = document.createElement('div');
     msgElem.innerHTML = `<span style="color:#888;font-size:11px;">${timeStr}</span><br><span style="color:${fromSelf ? '#0f0' : '#fff'}">${fromSelf ? 'Moi' : fromUser} :</span> ${message}`;
-
     msgElem.style.marginBottom = '4px';
 
     messages.appendChild(msgElem);
@@ -154,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!dragging) return;
       win.style.left = `${e.clientX - offsetX}px`;
       win.style.top = `${e.clientY - offsetY}px`;
-
     }
 
     function stop() {
@@ -164,7 +161,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Mise à jour de la liste utilisateurs avec gestion correcte clic/dblclick
+  // Mise à jour de la liste utilisateurs avec gestion clic simple/double clic
+
   function updateUserList(users) {
     const userList = document.getElementById('users');
     if (!userList) return;
@@ -188,14 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
   <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
 `;
 
-
       const roleIconSpan = li.querySelector('.role-icon');
       const icon = createRoleIcon(role);
       if (icon) roleIconSpan.appendChild(icon);
 
       const usernameSpan = li.querySelector('.username-span');
 
-      // Gestion clic simple / double clic différenciée
       let clickTimeout = null;
       usernameSpan.addEventListener('click', () => {
         if (clickTimeout) clearTimeout(clickTimeout);
@@ -234,6 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('user list', updateUserList);
 
   // Gestion affichage mot de passe selon pseudo
+
   const usernameInput = document.getElementById('username-input');
   const passwordInput = document.getElementById('password-input');
 
@@ -264,7 +261,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Variables pour mode invisible
   const invisibleBtn = document.getElementById('toggle-invisible-btn');
 
-  // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
     if (!invisibleBtn) return;
     invisibleBtn.textContent = '👻';
@@ -281,7 +277,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Affiche une bannière temporaire (type = 'error' ou 'success')
+  // Bannière temporaire
   function showBanner(message, type = 'error') {
     if (!initialLoadComplete) return;
     const banner = document.getElementById('error-banner');
@@ -300,7 +296,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000);
   }
 
-  // Extraction nom canal depuis texte (ex: "# 💬 ┊ Général (2)" => "Général")
+  // Extraction nom canal depuis texte
   function extractChannelName(text) {
     text = text.replace(/\s*\(\d+\)$/, '').trim();
     const parts = text.split('┊');
@@ -308,10 +304,9 @@ document.addEventListener('DOMContentLoaded', () => {
     return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
   }
 
-  // Ajoute un message dans la zone de chat
+  // Ajout message dans zone chat
   function addMessageToChat(msg) {
     if (msg.username === 'Système') {
-      // Ignore le message "est maintenant visible."
       if (/est maintenant visible\.$/i.test(msg.message)) return;
 
       const salonRegex = /salon\s+(.+)$/i;
@@ -345,7 +340,7 @@ document.addEventListener('DOMContentLoaded', () => {
       usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                            (msg.role === 'modo') ? 'Modérateur' : '';
 
-      // Icônes selon rôle
+      // Icônes rôle
       if (msg.role === 'admin') {
         const icon = document.createElement('img');
         icon.src = '/diamond.ico';
@@ -368,7 +363,7 @@ document.addEventListener('DOMContentLoaded', () => {
         usernameSpan.insertBefore(icon, usernameSpan.firstChild);
       }
 
-      // Clic pour mentionner
+      // Clic mention
       usernameSpan.addEventListener('click', () => {
         const input = document.getElementById('message-input');
         const mention = `@${msg.username} `;
@@ -393,7 +388,7 @@ document.addEventListener('DOMContentLoaded', () => {
     parts.forEach(part => {
       if (/https?:\/\/[^\s]+/.test(part)) {
         if (isYouTubeUrl(part)) {
-          return; // ignore dans texte, vidéo intégrée ailleurs
+          return;
         } else {
           const a = document.createElement('a');
           a.href = part;
@@ -411,7 +406,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    // Ajout du timestamp en italique
     const timeSpan = document.createElement('span');
     timeSpan.textContent = timeString + ' ';
     timeSpan.style.color = '#888';
@@ -424,7 +418,6 @@ document.addEventListener('DOMContentLoaded', () => {
       newMessage.appendChild(usernameSpan);
     }
 
-    // Ajouter le texte du message
     if (msg.username === 'Système') {
       messageText.style.color = '#888';
       messageText.style.fontStyle = 'italic';
@@ -442,7 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }
 
-  // Sélectionne visuellement un salon dans la liste
+  // Sélection visuelle salon
   function selectChannelInUI(channelName) {
     document.querySelectorAll('.channel').forEach(c => {
       if (extractChannelName(c.textContent) === channelName) {
@@ -453,7 +446,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Quand on rejoint un salon côté serveur
+  // Quand on rejoint salon côté serveur
   socket.on('joinedRoom', (newChannel) => {
     currentChannel = newChannel;
     localStorage.setItem('currentChannel', newChannel);
@@ -464,7 +457,7 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.emit('request history', newChannel);
   });
 
-  // Clic sur un salon dans la liste
+  // Clic sur salon dans liste
   document.getElementById('channel-list').addEventListener('click', (e) => {
     const target = e.target.closest('.channel');
     if (!target) return;
@@ -550,7 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
   }
 
-  // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
   socket.once('username accepted', ({ username, gender, age }) => {
     localStorage.setItem('username', username);
     localStorage.setItem('gender', gender);
@@ -569,7 +561,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initialLoadComplete = true;
   });
 
-  // Écouteurs socket divers
   socket.on('username error', msg => showBanner(msg, 'error'));
   socket.on('username exists', (username) => {
     const modalError = document.getElementById('modal-error');
@@ -620,71 +611,59 @@ document.addEventListener('DOMContentLoaded', () => {
     showBanner(`Salon "${newChannel}" créé avec succès !`, 'success');
   });
 
- socket.on('roomUserCounts', (counts) => {
-  const channelList = document.getElementById('channel-list');
-  if (!channelList) return;
+  socket.on('roomUserCounts', (counts) => {
+    const channelList = document.getElementById('channel-list');
+    if (!channelList) return;
 
-  [...channelList.children].forEach(li => {
-    const name = extractChannelName(li.textContent);
-    if (name && counts[name] !== undefined) {
-      const emoji = channelEmojis[name] || "💬";
+    [...channelList.children].forEach(li => {
+      const name = extractChannelName(li.textContent);
+      if (name && counts[name] !== undefined) {
+        const emoji = channelEmojis[name] || "💬";
 
-      let countSpan = li.querySelector('.user-count');
-      if (!countSpan) {
-        countSpan = document.createElement('span');
-        countSpan.classList.add('user-count');
-        li.appendChild(countSpan);
+        let countSpan = li.querySelector('.user-count');
+        if (!countSpan) {
+          countSpan = document.createElement('span');
+          countSpan.classList.add('user-count');
+          li.appendChild(countSpan);
+        }
+
+        if (invisibleMode && name === currentChannel) {
+          countSpan.textContent = '';  // Pas de nombre si invisible
+          li.firstChild.textContent = `# ${emoji} ┊ ${name}`;
+        } else {
+          countSpan.textContent = ` (${counts[name]})`;
+          li.firstChild.textContent = `# ${emoji} ┊ ${name}`;
+        }
       }
-
-      if (invisibleMode && name === currentChannel) {
-        countSpan.textContent = '';  // Pas de nombre si invisible
-        li.firstChild.textContent = `# ${emoji} ┊ ${name}`;
-      } else {
-        countSpan.textContent = ` (${counts[name]})`;
-        li.firstChild.textContent = `# ${emoji} ┊ ${name}`;
-      }
-    }
-  });
-});
-
-socket.on('room list', (rooms) => {
-  const channelList = document.getElementById('channel-list');
-  if (!channelList) return;
-  const previousChannel = currentChannel;
-
-  channelList.innerHTML = '';
-
-  rooms.forEach(channelName => {
-    const li = document.createElement('li');
-    li.classList.add('channel');
-    const emoji = channelEmojis[channelName] || "💬";
-    li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
-
-    li.addEventListener('click', () => {
-      const clickedRoom = extractChannelName(li.textContent);
-      if (clickedRoom === currentChannel) return;
-      currentChannel = clickedRoom;
-      localStorage.setItem('currentChannel', currentChannel);
-      const chatMessages = document.getElementById('chat-messages');
-      if (chatMessages) chatMessages.innerHTML = '';
-      selectChannelInUI(currentChannel);
-      socket.emit('joinRoom', currentChannel);
     });
-
-    channelList.appendChild(li);
   });
 
-  if (!rooms.includes(previousChannel)) {
-    currentChannel = 'Général';
-    localStorage.setItem('currentChannel', currentChannel);
-    socket.emit('joinRoom', currentChannel);
-    const chatMessages = document.getElementById('chat-messages');
-    if (chatMessages) chatMessages.innerHTML = '';
-  }
+  socket.on('room list', (rooms) => {
+    const channelList = document.getElementById('channel-list');
+    if (!channelList) return;
+    const previousChannel = currentChannel;
 
-  selectChannelInUI(currentChannel);
-});
+    channelList.innerHTML = '';
 
+    rooms.forEach(channelName => {
+      const li = document.createElement('li');
+      li.classList.add('channel');
+      const emoji = channelEmojis[channelName] || "💬";
+      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+
+      li.addEventListener('click', () => {
+        const clickedRoom = extractChannelName(li.textContent);
+        if (clickedRoom === currentChannel) return;
+        currentChannel = clickedRoom;
+        localStorage.setItem('currentChannel', currentChannel);
+        const chatMessages = document.getElementById('chat-messages');
+        if (chatMessages) chatMessages.innerHTML = '';
+        selectChannelInUI(currentChannel);
+        socket.emit('joinRoom', currentChannel);
+      });
+
+      channelList.appendChild(li);
+    });
 
     if (!rooms.includes(previousChannel)) {
       currentChannel = 'Général';
@@ -751,6 +730,7 @@ socket.on('room list', (rooms) => {
       }
     }
   });
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
