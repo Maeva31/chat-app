@@ -1,6 +1,32 @@
 const socket = io();
 window.socket = socket;
 
+let videoStream = null;
+let audioStream = null;
+
+async function startVideoStream() {
+  if (videoStream) return videoStream;
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    return videoStream;
+  } catch (err) {
+    console.error("Erreur accès vidéo :", err.message);
+    return null;
+  }
+}
+
+async function startAudioStream() {
+  if (audioStream) return audioStream;
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    return audioStream;
+  } catch (err) {
+    console.error("Erreur accès audio :", err.message);
+    return null;
+  }
+}
+
+
 const webcamStatus = {};  // { username: true/false }
 
 socket.on('webcam status update', ({ username, active }) => {
@@ -98,83 +124,143 @@ startWebcamBtn.addEventListener('click', () => {
   }
 
   // Variables WebRTC
-  const peerConnections = {};
-  const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-  let localStream = null;
-  const myUsername = localStorage.getItem('username');
+const peerConnections = {};
+const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+let localStream = null;
+let videoStream = null;
+let audioStream = null;
+const myUsername = localStorage.getItem('username');
 
-  // Démarre la capture webcam + micro
-  async function startLocalStream() {
-  if (localStream) return localStream;
+// Fonction pour démarrer la capture vidéo seule
+async function startVideoStream() {
+  if (videoStream) return videoStream;
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    const localVideo = document.getElementById('localVideo');
-    if (localVideo) localVideo.srcObject = localStream;
-    return localStream;
+    videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    return videoStream;
   } catch (err) {
-    console.error("Erreur accès webcam :", err.message);
+    console.error("Erreur accès vidéo :", err.message);
     return null;
   }
 }
 
+// Fonction pour démarrer la capture audio seule
+async function startAudioStream() {
+  if (audioStream) return audioStream;
+  try {
+    audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+    return audioStream;
+  } catch (err) {
+    console.error("Erreur accès audio :", err.message);
+    return null;
+  }
+}
 
-  // Crée une connexion WebRTC avec un utilisateur
-  async function createPeerConnection(remoteUsername) {
-    if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
+// Fonction createPeerConnection (comme tu l’as déjà)
+async function createPeerConnection(remoteUsername) {
+  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
-    const pc = new RTCPeerConnection(config);
+  const pc = new RTCPeerConnection(config);
 
-    if (!localStream) {
-      localStream = await startLocalStream();
-      if (!localStream) return null;
+  if (!videoStream) {
+    videoStream = await startVideoStream();
+  }
+  if (!audioStream) {
+    audioStream = await startAudioStream();
+  }
+
+  if (videoStream) {
+    videoStream.getVideoTracks().forEach(track => pc.addTrack(track, videoStream));
+  }
+  if (audioStream) {
+    audioStream.getAudioTracks().forEach(track => pc.addTrack(track, audioStream));
+  }
+
+  pc.onicecandidate = event => {
+    if (event.candidate) {
+      socket.emit('signal', {
+        to: remoteUsername,
+        from: myUsername,
+        data: { candidate: event.candidate }
+      });
     }
+  };
 
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  pc.ontrack = event => {
+    let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+    if (!remoteVideo) {
+      const container = document.getElementById('video-container');
+      if (!container) return;
 
-    pc.onicecandidate = event => {
-      if (event.candidate) {
+      remoteVideo = document.createElement('video');
+      remoteVideo.id = `remoteVideo-${remoteUsername}`;
+      remoteVideo.autoplay = true;
+      remoteVideo.playsInline = true;
+      remoteVideo.style.width = '300px';
+      remoteVideo.style.height = '225px';
+      remoteVideo.style.border = '2px solid #ccc';
+      remoteVideo.style.borderRadius = '8px';
+      remoteVideo.style.margin = '5px';
+
+      container.appendChild(remoteVideo);
+    }
+    remoteVideo.srcObject = event.streams[0];
+  };
+
+  peerConnections[remoteUsername] = pc;
+  return pc;
+}
+
+// Fonction pour initier un appel vers un utilisateur distant
+async function callUser(remoteUsername) {
+  const pc = await createPeerConnection(remoteUsername);
+  if (!pc) return;
+
+  try {
+    const offer = await pc.createOffer();
+    await pc.setLocalDescription(offer);
+
+    socket.emit('signal', {
+      to: remoteUsername,
+      from: myUsername,
+      data: { sdp: pc.localDescription }
+    });
+  } catch (err) {
+    console.error('Erreur lors de la création de l’offre:', err);
+  }
+}
+
+// Gestion des signaux WebRTC reçus via Socket.IO
+socket.on('signal', async ({ from, data }) => {
+  if (from === myUsername) return; // Ignore messages venant de soi-même
+
+  const pc = await createPeerConnection(from);
+  if (!pc) return;
+
+  try {
+    if (data.sdp) {
+      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+      if (data.sdp.type === 'offer') {
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+
         socket.emit('signal', {
-          to: remoteUsername,
+          to: from,
           from: myUsername,
-          data: { candidate: event.candidate }
+          data: { sdp: pc.localDescription }
         });
       }
-    };
-
-    pc.ontrack = event => {
-      const remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
-      if (remoteVideo) {
-        remoteVideo.srcObject = event.streams[0];
-      } else {
-        const container = document.getElementById('video-container');
-        if (!container) return;
-        const videoElem = document.createElement('video');
-        videoElem.id = `remoteVideo-${remoteUsername}`;
-        videoElem.autoplay = true;
-        videoElem.playsInline = true;
-        videoElem.srcObject = event.streams[0];
-        videoElem.style.width = '300px';
-        videoElem.style.height = '225px';
-        videoElem.style.border = '2px solid #ccc';
-        videoElem.style.borderRadius = '8px';
-        videoElem.style.margin = '5px';
-
-        const label = document.createElement('div');
-        label.textContent = remoteUsername;
-        label.style.color = 'white';
-        label.style.textAlign = 'center';
-
-        const wrapper = document.createElement('div');
-        wrapper.appendChild(videoElem);
-        wrapper.appendChild(label);
-
-        container.appendChild(wrapper);
-      }
-    };
-
-    peerConnections[remoteUsername] = pc;
-    return pc;
+    } else if (data.candidate) {
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }
+  } catch (err) {
+    console.error('Erreur dans la gestion du signal:', err);
   }
+});
+
+
+
+
 
   // Initie un appel WebRTC à un utilisateur
   async function callUser(remoteUsername) {
