@@ -4,27 +4,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const webcamPopupUrl = 'webcam-popup.html'; // page simple qui affichera ta webcam
 
-document.getElementById('start-webcam-btn').addEventListener('click', () => {
-  // Ouvre la popup si pas déjà ouverte
-  if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-    window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
-    // Optionnel : envoyer username à la popup après chargement
-    window.myWebcamPopup.addEventListener('load', () => {
-      window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
+  // Bouton Activer ma webcam (popup perso)
+  const startWebcamBtn = document.getElementById('start-webcam-btn');
+  if (startWebcamBtn) {
+    startWebcamBtn.addEventListener('click', () => {
+      if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
+        window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
+        window.myWebcamPopup.addEventListener('load', () => {
+          window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
+        });
+      } else {
+        window.myWebcamPopup.focus();
+      }
+
+      socket.emit('webcam activated', { username: localStorage.getItem('username') });
     });
-  } else {
-    window.myWebcamPopup.focus();
   }
-  
-  // Émettre événement serveur pour dire webcam activée
-  socket.emit('webcam activated', { username: localStorage.getItem('username') });
-});
 
-
-  // Variables globales
-  const peerConnections = {};  // { username: RTCPeerConnection }
+  // Variables WebRTC
+  const peerConnections = {};
   const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
   let localStream = null;
   const myUsername = localStorage.getItem('username');
 
@@ -33,11 +32,8 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
     if (localStream) return localStream;
     try {
       localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      // Affiche la vidéo locale
       const localVideo = document.getElementById('localVideo');
-      if (localVideo) {
-        localVideo.srcObject = localStream;
-      }
+      if (localVideo) localVideo.srcObject = localStream;
       return localStream;
     } catch (err) {
       alert("Erreur accès webcam : " + err.message);
@@ -45,7 +41,7 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
     }
   }
 
-  // Crée une connexion WebRTC pour un user donné
+  // Crée une connexion WebRTC avec un utilisateur
   async function createPeerConnection(remoteUsername) {
     if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
@@ -74,6 +70,7 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
         remoteVideo.srcObject = event.streams[0];
       } else {
         const container = document.getElementById('video-container');
+        if (!container) return;
         const videoElem = document.createElement('video');
         videoElem.id = `remoteVideo-${remoteUsername}`;
         videoElem.autoplay = true;
@@ -102,7 +99,7 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
     return pc;
   }
 
-  // Initie un appel WebRTC à un user
+  // Initie un appel WebRTC à un utilisateur
   async function callUser(remoteUsername) {
     const pc = await createPeerConnection(remoteUsername);
     if (!pc) return;
@@ -117,7 +114,7 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
     });
   }
 
-  // Gère les signaux WebRTC reçus via Socket.IO
+  // Gère les signaux WebRTC reçus
   socket.on('signal', async ({ from, data }) => {
     if (from === myUsername) return;
 
@@ -146,18 +143,19 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
     }
   });
 
-  // Démarre la capture locale immédiatement
+  // Démarre capture locale au chargement
   startLocalStream();
 
-  // ---------- Gestion modale webcam classique (aperçu local) -----------
-
+  // Gestion modale webcam classique (aperçu local)
   const webcamModal = document.getElementById('webcam-modal');
   const webcamVideo = document.getElementById('webcam-video');
   const closeWebcamBtn = document.getElementById('close-webcam');
   let webcamStream = null;
 
+  // Affiche modale webcam si clic sur icône webcam dans liste utilisateurs
   document.getElementById('users').addEventListener('click', async (event) => {
     if (event.target.classList.contains('webcam-icon')) {
+      // Si tu veux ouvrir popup distante, remplace ce code par l'ouverture popup (voir plus bas)
       try {
         webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         webcamVideo.srcObject = webcamStream;
@@ -183,9 +181,7 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
     }
   });
 
-  // --- Ici, à toi d'ajouter la logique pour déclencher un appel WebRTC vers un utilisateur
-  // Exemple simple pour lancer callUser quand on clique sur l'icône webcam :
-
+  // --- Gérer le clic sur l'icône webcam d’un autre utilisateur pour ouvrir sa popup webcam ---
   document.getElementById('users').addEventListener('click', (event) => {
     if (event.target.classList.contains('webcam-icon')) {
       const userLi = event.target.closest('li.user-item');
@@ -193,13 +189,16 @@ document.getElementById('start-webcam-btn').addEventListener('click', () => {
       const usernameSpan = userLi.querySelector('.username-span');
       if (!usernameSpan) return;
       const remoteUsername = usernameSpan.textContent.trim();
-      if (remoteUsername && remoteUsername !== myUsername) {
-        callUser(remoteUsername);
+
+      if (remoteUsername !== myUsername) {
+        const url = `webcam-popup.html?user=${encodeURIComponent(remoteUsername)}`;
+        window.open(url, `webcam-${remoteUsername}`, 'width=320,height=260');
       }
     }
   });
 
 });
+
 
 
 
