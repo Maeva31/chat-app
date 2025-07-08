@@ -806,7 +806,6 @@ if (webcamModal) {
     body.scrollTop = body.scrollHeight;
   });
 
-});
 
 
 
