@@ -9,31 +9,54 @@
   </style>
 </head>
 <body>
-  <video id="webcamVideo" autoplay playsinline muted></video>
+  <video id="local-video" autoplay playsinline muted></video>
 
   <script>
-    const video = document.getElementById('webcamVideo');
+    // Récupère le username de la query string
+    function getQueryUsername() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('user');
+    }
 
-    // Écoute le message du parent avec le pseudo
-    window.addEventListener('message', async (event) => {
-      if (event.data && event.data.type === 'init') {
-        const username = event.data.username || 'inconnu';
-        console.log('Webcam popup pour:', username);
+    const username = getQueryUsername();
 
-        try {
-          // Demande la webcam locale (audio désactivé ici)
-          const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-          video.srcObject = stream;
-        } catch (e) {
-          alert("Impossible d'accéder à la webcam : " + e.message);
+    let localStream = null;
+
+    async function startWebcam() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        const videoElem = document.getElementById('local-video');
+        if (videoElem) videoElem.srcObject = localStream;
+
+        // Prévenir serveur que webcam est active (via fenêtre parente)
+        if (window.opener && window.opener.socket) {
+          window.opener.socket.emit('webcam status', { username, active: true });
         }
+      } catch (err) {
+        alert("Impossible d'accéder à la webcam : " + err.message);
       }
-    }, false);
+    }
 
-    // Optionnel : demander la webcam tout de suite (sans message)
-    // navigator.mediaDevices.getUserMedia({ video: true, audio: false })
-    //   .then(stream => video.srcObject = stream)
-    //   .catch(e => alert("Erreur webcam : " + e.message));
+    function stopWebcam() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+      // Prévenir serveur que webcam est coupée
+      if (window.opener && window.opener.socket) {
+        window.opener.socket.emit('webcam status', { username, active: false });
+      }
+    }
+
+    // Au chargement, démarre la webcam
+    window.addEventListener('load', () => {
+      startWebcam();
+    });
+
+    // À la fermeture de la popup, stoppe webcam et prévient serveur
+    window.addEventListener('beforeunload', () => {
+      stopWebcam();
+    });
   </script>
 </body>
 </html>
