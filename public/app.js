@@ -941,7 +941,7 @@ if (usernameInput && passwordInput) {
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
-    const roleIconSpan = li.querySelector('.role-icon');
+  const roleIconSpan = li.querySelector('.role-icon');
 const icon = createRoleIcon(role);
 if (icon) roleIconSpan.appendChild(icon);
 
@@ -949,19 +949,22 @@ if (webcamActive) {
   let camIcon = roleIconSpan.querySelector('.webcam-icon');
   if (!camIcon) {
     camIcon = document.createElement('img');
-    camIcon.src = '/webcam.gif'; 
+    camIcon.src = '/webcam.gif';
     camIcon.alt = 'Webcam active';
     camIcon.title = 'Webcam active - cliquer pour voir';
     camIcon.classList.add('webcam-icon');
     camIcon.style.width = '16px';
     camIcon.style.height = '16px';
     camIcon.style.cursor = 'pointer';
-    camIcon.style.position = 'absolute';   // Pour superposer sans déplacer
+
+    // IMPORTANT : position absolute pour superposer, sans toucher aux tailles/marges
+    camIcon.style.position = 'absolute';
     camIcon.style.top = '0';
     camIcon.style.left = '0';
     camIcon.style.zIndex = '10';
 
-    roleIconSpan.style.position = 'relative';  // Nécessaire pour que position absolute marche
+    // Parent positionné relatif pour que absolute marche
+    roleIconSpan.style.position = 'relative';
 
     roleIconSpan.appendChild(camIcon);
 
@@ -973,6 +976,7 @@ if (webcamActive) {
   const camIcon = roleIconSpan.querySelector('.webcam-icon');
   if (camIcon) camIcon.remove();
 }
+
 
 
       
