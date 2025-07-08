@@ -105,17 +105,18 @@ startWebcamBtn.addEventListener('click', () => {
 
   // Démarre la capture webcam + micro
   async function startLocalStream() {
-    if (localStream) return localStream;
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      const localVideo = document.getElementById('localVideo');
-      if (localVideo) localVideo.srcObject = localStream;
-      return localStream;
-    } catch (err) {
-      alert("Erreur accès webcam : " + err.message);
-      return null;
-    }
+  if (localStream) return localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo) localVideo.srcObject = localStream;
+    return localStream;
+  } catch (err) {
+    console.error("Erreur accès webcam :", err.message);
+    return null;
   }
+}
+
 
   // Crée une connexion WebRTC avec un utilisateur
   async function createPeerConnection(remoteUsername) {
