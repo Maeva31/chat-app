@@ -1,4 +1,5 @@
 const socket = io();
+window.socket = socket;
 
 const webcamStatus = {};  // { username: true/false }
 
