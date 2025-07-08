@@ -333,7 +333,7 @@ io.on('connection', (socket) => {
     if (users[username] && users[username].id !== socket.id) {
       return socket.emit('username exists', username);
     }
-    usernameToSocketId[username] = socket.id;
+
     // VÉRIFICATION : Mot de passe pour les rôles privilégiés
     if (requiresPassword(username)) {
       if (!password) {
