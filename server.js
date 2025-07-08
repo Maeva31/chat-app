@@ -22,22 +22,6 @@ const MAX_ROOMS = 50;
 let users = {};           // { username: { id, username, gender, age, role, banned, muted, invisible } }
 let messageHistory = {};
 let roomUsers = {};
-// Ajoute un utilisateur dans un salon en évitant les doublons et en gérant l'invisibilité
-function addUserToRoom(channel, user) {
-  if (!roomUsers[channel]) roomUsers[channel] = [];
-  // Supprime les doublons
-  roomUsers[channel] = roomUsers[channel].filter(u => u.id !== user.id);
-  // N'ajoute l'utilisateur que s'il n'est pas invisible
-  if (!user.invisible) {
-    roomUsers[channel].push(user);
-  }
-}
-
-// Retire un utilisateur d'un salon
-function removeUserFromRoom(channel, socketId) {
-  if (!roomUsers[channel]) return;
-  roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socketId);
-}
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
@@ -118,11 +102,10 @@ function updateRoomUserCounts() {
 // Envoie la liste des utilisateurs en excluant les invisibles
 function emitUserList(channel) {
   if (!roomUsers[channel]) return;
+  // Exclure les users invisibles
   const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
-  console.log(`Envoi liste users salon ${channel} :`, visibleUsers.map(u => u.username));
   io.to(channel).emit('user list', visibleUsers);
 }
-
 
 function cleanupEmptyDynamicRooms() {
   for (const room of savedRooms) {
@@ -215,9 +198,11 @@ io.on('connection', (socket) => {
       return;
     }
 
+    // Recherche l'utilisateur AVANT d'émettre
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
 
+    // Émet avec role et gender
     io.to(channel).emit('file uploaded', {
       username: user.username,
       role: user.role,
@@ -229,7 +214,7 @@ io.on('connection', (socket) => {
     });
   });
 
-  socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
+socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
     if (!sender) return;
 
@@ -260,65 +245,56 @@ io.on('connection', (socket) => {
       gender: sender.gender,
     };
 
+    // Envoi au destinataire
     io.to(recipient.id).emit('private file', fileMsg);
+    // Écho au sender (pour affichage local)
     socket.emit('private file', fileMsg);
   });
 
-  function logout(socket) {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) {
-      console.log(`Logout : utilisateur non trouvé pour socket ${socket.id}`);
-      return;
-    }
 
-    tempMods.admins.delete(user.username);
-    tempMods.modos.delete(user.username);
-
-    const room = userChannels[socket.id];
-    if (room) {
-      if (!user.invisible) {
-        io.to(room).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a quitté le serveur (logout)`,
-          timestamp: new Date().toISOString(),
-          channel: room
-        });
-      }
-
-      if (roomUsers[room]) {
-        roomUsers[room] = roomUsers[room].filter(u => u.id !== socket.id);
-        emitUserList(room);
-      }
-    }
-
-    delete users[user.username];
-    delete userChannels[socket.id];
-
-    socket.disconnect(true);
-
-    cleanupEmptyDynamicRooms();
-
-    console.log(`🔒 Logout : ${user.username} déconnecté.`);
+ function logout(socket) {
+  const user = Object.values(users).find(u => u.id === socket.id);
+  if (!user) {
+    console.log(`Logout : utilisateur non trouvé pour socket ${socket.id}`);
+    return;
   }
 
-  socket.on('logout', () => {
+  // Supprimer les rôles temporaires
+  tempMods.admins.delete(user.username);
+  tempMods.modos.delete(user.username);
+
+  // ... le reste de la fonction logout (messages, nettoyage, etc.)
+
+  const room = userChannels[socket.id];
+  if (room) {
+    if (!user.invisible) {
+      io.to(room).emit('chat message', {
+        username: 'Système',
+        message: `${user.username} a quitté le serveur (logout)`,
+        timestamp: new Date().toISOString(),
+        channel: room
+      });
+    }
+
+    if (roomUsers[room]) {
+      roomUsers[room] = roomUsers[room].filter(u => u.id !== socket.id);
+      emitUserList(room);
+    }
+  }
+
+  delete users[user.username];
+  delete userChannels[socket.id];
+
+  socket.disconnect(true);
+
+  cleanupEmptyDynamicRooms();
+
+  console.log(`🔒 Logout : ${user.username} déconnecté.`);
+}
+
+
+   socket.on('logout', () => {
     logout(socket);
-  });
-
-  // --- Gestion WebRTC (signaling) ---
-  socket.on('signal', ({ to, from, data }) => {
-    if (users[to]) {
-      io.to(users[to].id).emit('signal', { from, data });
-    }
-  });
-
-  socket.on('disconnect', () => {
-    console.log(`Déconnexion : ${socket.id}`);
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (user) {
-      delete users[user.username];
-      socket.broadcast.emit('user-left', user.username);
-    }
   });
 
   socket.on('ping', () => {
@@ -349,7 +325,7 @@ io.on('connection', (socket) => {
 
     if (bannedUsers.has(username)) {
       socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr');
+      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
       return;
     }
 
@@ -357,6 +333,7 @@ io.on('connection', (socket) => {
       return socket.emit('username exists', username);
     }
 
+    // VÉRIFICATION : Mot de passe pour les rôles privilégiés
     if (requiresPassword(username)) {
       if (!password) {
         return socket.emit('password required', username);
@@ -367,10 +344,12 @@ io.on('connection', (socket) => {
       console.log(`🔐 Authentification réussie pour ${username}`);
     }
 
+    // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     const role = getUserRole(username);
+    // Par défaut invisible = false, sauf si récupéré
     const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
 
@@ -378,9 +357,8 @@ io.on('connection', (socket) => {
     socket.join(channel);
 
     if (!roomUsers[channel]) roomUsers[channel] = [];
-    removeUserFromRoom(channel, socket.id);
-    addUserToRoom(channel, userData);
-
+    roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+    roomUsers[channel].push(userData);
 
     console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
 
@@ -389,6 +367,7 @@ io.on('connection', (socket) => {
     socket.emit('chat history', messageHistory[channel]);
     updateRoomUserCounts();
 
+    // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
     if (!userData.invisible) {
       io.to(channel).emit('chat message', {
         username: 'Système',
@@ -399,76 +378,498 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Gestion du message normal ou commande
-socket.on('chat message', (msg) => {
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) return;
+  socket.on('chat message', (msg) => {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
 
-  const channel = userChannels[socket.id] || defaultChannel;
+    const channel = userChannels[socket.id] || defaultChannel;
 
-  if (bannedUsers.has(user.username)) {
-    socket.emit('error message', 'Vous êtes banni du serveur.');
-    socket.emit('redirect', 'https://banned.maevakonnect.fr');
+    if (bannedUsers.has(user.username)) {
+      socket.emit('error message', 'Vous êtes banni du serveur.');
+      socket.emit('redirect', 'https://banned.maevakonnect.fr');  // Redirection bannis si tente envoyer message
+      return;
+    }
+
+    if (mutedUsers.has(user.username)) {
+      socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+      // suppression de la redirection pour mute
+      return;
+    }
+
+    // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
+    if (msg.message.startsWith('/')) {
+      if (user.role !== 'admin' && user.role !== 'modo') {
+        socket.emit('no permission');
+        return;
+      }
+
+      const args = msg.message.trim().split(/\s+/);
+      const cmd = args[0].toLowerCase();
+      const targetName = args[1];
+      const targetUser = Object.values(users).find(u => u.username === targetName);
+
+      // Protection rôles
+      const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
+      const isUserModo = user.role === 'modo';
+      const isUserAdmin = user.role === 'admin';
+
+      // ✅ Seul un admin avec mot de passe peut agir sur un autre admin/modo
+      const isPrivilegedAdmin = isUserAdmin && passwords[user.username];
+
+      // Refus pour les modos
+      if (isUserModo && isTargetProtected) {
+      socket.emit('error message', 'Vous ne pouvez pas agir sur cet utilisateur.');
+      return;
+}
+
+// Refus pour admin non privilégié
+if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
+  socket.emit('error message', 'Seuls les administrateurs authentifiés peuvent agir sur les modérateurs ou administrateurs.');
+  return;
+}
+
+
+
+      switch (cmd) {
+  case '/ban':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+  if (targetUser.username === user.username) {
+    socket.emit('error message', 'Vous ne pouvez pas vous bannir vous-même.');
+    return;
+  }
+  if (isUserModo && isTargetProtected) {
+    socket.emit('error message', 'Vous ne pouvez pas bannir cet utilisateur.');
     return;
   }
 
-  if (mutedUsers.has(user.username)) {
-    socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
+  bannedUsers.add(targetName);
+  io.to(targetUser.id).emit('banned');
+  io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
+  setTimeout(() => {
+    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+  }, 1500);
+
+  const banChannel = userChannels[targetUser.id];
+  if (banChannel) {
+    io.to(banChannel).emit('chat message', {
+      username: 'Système',
+      message: `${targetName} a été banni par ${user.username}`,
+      timestamp: new Date().toISOString(),
+      channel: banChannel
+    });
+  }
+
+  console.log(`⚠️ ${user.username} a banni ${targetName}`);
+  return;
+
+case '/kick':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+  if (targetUser.username === user.username) {
+    socket.emit('error message', 'Vous ne pouvez pas vous expulser vous-même.');
+    return;
+  }
+  if (isUserModo && isTargetProtected) {
+    socket.emit('error message', 'Vous ne pouvez pas expulser cet utilisateur.');
     return;
   }
 
-  // Gestion des commandes réservées admin/modo (omise ici pour clarté, tu peux garder ta logique)
+  io.to(targetUser.id).emit('kicked');
+  io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
+  setTimeout(() => {
+    io.sockets.sockets.get(targetUser.id)?.disconnect(true);
+  }, 1500);
 
-  const message = {
-    username: user.username,
-    gender: user.gender,
-    role: user.role,
-    message: msg.message || '',
-    timestamp: msg.timestamp || new Date().toISOString(),
-    channel,
-    style: msg.style || {}
-  };
-
-  if (!messageHistory[channel]) messageHistory[channel] = [];
-  messageHistory[channel].push(message);
-  if (messageHistory[channel].length > MAX_HISTORY) {
-    messageHistory[channel].shift();
+  const kickChannel = userChannels[targetUser.id];
+  if (kickChannel) {
+    io.to(kickChannel).emit('chat message', {
+      username: 'Système',
+      message: `${targetName} a été expulsé par ${user.username}`,
+      timestamp: new Date().toISOString(),
+      channel: kickChannel
+    });
   }
 
-  io.to(channel).emit('chat message', message);
-});
+  console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+  return;
 
-// Rejoindre un salon
-socket.on('joinRoom', (newChannel) => {
-  if (typeof newChannel !== 'string' || !newChannel.trim()) {
-    return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
+case '/mute':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+  if (targetUser.username === user.username) {
+    socket.emit('error message', 'Vous ne pouvez pas vous muter vous-même.');
+    return;
+  }
+  if (isUserModo && isTargetProtected) {
+    socket.emit('error message', 'Vous ne pouvez pas muter cet utilisateur.');
+    return;
   }
 
-  const oldChannel = userChannels[socket.id] || defaultChannel;
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) return;
+  mutedUsers.add(targetName);
+  io.to(targetUser.id).emit('muted');
 
-  if (!messageHistory[newChannel]) messageHistory[newChannel] = [];
-  if (!roomUsers[newChannel]) roomUsers[newChannel] = [];
+  const muteChannel = userChannels[targetUser.id];
+  if (muteChannel) {
+    io.to(muteChannel).emit('chat message', {
+      username: 'Système',
+      message: `${targetName} a été muté par ${user.username}`,
+      timestamp: new Date().toISOString(),
+      channel: muteChannel
+    });
+  }
 
-  if (oldChannel !== newChannel) {
-    socket.leave(oldChannel);
-    removeUserFromRoom(oldChannel, socket.id);
-    emitUserList(oldChannel);
+  console.log(`⚠️ ${user.username} a muté ${targetName}`);
+  return;
 
-    userChannels[socket.id] = newChannel;
-    socket.join(newChannel);
+case '/unmute':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
 
-    removeUserFromRoom(newChannel, socket.id);
-    addUserToRoom(newChannel, user);
+  if (mutedUsers.has(targetName)) {
+    mutedUsers.delete(targetName);
+    io.to(targetUser.id).emit('unmuted');
 
-    if (!user.invisible) {
-      io.to(newChannel).emit('chat message', {
+    const unmuteChannel = userChannels[targetUser.id];
+    if (unmuteChannel) {
+      io.to(unmuteChannel).emit('chat message', {
         username: 'Système',
-        message: `${user.username} a rejoint le salon ${newChannel}`,
+        message: `${targetName} a été unmuté par ${user.username}`,
         timestamp: new Date().toISOString(),
-        channel: newChannel
+        channel: unmuteChannel
       });
+    }
+
+    console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
+  } else {
+    socket.emit('error message', `${targetName} n'est pas muté.`);
+  }
+  return;
+
+case '/unban':
+  if (!targetUser) {
+    socket.emit('error message', 'Utilisateur introuvable.');
+    return;
+  }
+
+  if (bannedUsers.has(targetName)) {
+    bannedUsers.delete(targetName);
+
+    // Si l'utilisateur est connecté, on envoie le message dans son salon
+    const unbanChannel = userChannels[targetUser.id];
+    if (unbanChannel) {
+      io.to(unbanChannel).emit('chat message', {
+        username: 'Système',
+        message: `${targetName} a été débanni par ${user.username}`,
+        timestamp: new Date().toISOString(),
+        channel: unbanChannel
+      });
+    }
+
+    console.log(`⚠️ ${user.username} a débanni ${targetName}`);
+  } else {
+    socket.emit('error message', `${targetName} n'est pas banni.`);
+  }
+  return;
+
+
+        case '/addmodo':
+case '/addadmin':
+  if (user.role !== 'admin') {
+    socket.emit('error message', "Seuls les administrateurs peuvent ajouter des modos ou admins.");
+    return;
+  }
+  if (!targetName) {
+    socket.emit('error message', `Usage : ${cmd} <pseudo>`);
+    return;
+  }
+  if (!users[targetName]) {
+    socket.emit('error message', `Utilisateur ${targetName} introuvable.`);
+    return;
+  }
+
+  if (cmd === '/addmodo') {
+    if (!modData.modos.includes(targetName) && !tempMods.modos.has(targetName)) {
+      tempMods.modos.add(targetName);
+      // Supprimer du rôle admin temporaire si existant
+      tempMods.admins.delete(targetName);
+      io.emit('server message', `${targetName} est maintenant modérateur temporaire (ajouté par ${user.username})`);
+      console.log(`⚠️ ${user.username} a ajouté modo temporaire ${targetName}`);
+    } else {
+      socket.emit('error message', `${targetName} est déjà modérateur.`);
+    }
+  } else if (cmd === '/addadmin') {
+    if (!modData.admins.includes(targetName) && !tempMods.admins.has(targetName)) {
+      tempMods.admins.add(targetName);
+      // Supprimer du rôle modo temporaire si existant
+      tempMods.modos.delete(targetName);
+      io.emit('server message', `${targetName} est maintenant administrateur temporaire (ajouté par ${user.username})`);
+      console.log(`⚠️ ${user.username} a ajouté admin temporaire ${targetName}`);
+    } else {
+      socket.emit('error message', `${targetName} est déjà administrateur.`);
+    }
+  }
+
+  // Actualiser le rôle en mémoire pour l'utilisateur si connecté
+  if (users[targetName]) {
+    users[targetName].role = (cmd === '/addmodo') ? 'modo' : 'admin';
+  }
+  return;
+
+
+case '/removemodo':
+case '/removeadmin':
+  // Seuls les admins authentifiés peuvent exécuter
+  const isPrivilegedAdmin = user.role === 'admin' && passwords[user.username];
+  if (!isPrivilegedAdmin) {
+    socket.emit('error message', "Seuls les administrateurs authentifiés peuvent retirer des rôles.");
+    return;
+  }
+
+  if (!targetName) {
+    socket.emit('error message', `Usage : ${cmd} <pseudo>`);
+    return;
+  }
+  if (!users[targetName]) {
+    socket.emit('error message', `Utilisateur ${targetName} introuvable.`);
+    return;
+  }
+
+  // Ne pas se retirer soi-même
+  if (targetName === user.username) {
+    socket.emit('error message', "Vous ne pouvez pas vous retirer votre propre rôle.");
+    return;
+  }
+
+  // Vérifie le rôle actuel de la cible
+  const targetRole = getUserRole(targetName);
+
+  if (cmd === '/removemodo') {
+  if (!modData.modos.includes(targetName) && !tempMods.modos.has(targetName)) {
+    socket.emit('error message', `${targetName} n'est pas modérateur.`);
+    return;
+  }
+  if (targetRole === 'admin') {
+    socket.emit('error message', "Vous ne pouvez pas retirer un administrateur avec /removemodo.");
+    return;
+  }
+} else if (cmd === '/removeadmin') {
+  if (!modData.admins.includes(targetName) && !tempMods.admins.has(targetName)) {
+    socket.emit('error message', `${targetName} n'est pas administrateur.`);
+    return;
+  }
+  if (targetRole === 'modo') {
+    socket.emit('error message', "Vous ne pouvez pas retirer un modérateur avec /removeadmin.");
+    return;
+  }
+}
+
+  // Retrait du rôle
+  if (cmd === '/removemodo') {
+    modData.modos = modData.modos.filter(u => u !== targetName);
+  } else {
+    modData.admins = modData.admins.filter(u => u !== targetName);
+  }
+
+  fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+  io.emit('server message', `${targetName} n'est plus ${cmd === '/removemodo' ? 'modérateur' : 'administrateur'} (retiré par ${user.username})`);
+  console.log(`⚠️ ${user.username} a retiré ${cmd === '/removemodo' ? 'modo' : 'admin'} ${targetName}`);
+
+  if (users[targetName]) {
+    users[targetName].role = 'user';
+
+    // Supprimer l'invisibilité si présente
+    if (users[targetName].invisible) {
+      users[targetName].invisible = false;
+      const targetSocketId = users[targetName].id;
+      const targetChannel = userChannels[targetSocketId];
+
+      if (roomUsers[targetChannel]) {
+        const u = roomUsers[targetChannel].find(u => u.id === targetSocketId);
+        if (u) u.invisible = false;
+      }
+
+      io.to(targetSocketId).emit('server message', "Vous avez perdu votre rôle, le mode invisible est désactivé.");
+      io.to(targetChannel).emit('chat message', {
+        username: 'Système',
+        message: `${targetName} est maintenant visible.`,
+        timestamp: new Date().toISOString(),
+        channel: targetChannel
+      });
+
+      emitUserList(targetChannel);
+      updateRoomUserCounts();
+    }
+  }
+  return;
+
+        case '/invisible':
+          if (user.role !== 'admin') {
+            socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
+            return;
+          }
+          if (args.length < 2) {
+            socket.emit('error message', 'Usage : /invisible on | off');
+            return;
+          }
+          const param = args[1].toLowerCase();
+          const channel = userChannels[socket.id];
+          if (param === 'on') {
+            user.invisible = true;
+            if (roomUsers[channel]) {
+              const u = roomUsers[channel].find(u => u.id === socket.id);
+              if (u) u.invisible = true;
+            }
+            socket.emit('server message', 'Mode invisible activé.');
+            console.log(`🔍 ${user.username} a activé le mode invisible.`);
+            emitUserList(channel);
+            updateRoomUserCounts();
+          } else if (param === 'off') {
+            user.invisible = false;
+            if (roomUsers[channel]) {
+              const u = roomUsers[channel].find(u => u.id === socket.id);
+              if (u) u.invisible = false;
+            }
+            socket.emit('server message', 'Mode invisible désactivé.');
+            console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
+            emitUserList(channel);
+            updateRoomUserCounts();
+            io.to(channel).emit('chat message', {
+              username: 'Système',
+              message: `${user.username} est maintenant visible.`,
+              timestamp: new Date().toISOString(),
+              channel
+            });
+          } else {
+            socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
+          }
+          return;
+
+        default:
+          socket.emit('error message', 'Commande inconnue.');
+          return;
+      }
+    }
+
+    const message = {
+  username: user.username,
+  gender: user.gender,
+  role: user.role,
+  message: msg.message || '',
+  timestamp: msg.timestamp || new Date().toISOString(),
+  channel,
+  style: msg.style || {} 
+};
+
+
+    if (!messageHistory[channel]) messageHistory[channel] = [];
+    messageHistory[channel].push(message);
+    if (messageHistory[channel].length > MAX_HISTORY) {
+      messageHistory[channel].shift();
+    }
+
+    io.to(channel).emit('chat message', message);
+  });
+
+  socket.on('joinRoom', (newChannel) => {
+    if (typeof newChannel !== 'string' || !newChannel.trim()) {
+      return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
+    }
+
+    const oldChannel = userChannels[socket.id] || defaultChannel;
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
+
+    if (!messageHistory[newChannel]) messageHistory[newChannel] = [];
+    if (!roomUsers[newChannel]) roomUsers[newChannel] = [];
+
+    if (oldChannel !== newChannel) {
+      socket.leave(oldChannel);
+      if (roomUsers[oldChannel]) {
+        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+        emitUserList(oldChannel);
+      }
+
+      userChannels[socket.id] = newChannel;
+      socket.join(newChannel);
+
+      roomUsers[newChannel] = roomUsers[newChannel].filter(u => u.id !== socket.id);
+      roomUsers[newChannel].push(user);
+
+      // Message système uniquement si non invisible
+      if (!user.invisible) {
+        io.to(newChannel).emit('chat message', {
+          username: 'Système',
+          message: `${user.username} a rejoint le salon ${newChannel}`,
+          timestamp: new Date().toISOString(),
+          channel: newChannel
+        });
+
+        io.to(oldChannel).emit('chat message', {
+          username: 'Système',
+          message: `${user.username} a quitté le salon ${oldChannel}`,
+          timestamp: new Date().toISOString(),
+          channel: oldChannel
+        });
+      }
+    } else {
+      if (!roomUsers[newChannel].some(u => u.id === socket.id)) {
+        roomUsers[newChannel].push(user);
+      }
+    }
+
+    socket.emit('chat history', messageHistory[newChannel]);
+    emitUserList(newChannel);
+    socket.emit('joinedRoom', newChannel);
+    updateRoomUserCounts();
+    cleanupEmptyDynamicRooms();
+  });
+
+  socket.on('createRoom', (newChannel) => {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
+
+    if (mutedUsers.has(user.username)) {
+      socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
+      // Retiré la ligne de redirection
+      return;
+    }
+
+    if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
+      return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
+    }
+
+    if (savedRooms.includes(newChannel)) {
+      return socket.emit('room exists', newChannel);
+    }
+
+    if (savedRooms.length >= MAX_ROOMS) {
+      return socket.emit('error', 'Nombre maximum de salons atteint.');
+    }
+
+    messageHistory[newChannel] = [];
+    roomUsers[newChannel] = [];
+    savedRooms.push(newChannel);
+    savedRooms = [...new Set(savedRooms)];
+
+    fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
+    console.log(`🆕 Salon créé : ${newChannel}`);
+
+    const oldChannel = userChannels[socket.id];
+    if (oldChannel && oldChannel !== newChannel) {
+      socket.leave(oldChannel);
+      if (roomUsers[oldChannel]) {
+        roomUsers[oldChannel] = roomUsers[oldChannel].filter(u => u.id !== socket.id);
+        emitUserList(oldChannel);
+      }
 
       io.to(oldChannel).emit('chat message', {
         username: 'Système',
@@ -477,94 +878,43 @@ socket.on('joinRoom', (newChannel) => {
         channel: oldChannel
       });
     }
-  } else {
-    if (!roomUsers[newChannel].some(u => u.id === socket.id)) {
-      addUserToRoom(newChannel, user);
-    }
-  }
 
-  socket.emit('chat history', messageHistory[newChannel]);
-  emitUserList(newChannel);
-  socket.emit('joinedRoom', newChannel);
-  updateRoomUserCounts();
-  cleanupEmptyDynamicRooms();
-});
+    userChannels[socket.id] = newChannel;
+    socket.join(newChannel);
+    roomUsers[newChannel].push(user);
+    console.log(`${user.username} a rejoint le salon ${newChannel}`);
 
-// Créer un salon
-socket.on('createRoom', (newChannel) => {
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) return;
+    socket.emit('room created', newChannel);
+    io.emit('room list', savedRooms);
+    updateRoomUserCounts();
 
-  if (mutedUsers.has(user.username)) {
-    socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
-    return;
-  }
+    socket.emit('chat history', messageHistory[newChannel]);
 
-  if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
-    return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
-  }
-
-  if (savedRooms.includes(newChannel)) {
-    return socket.emit('room exists', newChannel);
-  }
-
-  if (savedRooms.length >= MAX_ROOMS) {
-    return socket.emit('error', 'Nombre maximum de salons atteint.');
-  }
-
-  messageHistory[newChannel] = [];
-  roomUsers[newChannel] = [];
-  savedRooms.push(newChannel);
-  savedRooms = [...new Set(savedRooms)];
-
-  fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
-  console.log(`🆕 Salon créé : ${newChannel}`);
-
-  const oldChannel = userChannels[socket.id];
-  if (oldChannel && oldChannel !== newChannel) {
-    socket.leave(oldChannel);
-    removeUserFromRoom(oldChannel, socket.id);
-    emitUserList(oldChannel);
-
-    io.to(oldChannel).emit('chat message', {
+    io.to(newChannel).emit('chat message', {
       username: 'Système',
-      message: `${user.username} a quitté le salon ${oldChannel}`,
+      message: `Bienvenue dans le salon ${newChannel}!`,
       timestamp: new Date().toISOString(),
-      channel: oldChannel
+      channel: newChannel
     });
-  }
 
-  userChannels[socket.id] = newChannel;
-  socket.join(newChannel);
-  addUserToRoom(newChannel, user);
+    emitUserList(newChannel);
 
-  console.log(`${user.username} a rejoint le salon ${newChannel}`);
-
-  socket.emit('room created', newChannel);
-  io.emit('room list', savedRooms);
-  updateRoomUserCounts();
-
-  socket.emit('chat history', messageHistory[newChannel]);
-
-  io.to(newChannel).emit('chat message', {
-    username: 'Système',
-    message: `Bienvenue dans le salon ${newChannel}!`,
-    timestamp: new Date().toISOString(),
-    channel: newChannel
+    socket.emit('joinedRoom', newChannel);
+    cleanupEmptyDynamicRooms();
   });
 
-  emitUserList(newChannel);
+  socket.on('request history', (roomName) => {
+    if (roomName && messageHistory[roomName]) {
+      socket.emit('chat history', messageHistory[roomName]);
+    }
+  });
 
-  socket.emit('joinedRoom', newChannel);
-  cleanupEmptyDynamicRooms();
-});
-
-// Gestion de la déconnexion
-socket.on('disconnect', () => {
+  socket.on('disconnect', () => {
   const user = Object.values(users).find(u => u.id === socket.id);
   if (user) {
     console.log(`❌ Déconnexion : ${user.username}`);
 
+    // SUPPRESSION des rôles temporaires à la déconnexion
     tempMods.admins.delete(user.username);
     tempMods.modos.delete(user.username);
 
@@ -580,20 +930,22 @@ socket.on('disconnect', () => {
       }
     }
 
-    // Supprime l'utilisateur de tous les salons
-    for (const channel in roomUsers) {
-      removeUserFromRoom(channel, socket.id);
+  
+
+
+      for (const channel in roomUsers) {
+        roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+        emitUserList(channel);
+      }
+
+      delete users[user.username];
+      delete userChannels[socket.id];
+
+      cleanupEmptyDynamicRooms();
+    } else {
+      console.log(`❌ Déconnexion inconnue : ${socket.id}`);
     }
-
-    delete users[user.username];
-    delete userChannels[socket.id];
-
-    cleanupEmptyDynamicRooms();
-  } else {
-    console.log(`❌ Déconnexion inconnue : ${socket.id}`);
-  }
-});
-
+  });
   
     socket.on('private message', ({ to, message, style, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
