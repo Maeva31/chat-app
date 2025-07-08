@@ -963,7 +963,7 @@ if (usernameInput && passwordInput) {
         const ageDiv = li.querySelector('.gender-square');
 
         if (roleIconImg && roleIconImg.parentNode === roleIconSpan) {
-          roleIconSpan.insertBefore(camIcon, roleIconImg.nextSibling);
+          roleIconSpan.insertBefore(camIcon, roleIconImg);
         } else if (ageDiv) {
           ageDiv.parentNode.insertBefore(camIcon, ageDiv);
         } else {
@@ -971,12 +971,9 @@ if (usernameInput && passwordInput) {
         }
 
         camIcon.addEventListener('click', () => {
-          if (username === localStorage.getItem('username')) {
-            alert("Ceci est votre propre webcam.");
-            return;
-          }
-          window.open(`webcam-popup.html?user=${encodeURIComponent(username)}`, `webcam-${username}`, 'width=320,height=260');
-        });
+  window.open(`webcam-popup.html?user=${encodeURIComponent(username)}`, `webcam-${username}`, 'width=320,height=260');
+});
+
       }
     }
 
