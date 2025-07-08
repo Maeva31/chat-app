@@ -1,5 +1,20 @@
 const socket = io();
 
+const webcamStatus = {};  // { username: true/false }
+
+socket.on('webcam status update', ({ username, active }) => {
+  webcamStatus[username] = active;
+  if (window.users) {
+    window.users = window.users.map(u => {
+      if (u.username === username) {
+        return { ...u, webcamActive: active };
+      }
+      return u;
+    });
+    updateUserList(window.users);
+  }
+});
+
 document.addEventListener('DOMContentLoaded', () => {
 
    const webcamPopupUrl = 'webcam-popup.html'; // page simple qui affichera ta webcam
@@ -887,11 +902,15 @@ if (usernameInput && passwordInput) {
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
 
+  window.users = users; // Stocke globalement pour pouvoir rafraîchir
+
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
+
+    const webcamActive = user.webcamActive || webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -908,6 +927,57 @@ if (usernameInput && passwordInput) {
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
+    if (webcamActive) {
+      let camIcon = li.querySelector('.webcam-icon');
+      if (!camIcon) {
+        camIcon = document.createElement('img');
+        camIcon.src = '/webcam.gif'; 
+        camIcon.alt = 'Webcam active';
+        camIcon.title = 'Webcam active - cliquer pour voir';
+        camIcon.classList.add('webcam-icon');
+        camIcon.style.width = '16px';
+        camIcon.style.height = '16px';
+        camIcon.style.cursor = 'pointer';
+        camIcon.style.marginRight = '4px';
+        camIcon.style.verticalAlign = 'middle';
+
+        const roleIconImg = li.querySelector('.role-icon img');
+        const ageDiv = li.querySelector('.gender-square');
+
+        if (roleIconImg && roleIconImg.parentNode === roleIconSpan) {
+          roleIconSpan.insertBefore(camIcon, roleIconImg.nextSibling);
+        } else if (ageDiv) {
+          ageDiv.parentNode.insertBefore(camIcon, ageDiv);
+        } else {
+          li.insertBefore(camIcon, li.firstChild);
+        }
+
+        camIcon.addEventListener('click', () => {
+          if (username === localStorage.getItem('username')) {
+            alert("Ceci est votre propre webcam.");
+            return;
+          }
+          window.open(`webcam-popup.html?user=${encodeURIComponent(username)}`, `webcam-${username}`, 'width=320,height=260');
+        });
+      }
+    }
+
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
+    userList.appendChild(li);
+  });
+}
+      
+    
+
+    // Clic pseudo mention
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
