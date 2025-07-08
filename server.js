@@ -1,3 +1,4 @@
+
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -999,6 +1000,9 @@ io.on('connection', (socket) => {
   // Mise à jour du statut webcam (active ou non)
   socket.on('webcam status', ({ username, active }) => {
     webcamStatus[username] = active; // Mise à jour côté serveur
+    
+console.log('Emitting webcam status update for', username, active);
+
     io.emit('webcam status update', { username, active }); // Broadcast à tous
   });
 
