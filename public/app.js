@@ -29,9 +29,11 @@ async function startWebcam() {
     // Notifier le serveur que la webcam est active
     socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
   } catch (err) {
-    alert("Impossible d'accéder à la webcam : " + err.message);
+    // Erreur silencieuse, on ne fait rien ou on logue dans la console
+    console.error("Impossible d'accéder à la webcam :", err.message);
   }
 }
+
 
 const startWebcamBtn = document.getElementById('start-webcam-btn');
 if (startWebcamBtn) {
