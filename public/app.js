@@ -1,5 +1,7 @@
 const socket = io();
 
+let hasSentUserInfo = false;
+
 document.addEventListener('DOMContentLoaded', () => {
 
 
@@ -772,7 +774,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
   let selectedUser = null;
-  let hasSentUserInfo = false;
   let initialLoadComplete = false;
   let bannerTimeoutId = null;
 
