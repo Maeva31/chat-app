@@ -2,6 +2,44 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ---------- Début gestion webcam -----------
+const webcamModal = document.getElementById('webcam-modal');
+const webcamVideo = document.getElementById('webcam-video');
+const closeWebcamBtn = document.getElementById('close-webcam');
+let webcamStream = null;
+
+// Déléguer le clic sur icône webcam dans la liste utilisateurs (car liste dynamique)
+document.getElementById('users').addEventListener('click', async (event) => {
+  if (event.target.classList.contains('webcam-icon')) {
+    try {
+      webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      webcamVideo.srcObject = webcamStream;
+      webcamModal.style.display = 'flex';
+    } catch (e) {
+      alert("Impossible d'accéder à la webcam : " + e.message);
+    }
+  }
+});
+
+// Fermer la modale et couper la webcam
+closeWebcamBtn.addEventListener('click', () => {
+  webcamModal.style.display = 'none';
+  if (webcamStream) {
+    webcamStream.getTracks().forEach(track => track.stop());
+    webcamStream = null;
+  }
+  webcamVideo.srcObject = null;
+});
+
+// Fermer modale en cliquant hors contenu
+webcamModal.addEventListener('click', e => {
+  if (e.target === webcamModal) {
+    closeWebcamBtn.click();
+  }
+});
+// ---------- Fin gestion webcam -----------
+
+
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
@@ -723,6 +761,7 @@ if (usernameInput && passwordInput) {
       camIcon.src = '/webcam.gif';  // chemin vers ton gif caméra
       camIcon.alt = 'Caméra active';
       camIcon.title = 'Utilisateur avec caméra';
+      camIcon.classList.add('webcam-icon');
       camIcon.style.position = 'absolute';
       camIcon.style.top = '-6px';
       camIcon.style.left = '-18px';  // décale vers la gauche devant âge
