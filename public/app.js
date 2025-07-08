@@ -885,6 +885,7 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
+  console.log("Mise à jour user list, nombre :", users.length);
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
