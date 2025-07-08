@@ -22,6 +22,8 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 let webcamStatus = {};  // { username: true/false }
+const usernameToSocketId = {};
+
 
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
@@ -181,6 +183,17 @@ app.post('/upload', upload.single('file'), (req, res) => {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
+  socket.on('watch webcam', ({ from, to }) => {
+  const toSocketId = usernameToSocketId[to];
+  if (!toSocketId) {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    return;
+  }
+  // Demande au client "to" de commencer à envoyer sa webcam à "from"
+  io.to(toSocketId).emit('watch webcam request', { from });
+});
+
+
   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
     if (!channel || !savedRooms.includes(channel)) {
       socket.emit('error message', 'Salon invalide pour upload de fichier.');
@@ -298,38 +311,40 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
-    const { username, gender, age, invisible, password } = data;
+  const { username, gender, age, invisible, password } = data;
 
-    if (!username || username.length > 16 || /\s/.test(username)) {
-      return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
-    }
-    if (isNaN(age) || age < 18 || age > 89) {
-      return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
-    }
-    if (!gender) {
-      return socket.emit('username error', 'Genre non spécifié');
-    }
+  // Validation — ce que tu as écrit :
+  if (!username || username.length > 16 || /\s/.test(username)) {
+    return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
+  }
+  if (isNaN(age) || age < 18 || age > 89) {
+    return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
+  }
+  if (!gender) {
+    return socket.emit('username error', 'Genre non spécifié');
+  }
 
-    if (bannedUsers.has(username)) {
-      socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
-      return;
-    }
+  if (bannedUsers.has(username)) {
+    socket.emit('username error', 'Vous êtes banni du serveur.');
+    socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+    return;
+  }
 
-    if (users[username] && users[username].id !== socket.id) {
-      return socket.emit('username exists', username);
-    }
+  if (users[username] && users[username].id !== socket.id) {
+    return socket.emit('username exists', username);
+  }
 
-    // VÉRIFICATION : Mot de passe pour les rôles privilégiés
-    if (requiresPassword(username)) {
-      if (!password) {
-        return socket.emit('password required', username);
-      }
-      if (passwords[username] !== password) {
-        return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
-      }
-      console.log(`🔐 Authentification réussie pour ${username}`);
+  usernameToSocketId[username] = socket.id;
+
+  if (requiresPassword(username)) {
+    if (!password) {
+      return socket.emit('password required', username);
     }
+    if (passwords[username] !== password) {
+      return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
+    }
+    console.log(`🔐 Authentification réussie pour ${username}`);
+  }
 
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
@@ -892,6 +907,13 @@ io.on('connection', (socket) => {
   });
 
   socket.on('disconnect', () => {
+    for (const [username, id] of Object.entries(usernameToSocketId)) {
+  if (id === socket.id) {
+    delete usernameToSocketId[username];
+    break;
+  }
+}
+
     const user = Object.values(users).find(u => u.id === socket.id);
     if (user) {
       console.log(`❌ Déconnexion : ${user.username}`);
