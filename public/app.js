@@ -19,7 +19,9 @@ socket.on('webcam status update', ({ username, active }) => {
 
 document.addEventListener('DOMContentLoaded', () => {
 
-   const webcamPopupUrl = 'webcam-popup.html'; // page simple qui affichera ta webcam
+   const webcamPopupUrl = 'https://chat-app-91ml.onrender.com/webcam-popup.html';
+
+   // page simple qui affichera ta webcam
 
   // Bouton Activer ma webcam (popup perso)
   const startWebcamBtn = document.getElementById('start-webcam-btn');
@@ -957,25 +959,24 @@ if (webcamActive) {
     camIcon.style.height = '16px';
     camIcon.style.cursor = 'pointer';
 
-    // IMPORTANT : position absolute pour superposer, sans toucher aux tailles/marges
+    // positionnement
     camIcon.style.position = 'absolute';
     camIcon.style.top = '0';
     camIcon.style.left = '0';
     camIcon.style.zIndex = '10';
-
-    // Parent positionné relatif pour que absolute marche
     roleIconSpan.style.position = 'relative';
 
     roleIconSpan.appendChild(camIcon);
 
     camIcon.addEventListener('click', () => {
-      window.open(`webcam-popup.html?user=${encodeURIComponent(username)}`, `webcam-${username}`, 'width=320,height=260');
+      window.open(`https://chat-app-91ml.onrender.com/webcam-popup.html?user=${encodeURIComponent(username)}`, `webcam-${username}`, 'width=320,height=260');
     });
   }
 } else {
   const camIcon = roleIconSpan.querySelector('.webcam-icon');
   if (camIcon) camIcon.remove();
 }
+
 
 
 
