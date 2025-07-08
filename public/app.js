@@ -2,6 +2,7 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
+
   const webcamPopupUrl = 'webcam-popup.html'; // page simple qui affichera ta webcam
 
   // Bouton Activer ma webcam (popup perso)
@@ -1029,8 +1030,10 @@ function performLogout() {
   ['username', 'gender', 'age', 'password', 'invisibleMode', 'currentChannel'].forEach(key => {
     localStorage.removeItem(key);
   });
+  hasSentUserInfo = false; // <-- reset ici
   location.reload();
 }
+
 
 if (logoutButton) {
   logoutButton.addEventListener('click', openLogoutModal);
@@ -1531,33 +1534,31 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     }
   });
 
-  socket.on('connect', () => {
-  const savedUsername = localStorage.getItem('username');
-  const savedGender = localStorage.getItem('gender');
-  const savedAge = localStorage.getItem('age');
-  const savedPassword = localStorage.getItem('password'); // <-- ajout
+socket.on('connect', () => {
+  if (!hasSentUserInfo) {
+    const savedUsername = localStorage.getItem('username');
+    const savedGender = localStorage.getItem('gender');
+    const savedAge = localStorage.getItem('age');
+    const savedPassword = localStorage.getItem('password');
+    const savedChannel = localStorage.getItem('currentChannel') || 'Général';
 
-  if (!hasSentUserInfo && savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || 'non spécifié',
-      age: savedAge,
-      invisible: invisibleMode,
-      password: savedPassword || ''  // <-- ajout
-    });
-    currentChannel = 'Général';
-    localStorage.setItem('currentChannel', currentChannel);
-    socket.emit('joinRoom', currentChannel);
-    selectChannelInUI(currentChannel);
-
-    hasSentUserInfo = true;
-    initialLoadComplete = true;
-
-    if (invisibleMode) {
-      showBanner('Mode invisible activé (auto)', 'success');
+    if (savedUsername && savedAge) {
+      socket.emit('set username', {
+        username: savedUsername,
+        gender: savedGender || 'non spécifié',
+        age: savedAge,
+        invisible: invisibleMode,
+        password: savedPassword || ''
+      });
+      currentChannel = savedChannel;
+      localStorage.setItem('currentChannel', currentChannel);
+      socket.emit('joinRoom', currentChannel);
+      selectChannelInUI(currentChannel);
+      hasSentUserInfo = true;
     }
   }
 });
+
 
   // Bouton validation pseudo
   document.getElementById('username-submit').addEventListener('click', submitUserInfo);
