@@ -135,13 +135,18 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // ✅ 50 Mo max
+  limits: { fileSize: 50 * 1024 * 1024 }, // 50 Mo max
   fileFilter: (req, file, cb) => {
-    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
+    const allowed = [
+      'image/png', 'image/jpeg', 'image/jpg', 'image/gif',
+      'audio/mpeg', 'audio/wav', 'audio/ogg',
+      'video/mp4', 'video/webm', 'video/ogg'
+    ];
     if (allowed.includes(file.mimetype)) cb(null, true);
     else cb(new Error('Type de fichier non autorisé'));
   }
 });
+
 
 app.post('/upload', upload.single('file'), (req, res) => {
   const userId = req.body.userId; // id socket ou username
