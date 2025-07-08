@@ -24,18 +24,32 @@ document.addEventListener('DOMContentLoaded', () => {
   // Bouton Activer ma webcam (popup perso)
   const startWebcamBtn = document.getElementById('start-webcam-btn');
   if (startWebcamBtn) {
-    startWebcamBtn.addEventListener('click', () => {
-      if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-        window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
-        window.myWebcamPopup.addEventListener('load', () => {
-          window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
-        });
-      } else {
-        window.myWebcamPopup.focus();
-      }
+    let popupCheckInterval;
 
-      socket.emit('webcam activated', { username: localStorage.getItem('username') });
+startWebcamBtn.addEventListener('click', () => {
+  if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
+    window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
+    window.myWebcamPopup.addEventListener('load', () => {
+      window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
     });
+
+    // Émettre webcam active
+    socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
+
+    // Vérifier fermeture popup
+    if (popupCheckInterval) clearInterval(popupCheckInterval);
+    popupCheckInterval = setInterval(() => {
+      if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
+        clearInterval(popupCheckInterval);
+        socket.emit('webcam status', { username: localStorage.getItem('username'), active: false });
+      }
+    }, 500);
+
+  } else {
+    window.myWebcamPopup.focus();
+  }
+});
+
   }
 
   // Variables WebRTC
