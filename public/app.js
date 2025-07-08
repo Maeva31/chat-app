@@ -315,11 +315,7 @@ if (webcamModal) {
     }
   });
 
-  list.forEach(user => {
-    if (user.username !== myUsername && !peerConnections[user.username]) {
-      callUser(user.username);
-    }
-  });
+  
 
   // ── 2) Couleurs selon rôle/genre ──
   const usernameColors = {
