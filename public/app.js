@@ -1,265 +1,6 @@
 const socket = io();
-window.socket = socket;
-
-let videoStream = null;
-let audioStream = null;
-let localStream = null;
-
-async function startVideoStream() {
-  if (videoStream) return videoStream;
-  try {
-    videoStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    return videoStream;
-  } catch (err) {
-    console.error("Erreur accès vidéo :", err.message);
-    return null;
-  }
-}
-
-async function startAudioStream() {
-  if (audioStream) return audioStream;
-  try {
-    audioStream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
-    return audioStream;
-  } catch (err) {
-    console.error("Erreur accès audio :", err.message);
-    return null;
-  }
-}
-
-// Si tu veux démarrer les deux en même temps, fais une fonction :
-async function startLocalStream() {
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-    return localStream;
-  } catch (err) {
-    console.error("Erreur accès webcam et micro :", err.message);
-    return null;
-  }
-}
-
-const webcamStatus = {};  // { username: true/false }
-
-socket.on('webcam status update', ({ username, active }) => {
-  console.log('webcam status update:', username, active);
-  webcamStatus[username] = active;
-  if (window.users) {
-    window.users = window.users.map(u => {
-      if (u.username === username) {
-        return { ...u, webcamActive: active };
-      }
-      return u;
-    });
-    updateUserList(window.users);
-  }
-});
 
 document.addEventListener('DOMContentLoaded', () => {
-
-
-async function startWebcam() {
-
-
-
-
-if (startWebcamBtn) {
-  startWebcamBtn.addEventListener('click', () => {
-    startWebcam();
-  });
-}
-
-   // Exemple d'écouteur clic sur icône webcam utilisateur pour ouvrir popup webcam distante
-  const usersList = document.getElementById('users');
-  if (usersList) {
-    usersList.addEventListener('click', (e) => {
-      if (e.target.classList.contains('webcam-icon')) {
-        const username = e.target.dataset.username;
-        if (username) {
-          window.open(
-            `webcam-popup.html?user=${encodeURIComponent(username)}`,
-            'WebcamPopup',
-            'width=320,height=260'
-          );
-        }
-      }
-    });
-  }
-});
-
-
-
-   const webcamPopupUrl = 'webcam-popup.html';
-
-   // page simple qui affichera ta webcam
-
-  // Bouton Activer ma webcam (popup perso)
-const startWebcamBtn = document.getElementById('start-webcam-btn');
-if (startWebcamBtn) {
-  let popupCheckInterval;
-
-  startWebcamBtn.addEventListener('click', async () => {
-    // Démarrer la webcam locale (aperçu vidéo dans l'interface principale)
-    await startWebcam();
-
-    // Ouvrir la popup webcam si elle n'existe pas ou est fermée
-    if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-      window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
-      window.myWebcamPopup.addEventListener('load', () => {
-        window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
-      });
-
-      // Notifier le serveur que la webcam est active
-      socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
-
-      // Vérifier régulièrement si la popup est fermée
-      if (popupCheckInterval) clearInterval(popupCheckInterval);
-      popupCheckInterval = setInterval(() => {
-        if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-          clearInterval(popupCheckInterval);
-          socket.emit('webcam status', { username: localStorage.getItem('username'), active: false });
-        }
-      }, 500);
-    } else {
-      // Si popup déjà ouverte, on la focus
-      window.myWebcamPopup.focus();
-  }
-});
-
-  }
-
-  // Variables WebRTC
-const peerConnections = {};
-const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-
-const myUsername = localStorage.getItem('username');
-
-
-
-// Fonction createPeerConnection (comme tu l’as déjà)
-async function createPeerConnection(remoteUsername) {
-  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
-
-  const pc = new RTCPeerConnection(config);
-
-
-
-// Fonction pour initier un appel vers un utilisateur distant
-async function callUser(remoteUsername) {
-  const pc = await createPeerConnection(remoteUsername);
-  if (!pc) return;
-
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    socket.emit('signal', {
-      to: remoteUsername,
-      from: myUsername,
-      data: { sdp: pc.localDescription }
-    });
-  } catch (err) {
-    console.error('Erreur lors de la création de l’offre:', err);
-  }
-}
-
-// Gestion des signaux WebRTC reçus via Socket.IO
-socket.on('signal', async ({ from, data }) => {
-  if (from === myUsername) return; // Ignore messages venant de soi-même
-
-  const pc = await createPeerConnection(from);
-  if (!pc) return;
-
-  try {
-    if (data.sdp) {
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-      if (data.sdp.type === 'offer') {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        socket.emit('signal', {
-          to: from,
-          from: myUsername,
-          data: { sdp: pc.localDescription }
-        });
-      }
-    } else if (data.candidate) {
-      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-    }
-  } catch (err) {
-    console.error('Erreur dans la gestion du signal:', err);
-  }
-});
-
-
-
-  // Démarre capture locale au chargement
-  startLocalStream();
-
-  // Gestion modale webcam classique (aperçu local)
-const webcamModal = document.getElementById('webcam-modal');
-const webcamVideo = document.getElementById('webcam-video');
-let webcamStream = null;
-
-const usersList = document.getElementById('users');
-
-if (usersList && webcamVideo && webcamModal) {
-  usersList.addEventListener('click', async (event) => {
-    if (event.target.classList.contains('webcam-icon')) {
-      try {
-        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        webcamVideo.srcObject = webcamStream;
-        webcamModal.style.display = 'flex';
-      } catch (e) {
-        alert("Impossible d'accéder à la webcam : " + e.message);
-      }
-    }
-  });
-}
-
-
-
-// Fermer la webcam quand la modale est fermée (style.display = 'none')
-const observer = new MutationObserver(() => {
-  if (webcamModal.style.display === 'none' && webcamStream) {
-    webcamStream.getTracks().forEach(track => track.stop());
-    webcamStream = null;
-    webcamVideo.srcObject = null;
-  }
-});
-
-// Observer sur les changements d'attributs (style)
-observer.observe(webcamModal, { attributes: true, attributeFilter: ['style'] });
-
-// Pour permettre fermeture modale en cliquant en dehors
-if (webcamModal) {
-  webcamModal.addEventListener('click', e => {
-    if (e.target === webcamModal) {
-      webcamModal.style.display = 'none';  // ferme la modale
-      // webcam sera arrêtée par l'observer ci-dessus
-    }
-  });
-}
-
-
- /* // --- Gérer le clic sur l'icône webcam d’un autre utilisateur pour ouvrir sa popup webcam ---
-  document.getElementById('users').addEventListener('click', (event) => {
-    if (event.target.classList.contains('webcam-icon')) {
-      const userLi = event.target.closest('li.user-item');
-      if (!userLi) return;
-      const usernameSpan = userLi.querySelector('.username-span');
-      if (!usernameSpan) return;
-      const remoteUsername = usernameSpan.textContent.trim();
-
-      if (remoteUsername !== myUsername) {
-        const url = `webcam-popup.html?user=${encodeURIComponent(remoteUsername)}`;
-        window.open(url, `webcam-${remoteUsername}`, 'width=320,height=260');
-      }
-    }
-  });
-
-}); */
 
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
@@ -288,8 +29,6 @@ if (webcamModal) {
       });
     }
   });
-
-  
 
   // ── 2) Couleurs selon rôle/genre ──
   const usernameColors = {
@@ -809,6 +548,7 @@ if (webcamModal) {
     body.scrollTop = body.scrollHeight;
   });
 
+});
 
 
 
@@ -934,22 +674,16 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
-    console.log('webcam status:', webcamStatus);
-    console.log('users:', window.users);
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
-
-  window.users = users; // Stocke globalement pour pouvoir rafraîchir
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
-
-    const webcamActive = user.webcamActive || webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -962,48 +696,10 @@ if (usernameInput && passwordInput) {
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
-  const roleIconSpan = li.querySelector('.role-icon');
-const icon = createRoleIcon(role);
-if (icon) roleIconSpan.appendChild(icon);
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
 
-if (webcamActive) {
-  let camIcon = roleIconSpan.querySelector('.webcam-icon');
-  if (!camIcon) {
-    camIcon = document.createElement('img');
-    camIcon.src = '/webcam.gif';
-    camIcon.alt = 'Webcam active';
-    camIcon.title = 'Webcam active - cliquer pour voir';
-    camIcon.classList.add('webcam-icon');
-    camIcon.style.width = '16px';
-    camIcon.style.height = '16px';
-    camIcon.style.cursor = 'pointer';
-    camIcon.style.position = 'absolute';
-    camIcon.style.top = '0';
-    camIcon.style.left = '0';
-    camIcon.style.zIndex = '10';
-    roleIconSpan.style.position = 'relative';
-
-   camIcon.addEventListener('click', () => {
-  console.log('Clic sur webcam de', username);
-  window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
-});
-
-
-    roleIconSpan.appendChild(camIcon);
-  }
-} else {
-  const camIcon = roleIconSpan.querySelector('.webcam-icon');
-  if (camIcon) camIcon.remove();
-}
-
-
-
-
-
-      
-    
-
-    // Clic pseudo mention
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
@@ -1017,6 +713,25 @@ if (webcamActive) {
   });
 }
 
+
+function createRoleIcon(role) {
+  if (role === 'admin') {
+    const icon = document.createElement('img');
+    icon.src = '/diamond.ico'; // icône admin
+    icon.alt = 'Admin';
+    icon.title = 'Admin';
+    icon.classList.add('admin-icon');
+    return icon;
+  } else if (role === 'modo') {
+    const icon = document.createElement('img');
+    icon.src = '/favicon.ico'; // icône modo
+    icon.alt = 'Modérateur';
+    icon.title = 'Modérateur';
+    icon.classList.add('modo-icon');
+    return icon;
+  }
+  return null;
+}
 
 
  const logoutButton = document.getElementById('logoutButton');
