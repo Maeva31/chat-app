@@ -198,11 +198,9 @@ io.on('connection', (socket) => {
       return;
     }
 
-    // Recherche l'utilisateur AVANT d'émettre
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
 
-    // Émet avec role et gender
     io.to(channel).emit('file uploaded', {
       username: user.username,
       role: user.role,
@@ -214,7 +212,7 @@ io.on('connection', (socket) => {
     });
   });
 
-socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
+  socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
     if (!sender) return;
 
@@ -245,56 +243,65 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
       gender: sender.gender,
     };
 
-    // Envoi au destinataire
     io.to(recipient.id).emit('private file', fileMsg);
-    // Écho au sender (pour affichage local)
     socket.emit('private file', fileMsg);
   });
 
-
- function logout(socket) {
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) {
-    console.log(`Logout : utilisateur non trouvé pour socket ${socket.id}`);
-    return;
-  }
-
-  // Supprimer les rôles temporaires
-  tempMods.admins.delete(user.username);
-  tempMods.modos.delete(user.username);
-
-  // ... le reste de la fonction logout (messages, nettoyage, etc.)
-
-  const room = userChannels[socket.id];
-  if (room) {
-    if (!user.invisible) {
-      io.to(room).emit('chat message', {
-        username: 'Système',
-        message: `${user.username} a quitté le serveur (logout)`,
-        timestamp: new Date().toISOString(),
-        channel: room
-      });
+  function logout(socket) {
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) {
+      console.log(`Logout : utilisateur non trouvé pour socket ${socket.id}`);
+      return;
     }
 
-    if (roomUsers[room]) {
-      roomUsers[room] = roomUsers[room].filter(u => u.id !== socket.id);
-      emitUserList(room);
+    tempMods.admins.delete(user.username);
+    tempMods.modos.delete(user.username);
+
+    const room = userChannels[socket.id];
+    if (room) {
+      if (!user.invisible) {
+        io.to(room).emit('chat message', {
+          username: 'Système',
+          message: `${user.username} a quitté le serveur (logout)`,
+          timestamp: new Date().toISOString(),
+          channel: room
+        });
+      }
+
+      if (roomUsers[room]) {
+        roomUsers[room] = roomUsers[room].filter(u => u.id !== socket.id);
+        emitUserList(room);
+      }
     }
+
+    delete users[user.username];
+    delete userChannels[socket.id];
+
+    socket.disconnect(true);
+
+    cleanupEmptyDynamicRooms();
+
+    console.log(`🔒 Logout : ${user.username} déconnecté.`);
   }
 
-  delete users[user.username];
-  delete userChannels[socket.id];
-
-  socket.disconnect(true);
-
-  cleanupEmptyDynamicRooms();
-
-  console.log(`🔒 Logout : ${user.username} déconnecté.`);
-}
-
-
-   socket.on('logout', () => {
+  socket.on('logout', () => {
     logout(socket);
+  });
+
+  // --- Gestion WebRTC (signaling) ---
+  socket.on('signal', ({ to, from, data }) => {
+    if (users[to]) {
+      io.to(users[to].id).emit('signal', { from, data });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    console.log(`Déconnexion : ${socket.id}`);
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (user) {
+      delete users[user.username];
+      socket.broadcast.emit('user-left', user.username);
+    }
   });
 
   socket.on('ping', () => {
@@ -325,7 +332,7 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
 
     if (bannedUsers.has(username)) {
       socket.emit('username error', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+      socket.emit('redirect', 'https://banned.maevakonnect.fr');
       return;
     }
 
@@ -333,7 +340,6 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
       return socket.emit('username exists', username);
     }
 
-    // VÉRIFICATION : Mot de passe pour les rôles privilégiés
     if (requiresPassword(username)) {
       if (!password) {
         return socket.emit('password required', username);
@@ -344,12 +350,10 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
       console.log(`🔐 Authentification réussie pour ${username}`);
     }
 
-    // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
     const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
 
     const role = getUserRole(username);
-    // Par défaut invisible = false, sauf si récupéré
     const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
 
@@ -367,7 +371,6 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
     socket.emit('chat history', messageHistory[channel]);
     updateRoomUserCounts();
 
-    // Message système : a rejoint le salon (après actualisation) uniquement si non invisible
     if (!userData.invisible) {
       io.to(channel).emit('chat message', {
         username: 'Système',
@@ -386,17 +389,15 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
 
     if (bannedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes banni du serveur.');
-      socket.emit('redirect', 'https://banned.maevakonnect.fr');  // Redirection bannis si tente envoyer message
+      socket.emit('redirect', 'https://banned.maevakonnect.fr');
       return;
     }
 
     if (mutedUsers.has(user.username)) {
       socket.emit('error message', 'Vous êtes muté et ne pouvez pas envoyer de messages.');
-      // suppression de la redirection pour mute
       return;
     }
 
-    // Gestion commande admin/modo (inclut la nouvelle commande /invisible)
     if (msg.message.startsWith('/')) {
       if (user.role !== 'admin' && user.role !== 'modo') {
         socket.emit('no permission');
@@ -408,25 +409,21 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
       const targetName = args[1];
       const targetUser = Object.values(users).find(u => u.username === targetName);
 
-      // Protection rôles
       const isTargetProtected = targetUser && (targetUser.role === 'admin' || targetUser.role === 'modo');
       const isUserModo = user.role === 'modo';
       const isUserAdmin = user.role === 'admin';
 
-      // ✅ Seul un admin avec mot de passe peut agir sur un autre admin/modo
       const isPrivilegedAdmin = isUserAdmin && passwords[user.username];
 
-      // Refus pour les modos
       if (isUserModo && isTargetProtected) {
-      socket.emit('error message', 'Vous ne pouvez pas agir sur cet utilisateur.');
-      return;
-}
+        socket.emit('error message', 'Vous ne pouvez pas agir sur cet utilisateur.');
+        return;
+      }
 
-// Refus pour admin non privilégié
-if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
-  socket.emit('error message', 'Seuls les administrateurs authentifiés peuvent agir sur les modérateurs ou administrateurs.');
-  return;
-}
+      if (isUserAdmin && isTargetProtected && !isPrivilegedAdmin) {
+        socket.emit('error message', 'Seuls les administrateurs authentifiés peuvent agir sur les modérateurs ou administrateurs.');
+        return;
+      }
 
 
 
