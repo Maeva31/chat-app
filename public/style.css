@@ -919,3 +919,30 @@ button:focus {
 .private-chat-input button:hover {
   background: #8f00ff;
 }
+
+/* Bouton démarrer webcam */
+.start-webcam-btn {
+  width: 24px;
+  height: 24px;
+  background: url('/icon/camzy.gif') no-repeat top center;
+  background-size: 24px 48px;
+  border: none;
+  cursor: pointer;
+  display: inline-block;
+  padding: 0;
+  position: relative;
+  left: -8px;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.start-webcam-btn:hover {
+  background-position: 0 -24px;
+}
+
+.start-webcam-btn:focus,
+.start-webcam-btn:active {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
