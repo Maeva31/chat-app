@@ -127,8 +127,7 @@ startWebcamBtn.addEventListener('click', () => {
 const peerConnections = {};
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 let localStream = null;
-let videoStream = null;
-let audioStream = null;
+
 const myUsername = localStorage.getItem('username');
 
 // Fonction pour démarrer la capture vidéo seule
