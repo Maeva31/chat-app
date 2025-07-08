@@ -1015,11 +1015,29 @@ button:focus {
   border: none !important;
 }
 
-.webcam-icon {
-  width: 20px;
-  height: 20px;
-  margin-right: 5px;
+.role-icon {
+  position: relative;
+  display: inline-block;
+  width: 20px; /* adapte selon tes icônes */
+  height: 16px;
+}
+
+.role-icon img {
+  position: relative; /* icônes rôle normales */
+  z-index: 1;
+  width: 16px;
+  height: 16px;
+  margin-right: 6px; /* comme tu as déjà */
   vertical-align: middle;
-  cursor: default;
+}
+
+.webcam-icon {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 16px;
+  height: 16px;
+  z-index: 10; /* au-dessus des icônes rôle */
+  cursor: pointer;
 }
 
