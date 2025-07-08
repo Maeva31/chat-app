@@ -1035,10 +1035,11 @@ button:focus {
 
 .role-icon .webcam-icon {
   position: absolute;
-  top: -18px;    /* remonte la webcam au-dessus des icônes */
+  top: -4px;    /* place l'icône un peu au-dessus mais visible */
   left: 0;
-  width: 16px;   /* même taille qu’avant */
+  width: 16px;
   height: 16px;
   cursor: pointer;
   z-index: 10;
 }
+
