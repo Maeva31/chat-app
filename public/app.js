@@ -150,15 +150,16 @@ document.addEventListener('DOMContentLoaded', () => {
   startLocalStream();
 
   // Gestion modale webcam classique (aperçu local)
-  const webcamModal = document.getElementById('webcam-modal');
-  const webcamVideo = document.getElementById('webcam-video');
-  const closeWebcamBtn = document.getElementById('close-webcam');
-  let webcamStream = null;
+ const webcamModal = document.getElementById('webcam-modal');
+const webcamVideo = document.getElementById('webcam-video');
+const closeWebcamBtn = document.getElementById('close-webcam');
+let webcamStream = null;
 
-  // Affiche modale webcam si clic sur icône webcam dans liste utilisateurs
-  document.getElementById('users').addEventListener('click', async (event) => {
+const usersList = document.getElementById('users');
+
+if (usersList && webcamVideo && webcamModal) {
+  usersList.addEventListener('click', async (event) => {
     if (event.target.classList.contains('webcam-icon')) {
-      // Si tu veux ouvrir popup distante, remplace ce code par l'ouverture popup (voir plus bas)
       try {
         webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         webcamVideo.srcObject = webcamStream;
@@ -168,7 +169,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   });
+}
 
+if (closeWebcamBtn && webcamModal && webcamVideo) {
   closeWebcamBtn.addEventListener('click', () => {
     webcamModal.style.display = 'none';
     if (webcamStream) {
@@ -177,12 +180,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     webcamVideo.srcObject = null;
   });
+}
 
+if (webcamModal && closeWebcamBtn) {
   webcamModal.addEventListener('click', e => {
     if (e.target === webcamModal) {
       closeWebcamBtn.click();
     }
   });
+}
 
   // --- Gérer le clic sur l'icône webcam d’un autre utilisateur pour ouvrir sa popup webcam ---
   document.getElementById('users').addEventListener('click', (event) => {
