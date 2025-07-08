@@ -19,6 +19,27 @@ socket.on('webcam status update', ({ username, active }) => {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+
+async function startWebcam() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const videoElem = document.getElementById('local-video'); // ou l’élément vidéo où tu veux afficher la webcam
+    if (videoElem) videoElem.srcObject = stream;
+
+    // Notifier le serveur que la webcam est active
+    socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
+  } catch (err) {
+    alert("Impossible d'accéder à la webcam : " + err.message);
+  }
+}
+
+const startWebcamBtn = document.getElementById('start-webcam-btn');
+if (startWebcamBtn) {
+  startWebcamBtn.addEventListener('click', () => {
+    startWebcam();
+  });
+}
+
   const usersList = document.getElementById('users');
   if (usersList) {
     usersList.addEventListener('click', (e) => {
@@ -35,6 +56,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 });
+
+
+
 
    const webcamPopupUrl = 'webcam-popup.html';
 
