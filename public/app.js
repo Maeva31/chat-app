@@ -1,6 +1,26 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
+
+  const webcamPopupUrl = 'webcam-popup.html'; // page simple qui affichera ta webcam
+
+document.getElementById('start-webcam-btn').addEventListener('click', () => {
+  // Ouvre la popup si pas déjà ouverte
+  if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
+    window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
+    // Optionnel : envoyer username à la popup après chargement
+    window.myWebcamPopup.addEventListener('load', () => {
+      window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
+    });
+  } else {
+    window.myWebcamPopup.focus();
+  }
+  
+  // Émettre événement serveur pour dire webcam activée
+  socket.emit('webcam activated', { username: localStorage.getItem('username') });
+});
+
+
   // Variables globales
   const peerConnections = {};  // { username: RTCPeerConnection }
   const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
