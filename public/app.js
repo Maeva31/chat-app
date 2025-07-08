@@ -687,23 +687,86 @@ if (usernameInput && passwordInput) {
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
+    const hasCam = user?.hasCam || false; // Assure-toi que c’est bien envoyé depuis le serveur
 
     const li = document.createElement('li');
     li.classList.add('user-item');
 
     const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
+    // Container positionné pour âge + icônes
+    const camAgeContainer = document.createElement('div');
+    camAgeContainer.style.position = 'relative';
+    camAgeContainer.style.display = 'inline-block';
+    camAgeContainer.style.marginRight = '6px';
+    camAgeContainer.style.verticalAlign = 'middle';
 
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
+    // Carré âge
+    const ageSquare = document.createElement('div');
+    ageSquare.classList.add('gender-square');
+    ageSquare.style.backgroundColor = getUsernameColor(gender);
+    ageSquare.textContent = age;
+    ageSquare.style.width = '24px';
+    ageSquare.style.height = '24px';
+    ageSquare.style.lineHeight = '24px';
+    ageSquare.style.textAlign = 'center';
+    ageSquare.style.borderRadius = '4px';
+    ageSquare.style.color = '#fff';
+    ageSquare.style.fontWeight = 'bold';
+    ageSquare.style.userSelect = 'none';
 
-    const usernameSpan = li.querySelector('.username-span');
+    camAgeContainer.appendChild(ageSquare);
+
+    // Icône webcam.gif devant âge si a la cam
+    if (hasCam) {
+      const camIcon = document.createElement('img');
+      camIcon.src = '/webcam.gif';  // chemin vers ton gif caméra
+      camIcon.alt = 'Caméra active';
+      camIcon.title = 'Utilisateur avec caméra';
+      camIcon.style.position = 'absolute';
+      camIcon.style.top = '-6px';
+      camIcon.style.left = '-18px';  // décale vers la gauche devant âge
+      camIcon.style.width = '18px';
+      camIcon.style.height = '18px';
+      camIcon.style.zIndex = '10';
+      camAgeContainer.appendChild(camIcon);
+
+      // Si admin/modo, superposer icône rôle à gauche de la webcam
+      if (role === 'admin' || role === 'modo') {
+        const roleIcon = createRoleIcon(role);
+        if (roleIcon) {
+          roleIcon.style.position = 'absolute';
+          roleIcon.style.top = '-6px';
+          roleIcon.style.left = '-36px'; // plus à gauche que la cam
+          roleIcon.style.width = '16px';
+          roleIcon.style.height = '16px';
+          roleIcon.style.zIndex = '20';
+          camAgeContainer.appendChild(roleIcon);
+        }
+      }
+    } else {
+      // Pas de cam, mais rôle admin/modo : afficher icône rôle devant âge
+      if (role === 'admin' || role === 'modo') {
+        const roleIcon = createRoleIcon(role);
+        if (roleIcon) {
+          roleIcon.style.position = 'absolute';
+          roleIcon.style.top = '-6px';
+          roleIcon.style.left = '-18px';  // à gauche du carré âge
+          roleIcon.style.width = '16px';
+          roleIcon.style.height = '16px';
+          roleIcon.style.zIndex = '10';
+          camAgeContainer.appendChild(roleIcon);
+        }
+      }
+    }
+
+    // Span pseudo
+    const usernameSpan = document.createElement('span');
+    usernameSpan.classList.add('username-span', 'clickable-username');
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = username;
+    usernameSpan.title = (role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : '');
+
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${username} `;
@@ -712,9 +775,14 @@ if (usernameInput && passwordInput) {
       selectedUser = username;
     });
 
+    // Assemblage final
+    li.appendChild(camAgeContainer);
+    li.appendChild(usernameSpan);
+
     userList.appendChild(li);
   });
 }
+
 
 
 function createRoleIcon(role) {
