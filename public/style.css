@@ -2,11 +2,13 @@
 html, body {
   margin: 0;
   padding: 0;
+  /* overflow: hidden; /* Empêche tout scroll vertical */
   overflow-x: hidden;
   overflow-y: auto;
 
   height: 100%;
   max-width: 100vw;   /* Empêche la largeur > fenêtre */
+  overflow-x: hidden; /* Empêche le scroll horizontal */
 }
 
 body {
@@ -19,33 +21,33 @@ body {
 
 /*==== scrollbar ====*/
 ::-webkit-scrollbar {
-  width: 12px;
-  border-radius: 8px;
+  width: 12px; /* Légèrement plus large pour une meilleure visibilité */
+  border-radius: 8px; /* Ajoute une petite courbure à la scrollbar */
 }
 
 ::-webkit-scrollbar-track {
   background: #111;
-  border-radius: 8px;
+  border-radius: 8px; /* Arrondi également la track */
 }
 
 ::-webkit-scrollbar-thumb {
   background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
   background-size: 400% 400%;
   border-radius: 8px;
-  transition: background-position 0.5s ease;
-  animation: gradientThumb 10s ease infinite; /* Durée unifiée */
-  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6);
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 3s ease infinite;
+  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
 }
 
 @keyframes gradientThumb {
   0% {
-    background-position: 0% 50%;
+    background-position: 400% 0;
   }
   50% {
-    background-position: 100% 50%;
+    background-position: 0 100%;
   }
   100% {
-    background-position: 0% 50%;
+    background-position: 400% 0;
   }
 }
 
@@ -59,6 +61,7 @@ main {
   min-width: 0;
 }
 
+
 #content-container {
   display: flex;
   flex: 1;
@@ -69,7 +72,7 @@ main {
 /* === CHANNEL SIDEBAR (LEFT) === */
 #channel-sidebar {
   flex: 0 0 240px;
-  min-width: 180px;
+  min-width: 180px; /* Ajouté pour flexibilité */
   max-width: 240px;
   background: #222222b8;
   padding: 1em;
@@ -108,12 +111,20 @@ main {
   transition: 0.2s ease;
 }
 
-#channel-list .channel:hover,
+#channel-list .channel:hover {
+  background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
+  background-size: 400% 400%;
+  border-radius: 8px;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
+  animation: gradientThumb 10s ease infinite;
+  /* box-shadow: 0 0 10px rgba(251, 0, 255, 0.6), 0 0 10px rgba(0, 218, 222, 0.6); /* Ombre lumineuse pour plus de profondeur */
+}
+
 #channel-list .channel.selected {
   background: linear-gradient(45deg, rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
   background-size: 400% 400%;
   border-radius: 8px;
-  transition: background-position 0.5s ease;
+  transition: background-position 0.5s ease; /* Transition fluide pour l'animation */
   animation: gradientThumb 10s ease infinite;
   color: white;
   font-weight: bold;
@@ -145,7 +156,12 @@ main {
   color: white;
   font-size: 1em;
   box-sizing: border-box;
+
+  /* Désactiver la sélection */
   user-select: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
 }
 
 #create-channel button {
@@ -161,6 +177,7 @@ main {
   white-space: nowrap;
   box-sizing: border-box;
 }
+
 
 #create-channel button:hover {
   background: linear-gradient(
@@ -179,6 +196,13 @@ main {
   color: #fff;
 }
 
+@keyframes gradientThumb {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
 /* === CHAT CONTAINER (CENTER) === */
 #chat-container {
   flex: 6 1 auto;
@@ -190,7 +214,7 @@ main {
 
 .chat-messages {
   flex: 1 1 auto;
-  min-height: 0;
+  min-height: 0; /* Important pour éviter le dépassement */
   overflow-y: auto;
   background: #222222b8;
   padding: 1em;
@@ -210,14 +234,14 @@ main {
 #chat-input {
   display: flex;
   gap: 10px;
-  align-items: center;
+  align-items: center;  /* centre verticalement */
   width: 100%;
   box-sizing: border-box;
 }
 
 #message-input {
-  flex: 1;
-  min-width: 0;
+  flex: 1;              /* prend toute la place possible */
+  min-width: 0;         /* important en flexbox pour éviter débordement */
   padding: 1em;
   font-size: 1em;
   border-radius: 5px;
@@ -225,10 +249,12 @@ main {
   background-color: #121212;
   color: white;
   box-sizing: border-box;
+  /* facultatif: pour autoriser la zone texte à grandir verticalement si textarea */
   resize: vertical;
   max-height: 150px;
 }
 
+/* Le bouton reste sa taille mais ne rétrécit pas */
 #send-button {
   padding: 0.5em 1em;
   background-color: #4caf50;
@@ -239,6 +265,7 @@ main {
   cursor: pointer;
 }
 
+/* Responsive : en petit écran, empile le champ et bouton */
 @media (max-width: 600px) {
   #chat-input {
     flex-direction: column;
@@ -250,10 +277,11 @@ main {
   }
 }
 
+
 /* === USER LIST (RIGHT SIDEBAR) === */
 #user-list {
   flex: 0 0 240px;
-  min-width: 180px;
+  min-width: 180px; /* Ajouté */
   max-width: 240px;
   background: #222222b8;
   padding: 1em;
@@ -262,8 +290,8 @@ main {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  height: 100%;
-  overflow-y: auto;
+  height: 100%;      /* Prend toute la hauteur disponible */
+  overflow-y: auto
 }
 
 #users {
@@ -272,8 +300,11 @@ main {
 }
 
 #users li {
+  /* display: flex; */
   align-items: center;
   justify-content: flex-start;
+  gap: 0px;
+  /* padding: 4px 6px; */
   box-sizing: border-box;
   width: 100%;
   max-width: 100%;
@@ -282,7 +313,7 @@ main {
 .gender-square {
   width: 22px;
   height: 22px;
-  flex-shrink: 0;
+  flex-shrink: 0; /* empêche de rétrécir */
   display: flex;
   align-items: center;
   justify-content: center;
@@ -297,6 +328,7 @@ main {
   color: #000;
 }
 
+/* Ajustement du pseudo pour qu'il accepte 16 caractères sans couper */
 .username-span {
   color: #000;
   font-weight: bold;
@@ -332,9 +364,12 @@ main {
 /* === MODAL === */
 .modal {
   position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: #000000 url(https://maevakonnect.fr/src/img/359059.jpg) no-repeat center center fixed;
-  background-size: cover;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #000000;
+  background-image: url(https://maevakonnect.fr/src/img/359059.jpg);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -416,11 +451,12 @@ main {
   display: block;
   width: 50px;
   height: 50px;
-  object-fit: cover;
+  object-fit: cover; /* ou contain selon le rendu voulu */
   margin: 0 auto 20px auto;
   border-radius: 10px;
   box-shadow: 0 0 15px #00ffff88;
 }
+
 
 /* === RESPONSIVE === */
 @media (max-width: 768px) {
@@ -493,7 +529,9 @@ button:focus {
 /* Bande supérieure fixe */
 #top-bar {
   position: fixed;
-  top: 0; left: 0; right: 0;
+  top: 0;
+  left: 0;
+  right: 0;
   height: 40px;
   background: #111;
   color: #00ffff;
@@ -504,14 +542,12 @@ button:focus {
   box-shadow: 0 2px 5px rgba(0,0,0,0.4);
   z-index: 1001;
 }
-
 .system-message {
   color: #888;
   font-style: italic;
   margin: 5px 0;
   text-align: center;
 }
-
 .username-span.admin,
 .message .clickable-username.admin {
   color: red;
@@ -519,6 +555,7 @@ button:focus {
   position: relative;
 }
 
+/* Pour l'icône "🔥" */
 .username-span.admin::after,
 .message .clickable-username.admin::after {
   content: "🔥";
@@ -528,23 +565,24 @@ button:focus {
   color: red;
 }
 
+/* Optionnel : curseur pointer quand sur pseudo */
 .clickable-username {
   cursor: pointer;
 }
 
-/* Espace entre l'âge et le pseudo */
+/* Optionnel : espace entre l'âge et le pseudo */
 .user-item .gender-square {
-  display: inline-block;
-  width: 20px;
-  height: 18px;
-  line-height: 19px;
-  text-align: center;
-  border-radius: 3px;
-  color: white;
-  font-weight: bold;
-  margin-right: 8px;
-  font-size: 14px;
-  user-select: none;
+    display: inline-block;
+    width: 20px;
+    height: 18px;
+    line-height: 19px;
+    text-align: center;
+    border-radius: 3px;
+    color: white;
+    font-weight: bold;
+    margin-right: 8px;
+    font-size: 14px;
+    user-select: none;
 }
 
 /* Conteneur utilisateur */
@@ -552,18 +590,20 @@ button:focus {
   display: flex;
   align-items: center;
   gap: 8px;
+  /* Optionnel pour que le texte ne dépasse pas */
   min-width: 0;
 }
 
-/* Zone icône rôle (admin/modo) */
+/* Zone icône rôle (admin/modo), largeur fixe */
 .user-item .role-icon {
-  width: 24px;
+  width: 24px;  /* largeur fixe, à ajuster */
   flex-shrink: 0;
   display: flex;
   justify-content: center;
   align-items: center;
 }
 
+/* Icône admin/mode centrée dans le conteneur */
 .user-item .role-icon img,
 .user-item .role-icon svg {
   max-width: 20px;
@@ -571,9 +611,9 @@ button:focus {
   display: block;
 }
 
-/* Carré âge */
+/* Carré âge, largeur fixe */
 .user-item .age-square {
-  width: 22px;
+  width: 22px;  /* même largeur que ton .gender-square ? */
   height: 22px;
   flex-shrink: 0;
   display: flex;
@@ -586,16 +626,17 @@ button:focus {
   font-size: 1em;
 }
 
-/* Pseudo */
+/* Pseudo, commence toujours après âge */
 .user-item .username-span {
   flex: 1;
-  min-width: 0;
+  min-width: 0; /* Permet de shrink */
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   color: #000;
   font-weight: bold;
 }
+
 
 /* Texte laser */
 .texte-laser {
@@ -620,22 +661,31 @@ button:focus {
   }
 }
 
-/* Empêche le retour à la ligne entre nom et icônes */
+/* Fin texte laser */
+
+/* Empêche le retour à la ligne entre le nom d'utilisateur et les icônes */
 .username-span {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  white-space: nowrap;
+  gap: 4px; /* petit espace entre nom et icône */
+  white-space: nowrap; /* empêche de passer à la ligne */
 }
 
-/* Icônes rôle */
-.admin-icon, .modo-icon {
+/* Icône admin */
+.admin-icon {
   width: 20px;
   height: 20px;
   vertical-align: middle;
   flex-shrink: 0;
 }
 
+/* Icône modo */
+.modo-icon {
+  width: 20px;
+  height: 20px;
+  vertical-align: middle;
+  flex-shrink: 0;
+}
 @media (max-width: 400px) {
   .admin-icon,
   .modo-icon {
@@ -652,7 +702,7 @@ button:focus {
 
 #user-list .texte-laser {
   flex: 0 0 auto;
-  margin-bottom: 0;
+  margin-bottom: 0px; /* ou 0 */
   text-align: center;
   white-space: nowrap;
   width: 100%;
@@ -674,11 +724,11 @@ button:focus {
 }
 
 #emoji-picker {
-  display: none;
+  display: none; /* caché par défaut */
   position: absolute;
   bottom: 70px;
   left: 10px;
-  background: #222;
+  background: #222; /* fond sombre */
   border: 1px solid #444;
   border-radius: 12px;
   padding: 12px;
@@ -693,6 +743,7 @@ button:focus {
   justify-content: center;
 }
 
+/* Style des emojis */
 #emoji-picker .emoji {
   font-size: 26px;
   cursor: pointer;
@@ -706,28 +757,27 @@ button:focus {
   background-color: #555;
   transform: scale(1.3);
 }
-
-/* Masquer la top-bar et autres quand modal visible */
+.modal[style*="display: flex"] ~ #top-bar {
+  display: none !important;
+}
 .modal[style*="display: flex"] ~ #top-bar,
 .modal[style*="display: flex"] ~ #user-list,
 .modal[style*="display: flex"] ~ #chat-container {
   display: none !important;
 }
-
-/* User list clickable uniquement sur pseudo */
 .user-item {
-  pointer-events: none;
+  pointer-events: none; /* Empêche tout clic sur l’élément entier */
 }
 
 .user-item .clickable-username {
-  pointer-events: auto;
+  pointer-events: auto; /* Autorise le clic uniquement ici */
   cursor: pointer;
 }
 
-/* Responsive pour la vidéo YouTube */
+/* Responsive : ajuste automatiquement la taille en dessous de 500px */
 .youtube-wrapper {
-  width: 100%;
-  max-width: 640px;
+  width: 100%;        /* prend toute la largeur possible */
+  max-width: 640px;   /* ne dépasse pas 640px */
   aspect-ratio: 16 / 9;
   margin: 10px 0 10px 10px;
   background-color: #222;
@@ -743,7 +793,7 @@ button:focus {
   border: none;
   border-radius: 4px;
   display: block;
-}
+} 
 
 #content-container {
   display: flex;
@@ -752,17 +802,16 @@ button:focus {
   overflow: hidden;
   min-width: 0;
   height: 100%;
-  padding-top: 40px; /* place pour top-bar */
+  padding-top: 40px; /* Ajout pour laisser la place à la top-bar */
   box-sizing: border-box;
 }
 
 #channel-sidebar,
 #user-list {
-  height: calc(100vh - 40px);
-  margin-top: 15px;
+  height: calc(100vh - 40px); /* Hauteur sans la top bar */
+  margin-top: 15px;           
 }
 
-/* Sprite buttons */
 .sprite-button {
   width: 24px;
   height: 24px;
@@ -773,13 +822,18 @@ button:focus {
   display: inline-block;
   padding: 0;
   position: relative;
-  left: -8px;
-  outline: none !important;
-  box-shadow: none !important;
+  left: -8px; /* décale vers la gauche */
 }
 
 .sprite-button:hover {
   background-position: 0 -24px;
+}
+
+/* Pour désactiver les focus/outline si tu veux */
+.sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .sprite-button:focus,
@@ -789,7 +843,7 @@ button:focus {
   border: none !important;
 }
 
-/* Nouveau bouton fermeture */
+/* Nouveau bouton fermeture, classe différente */
 .close-sprite-button {
   width: 24px;
   height: 24px;
@@ -800,14 +854,18 @@ button:focus {
   display: inline-block;
   padding: 0;
   position: relative;
-  left: 0;
+  left: 0; /* enlever décalage pour éviter hors écran */
   user-select: none;
-  outline: none !important;
-  box-shadow: none !important;
+}
+.close-sprite-button:hover {
+  filter: brightness(1.2); /* effet léger au hover */
 }
 
-.close-sprite-button:hover {
-  filter: brightness(1.2);
+/* Désactivation des focus/outline */
+.close-sprite-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
 }
 
 .close-sprite-button:focus,
@@ -817,19 +875,24 @@ button:focus {
   border: none !important;
 }
 
-/* === MP === */
+
+/* MP */
+
+/* Conteneur général des fenêtres privées */
 #private-chat-container {
   position: fixed;
   bottom: 0;
   right: 0;
   width: 100%;
   height: 100%;
-  pointer-events: none;
+  pointer-events: none; /* Pour ne pas bloquer les clics en arrière-plan */
   z-index: 10000;
 }
 
+/* Fenêtre privée */
 .private-chat-window {
-  pointer-events: auto;
+  pointer-events: auto; /* Permet d’interagir avec la fenêtre */
+  /* background: #1a0055; */
   border: 2px solid #8e44ad;
   border-radius: 10px;
   box-shadow: 0 0 10px #8e44ad;
@@ -839,10 +902,11 @@ button:focus {
   font-family: Arial, sans-serif;
   user-select: none;
 
-  max-height: 300px;
-  width: 440px;
+  max-height: 300px;  /* Hauteur max fixée pour limiter la taille */
+  width: 440px;       /* Largeur fixe, ajustable */
 }
 
+/* Header de la fenêtre privée */
 .private-chat-header {
   background: #3a0a8a;
   padding: 8px 12px;
@@ -856,6 +920,7 @@ button:focus {
   border-radius: 6px;
 }
 
+/* Bouton fermer */
 .private-chat-header button {
   margin-left: auto;
   background: none;
@@ -871,20 +936,22 @@ button:focus {
   color: #ff8888;
 }
 
+/* Corps de la fenêtre (zone des messages) */
 .private-chat-body {
   flex: 1;
   padding: 10px;
-  overflow-y: auto;
+  overflow-y: auto; /* Barre de défilement verticale */
   background: #5f30bde6;
   font-size: 0.9em;
   line-height: 1.3;
   color: #ddd;
 
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
+  white-space: pre-wrap;      /* Retours à la ligne automatiques */
+  word-wrap: break-word;      /* Coupe les mots trop longs */
+  overflow-wrap: break-word;  /* Support moderne pour word-wrap */
 }
 
+/* Barre d’entrée message */
 .private-chat-input {
   display: flex;
   padding: 8px;
@@ -947,4 +1014,3 @@ button:focus {
   box-shadow: none !important;
   border: none !important;
 }
-
