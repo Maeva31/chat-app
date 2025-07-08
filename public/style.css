@@ -1026,4 +1026,19 @@ button:focus {
   z-index: 10;
 }
 
+.role-icon {
+  position: relative;
+  display: inline-block; /* ou inline-flex */
+  width: 20px;  /* largeur pour contenir l’icône diamond ou favicon */
+  height: 16px; /* hauteur adaptée */
+}
 
+.role-icon .webcam-icon {
+  position: absolute;
+  top: -18px;    /* remonte la webcam au-dessus des icônes */
+  left: 0;
+  width: 16px;   /* même taille qu’avant */
+  height: 16px;
+  cursor: pointer;
+  z-index: 10;
+}
