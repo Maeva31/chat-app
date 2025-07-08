@@ -4,6 +4,7 @@ window.socket = socket;
 const webcamStatus = {};  // { username: true/false }
 
 socket.on('webcam status update', ({ username, active }) => {
+  console.log('webcam status update:', username, active);
   webcamStatus[username] = active;
   if (window.users) {
     window.users = window.users.map(u => {
@@ -898,6 +899,8 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
+    console.log('webcam status:', webcamStatus);
+    console.log('users:', window.users);
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
