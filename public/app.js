@@ -132,6 +132,7 @@ pc.ontrack = event => {
   if (event.track.kind === 'video' || event.track.kind === 'audio') {
     remoteVideo.remoteStream.addTrack(event.track);
   }
+}
 };
 
 // Ajout ici : au clic sur icône webcam distante, appelle callUser()
