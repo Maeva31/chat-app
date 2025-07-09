@@ -104,7 +104,7 @@ const myUsername = localStorage.getItem('username');
 async function startLocalStream() {
   if (localStream) return localStream;
   try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     const localVideo = document.getElementById('localVideo');
     if (localVideo) localVideo.srcObject = localStream;
     return localStream;
