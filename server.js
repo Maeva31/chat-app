@@ -193,6 +193,20 @@ io.on('connection', (socket) => {
   io.to(toSocketId).emit('watch webcam request', { from });
 });
 
+socket.on('request call', ({ to }) => {
+  const toSocketId = usernameToSocketId[to];
+  if (!toSocketId) {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    return;
+  }
+  // Récupérer le pseudo de l'émetteur
+  const senderUser = Object.values(users).find(u => u.id === socket.id);
+  const fromUsername = senderUser ? senderUser.username : socket.id;
+
+  io.to(toSocketId).emit('request call', { from: fromUsername });
+});
+
+
 
   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
     if (!channel || !savedRooms.includes(channel)) {
