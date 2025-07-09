@@ -2,10 +2,14 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Webcam Popup</title>
+  <title>Webcam de l'utilisateur</title>
   <style>
-    body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    video { max-width: 100%; max-height: 100%; border-radius: 8px; border: 2px solid #ccc; }
+    body, html {
+      margin: 0; height: 100%; background: black; display: flex; justify-content: center; align-items: center;
+    }
+    video {
+      max-width: 100%; max-height: 100%; border-radius: 8px; border: 2px solid #ccc;
+    }
   </style>
 </head>
 <body>
@@ -15,50 +19,47 @@
   <script>
     const socket = io();
 
-    // Récupère le pseudo distant de la query string
-    const remoteUsername = new URLSearchParams(window.location.search).get('user');
-    if (!remoteUsername) {
-      alert("Utilisateur distant non spécifié");
-      throw new Error("Utilisateur distant non spécifié");
+    function getUsernameFromURL() {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('user');
     }
 
+    const remoteUser = getUsernameFromURL();
     const myUsername = localStorage.getItem('username');
-    if (!myUsername) {
-      alert("Tu dois être connecté pour voir une webcam.");
-      throw new Error("Utilisateur local non connecté");
-    }
 
-    const videoElem = document.getElementById('remote-video');
     const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
     let pc = null;
 
-    // Initialise la connexion WebRTC côté receveur (popup)
-    async function startReceiving() {
+    async function createPeerConnection() {
       pc = new RTCPeerConnection(config);
 
-      pc.ontrack = event => {
-        videoElem.srcObject = event.streams[0];
-      };
-
-      pc.onicecandidate = event => {
+      pc.onicecandidate = (event) => {
         if (event.candidate) {
           socket.emit('signal', {
-            to: remoteUsername,
+            to: remoteUser,
             from: myUsername,
             data: { candidate: event.candidate }
           });
         }
       };
 
-      // Demande au serveur de commencer la négociation (lui dira au streamer de faire l'offre)
-      socket.emit('watch webcam', { from: myUsername, to: remoteUsername });
+      pc.ontrack = (event) => {
+        const video = document.getElementById('remote-video');
+        video.srcObject = event.streams[0];
+      };
     }
 
-    // Écoute des signaux WebRTC
-    socket.on('signal', async ({ from, data }) => {
-      if (from !== remoteUsername) return;
+    async function startWatching() {
+      await createPeerConnection();
 
-      if (!pc) await startReceiving();
+      socket.emit('watch webcam', { user: remoteUser, from: myUsername });
+    }
+
+    // Réception des signaux (SDP, ICE)
+    socket.on('signal', async ({ from, data }) => {
+      if (from !== remoteUser) return;
+
+      if (!pc) await createPeerConnection();
 
       if (data.sdp) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
@@ -75,13 +76,13 @@
       } else if (data.candidate) {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (err) {
-          console.error("Erreur ICE candidate:", err);
+        } catch (e) {
+          console.error('Erreur ICE candidate:', e);
         }
       }
     });
 
-    startReceiving();
+    startWatching();
   </script>
 </body>
 </html>
