@@ -975,24 +975,6 @@ if (usernameInput && passwordInput) {
 }
 
 
-function createRoleIcon(role) {
-  if (role === 'admin') {
-    const icon = document.createElement('img');
-    icon.src = '/diamond.ico'; // icône admin
-    icon.alt = 'Admin';
-    icon.title = 'Admin';
-    icon.classList.add('admin-icon');
-    return icon;
-  } else if (role === 'modo') {
-    const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // icône modo
-    icon.alt = 'Modérateur';
-    icon.title = 'Modérateur';
-    icon.classList.add('modo-icon');
-    return icon;
-  }
-  return null;
-}
 
 
  const logoutButton = document.getElementById('logoutButton');
