@@ -32,14 +32,13 @@
 </head>
 <body>
 
-  <video id="remote-video" autoplay playsinline></video>
+  <video id="remote-video" autoplay playsinline muted></video>
   <div id="info">Connexion à la webcam distante...</div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
-    // Récupère le paramètre "user" dans l'URL
     function getQueryUsername() {
       const params = new URLSearchParams(window.location.search);
       return params.get('user');
@@ -56,7 +55,6 @@
       throw new Error("Utilisateur distant non spécifié");
     }
 
-    // Configuration STUN
     const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
     let pc = null;
@@ -66,69 +64,63 @@
 
       pc.onicecandidate = event => {
         if (event.candidate) {
-          socket.emit('webrtc ice candidate', { to: remoteUsername, candidate: event.candidate });
+          console.log('Envoi ICE candidate vers', remoteUsername);
+          socket.emit('signal', {
+            to: remoteUsername,
+            from: myUsername,
+            data: { candidate: event.candidate }
+          });
         }
       };
 
       pc.ontrack = event => {
+        console.log('Track reçu', event.streams);
         remoteVideo.srcObject = event.streams[0];
         infoElem.textContent = `Webcam distante : ${remoteUsername}`;
+      };
+
+      pc.onconnectionstatechange = () => {
+        console.log('État de la connexion:', pc.connectionState);
+        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+          infoElem.textContent = 'Connexion perdue ou fermée.';
+          remoteVideo.srcObject = null;
+        }
       };
 
       return pc;
     }
 
-    // Gérer les signaux WebRTC reçus du serveur
-    socket.on('webrtc offer', async ({ from, offer }) => {
-      if (from !== remoteUsername) return;
+    socket.on('signal', async ({ from, to, data }) => {
+      if (from !== remoteUsername || to !== myUsername) return;
 
       if (!pc) pc = await createPeerConnection();
 
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
+      if (data.sdp) {
+        console.log('Signal SDP reçu:', data.sdp.type);
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-
-      socket.emit('webrtc answer', { to: from, answer: pc.localDescription });
-    });
-
-    socket.on('webrtc answer', async ({ from, answer }) => {
-      if (from !== remoteUsername) return;
-      if (!pc) return;
-
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    });
-
-    socket.on('webrtc ice candidate', async ({ from, candidate }) => {
-      if (from !== remoteUsername) return;
-      if (!pc) return;
-
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(candidate));
-      } catch (e) {
-        console.error("Erreur ajout ICE candidate:", e);
+        if (data.sdp.type === 'offer') {
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('signal', {
+            to: from,
+            from: myUsername,
+            data: { sdp: pc.localDescription }
+          });
+        }
+      } else if (data.candidate) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          console.log('ICE candidate ajoutée');
+        } catch (err) {
+          console.error('Erreur ajout ICE candidate:', err);
+        }
       }
     });
 
-    // Gérer l'appel entrant : serveur émet 'call user' pour démarrer offre
-    socket.on('call user', async ({ from }) => {
-      if (from !== remoteUsername) return;
-
-      if (!pc) pc = await createPeerConnection();
-
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-
-      socket.emit('webrtc offer', { to: from, offer: pc.localDescription });
-    });
-
-    // Démarre tout à la charge de la page : demande l'appel au remote
-    async function start() {
-      // On demande au serveur d'appeler le remote (pour initier)
-      socket.emit('call user', { to: remoteUsername, from: myUsername });
-    }
-
-    start();
+    // ** IMPORTANT **
+    // La popup distante est passive : elle n'initie pas l'appel. 
+    // L’initiateur est la page principale qui envoie l’offre.
 
     // Nettoyage à la fermeture
     window.addEventListener('beforeunload', () => {
