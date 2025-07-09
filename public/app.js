@@ -1,24 +1,100 @@
 const socket = io();
+window.socket = socket;
+
+const webcamStatus = {};  // { username: true/false }
+
+socket.on('webcam status update', ({ username, active }) => {
+  console.log('webcam status update:', username, active);
+  webcamStatus[username] = active;
+  if (window.users) {
+    window.users = window.users.map(u => {
+      if (u.username === username) {
+        return { ...u, webcamActive: active };
+      }
+      return u;
+    });
+    updateUserList(window.users);
+  }
+});
 
 document.addEventListener('DOMContentLoaded', () => {
 
-   const webcamPopupUrl = 'webcam-popup.html'; // page simple qui affichera ta webcam
+
+async function startWebcam() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    const videoElem = document.getElementById('local-video'); // ou l’élément vidéo où tu veux afficher la webcam
+    if (videoElem) videoElem.srcObject = stream;
+
+    // Notifier le serveur que la webcam est active
+    socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
+  } catch (err) {
+    // Erreur silencieuse, on ne fait rien ou on logue dans la console
+    console.error("Impossible d'accéder à la webcam :", err.message);
+  }
+}
+
+
+const startWebcamBtn = document.getElementById('start-webcam-btn');
+if (startWebcamBtn) {
+  startWebcamBtn.addEventListener('click', () => {
+    startWebcam();
+  });
+}
+
+  const usersList = document.getElementById('users');
+  if (usersList) {
+    usersList.addEventListener('click', (e) => {
+      if (e.target.classList.contains('webcam-icon')) {
+        const username = e.target.dataset.username;
+        if (username) {
+          window.open(
+            `webcam-popup.html?user=${encodeURIComponent(username)}`,
+            'WebcamPopup',
+            'width=320,height=260'
+          );
+        }
+      }
+    });
+  }
+});
+
+
+
+
+   const webcamPopupUrl = 'webcam-popup.html';
+
+   // page simple qui affichera ta webcam
 
   // Bouton Activer ma webcam (popup perso)
   const startWebcamBtn = document.getElementById('start-webcam-btn');
   if (startWebcamBtn) {
-    startWebcamBtn.addEventListener('click', () => {
-      if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-        window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
-        window.myWebcamPopup.addEventListener('load', () => {
-          window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
-        });
-      } else {
-        window.myWebcamPopup.focus();
-      }
+    let popupCheckInterval;
 
-      socket.emit('webcam activated', { username: localStorage.getItem('username') });
+startWebcamBtn.addEventListener('click', () => {
+  if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
+    window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
+    window.myWebcamPopup.addEventListener('load', () => {
+      window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
     });
+
+    // Émettre webcam active
+    socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
+
+    // Vérifier fermeture popup
+    if (popupCheckInterval) clearInterval(popupCheckInterval);
+    popupCheckInterval = setInterval(() => {
+      if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
+        clearInterval(popupCheckInterval);
+        socket.emit('webcam status', { username: localStorage.getItem('username'), active: false });
+      }
+    }, 500);
+
+  } else {
+    window.myWebcamPopup.focus();
+  }
+});
+
   }
 
   // Variables WebRTC
@@ -29,17 +105,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Démarre la capture webcam + micro
   async function startLocalStream() {
-    if (localStream) return localStream;
-    try {
-      localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-      const localVideo = document.getElementById('localVideo');
-      if (localVideo) localVideo.srcObject = localStream;
-      return localStream;
-    } catch (err) {
-      alert("Erreur accès webcam : " + err.message);
-      return null;
-    }
+  if (localStream) return localStream;
+  try {
+    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    const localVideo = document.getElementById('localVideo');
+    if (localVideo) localVideo.srcObject = localStream;
+    return localStream;
+  } catch (err) {
+    console.error("Erreur accès webcam :", err.message);
+    return null;
   }
+}
+
 
   // Crée une connexion WebRTC avec un utilisateur
   async function createPeerConnection(remoteUsername) {
@@ -237,6 +314,8 @@ if (webcamModal) {
       });
     }
   });
+
+  
 
   // ── 2) Couleurs selon rôle/genre ──
   const usernameColors = {
@@ -756,7 +835,6 @@ if (webcamModal) {
     body.scrollTop = body.scrollHeight;
   });
 
-});
 
 
 
@@ -882,16 +960,22 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
+    console.log('webcam status:', webcamStatus);
+    console.log('users:', window.users);
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
+
+  window.users = users; // Stocke globalement pour pouvoir rafraîchir
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
+
+    const webcamActive = user.webcamActive || webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -904,10 +988,48 @@ if (usernameInput && passwordInput) {
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
+  const roleIconSpan = li.querySelector('.role-icon');
+const icon = createRoleIcon(role);
+if (icon) roleIconSpan.appendChild(icon);
 
+if (webcamActive) {
+  let camIcon = roleIconSpan.querySelector('.webcam-icon');
+  if (!camIcon) {
+    camIcon = document.createElement('img');
+    camIcon.src = '/webcam.gif';
+    camIcon.alt = 'Webcam active';
+    camIcon.title = 'Webcam active - cliquer pour voir';
+    camIcon.classList.add('webcam-icon');
+    camIcon.style.width = '16px';
+    camIcon.style.height = '16px';
+    camIcon.style.cursor = 'pointer';
+    camIcon.style.position = 'absolute';
+    camIcon.style.top = '0';
+    camIcon.style.left = '0';
+    camIcon.style.zIndex = '10';
+    roleIconSpan.style.position = 'relative';
+
+   camIcon.addEventListener('click', () => {
+  console.log('Clic sur webcam de', username);
+  window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
+});
+
+
+    roleIconSpan.appendChild(camIcon);
+  }
+} else {
+  const camIcon = roleIconSpan.querySelector('.webcam-icon');
+  if (camIcon) camIcon.remove();
+}
+
+
+
+
+
+      
+    
+
+    // Clic pseudo mention
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
@@ -921,25 +1043,6 @@ if (usernameInput && passwordInput) {
   });
 }
 
-
-function createRoleIcon(role) {
-  if (role === 'admin') {
-    const icon = document.createElement('img');
-    icon.src = '/diamond.ico'; // icône admin
-    icon.alt = 'Admin';
-    icon.title = 'Admin';
-    icon.classList.add('admin-icon');
-    return icon;
-  } else if (role === 'modo') {
-    const icon = document.createElement('img');
-    icon.src = '/favicon.ico'; // icône modo
-    icon.alt = 'Modérateur';
-    icon.title = 'Modérateur';
-    icon.classList.add('modo-icon');
-    return icon;
-  }
-  return null;
-}
 
 
  const logoutButton = document.getElementById('logoutButton');
