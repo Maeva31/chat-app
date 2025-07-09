@@ -601,6 +601,7 @@ button:focus {
   display: flex;
   justify-content: center;
   align-items: center;
+  top: -6px;
 }
 
 /* Icône admin/mode centrée dans le conteneur */
