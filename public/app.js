@@ -792,7 +792,9 @@ socket.on('signal', async ({ from, data }) => {
 
 
 
-
+socket.emit('webrtc offer', { to: remoteUsername, offer });
+socket.emit('webrtc answer', { to: remoteUsername, answer });
+socket.emit('webrtc ice candidate', { to: remoteUsername, candidate });
 
 
 
