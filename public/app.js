@@ -100,19 +100,63 @@ async function createPeerConnection(remoteUsername) {
 
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-  pc.onnegotiationneeded = async () => {
-    try {
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('signal', {
-        to: remoteUsername,
-        from: myUsername,
-        data: { sdp: pc.localDescription }
-      });
-    } catch (err) {
-      console.error('Erreur négociation:', err);
+  pc.oniceconnectionstatechange = () => {
+  console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
+};
+
+// Gestion ontrack améliorée (ajout de la piste dans MediaStream)
+pc.ontrack = event => {
+  let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+
+  if (!remoteVideo) {
+    const container = document.getElementById('video-container');
+    if (!container) return;
+
+    remoteVideo = document.createElement('video');
+    remoteVideo.id = `remoteVideo-${remoteUsername}`;
+    remoteVideo.autoplay = true;
+    remoteVideo.playsInline = true;
+    remoteVideo.style.width = '300px';
+    remoteVideo.style.height = '225px';
+    remoteVideo.style.border = '2px solid #ccc';
+    remoteVideo.style.borderRadius = '8px';
+    remoteVideo.style.margin = '5px';
+
+    const label = document.createElement('div');
+    label.textContent = remoteUsername;
+    label.style.color = 'white';
+    label.style.textAlign = 'center';
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(remoteVideo);
+    wrapper.appendChild(label);
+
+    container.appendChild(wrapper);
+
+    // Crée un MediaStream et l'assigne à la vidéo distante
+    remoteVideo.remoteStream = new MediaStream();
+    remoteVideo.srcObject = remoteVideo.remoteStream;
+  }
+
+  // Ajoute la piste reçue dans le MediaStream
+  if (event.track.kind === 'video' || event.track.kind === 'audio') {
+    remoteVideo.remoteStream.addTrack(event.track);
+  }
+};
+
+// Ajout ici : au clic sur icône webcam distante, appelle callUser()
+const usersList = document.getElementById('users');
+if (usersList) {
+  usersList.addEventListener('click', e => {
+    if (e.target.classList.contains('webcam-icon')) {
+      const username = e.target.dataset.username;
+      if (username) {
+        callUser(username);       // <-- Ajouté pour démarrer l'appel WebRTC
+        openRemoteWebcamPopup(username);
+      }
     }
-  };
+  });
+}
 
   pc.onicecandidate = event => {
     if (event.candidate) {
