@@ -372,13 +372,6 @@ if (!userData.username || !userData.gender || !userData.age) {
 }
 
 
-    let channel = userChannels[socket.id] || defaultChannel;
-    socket.join(channel);
-
-    if (!roomUsers[channel]) roomUsers[channel] = [];
-    roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
-    roomUsers[channel].push(userData);
-
     console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
 
     emitUserList(channel);
