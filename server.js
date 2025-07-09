@@ -24,7 +24,7 @@ let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on 
 let mutedUsers = new Set();    // pseudos mutés
 let webcamStatus = {};  // { username: true/false }
 const usernameToSocketId = {};
-
+const users = {};
 
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
