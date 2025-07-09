@@ -1,24 +1,58 @@
 const socket = io();
 
-document.addEventListener('DOMContentLoaded', () => {
-
-  const socket = io();
-window.socket = socket;
-
 const webcamStatus = {};  // { username: true/false }
 const peerConnections = {};
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 let localStream = null;
 const myUsername = localStorage.getItem('username');
 
-socket.on('webcam status update', ({ username, active }) => {
-  console.log('webcam status update:', username, active);
-  webcamStatus[username] = active;
-  if (window.users) {
-    window.users = window.users.map(u => u.username === username ? { ...u, webcamActive: active } : u);
-    updateUserList(window.users);
+document.addEventListener('DOMContentLoaded', () => {
+  window.socket = socket;
+
+  // --- Webcam status update ---
+  socket.on('webcam status update', ({ username, active }) => {
+    console.log('webcam status update:', username, active);
+    webcamStatus[username] = active;
+
+    if (window.users) {
+      window.users = window.users.map(u => u.username === username ? { ...u, webcamActive: active } : u);
+      updateUserList(window.users);
+    }
+  });
+
+  // --- Bouton activer webcam locale ---
+  const startWebcamBtn = document.getElementById('start-webcam-btn');
+  if (startWebcamBtn) {
+    let popupCheckInterval;
+
+    startWebcamBtn.addEventListener('click', () => {
+      openLocalWebcamPopup();
+
+      socket.emit('webcam status', { username: myUsername, active: true });
+
+      if (popupCheckInterval) clearInterval(popupCheckInterval);
+      popupCheckInterval = setInterval(() => {
+        if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
+          clearInterval(popupCheckInterval);
+          socket.emit('webcam status', { username: myUsername, active: false });
+        }
+      }, 500);
+    });
+  }
+
+  // --- Gestion clic icône webcam distante ---
+  const usersList = document.getElementById('users');
+  if (usersList) {
+    usersList.addEventListener('click', e => {
+      if (e.target.classList.contains('webcam-icon')) {
+        const username = e.target.dataset.username;
+        if (username) openRemoteWebcamPopup(username);
+      }
+    });
   }
 });
+
+// --- Fonctions auxiliaires ---
 
 function openLocalWebcamPopup() {
   if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
@@ -42,42 +76,6 @@ function openRemoteWebcamPopup(username) {
   }
 }
 
-
-
-document.addEventListener('DOMContentLoaded', () => {
-  // Bouton "Activer ma webcam"
-  const startWebcamBtn = document.getElementById('start-webcam-btn');
-  if (startWebcamBtn) {
-    let popupCheckInterval;
-
-    startWebcamBtn.addEventListener('click', () => {
-      openLocalWebcamPopup();
-
-      socket.emit('webcam status', { username: myUsername, active: true });
-
-      if (popupCheckInterval) clearInterval(popupCheckInterval);
-      popupCheckInterval = setInterval(() => {
-        if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
-          clearInterval(popupCheckInterval);
-          socket.emit('webcam status', { username: myUsername, active: false });
-        }
-      }, 500);
-    });
-  }
-
-  // Gestion clic icône webcam distante
-  const usersList = document.getElementById('users');
-  if (usersList) {
-    usersList.addEventListener('click', e => {
-      if (e.target.classList.contains('webcam-icon')) {
-        const username = e.target.dataset.username;
-        if (username) openRemoteWebcamPopup(username);
-      }
-    });
-  }
-});
-
-// Fonction pour démarrer la capture webcam locale (video seulement)
 async function startLocalStream() {
   if (localStream) return localStream;
   try {
@@ -91,7 +89,6 @@ async function startLocalStream() {
   }
 }
 
-// Création ou récupération d'une connexion WebRTC avec un utilisateur
 async function createPeerConnection(remoteUsername) {
   if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
@@ -99,10 +96,9 @@ async function createPeerConnection(remoteUsername) {
 
   if (!localStream) {
     localStream = await startLocalStream();
-    if (!localStream) return null; // Pas de stream = pas de connection
+    if (!localStream) return null;
   }
 
-  // Ajout des pistes locales pour streaming vidéo
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
   pc.onicecandidate = event => {
@@ -151,7 +147,6 @@ async function createPeerConnection(remoteUsername) {
   return pc;
 }
 
-// Démarrer un appel WebRTC à un utilisateur
 async function callUser(remoteUsername) {
   const pc = await createPeerConnection(remoteUsername);
   if (!pc) return;
@@ -170,9 +165,8 @@ async function callUser(remoteUsername) {
   }
 }
 
-// Gérer les signaux reçus (offer, answer, candidate)
 socket.on('signal', async ({ from, data }) => {
-  if (from === myUsername) return; // Ignorer signaux de soi
+  if (from === myUsername) return;
 
   const pc = await createPeerConnection(from);
   if (!pc) return;
@@ -180,7 +174,6 @@ socket.on('signal', async ({ from, data }) => {
   if (data.sdp) {
     try {
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
       if (data.sdp.type === 'offer') {
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
@@ -202,14 +195,35 @@ socket.on('signal', async ({ from, data }) => {
   }
 });
 
-// Démarrer la capture locale dès le chargement
+// Démarrage localStream au chargement
 startLocalStream();
 
+// --- Mise à jour liste utilisateurs avec icône webcam ---
+function updateUserList(users) {
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
 
-    // Webcam icon
+  users.forEach(user => {
+    const username = user.username || 'Inconnu';
+    const role = user.role || 'user';
+    const webcamActive = webcamStatus[username] || false;
+
+    const li = document.createElement('li');
+    li.classList.add('user-item');
+
+    li.innerHTML = `
+      <span class="role-icon"></span>
+      <span class="username-span clickable-username">${username}</span>
+    `;
+
+    const roleIconSpan = li.querySelector('.role-icon');
+
+    // Supprimer ancienne icône webcam si présente
     const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
     if (oldCamIcon) oldCamIcon.remove();
 
+    // Ajouter icône webcam si active
     if (webcamActive) {
       const camIcon = document.createElement('img');
       camIcon.src = '/webcam.gif';
@@ -223,10 +237,10 @@ startLocalStream();
       camIcon.style.top = '0';
       camIcon.style.left = '0';
       camIcon.style.zIndex = '10';
+
       roleIconSpan.style.position = 'relative';
 
       camIcon.dataset.username = username;
-
       camIcon.addEventListener('click', () => {
         openRemoteWebcamPopup(username);
       });
@@ -236,10 +250,24 @@ startLocalStream();
 
     userList.appendChild(li);
   });
+}
 
+// Mise à jour liste utilisateurs et appel WebRTC quand reçue
+socket.on('user list', (users) => {
+  window.users = users;  // garde copie globale
+  updateUserList(users);
 
-// Puis délégation sur #users pour mentions
-document.getElementById('users').addEventListener('click', (e) => {
+  users.forEach(user => {
+    if (user.username !== myUsername) {
+      if (!peerConnections[user.username]) {
+        callUser(user.username);
+      }
+    }
+  });
+});
+
+// Délégation clic pseudo pour mention
+document.getElementById('users')?.addEventListener('click', (e) => {
   const span = e.target.closest('.username-span.clickable-username');
   if (!span) return;
   const username = span.textContent.trim();
@@ -250,18 +278,6 @@ document.getElementById('users').addEventListener('click', (e) => {
   input.focus();
 });
 
- // Mise à jour bouton mode invisible selon rôle
-  socket.on('user list', (users) => {
-  updateUserList(users);
-  users.forEach(user => {
-    if (user.username !== myUsername) {
-      // initie appel WebRTC vers cet utilisateur si pas déjà connecté
-      if (!peerConnections[user.username]) {
-        callUser(user.username);
-      }
-    }
-  });
-});
 
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
