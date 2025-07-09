@@ -59,6 +59,7 @@ function openLocalWebcamPopup() {
     window.localWebcamPopup = window.open('local-webcam.html', 'LocalWebcam', 'width=320,height=260');
   } else {
     window.localWebcamPopup.focus();
+    window.localWebcamPopup.postMessage({ type: 'init', username: myUsername }, '*');
   }
 }
 
