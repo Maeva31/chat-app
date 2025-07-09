@@ -11,7 +11,6 @@
   <script>
     const socket = io();
 
-    // Récupérer le username distant de la query string
     const params = new URLSearchParams(window.location.search);
     const remoteUsername = params.get('user');
     const myUsername = localStorage.getItem('username');
@@ -39,6 +38,7 @@
       };
     }
 
+    // On attend les signaux (offer, answer, candidate)
     socket.on('signal', async ({ from, to, data }) => {
       if (from !== remoteUsername) return;
 
@@ -64,8 +64,9 @@
       }
     });
 
-    // Demander à l’autre utilisateur de démarrer l’appel (optionnel)
+    // Demander à l’autre utilisateur de lancer l’appel
     socket.emit('ready for call', { to: remoteUsername, from: myUsername });
+
   </script>
 </body>
 </html>
