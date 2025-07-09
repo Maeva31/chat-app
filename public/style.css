@@ -1015,26 +1015,32 @@ button:focus {
 
 
 
- .webcam-icon {
+.role-icon {
+  position: relative;
+  display: inline-block;
+  width: 20px;
+  height: 20px;
+}
+
+.webcam-icon {
   position: absolute;
-  top: -6px;    /* place l'icône un peu au-dessus mais visible */
+  top: -6px;
   left: 0;
   width: 16px;
   height: 16px;
   cursor: pointer;
   z-index: 10;
 }
+
 .webcam-icon.admin {
-  top: 0px;
-  left: 0px;
+  top: -2px;  /* un peu plus bas */
 }
 
 .webcam-icon.modo {
-  top: 0px;
-  left: 0px;
+  top: -2px;
 }
 
 .webcam-icon.user {
-  top: -8px;
-  left: 0;
+  top: -6px;
 }
+
