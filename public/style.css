@@ -1015,10 +1015,9 @@ button:focus {
 
 
 
-.webcam-icon,
-.user-item {
+ .webcam-icon {
   position: absolute;
-  top: 0px;
+  top: -6px;    /* place l'icône un peu au-dessus mais visible */
   left: 0;
   width: 16px;
   height: 16px;
