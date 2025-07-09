@@ -825,7 +825,6 @@ document.getElementById('users')?.addEventListener('click', (e) => {
     body.scrollTop = body.scrollHeight;
   });
 
-});
 
 
 
