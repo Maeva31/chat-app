@@ -180,8 +180,34 @@ app.post('/upload', upload.single('file'), (req, res) => {
   }
 });
 
+function getUserListForClient() {
+  return Object.values(users).map(user => ({
+    username: user.username,
+    role: user.role,
+    gender: user.gender,
+    age: user.age,
+    webcamActive: !!webcamStatus[user.username]
+  }));
+}
+
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
+  
+    // Envoi initial de la liste utilisateurs au client connecté
+  socket.emit('user list', getUserListForClient());
+
+  // Mise à jour du statut webcam
+  socket.on('webcam status', ({ username, active }) => {
+    if (users[username]) {
+      users[username].webcamActive = active;
+      webcamStatus[username] = active;
+    }
+
+    console.log('Emitting webcam status update for', username, active);
+
+    io.emit('webcam status update', { username, active });
+    io.emit('user list', getUserListForClient());
+  });
 
   // écouteur 'signal' pour WebRTC
   socket.on('signal', ({ to, from, data }) => {
@@ -1049,14 +1075,6 @@ io.on('connection', (socket) => {
 });
 
 
-  // Mise à jour du statut webcam (active ou non)
-  socket.on('webcam status', ({ username, active }) => {
-    webcamStatus[username] = active; // Mise à jour côté serveur
-    
-console.log('Emitting webcam status update for', username, active);
-
-    io.emit('webcam status update', { username, active }); // Broadcast à tous
-  });
 
   // --- FIN AJOUT WEBRTC ---
 
