@@ -249,7 +249,7 @@ startLocalStream();
       camIcon.style.height = '16px';
       camIcon.style.cursor = 'pointer';
       camIcon.style.position = 'absolute';
-      camIcon.style.top = '0';
+      camIcon.style.top = '-6px';
       camIcon.style.left = '0';
       camIcon.style.zIndex = '10';
 
