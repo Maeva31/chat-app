@@ -277,7 +277,29 @@ socket.on('user list', (users) => {
 
 
 
+function getUserListForClient() {
+  return Object.values(users).map(user => ({
+    username: user.username,
+    role: user.role,
+    gender: user.gender,
+    age: user.age,
+    webcamActive: !!user.webcamActive // ou true/false selon état actuel
+  }));
+}
 
+// Quand le serveur envoie la liste à tous les clients
+io.emit('user list', getUserListForClient());
+
+
+socket.on('webcam status', ({ username, active }) => {
+  if (users[username]) {
+    users[username].webcamActive = active;
+  }
+  io.emit('webcam status update', { username, active });
+
+  // Met à jour la liste complète, notamment webcamActive
+  io.emit('user list', getUserListForClient());
+});
 
 
 
@@ -1350,12 +1372,37 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     modalError.style.display = 'block';
   });
 
-  socket.on('chat history', (messages) => {
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-    chatMessages.innerHTML = '';
-    messages.forEach(addMessageToChat);
+socket.on('chat history full', (items) => {
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
+  chatMessages.innerHTML = ''; // vide avant affichage
+
+  items.forEach(item => {
+    const msgElem = document.createElement('div');
+    msgElem.classList.add('chat-item');
+
+    if (item.type === 'message') {
+      msgElem.textContent = `[${new Date(item.timestamp).toLocaleTimeString()}] ${item.username}: ${item.message}`;
+    } else if (item.type === 'file') {
+      const time = new Date(item.timestamp).toLocaleTimeString();
+      msgElem.textContent = `[${time}] ${item.username} a envoyé une image : `;
+
+      const img = document.createElement('img');
+      img.src = item.data || `/uploads/${item.filename}`;
+      img.alt = 'Image uploadée';
+      img.style.maxWidth = '200px';
+      img.style.display = 'block';
+      img.style.marginTop = '5px';
+
+      msgElem.appendChild(img);
+    }
+
+    chatMessages.appendChild(msgElem);
   });
+
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+});
+
 
   socket.on('chat message', addMessageToChat);
   socket.on('server message', (msg) => {
