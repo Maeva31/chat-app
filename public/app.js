@@ -61,6 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+});
 
 // Fonction pour démarrer la capture webcam locale (video seulement)
 async function startLocalStream() {
@@ -1970,4 +1971,4 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
 });
-console.log('app.js chargé sans erreur');
+
