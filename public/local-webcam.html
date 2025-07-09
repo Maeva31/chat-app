@@ -2,49 +2,50 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Webcam locale</title>
+  <title>Ma Webcam</title>
   <style>
-    /* Le body et html prennent toute la taille de la popup */
     html, body {
       margin: 0; padding: 0; height: 100%; width: 100%; background: black; overflow: hidden;
-      display: flex; justify-content: center; align-items: center;
     }
     video {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; /* Remplit toute la zone sans déformer */
-      background: black;
-      border: none; /* Pas de bordure */
-      margin: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
       display: block;
+      background: black;
     }
   </style>
 </head>
 <body>
   <video id="localVideo" autoplay playsinline muted></video>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    let username = null;
+    const socket = io();
+    const video = document.getElementById('localVideo');
+    let localStream = null;
 
-    async function startLocalStream() {
+    // Démarre webcam locale et l'affiche
+    async function startLocalWebcam() {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        document.getElementById('localVideo').srcObject = stream;
-      } catch (err) {
-        console.error("Erreur accès webcam :", err);
-        alert("Impossible d'accéder à la webcam : " + err.message);
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        video.srcObject = localStream;
+      } catch (e) {
+        console.error("Erreur accès webcam locale :", e);
+        alert("Impossible d'accéder à la webcam locale");
       }
     }
 
+    // Attendre le message init depuis la fenêtre parente (pour récupérer username si besoin)
     window.addEventListener('message', event => {
-      if (!event.data) return;
-      if (event.data.type === 'init' && event.data.username) {
-        username = event.data.username;
-        console.log("Local webcam popup initialisé pour :", username);
+      if (event.data?.type === 'init') {
+        // Ici tu peux récupérer event.data.username si nécessaire
+        startLocalWebcam();
       }
     });
 
-    startLocalStream();
+    // Auto start pour cas où popup ouvre sans message (sécurité)
+    startLocalWebcam();
   </script>
 </body>
 </html>
