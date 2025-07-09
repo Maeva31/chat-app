@@ -1,141 +1,6 @@
 const socket = io();
-const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-let localStream = null;
-const peerConnections = {};
-const myUsername = localStorage.getItem('username');
-
-async function startLocalStream() {
-  if (localStream) return localStream;
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    // Optionnel : afficher localStream dans un élément video local si tu veux
-    return localStream;
-  } catch (err) {
-    console.error("Erreur accès webcam :", err.message);
-    return null;
-  }
-}
-
-async function createPeerConnection(remoteUsername) {
-  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
-
-  const pc = new RTCPeerConnection(config);
-
-  if (!localStream) {
-    localStream = await startLocalStream();
-    if (!localStream) return null;
-  }
-
-  // Ajout des pistes locales au PC
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-  pc.onicecandidate = event => {
-    if (event.candidate) {
-      socket.emit('signal', {
-        to: remoteUsername,
-        from: myUsername,
-        data: { candidate: event.candidate }
-      });
-    }
-  };
-
-  pc.oniceconnectionstatechange = () => {
-    console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
-  };
-
-  pc.ontrack = event => {
-    console.log('Track received from', remoteUsername);
-    // Dans le caller, tu peux gérer le stream reçu si besoin (par ex. afficher vidéo distante)
-  };
-
-  peerConnections[remoteUsername] = pc;
-  return pc;
-}
-
-async function callUser(remoteUsername) {
-  const pc = await createPeerConnection(remoteUsername);
-  if (!pc) return;
-
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    socket.emit('signal', {
-      to: remoteUsername,
-      from: myUsername,
-      data: { sdp: pc.localDescription }
-    });
-
-    console.log('Offer envoyé à', remoteUsername);
-  } catch (err) {
-    console.error("Erreur lors de la création de l'offre:", err);
-  }
-}
-
-socket.on('signal', async ({ from, to, data }) => {
-  if (to !== myUsername) return; // On ne traite que les messages qui nous sont destinés
-
-  let pc = peerConnections[from];
-  if (!pc) {
-    pc = await createPeerConnection(from);
-    if (!pc) return;
-  }
-
-  if (data.sdp) {
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-      if (data.sdp.type === 'offer') {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        socket.emit('signal', {
-          to: from,
-          from: myUsername,
-          data: { sdp: pc.localDescription }
-        });
-
-        console.log('Answer envoyé à', from);
-      }
-    } catch (err) {
-      console.error('Erreur setRemoteDescription / createAnswer:', err);
-    }
-  } else if (data.candidate) {
-    try {
-      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-    } catch (err) {
-      console.error('Erreur ajout ICE candidate:', err);
-    }
-  }
-});
-
-// Démarrer la capture locale dès le chargement
-startLocalStream();
-
-
-
-
-
-
-
- /* // --- Gérer le clic sur l'icône webcam d’un autre utilisateur pour ouvrir sa popup webcam ---
-  document.getElementById('users').addEventListener('click', (event) => {
-    if (event.target.classList.contains('webcam-icon')) {
-      const userLi = event.target.closest('li.user-item');
-      if (!userLi) return;
-      const usernameSpan = userLi.querySelector('.username-span');
-      if (!usernameSpan) return;
-      const remoteUsername = usernameSpan.textContent.trim();
-
-      if (remoteUsername !== myUsername) {
-        const url = `webcam-popup.html?user=${encodeURIComponent(remoteUsername)}`;
-        window.open(url, `webcam-${remoteUsername}`, 'width=320,height=260');
-      }
-    }
-  });
-
-}); */
+document.addEventListener('DOMContentLoaded', () => {
 
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
@@ -164,8 +29,6 @@ startLocalStream();
       });
     }
   });
-
-  
 
   // ── 2) Couleurs selon rôle/genre ──
   const usernameColors = {
@@ -685,6 +548,19 @@ startLocalStream();
     body.scrollTop = body.scrollHeight;
   });
 
+});
+
+
+
+
+
+
+
+
+
+
+
+
 
 
  const adminUsernames = ['MaEvA'];
@@ -797,21 +673,17 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-function updateUserList(users) {
+  function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
-
-  window.users = users; 
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
-
-    const webcamActive = user.webcamActive || webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -828,50 +700,38 @@ function updateUserList(users) {
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
-    // Webcam icon
-    const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
-    if (oldCamIcon) oldCamIcon.remove();
-
-    if (webcamActive) {
-      const camIcon = document.createElement('img');
-      camIcon.src = '/webcam.gif';
-      camIcon.alt = 'Webcam active';
-      camIcon.title = 'Webcam active - cliquer pour voir';
-      camIcon.classList.add('webcam-icon');
-      camIcon.style.width = '16px';
-      camIcon.style.height = '16px';
-      camIcon.style.cursor = 'pointer';
-      camIcon.style.position = 'absolute';
-      camIcon.style.top = '0';
-      camIcon.style.left = '0';
-      camIcon.style.zIndex = '10';
-      roleIconSpan.style.position = 'relative';
-
-      camIcon.dataset.username = username;
-
-      camIcon.addEventListener('click', () => {
-        openRemoteWebcamPopup(username);
-      });
-
-      roleIconSpan.appendChild(camIcon);
-    }
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
 
     userList.appendChild(li);
   });
 }
 
-// Puis délégation sur #users pour mentions
-document.getElementById('users').addEventListener('click', (e) => {
-  const span = e.target.closest('.username-span.clickable-username');
-  if (!span) return;
-  const username = span.textContent.trim();
-  const input = document.getElementById('message-input');
-  if (!input) return;
-  const mention = `@${username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-});
 
+function createRoleIcon(role) {
+  if (role === 'admin') {
+    const icon = document.createElement('img');
+    icon.src = '/diamond.ico'; // icône admin
+    icon.alt = 'Admin';
+    icon.title = 'Admin';
+    icon.classList.add('admin-icon');
+    return icon;
+  } else if (role === 'modo') {
+    const icon = document.createElement('img');
+    icon.src = '/favicon.ico'; // icône modo
+    icon.alt = 'Modérateur';
+    icon.title = 'Modérateur';
+    icon.classList.add('modo-icon');
+    return icon;
+  }
+  return null;
+}
 
 
  const logoutButton = document.getElementById('logoutButton');
@@ -1515,17 +1375,6 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
   // Mise à jour bouton mode invisible selon rôle
   socket.on('user list', (users) => {
-  updateUserList(users);
-  users.forEach(user => {
-    if (user.username !== myUsername) {
-      // initie appel WebRTC vers cet utilisateur si pas déjà connecté
-      if (!peerConnections[user.username]) {
-        callUser(user.username);
-      }
-    }
-  });
-});
-
   // Met à jour la liste des utilisateurs dans l'interface
   updateUserList(users);
 
@@ -1550,7 +1399,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       }
     }
   }
-
+});
 
 
 
@@ -1833,4 +1682,3 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
 });
-
