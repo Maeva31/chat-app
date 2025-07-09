@@ -1629,6 +1629,17 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
   // Mise à jour bouton mode invisible selon rôle
   socket.on('user list', (users) => {
+  updateUserList(users);
+  users.forEach(user => {
+    if (user.username !== myUsername) {
+      // initie appel WebRTC vers cet utilisateur si pas déjà connecté
+      if (!peerConnections[user.username]) {
+        callUser(user.username);
+      }
+    }
+  });
+});
+
   // Met à jour la liste des utilisateurs dans l'interface
   updateUserList(users);
 
