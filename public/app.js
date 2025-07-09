@@ -940,7 +940,7 @@ if (usernameInput && passwordInput) {
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
-  const roleIconSpan = li.querySelector('.role-icon');
+const roleIconSpan = li.querySelector('.role-icon');
 const icon = createRoleIcon(role);
 if (icon) roleIconSpan.appendChild(icon);
 
@@ -961,11 +961,11 @@ if (webcamActive) {
     camIcon.style.zIndex = '10';
     roleIconSpan.style.position = 'relative';
 
-   camIcon.addEventListener('click', () => {
-  console.log('Clic sur webcam de', username);
-  window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
-});
-
+    camIcon.addEventListener('click', () => {
+      console.log('Clic sur webcam de', username);
+      // Remplacer l'ouverture direct par l'appel de la fonction
+      openRemoteWebcamPopup(username);
+    });
 
     roleIconSpan.appendChild(camIcon);
   }
@@ -973,6 +973,7 @@ if (webcamActive) {
   const camIcon = roleIconSpan.querySelector('.webcam-icon');
   if (camIcon) camIcon.remove();
 }
+
 
 
 
