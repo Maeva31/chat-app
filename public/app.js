@@ -934,45 +934,59 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
+function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
+    const webcamActive = webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
-
     li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+      <span class="role-icon"></span>
+      <span class="username-span clickable-username">${username}</span>
     `;
 
     const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
 
-    const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
+    // Supprimer ancienne icône webcam si présente
+    const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
+    if (oldCamIcon) oldCamIcon.remove();
+
+    // Ajouter icône webcam si active
+    if (webcamActive) {
+      const camIcon = document.createElement('img');
+      camIcon.src = '/webcam.gif';
+      camIcon.alt = 'Webcam active';
+      camIcon.title = 'Webcam active - cliquer pour voir';
+      camIcon.classList.add('webcam-icon');
+      camIcon.style.width = '16px';
+      camIcon.style.height = '16px';
+      camIcon.style.cursor = 'pointer';
+      camIcon.style.position = 'absolute';
+      camIcon.style.top = '0';
+      camIcon.style.left = '0';
+      camIcon.style.zIndex = '10';
+
+      roleIconSpan.style.position = 'relative';
+
+      camIcon.dataset.username = username;
+      camIcon.addEventListener('click', () => {
+        openRemoteWebcamPopup(username);
+      });
+
+      roleIconSpan.appendChild(camIcon);
+    }
 
     userList.appendChild(li);
   });
 }
+
 
 
 
