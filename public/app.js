@@ -198,26 +198,37 @@ socket.on('signal', async ({ from, data }) => {
 // Démarrage localStream au chargement
 startLocalStream();
 
-// --- Mise à jour liste utilisateurs avec icône webcam ---
-function updateUserList(users) {
+
+
+  // Met à jour la liste des utilisateurs affichée
+ function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
 
   users.forEach(user => {
-    const username = user.username || 'Inconnu';
-    const role = user.role || 'user';
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
     const webcamActive = webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
 
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+
+    // Structure HTML avec âge, rôle, pseudo
     li.innerHTML = `
-      <span class="role-icon"></span>
-      <span class="username-span clickable-username">${username}</span>
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
     const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
 
     // Supprimer ancienne icône webcam si présente
     const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
@@ -248,9 +259,27 @@ function updateUserList(users) {
       roleIconSpan.appendChild(camIcon);
     }
 
+    // Clic pseudo pour mention
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
     userList.appendChild(li);
   });
 }
+
+
+
+
+
+
+
+
 
 // Mise à jour liste utilisateurs et appel WebRTC quand reçue
 socket.on('user list', (users) => {
@@ -948,46 +977,6 @@ if (usernameInput && passwordInput) {
     return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
   }
 
-  // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
-
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
-
-    const li = document.createElement('li');
-    li.classList.add('user-item');
-
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
-
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
-
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
-
-    const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
-
-    userList.appendChild(li);
-  });
-}
 
 
 function createRoleIcon(role) {
