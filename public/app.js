@@ -223,31 +223,6 @@ startWebcamBtn.addEventListener('click', () => {
   // Démarre capture locale au chargement
   startLocalStream();
 
- 
-
-
-
-// Fermer la webcam quand la modale est fermée (style.display = 'none')
-const observer = new MutationObserver(() => {
-  if (webcamModal.style.display === 'none' && webcamStream) {
-    webcamStream.getTracks().forEach(track => track.stop());
-    webcamStream = null;
-    webcamVideo.srcObject = null;
-  }
-});
-
-// Observer sur les changements d'attributs (style)
-observer.observe(webcamModal, { attributes: true, attributeFilter: ['style'] });
-
-// Pour permettre fermeture modale en cliquant en dehors
-if (webcamModal) {
-  webcamModal.addEventListener('click', e => {
-    if (e.target === webcamModal) {
-      webcamModal.style.display = 'none';  // ferme la modale
-      // webcam sera arrêtée par l'observer ci-dessus
-    }
-  });
-}
 
 
  /* // --- Gérer le clic sur l'icône webcam d’un autre utilisateur pour ouvrir sa popup webcam ---
