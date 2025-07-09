@@ -178,6 +178,7 @@ async function callUser(remoteUsername) {
   }
 }
 
+
 // Gestion clic sur icône webcam distante pour lancer appel WebRTC + popup
 const usersList = document.getElementById('users');
 if (usersList) {
