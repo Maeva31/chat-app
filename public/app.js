@@ -19,106 +19,89 @@ socket.on('webcam status update', ({ username, active }) => {
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  async function startWebcam() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      const videoElem = document.getElementById('local-video'); // ou l’élément vidéo où tu veux afficher la webcam
+      if (videoElem) videoElem.srcObject = stream;
 
-async function startWebcam() {
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    const videoElem = document.getElementById('local-video'); // ou l’élément vidéo où tu veux afficher la webcam
-    if (videoElem) videoElem.srcObject = stream;
-
-    // Notifier le serveur que la webcam est active
-    socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
-  } catch (err) {
-    // Erreur silencieuse, on ne fait rien ou on logue dans la console
-    console.error("Impossible d'accéder à la webcam :", err.message);
+      // Notifier le serveur que la webcam est active
+      socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
+    } catch (err) {
+      console.error("Impossible d'accéder à la webcam :", err.message);
+    }
   }
-}
 
+  // Fonction pour ouvrir la popup webcam locale (ta propre webcam)
+  function openLocalWebcamPopup() {
+    if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
+      window.localWebcamPopup = window.open('local-webcam.html', 'LocalWebcam', 'width=320,height=260');
+    } else {
+      window.localWebcamPopup.focus();
+    }
+  }
 
-const startWebcamBtn = document.getElementById('start-webcam-btn');
-if (startWebcamBtn) {
-  startWebcamBtn.addEventListener('click', () => {
-    startWebcam();
-  });
-}
+  // Fonction pour ouvrir la webcam distante d'un utilisateur dans une popup
+  function openRemoteWebcamPopup(username) {
+    if (!username) return;
+    if (!window.remoteWebcamPopups) window.remoteWebcamPopups = {};
 
+    if (!window.remoteWebcamPopups[username] || window.remoteWebcamPopups[username].closed) {
+      window.remoteWebcamPopups[username] = window.open(
+        `remote-webcam.html?user=${encodeURIComponent(username)}`,
+        `RemoteWebcam-${username}`,
+        'width=320,height=260'
+      );
+    } else {
+      window.remoteWebcamPopups[username].focus();
+    }
+  }
+
+  // Bouton "Activer ma webcam"
+  const startWebcamBtn = document.getElementById('start-webcam-btn');
+  if (startWebcamBtn) {
+    let popupCheckInterval;
+
+    startWebcamBtn.addEventListener('click', () => {
+      openLocalWebcamPopup();
+
+      // Émettre webcam active
+      socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
+
+      // Vérifier fermeture popup pour envoyer status false
+      if (popupCheckInterval) clearInterval(popupCheckInterval);
+      popupCheckInterval = setInterval(() => {
+        if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
+          clearInterval(popupCheckInterval);
+          socket.emit('webcam status', { username: localStorage.getItem('username'), active: false });
+        }
+      }, 500);
+    });
+  }
+
+  // Gestion du clic sur l’icône webcam d’un autre utilisateur
   const usersList = document.getElementById('users');
   if (usersList) {
     usersList.addEventListener('click', (e) => {
       if (e.target.classList.contains('webcam-icon')) {
         const username = e.target.dataset.username;
         if (username) {
-          window.open(
-            `webcam-popup.html?user=${encodeURIComponent(username)}`,
-            'WebcamPopup',
-            'width=320,height=260'
-          );
+          openRemoteWebcamPopup(username);
         }
       }
     });
   }
 });
 
-socket.on('request call', async ({ from }) => {
-  console.log('Demande appel WebRTC reçue de', from);
-  const pc = await createPeerConnection(from);
-  if (!pc) return;
+// --- LE RESTE DE TON CODE, notamment WebRTC et chat privé ---
 
-  const offer = await pc.createOffer();
-  await pc.setLocalDescription(offer);
+const peerConnections = {};
+const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+let localStream = null;
+const myUsername = localStorage.getItem('username');
 
-  socket.emit('signal', {
-    to: from,
-    from: myUsername,
-    data: { sdp: pc.localDescription }
-  });
-});
-
-
-
-   const webcamPopupUrl = 'webcam-popup.html';
-
-   // page simple qui affichera ta webcam
-
-  // Bouton Activer ma webcam (popup perso)
-  const startWebcamBtn = document.getElementById('start-webcam-btn');
-  if (startWebcamBtn) {
-    let popupCheckInterval;
-
-startWebcamBtn.addEventListener('click', () => {
-  if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-    window.myWebcamPopup = window.open(webcamPopupUrl, 'MyWebcam', 'width=320,height=260');
-    window.myWebcamPopup.addEventListener('load', () => {
-      window.myWebcamPopup.postMessage({ type: 'init', username: localStorage.getItem('username') }, '*');
-    });
-
-    // Émettre webcam active
-    socket.emit('webcam status', { username: localStorage.getItem('username'), active: true });
-
-    // Vérifier fermeture popup
-    if (popupCheckInterval) clearInterval(popupCheckInterval);
-    popupCheckInterval = setInterval(() => {
-      if (!window.myWebcamPopup || window.myWebcamPopup.closed) {
-        clearInterval(popupCheckInterval);
-        socket.emit('webcam status', { username: localStorage.getItem('username'), active: false });
-      }
-    }, 500);
-
-  } else {
-    window.myWebcamPopup.focus();
-  }
-});
-
-  }
-
-  // Variables WebRTC
-  const peerConnections = {};
-  const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-  let localStream = null;
-  const myUsername = localStorage.getItem('username');
-
-  // Démarre la capture webcam + micro
-  async function startLocalStream() {
+// Démarre la capture webcam + micro
+async function startLocalStream() {
   if (localStream) return localStream;
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
@@ -131,108 +114,107 @@ startWebcamBtn.addEventListener('click', () => {
   }
 }
 
+// Crée une connexion WebRTC avec un utilisateur
+async function createPeerConnection(remoteUsername) {
+  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
-  // Crée une connexion WebRTC avec un utilisateur
-  async function createPeerConnection(remoteUsername) {
-    if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
+  const pc = new RTCPeerConnection(config);
 
-    const pc = new RTCPeerConnection(config);
-
-    if (!localStream) {
-      localStream = await startLocalStream();
-      if (!localStream) return null;
-    }
-
-    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-    pc.onicecandidate = event => {
-      if (event.candidate) {
-        socket.emit('signal', {
-          to: remoteUsername,
-          from: myUsername,
-          data: { candidate: event.candidate }
-        });
-      }
-    };
-
-    pc.ontrack = event => {
-      const remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
-      if (remoteVideo) {
-        remoteVideo.srcObject = event.streams[0];
-      } else {
-        const container = document.getElementById('video-container');
-        if (!container) return;
-        const videoElem = document.createElement('video');
-        videoElem.id = `remoteVideo-${remoteUsername}`;
-        videoElem.autoplay = true;
-        videoElem.playsInline = true;
-        videoElem.srcObject = event.streams[0];
-        videoElem.style.width = '300px';
-        videoElem.style.height = '225px';
-        videoElem.style.border = '2px solid #ccc';
-        videoElem.style.borderRadius = '8px';
-        videoElem.style.margin = '5px';
-
-        const label = document.createElement('div');
-        label.textContent = remoteUsername;
-        label.style.color = 'white';
-        label.style.textAlign = 'center';
-
-        const wrapper = document.createElement('div');
-        wrapper.appendChild(videoElem);
-        wrapper.appendChild(label);
-
-        container.appendChild(wrapper);
-      }
-    };
-
-    peerConnections[remoteUsername] = pc;
-    return pc;
+  if (!localStream) {
+    localStream = await startLocalStream();
+    if (!localStream) return null;
   }
 
-  // Initie un appel WebRTC à un utilisateur
-  async function callUser(remoteUsername) {
-    const pc = await createPeerConnection(remoteUsername);
-    if (!pc) return;
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    socket.emit('signal', {
-      to: remoteUsername,
-      from: myUsername,
-      data: { sdp: pc.localDescription }
-    });
-  }
-
-  // Gère les signaux WebRTC reçus
-  socket.on('signal', async ({ from, data }) => {
-    if (from === myUsername) return;
-
-    const pc = await createPeerConnection(from);
-    if (!pc) return;
-
-    if (data.sdp) {
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
-      if (data.sdp.type === 'offer') {
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-
-        socket.emit('signal', {
-          to: from,
-          from: myUsername,
-          data: { sdp: pc.localDescription }
-        });
-      }
-    } else if (data.candidate) {
-      try {
-        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch (e) {
-        console.error("Erreur ajout ICE candidate", e);
-      }
+  pc.onicecandidate = event => {
+    if (event.candidate) {
+      socket.emit('signal', {
+        to: remoteUsername,
+        from: myUsername,
+        data: { candidate: event.candidate }
+      });
     }
+  };
+
+  pc.ontrack = event => {
+    const remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+    if (remoteVideo) {
+      remoteVideo.srcObject = event.streams[0];
+    } else {
+      const container = document.getElementById('video-container');
+      if (!container) return;
+      const videoElem = document.createElement('video');
+      videoElem.id = `remoteVideo-${remoteUsername}`;
+      videoElem.autoplay = true;
+      videoElem.playsInline = true;
+      videoElem.srcObject = event.streams[0];
+      videoElem.style.width = '300px';
+      videoElem.style.height = '225px';
+      videoElem.style.border = '2px solid #ccc';
+      videoElem.style.borderRadius = '8px';
+      videoElem.style.margin = '5px';
+
+      const label = document.createElement('div');
+      label.textContent = remoteUsername;
+      label.style.color = 'white';
+      label.style.textAlign = 'center';
+
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(videoElem);
+      wrapper.appendChild(label);
+
+      container.appendChild(wrapper);
+    }
+  };
+
+  peerConnections[remoteUsername] = pc;
+  return pc;
+}
+
+// Initie un appel WebRTC à un utilisateur
+async function callUser(remoteUsername) {
+  const pc = await createPeerConnection(remoteUsername);
+  if (!pc) return;
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  socket.emit('signal', {
+    to: remoteUsername,
+    from: myUsername,
+    data: { sdp: pc.localDescription }
   });
+}
+
+// Gère les signaux WebRTC reçus
+socket.on('signal', async ({ from, data }) => {
+  if (from === myUsername) return;
+
+  const pc = await createPeerConnection(from);
+  if (!pc) return;
+
+  if (data.sdp) {
+    await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+    if (data.sdp.type === 'offer') {
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
+
+      socket.emit('signal', {
+        to: from,
+        from: myUsername,
+        data: { sdp: pc.localDescription }
+      });
+    }
+  } else if (data.candidate) {
+    try {
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    } catch (e) {
+      console.error("Erreur ajout ICE candidate", e);
+    }
+  }
+});
 
   // Démarre capture locale au chargement
   startLocalStream();
