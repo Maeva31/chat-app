@@ -187,7 +187,7 @@ async function callUser(remoteUsername) {
   });
 }
 
-// Gère les signaux WebRTC reçus
+// Gestion des signaux WebRTC reçus
 socket.on('signal', async ({ from, data }) => {
   if (from === myUsername) return;
 
@@ -196,11 +196,9 @@ socket.on('signal', async ({ from, data }) => {
 
   if (data.sdp) {
     await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
     if (data.sdp.type === 'offer') {
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
-
       socket.emit('signal', {
         to: from,
         from: myUsername,
@@ -216,8 +214,9 @@ socket.on('signal', async ({ from, data }) => {
   }
 });
 
-  // Démarre capture locale au chargement
-  startLocalStream();
+// Démarre la capture locale au chargement
+startLocalStream();
+
 
 
 
@@ -786,20 +785,6 @@ socket.on('signal', async ({ from, data }) => {
     body.appendChild(msgDiv);
     body.scrollTop = body.scrollHeight;
   });
-
-
-
-
-
-
-socket.emit('webrtc offer', { to: remoteUsername, offer });
-socket.emit('webrtc answer', { to: remoteUsername, answer });
-socket.emit('webrtc ice candidate', { to: remoteUsername, candidate });
-
-
-
-
-
 
 
 
