@@ -357,8 +357,20 @@ io.on('connection', (socket) => {
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
-    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
-    users[username] = userData;
+   const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
+users[username] = userData;
+
+let channel = userChannels[socket.id] || defaultChannel;
+socket.join(channel);
+
+if (!userData.username || !userData.gender || !userData.age) {
+  console.warn(`Utilisateur avec données incomplètes ignoré :`, userData);
+} else {
+  if (!roomUsers[channel]) roomUsers[channel] = [];
+  roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+  roomUsers[channel].push(userData);
+}
+
 
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
