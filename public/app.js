@@ -96,11 +96,26 @@ async function createPeerConnection(remoteUsername) {
     console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
   };
 
+async function createPeerConnection(remoteUsername) {
+  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
+
+  const pc = new RTCPeerConnection(config);
+
+  if (!localStream) {
+    localStream = await startLocalStream();
+    if (!localStream) return null; // Pas de stream = pas de connexion
+  }
+
+  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.oniceconnectionstatechange = () => {
+    console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
+  };
+
   pc.ontrack = event => {
     console.log('Track received:', event.track.kind, event.track.readyState);
 
     let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
-
     if (!remoteVideo) {
       const container = document.getElementById('video-container');
       if (!container) return;
@@ -123,21 +138,22 @@ async function createPeerConnection(remoteUsername) {
       const wrapper = document.createElement('div');
       wrapper.appendChild(remoteVideo);
       wrapper.appendChild(label);
-
       container.appendChild(wrapper);
 
       // Crée un MediaStream unique par utilisateur et l'assigne
       remoteVideo.remoteStream = new MediaStream();
       remoteVideo.srcObject = remoteVideo.remoteStream;
-
       remoteVideo.muted = false; // Ne mute pas la vidéo distante
+
       remoteVideo.play().catch(e => {
         console.warn('Erreur play vidéo distante:', e);
       });
     }
 
-    // Ajoute la piste reçue dans le MediaStream unique
-    if (event.track.kind === 'video' || event.track.kind === 'audio') {
+    // Evite d'ajouter plusieurs fois la même piste
+    const tracks = remoteVideo.remoteStream.getTracks();
+    const alreadyAdded = tracks.some(t => t.id === event.track.id);
+    if (!alreadyAdded && (event.track.kind === 'video' || event.track.kind === 'audio')) {
       remoteVideo.remoteStream.addTrack(event.track);
     }
   };
@@ -154,6 +170,7 @@ async function createPeerConnection(remoteUsername) {
 
   peerConnections[remoteUsername] = pc;
   return pc;
+}
 }
 
 // Démarrer un appel WebRTC à un utilisateur
