@@ -4,35 +4,50 @@
   <meta charset="UTF-8" />
   <title>Webcam distante</title>
   <style>
-    body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; flex-direction: column; color: white; }
-    video { width: 320px; height: 240px; border-radius: 8px; border: 2px solid #ccc; background: #222; }
-    #usernameLabel { margin-top: 8px; font-weight: bold; }
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%; background: black; overflow: hidden;
+      display: flex; justify-content: center; align-items: center;
+      flex-direction: column;
+      color: white;
+      font-family: sans-serif;
+    }
+    #username-label {
+      position: absolute;
+      top: 0;
+      width: 100%;
+      text-align: center;
+      padding: 5px 0;
+      background: rgba(0,0,0,0.5);
+      font-weight: bold;
+      z-index: 10;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: black;
+      border: none;
+      margin: 0;
+      display: block;
+    }
   </style>
 </head>
 <body>
+  <div id="username-label">Chargement...</div>
   <video id="remoteVideo" autoplay playsinline></video>
-  <div id="usernameLabel"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    let pc = null;
+    let remoteUsername = null;
 
-    // Récupérer username cible dans query string
-    function getQueryUsername() {
+    function getUsernameFromURL() {
       const params = new URLSearchParams(window.location.search);
       return params.get('user');
     }
 
-    const remoteUsername = getQueryUsername();
-    const remoteVideo = document.getElementById('remoteVideo');
-    const usernameLabel = document.getElementById('usernameLabel');
-
-    usernameLabel.textContent = remoteUsername || 'Utilisateur';
-
-    let pc = null;
-    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    // Créer PeerConnection pour cet utilisateur distant
     async function createPeerConnection() {
       pc = new RTCPeerConnection(config);
 
@@ -40,50 +55,71 @@
         if (event.candidate) {
           socket.emit('signal', {
             to: remoteUsername,
-            from: localStorage.getItem('username'),
+            from: myUsername,
             data: { candidate: event.candidate }
           });
         }
       };
 
       pc.ontrack = event => {
+        const remoteVideo = document.getElementById('remoteVideo');
         remoteVideo.srcObject = event.streams[0];
       };
     }
 
-    // Écoute les signaux pour cette remote webcam
-    socket.on('signal', async ({ from, data }) => {
-      if (from !== remoteUsername) return;
+    const myUsername = localStorage.getItem('username') || 'unknown';
 
-      if (!pc) await createPeerConnection();
+    async function start() {
+      remoteUsername = getUsernameFromURL();
+      if (!remoteUsername) {
+        document.getElementById('username-label').textContent = 'Utilisateur distant non spécifié';
+        return;
+      }
+      document.getElementById('username-label').textContent = `Webcam de ${remoteUsername}`;
 
-      if (data.sdp) {
+      await createPeerConnection();
+
+      socket.emit('request call', { to: remoteUsername });
+
+      socket.on('signal', async ({ from, data }) => {
+        if (from !== remoteUsername) return;
+
         try {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          if (data.sdp.type === 'offer') {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit('signal', {
-              to: from,
-              from: localStorage.getItem('username'),
-              data: { sdp: pc.localDescription }
-            });
+          if (data.sdp) {
+            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+            if (data.sdp.type === 'offer') {
+              const answer = await pc.createAnswer();
+              await pc.setLocalDescription(answer);
+              socket.emit('signal', {
+                to: from,
+                from: myUsername,
+                data: { sdp: pc.localDescription }
+              });
+            }
+          } else if (data.candidate) {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
           }
         } catch (err) {
-          console.error("Erreur lors du setRemoteDescription/createAnswer:", err);
+          console.error('Erreur WebRTC signal:', err);
         }
-      } else if (data.candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (e) {
-          console.error("Erreur ajout ICE candidate:", e);
+      });
+
+      socket.on('request call', ({ from }) => {
+        if (from === remoteUsername) {
+          pc.createOffer().then(offer => {
+            pc.setLocalDescription(offer).then(() => {
+              socket.emit('signal', {
+                to: from,
+                from: myUsername,
+                data: { sdp: pc.localDescription }
+              });
+            });
+          });
         }
-      }
-    });
+      });
+    }
 
-    // Démarrer la connexion WebRTC par une demande d'appel au serveur
-    socket.emit('call user', { to: remoteUsername, from: localStorage.getItem('username') });
-
+    start();
   </script>
 </body>
 </html>
