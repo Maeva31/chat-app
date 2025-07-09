@@ -1016,9 +1016,9 @@ button:focus {
 
 
 .webcam-icon,
-.user-item .role-icon {
+.user-item {
   position: absolute;
-  top: -6px;
+  top: 0px;
   left: 0;
   width: 16px;
   height: 16px;
