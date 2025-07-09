@@ -3,7 +3,7 @@ window.socket = socket;
 
 const webcamStatus = {};  // { username: true/false }
 const peerConnections = {};
-const peerVideos = {};
+const peerVideos = {};    // Stocke les vidéos distantes
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 let localStream = null;
 const myUsername = localStorage.getItem('username');
@@ -69,9 +69,7 @@ async function startLocalStream() {
     if (localVideo) {
       localVideo.srcObject = localStream;
       localVideo.muted = true; // mute local video pour éviter écho
-      localVideo.play().catch(e => {
-        console.warn('Erreur play vidéo locale:', e);
-      });
+      await localVideo.play();
     }
     return localStream;
   } catch (err) {
@@ -80,75 +78,73 @@ async function startLocalStream() {
   }
 }
 
+// Gestion ontrack avec bonne fermeture sur remoteUsername
+function handleTrack(event, remoteUsername) {
+  console.log('Track received:', event.track.kind, event.track.readyState);
+
+  let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+  if (!remoteVideo) {
+    const container = document.getElementById('video-container');
+    if (!container) return;
+
+    remoteVideo = document.createElement('video');
+    remoteVideo.id = `remoteVideo-${remoteUsername}`;
+    remoteVideo.autoplay = true;
+    remoteVideo.playsInline = true;
+    remoteVideo.style.width = '300px';
+    remoteVideo.style.height = '225px';
+    remoteVideo.style.border = '2px solid #ccc';
+    remoteVideo.style.borderRadius = '8px';
+    remoteVideo.style.margin = '5px';
+
+    const label = document.createElement('div');
+    label.textContent = remoteUsername;
+    label.style.color = 'white';
+    label.style.textAlign = 'center';
+
+    const wrapper = document.createElement('div');
+    wrapper.appendChild(remoteVideo);
+    wrapper.appendChild(label);
+    container.appendChild(wrapper);
+
+    peerVideos[remoteUsername] = remoteVideo;
+
+    remoteVideo.remoteStream = new MediaStream();
+    remoteVideo.srcObject = remoteVideo.remoteStream;
+    remoteVideo.muted = false;
+  }
+
+  const tracks = remoteVideo.remoteStream.getTracks();
+  const alreadyAdded = tracks.some(t => t.id === event.track.id);
+  if (!alreadyAdded && (event.track.kind === 'video' || event.track.kind === 'audio')) {
+    remoteVideo.remoteStream.addTrack(event.track);
+  }
+
+  remoteVideo.play().catch(e => {
+    console.warn('Erreur play vidéo distante:', e);
+  });
+}
+
 // Création ou récupération d'une connexion WebRTC avec un utilisateur
 async function createPeerConnection(remoteUsername) {
   if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
   const pc = new RTCPeerConnection(config);
 
-  // S'assurer d'avoir un stream local
   if (!localStream) {
     localStream = await startLocalStream();
-    if (!localStream) return null; // Arrêt si pas de stream local
+    if (!localStream) return null;
   }
 
-  // Ajouter toutes les pistes locales à la connexion
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
-  // Gérer l'état de la connexion ICE
   pc.oniceconnectionstatechange = () => {
     console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
   };
 
-  // Gérer la réception d'une piste distante (audio ou vidéo)
-  pc.ontrack = (event) => {
-    console.log('Track received:', event.track.kind, event.track.readyState);
+  // Attention à bien passer remoteUsername dans la closure
+  pc.ontrack = event => handleTrack(event, remoteUsername);
 
-    let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
-    if (!remoteVideo) {
-      const container = document.getElementById('video-container');
-      if (!container) return;
-
-      remoteVideo = document.createElement('video');
-      remoteVideo.id = `remoteVideo-${remoteUsername}`;
-      remoteVideo.autoplay = true;
-      remoteVideo.playsInline = true;
-      remoteVideo.style.width = '300px';
-      remoteVideo.style.height = '225px';
-      remoteVideo.style.border = '2px solid #ccc';
-      remoteVideo.style.borderRadius = '8px';
-      remoteVideo.style.margin = '5px';
-
-      const label = document.createElement('div');
-      label.textContent = remoteUsername;
-      label.style.color = 'white';
-      label.style.textAlign = 'center';
-
-      const wrapper = document.createElement('div');
-      wrapper.appendChild(remoteVideo);
-      wrapper.appendChild(label);
-      container.appendChild(wrapper);
-
-      peerVideos[remoteUsername] = remoteVideo;
-
-      remoteVideo.remoteStream = new MediaStream();
-      remoteVideo.srcObject = remoteVideo.remoteStream;
-      remoteVideo.muted = false;
-
-      remoteVideo.play().catch(e => {
-        console.warn('Erreur play vidéo distante:', e);
-      });
-    }
-
-    // Ajouter la piste distante au MediaStream si pas déjà présente
-    const tracks = remoteVideo.remoteStream.getTracks();
-    const alreadyAdded = tracks.some(t => t.id === event.track.id);
-    if (!alreadyAdded && (event.track.kind === 'video' || event.track.kind === 'audio')) {
-      remoteVideo.remoteStream.addTrack(event.track);
-    }
-  };
-
-  // Gérer les candidats ICE
   pc.onicecandidate = event => {
     if (event.candidate) {
       socket.emit('signal', {
@@ -162,7 +158,6 @@ async function createPeerConnection(remoteUsername) {
   peerConnections[remoteUsername] = pc;
   return pc;
 }
-
 
 // Démarrer un appel WebRTC à un utilisateur
 async function callUser(remoteUsername) {
@@ -231,6 +226,7 @@ socket.on('signal', async ({ from, data }) => {
 
 // Démarrer la capture locale dès le chargement
 startLocalStream();
+
 
 
 
