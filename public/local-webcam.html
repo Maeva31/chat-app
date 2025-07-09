@@ -2,48 +2,58 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Ma Webcam Locale</title>
+  <title>Webcam locale</title>
   <style>
     body {
-      margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh;
+      background-color: #000;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
       overflow: hidden;
     }
-    video {
-      max-width: 100%; max-height: 100%; border-radius: 8px; border: 2px solid #ccc;
-      background: black;
+    video#local-video {
+      width: 320px;
+      height: 240px;
+      border-radius: 8px;
+      border: 3px solid #4caf50;
+      background-color: #222;
+      object-fit: cover;
     }
   </style>
 </head>
 <body>
+
   <video id="local-video" autoplay playsinline muted></video>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
-    async function startLocalWebcam() {
+    const socket = io();
+
+    async function startWebcam() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         const videoElem = document.getElementById('local-video');
         videoElem.srcObject = stream;
 
-        // Informer la fenêtre parent que la webcam est prête (optionnel)
-        if (window.opener) {
-          window.opener.postMessage({ type: 'local-webcam-started' }, '*');
-        }
+        // Notifier le serveur que la webcam est active
+        const username = localStorage.getItem('username') || 'inconnu';
+        socket.emit('webcam status', { username, active: true });
+
+        // Détecter fermeture de la fenêtre / popup
+        window.addEventListener('beforeunload', () => {
+          socket.emit('webcam status', { username, active: false });
+        });
+
       } catch (err) {
+        console.error("Impossible d'accéder à la webcam :", err.message);
         alert("Impossible d'accéder à la webcam : " + err.message);
-        if (window.opener) {
-          window.opener.postMessage({ type: 'local-webcam-error', message: err.message }, '*');
-        }
       }
     }
 
-    startLocalWebcam();
-
-    // Optional: détecter fermeture fenêtre et notifier
-    window.addEventListener('beforeunload', () => {
-      if (window.opener) {
-        window.opener.postMessage({ type: 'local-webcam-closed' }, '*');
-      }
-    });
+    startWebcam();
   </script>
+
 </body>
 </html>
