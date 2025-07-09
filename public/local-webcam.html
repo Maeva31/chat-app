@@ -2,58 +2,53 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Webcam locale</title>
+  <title>Webcam Locale</title>
   <style>
     body {
-      background-color: #000;
-      margin: 0;
-      display: flex;
-      justify-content: center;
-      align-items: center;
+      margin: 0; background: #000;
+      display: flex; justify-content: center; align-items: center;
       height: 100vh;
-      overflow: hidden;
     }
-    video#local-video {
+    video {
       width: 320px;
       height: 240px;
       border-radius: 8px;
-      border: 3px solid #4caf50;
-      background-color: #222;
-      object-fit: cover;
+      border: 2px solid #ccc;
+      background: #222;
     }
   </style>
 </head>
 <body>
-
-  <video id="local-video" autoplay playsinline muted></video>
+  <video id="localVideo" autoplay muted playsinline></video>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const myUsername = localStorage.getItem('username');
 
-    async function startWebcam() {
+    async function startLocalStream() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        const videoElem = document.getElementById('local-video');
-        videoElem.srcObject = stream;
+        const video = document.getElementById('localVideo');
+        video.srcObject = stream;
 
-        // Notifier le serveur que la webcam est active
-        const username = localStorage.getItem('username') || 'inconnu';
-        socket.emit('webcam status', { username, active: true });
+        // Expose le stream pour le parent si besoin
+        window.opener.localStream = stream;
 
-        // Détecter fermeture de la fenêtre / popup
+        // Informe le serveur que la webcam est active
+        socket.emit('webcam status', { username: myUsername, active: true });
+
+        // Ecoute fermeture fenêtre pour notifier le serveur
         window.addEventListener('beforeunload', () => {
-          socket.emit('webcam status', { username, active: false });
+          socket.emit('webcam status', { username: myUsername, active: false });
         });
 
       } catch (err) {
-        console.error("Impossible d'accéder à la webcam :", err.message);
-        alert("Impossible d'accéder à la webcam : " + err.message);
+        alert('Erreur accès webcam: ' + err.message);
       }
     }
 
-    startWebcam();
+    startLocalStream();
   </script>
-
 </body>
 </html>
