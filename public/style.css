@@ -1025,16 +1025,16 @@ button:focus {
   z-index: 10;
 }
 .webcam-icon.admin {
-  top: -6px;
+  top: 0px;
   left: 0px;
 }
 
 .webcam-icon.modo {
-  top: -6px;
+  top: 0px;
   left: 0px;
 }
 
 .webcam-icon.user {
-  top: -6px;
+  top: -8px;
   left: 0;
 }
