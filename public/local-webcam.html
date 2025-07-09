@@ -2,35 +2,21 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Ma webcam</title>
+  <title>Ma Webcam</title>
   <style>
-    body {
-      margin: 0;
-      background: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    video {
-      max-width: 100%;
-      max-height: 100%;
-      border-radius: 8px;
-      border: 2px solid #ccc;
-      background: #222;
-    }
+    body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    video { max-width: 100%; max-height: 100%; border-radius: 8px; }
   </style>
 </head>
 <body>
-  <video id="local-video" autoplay muted playsinline></video>
-
+  <video id="local-video" autoplay playsinline muted></video>
   <script>
     async function startLocalWebcam() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         document.getElementById('local-video').srcObject = stream;
       } catch (e) {
-        alert("Impossible d'accéder à la webcam locale : " + e.message);
+        alert("Impossible d'accéder à la webcam : " + e.message);
       }
     }
     startLocalWebcam();
