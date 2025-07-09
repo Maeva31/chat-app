@@ -8,55 +8,49 @@
   <video id="remote-video" autoplay playsinline style="max-width:100%; max-height:100%; border-radius:8px; border:2px solid #ccc;"></video>
 
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const remoteUsername = urlParams.get('user');
-    const socket = io();
+  <video id="remote-video" autoplay playsinline></video>
+<script src="/socket.io/socket.io.js"></script>
+<script>
+  const urlParams = new URLSearchParams(window.location.search);
+  const remoteUsername = urlParams.get('user');
+  const socket = io();
+  const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  let pc = null;
+  const myUsername = localStorage.getItem('username');
 
-    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    let pc = null;
+  async function start() {
+    pc = new RTCPeerConnection(config);
 
-    async function start() {
-      pc = new RTCPeerConnection(config);
+    pc.ontrack = e => {
+      document.getElementById('remote-video').srcObject = e.streams[0];
+    };
 
-      pc.ontrack = event => {
-        const video = document.getElementById('remote-video');
-        if (video.srcObject !== event.streams[0]) {
-          video.srcObject = event.streams[0];
-          console.log('Flux distant reçu');
+    pc.onicecandidate = e => {
+      if (e.candidate) {
+        socket.emit('signal', { to: remoteUsername, from: myUsername, data: { candidate: e.candidate } });
+      }
+    };
+
+    socket.on('signal', async ({ from, data }) => {
+      if (from !== remoteUsername) return;
+      if (data.sdp) {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        if (data.sdp.type === 'offer') {
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit('signal', { to: from, from: myUsername, data: { sdp: pc.localDescription } });
         }
-      };
+      } else if (data.candidate) {
+        await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+      }
+    });
 
-      pc.onicecandidate = event => {
-        if (event.candidate) {
-          socket.emit('signal', { to: remoteUsername, data: { candidate: event.candidate } });
-        }
-      };
+    // Demande au serveur d'initier le call
+    socket.emit('request call', { to: remoteUsername });
+  }
 
-      socket.on('signal', async ({ from, data }) => {
-        if (from !== remoteUsername) return;
+  start();
+</script>
 
-        if (data.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-          if (data.sdp.type === 'offer') {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit('signal', { to: from, data: { sdp: pc.localDescription } });
-          }
-        } else if (data.candidate) {
-          try {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          } catch (e) {
-            console.error('Erreur ICE candidate:', e);
-          }
-        }
-      });
-
-      // Demande au serveur d’initier la connexion WebRTC vers remoteUsername
-      socket.emit('request call', { to: remoteUsername });
-    }
-
-    start();
-  </script>
 </body>
 </html>
