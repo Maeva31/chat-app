@@ -38,10 +38,7 @@ function openRemoteWebcamPopup(username) {
   }
 }
 
-
-
 document.addEventListener('DOMContentLoaded', () => {
-  // Bouton "Activer ma webcam"
   const startWebcamBtn = document.getElementById('start-webcam-btn');
   if (startWebcamBtn) {
     let popupCheckInterval;
@@ -60,16 +57,21 @@ document.addEventListener('DOMContentLoaded', () => {
       }, 500);
     });
   }
-
 });
 
-// Fonction pour démarrer la capture webcam locale (video seulement)
+// Démarre la capture webcam locale (vidéo seulement)
 async function startLocalStream() {
   if (localStream) return localStream;
   try {
     localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     const localVideo = document.getElementById('localVideo');
-    if (localVideo) localVideo.srcObject = localStream;
+    if (localVideo) {
+      localVideo.srcObject = localStream;
+      localVideo.muted = true; // mute local video pour éviter écho
+      localVideo.play().catch(e => {
+        console.warn('Erreur play vidéo locale:', e);
+      });
+    }
     return localStream;
   } catch (err) {
     console.error("Erreur accès webcam :", err.message);
@@ -85,68 +87,60 @@ async function createPeerConnection(remoteUsername) {
 
   if (!localStream) {
     localStream = await startLocalStream();
-    if (!localStream) return null; // Pas de stream = pas de connection
+    if (!localStream) return null; // Pas de stream = pas de connexion
   }
 
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
   pc.oniceconnectionstatechange = () => {
-  console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
-};
+    console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
+  };
 
-// Gestion ontrack améliorée (ajout de la piste dans MediaStream)
-pc.ontrack = event => {
-  let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+  pc.ontrack = event => {
+    console.log('Track received:', event.track.kind, event.track.readyState);
 
-  if (!remoteVideo) {
-    const container = document.getElementById('video-container');
-    if (!container) return;
+    let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
 
-    remoteVideo = document.createElement('video');
-    remoteVideo.id = `remoteVideo-${remoteUsername}`;
-    remoteVideo.autoplay = true;
-    remoteVideo.playsInline = true;
-    remoteVideo.style.width = '300px';
-    remoteVideo.style.height = '225px';
-    remoteVideo.style.border = '2px solid #ccc';
-    remoteVideo.style.borderRadius = '8px';
-    remoteVideo.style.margin = '5px';
+    if (!remoteVideo) {
+      const container = document.getElementById('video-container');
+      if (!container) return;
 
-    const label = document.createElement('div');
-    label.textContent = remoteUsername;
-    label.style.color = 'white';
-    label.style.textAlign = 'center';
+      remoteVideo = document.createElement('video');
+      remoteVideo.id = `remoteVideo-${remoteUsername}`;
+      remoteVideo.autoplay = true;
+      remoteVideo.playsInline = true;
+      remoteVideo.style.width = '300px';
+      remoteVideo.style.height = '225px';
+      remoteVideo.style.border = '2px solid #ccc';
+      remoteVideo.style.borderRadius = '8px';
+      remoteVideo.style.margin = '5px';
 
-    const wrapper = document.createElement('div');
-    wrapper.appendChild(remoteVideo);
-    wrapper.appendChild(label);
+      const label = document.createElement('div');
+      label.textContent = remoteUsername;
+      label.style.color = 'white';
+      label.style.textAlign = 'center';
 
-    container.appendChild(wrapper);
+      const wrapper = document.createElement('div');
+      wrapper.appendChild(remoteVideo);
+      wrapper.appendChild(label);
 
-    // Crée un MediaStream et l'assigne à la vidéo distante
-    remoteVideo.remoteStream = new MediaStream();
-    remoteVideo.srcObject = remoteVideo.remoteStream;
-  }
+      container.appendChild(wrapper);
 
-  // Ajoute la piste reçue dans le MediaStream
-  if (event.track.kind === 'video' || event.track.kind === 'audio') {
-    remoteVideo.remoteStream.addTrack(event.track);
-  }
-};
+      // Crée un MediaStream unique par utilisateur et l'assigne
+      remoteVideo.remoteStream = new MediaStream();
+      remoteVideo.srcObject = remoteVideo.remoteStream;
 
-// Ajout ici : au clic sur icône webcam distante, appelle callUser()
-const usersList = document.getElementById('users');
-if (usersList) {
-  usersList.addEventListener('click', e => {
-    if (e.target.classList.contains('webcam-icon')) {
-      const username = e.target.dataset.username;
-      if (username) {
-        callUser(username);       // <-- Ajouté pour démarrer l'appel WebRTC
-        openRemoteWebcamPopup(username);
-      }
+      remoteVideo.muted = false; // Ne mute pas la vidéo distante
+      remoteVideo.play().catch(e => {
+        console.warn('Erreur play vidéo distante:', e);
+      });
     }
-  });
-}
+
+    // Ajoute la piste reçue dans le MediaStream unique
+    if (event.track.kind === 'video' || event.track.kind === 'audio') {
+      remoteVideo.remoteStream.addTrack(event.track);
+    }
+  };
 
   pc.onicecandidate = event => {
     if (event.candidate) {
@@ -158,9 +152,9 @@ if (usersList) {
     }
   };
 
+  peerConnections[remoteUsername] = pc;
+  return pc;
 }
-
-
 
 // Démarrer un appel WebRTC à un utilisateur
 async function callUser(remoteUsername) {
@@ -180,6 +174,23 @@ async function callUser(remoteUsername) {
     console.error("Erreur lors de l'appel à l'utilisateur:", err);
   }
 }
+
+// Gestion clic sur icône webcam distante pour lancer appel WebRTC + popup
+const usersList = document.getElementById('users');
+if (usersList) {
+  usersList.addEventListener('click', e => {
+    if (e.target.classList.contains('webcam-icon')) {
+      const username = e.target.dataset.username;
+      if (username) {
+        callUser(username);
+        openRemoteWebcamPopup(username);
+      }
+    }
+  });
+}
+
+
+
 
 // Gérer les signaux reçus (offer, answer, candidate)
 socket.on('signal', async ({ from, data }) => {
