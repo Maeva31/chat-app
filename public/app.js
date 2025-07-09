@@ -172,10 +172,10 @@ socket.on('signal', async ({ from, data }) => {
   const pc = await createPeerConnection(from);
   if (!pc) return;
 
-  if (data.sdp) {
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+  try {
+    if (data.sdp) {
       if (data.sdp.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         socket.emit('signal', {
@@ -183,18 +183,21 @@ socket.on('signal', async ({ from, data }) => {
           from: myUsername,
           data: { sdp: pc.localDescription }
         });
+      } else if (data.sdp.type === 'answer') {
+        if (pc.signalingState !== 'stable') {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        } else {
+          console.warn("Ignorer setRemoteDescription answer : signalingState stable");
+        }
       }
-    } catch (err) {
-      console.error("Erreur setRemoteDescription / createAnswer:", err);
-    }
-  } else if (data.candidate) {
-    try {
+    } else if (data.candidate) {
       await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-    } catch (e) {
-      console.error("Erreur ajout ICE candidate:", e);
     }
+  } catch (err) {
+    console.error("Erreur setRemoteDescription / createAnswer:", err);
   }
 });
+
 
 // Démarrage localStream au chargement
 startLocalStream();
@@ -290,6 +293,12 @@ socket.on('user list', (users) => {
 });
 
 
+if (pc.signalingState === 'stable' && data.sdp.type === 'answer') {
+  // Erreur : ne pas appliquer l'answer dans l'état stable
+  console.warn("Tentative de setRemoteDescription answer en état stable, ignorer");
+  return;
+}
+await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
 
 
