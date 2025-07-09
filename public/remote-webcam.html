@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <title>Webcam distante</title>
+  <style>
+    body { background: #000; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; }
+    video { max-width: 100%; max-height: 100%; border-radius: 8px; }
+  </style>
 </head>
 <body>
   <video id="remote-video" autoplay playsinline></video>
@@ -34,18 +38,18 @@
       pc.ontrack = event => {
         const video = document.getElementById('remote-video');
         video.srcObject = event.streams[0];
-        video.play().catch(console.warn);
       };
     }
 
-    // On attend les signaux (offer, answer, candidate)
     socket.on('signal', async ({ from, to, data }) => {
-      if (from !== remoteUsername) return;
+      // La popup distante ne s'occupe que des signaux venant de l'utilisateur distant
+      if (from !== remoteUsername || to !== myUsername) return;
 
       if (!pc) createPeerConnection();
 
       if (data.sdp) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
         if (data.sdp.type === 'offer') {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -63,10 +67,6 @@
         }
       }
     });
-
-    // Demander à l’autre utilisateur de lancer l’appel
-    socket.emit('ready for call', { to: remoteUsername, from: myUsername });
-
   </script>
 </body>
 </html>
