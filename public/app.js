@@ -226,28 +226,30 @@ function updateUserList(users) {
 
     // Ajouter icône webcam si active
     if (webcamActive) {
-      const camIcon = document.createElement('img');
-      camIcon.src = '/webcam.gif';
-      camIcon.alt = 'Webcam active';
-      camIcon.title = 'Webcam active - cliquer pour voir';
-      camIcon.classList.add('webcam-icon');
-      camIcon.style.width = '16px';
-      camIcon.style.height = '16px';
-      camIcon.style.cursor = 'pointer';
-      camIcon.style.position = 'absolute';
-      camIcon.style.top = '-6px';
-      camIcon.style.left = '0';
-      camIcon.style.zIndex = '10';
+  const camIcon = document.createElement('img');
+  camIcon.src = '/webcam.gif';
+  camIcon.alt = 'Webcam active';
+  camIcon.title = 'Webcam active - cliquer pour voir';
+  camIcon.classList.add('webcam-icon');
 
-      roleIconSpan.style.position = 'relative';
+  // Ajoute classe selon rôle
+  if (role === 'admin') {
+    camIcon.classList.add('admin');
+  } else if (role === 'modo') {
+    camIcon.classList.add('modo');
+  } else {
+    camIcon.classList.add('user');
+  }
 
-      camIcon.dataset.username = username;
-      camIcon.addEventListener('click', () => {
-        openRemoteWebcamPopup(username);
-      });
+  roleIconSpan.style.position = 'relative';
 
-      roleIconSpan.appendChild(camIcon);
-    }
+  camIcon.dataset.username = username;
+  camIcon.addEventListener('click', () => {
+    openRemoteWebcamPopup(username);
+  });
+
+  roleIconSpan.appendChild(camIcon);
+}
 
     // Clic pseudo pour mention
     const usernameSpan = li.querySelector('.username-span');
