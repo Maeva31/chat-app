@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Webcam locale & distante</title>
+  <title>Ma webcam</title>
   <style>
     body {
       margin: 0;
@@ -11,12 +11,10 @@
       justify-content: center;
       align-items: center;
       height: 100vh;
-      gap: 10px;
-      flex-wrap: wrap;
     }
     video {
-      max-width: 45vw;
-      max-height: 45vh;
+      max-width: 100%;
+      max-height: 100%;
       border-radius: 8px;
       border: 2px solid #ccc;
       background: #222;
@@ -25,74 +23,17 @@
 </head>
 <body>
   <video id="local-video" autoplay muted playsinline></video>
-  <video id="remote-video" autoplay playsinline></video>
 
-  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const remoteUsername = urlParams.get('user');
-    const socket = io();
-    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    let pc = null;
-    const myUsername = localStorage.getItem('username') || 'unknown';
-    let localStream = null;
-
-    async function start() {
+    async function startLocalWebcam() {
       try {
-        pc = new RTCPeerConnection(config);
-
-        // Récupérer webcam locale
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        const localVideo = document.getElementById('local-video');
-        localVideo.srcObject = localStream;
-
-        // Ajouter pistes locales à la connexion WebRTC
-        localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-        // Quand un flux distant arrive, l'afficher
-        pc.ontrack = e => {
-          const remoteVideo = document.getElementById('remote-video');
-          if (remoteVideo.srcObject !== e.streams[0]) {
-            remoteVideo.srcObject = e.streams[0];
-          }
-        };
-
-        // Envoyer candidates ICE
-        pc.onicecandidate = e => {
-          if (e.candidate) {
-            socket.emit('signal', { to: remoteUsername, from: myUsername, data: { candidate: e.candidate } });
-          }
-        };
-
-        // Recevoir signaux WebRTC
-        socket.on('signal', async ({ from, data }) => {
-          if (from !== remoteUsername) return;
-          if (data.sdp) {
-            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-            if (data.sdp.type === 'offer') {
-              const answer = await pc.createAnswer();
-              await pc.setLocalDescription(answer);
-              socket.emit('signal', { to: from, from: myUsername, data: { sdp: pc.localDescription } });
-            }
-          } else if (data.candidate) {
-            try {
-              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-            } catch (e) {
-              console.error('Erreur ajout ICE candidate:', e);
-            }
-          }
-        });
-
-        // Demander au serveur d’initier l’appel
-        socket.emit('request call', { to: remoteUsername });
-
-      } catch (err) {
-        console.error('Erreur WebRTC popup:', err);
-        alert('Erreur lors de la connexion webcam locale et distante.');
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        document.getElementById('local-video').srcObject = stream;
+      } catch (e) {
+        alert("Impossible d'accéder à la webcam locale : " + e.message);
       }
     }
-
-    start();
+    startLocalWebcam();
   </script>
 </body>
 </html>
