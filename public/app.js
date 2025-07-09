@@ -96,22 +96,6 @@ async function createPeerConnection(remoteUsername) {
     console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
   };
 
-async function createPeerConnection(remoteUsername) {
-  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
-
-  const pc = new RTCPeerConnection(config);
-
-  if (!localStream) {
-    localStream = await startLocalStream();
-    if (!localStream) return null; // Pas de stream = pas de connexion
-  }
-
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-  pc.oniceconnectionstatechange = () => {
-    console.log(`ICE connection state with ${remoteUsername}: ${pc.iceConnectionState}`);
-  };
-
   pc.ontrack = event => {
     console.log('Track received:', event.track.kind, event.track.readyState);
 
@@ -171,7 +155,7 @@ async function createPeerConnection(remoteUsername) {
   peerConnections[remoteUsername] = pc;
   return pc;
 }
-}
+
 
 // Démarrer un appel WebRTC à un utilisateur
 async function callUser(remoteUsername) {
