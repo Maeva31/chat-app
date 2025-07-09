@@ -61,17 +61,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // Gestion clic icône webcam distante
-  const usersList = document.getElementById('users');
-  if (usersList) {
-    usersList.addEventListener('click', e => {
-      if (e.target.classList.contains('webcam-icon')) {
-        const username = e.target.dataset.username;
-        if (username) openRemoteWebcamPopup(username);
-      }
-    });
-  }
-});
 
 // Fonction pour démarrer la capture webcam locale (video seulement)
 async function startLocalStream() {
