@@ -183,28 +183,39 @@ app.post('/upload', upload.single('file'), (req, res) => {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
+  // écouteur 'signal' pour WebRTC
+  socket.on('signal', ({ to, from, data }) => {
+  const toSocketId = usernameToSocketId[to];
+  if (toSocketId) {
+    io.to(toSocketId).emit('signal', { from, data });
+    console.log(`Signal envoyé de ${from} vers ${to}`);
+  } else {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
+  }
+});
+
+
   socket.on('watch webcam', ({ from, to }) => {
-  const toSocketId = usernameToSocketId[to];
-  if (!toSocketId) {
-    socket.emit('error message', `Utilisateur ${to} non connecté`);
-    return;
-  }
-  // Demande au client "to" de commencer à envoyer sa webcam à "from"
-  io.to(toSocketId).emit('watch webcam request', { from });
-});
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    io.to(toSocketId).emit('watch webcam request', { from });
+  });
 
-socket.on('request call', ({ to }) => {
-  const toSocketId = usernameToSocketId[to];
-  if (!toSocketId) {
-    socket.emit('error message', `Utilisateur ${to} non connecté`);
-    return;
-  }
-  // Récupérer le pseudo de l'émetteur
-  const senderUser = Object.values(users).find(u => u.id === socket.id);
-  const fromUsername = senderUser ? senderUser.username : socket.id;
+  socket.on('request call', ({ to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    const senderUser = Object.values(users).find(u => u.id === socket.id);
+    const fromUsername = senderUser ? senderUser.username : socket.id;
 
-  io.to(toSocketId).emit('request call', { from: fromUsername });
-});
+    io.to(toSocketId).emit('request call', { from: fromUsername });
+  });
 
 
 
@@ -1005,9 +1016,6 @@ socket.on('request call', ({ to }) => {
   });
 
   // --- DEBUT AJOUT WEBRTC AUDIO/VIDEO SIGNALING ---
-
-  // Stockage temporaire des connexions WebRTC pour chaque pair
-  const peerConnections = {}; // { socketId: RTCPeerConnection }
 
   // Transmission des offres SDP entre pairs
   socket.on('webrtc offer', ({ to, offer }) => {
