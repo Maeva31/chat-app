@@ -188,15 +188,15 @@ app.post('/upload', upload.single('file'), (req, res) => {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
-  socket.on('watch webcam', ({ from, to }) => {
-  const toSocketId = usernameToSocketId[to];
-  if (!toSocketId) {
-    socket.emit('error message', `Utilisateur ${to} non connecté`);
-    return;
-  }
-  // Demande au client "to" de commencer à envoyer sa webcam à "from"
-  io.to(toSocketId).emit('watch webcam request', { from });
-});
+    socket.on('watch webcam', ({ from, to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    io.to(toSocketId).emit('watch webcam request', { from });
+  });
+
 
 
   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
@@ -204,6 +204,7 @@ io.on('connection', (socket) => {
       socket.emit('error message', 'Salon invalide pour upload de fichier.');
       return;
     }
+    
 
     // Recherche l'utilisateur AVANT d'émettre
     const user = Object.values(users).find(u => u.id === socket.id);
