@@ -3,68 +3,27 @@
 <head>
   <meta charset="UTF-8" />
   <title>Webcam distante</title>
-  <style>
-    body {
-      margin: 0;
-      background-color: #000;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      overflow: hidden;
-      color: white;
-      font-family: Arial, sans-serif;
-      flex-direction: column;
-    }
-    video#remote-video {
-      width: 320px;
-      height: 240px;
-      border-radius: 8px;
-      border: 3px solid #2196f3;
-      background-color: #111;
-      object-fit: cover;
-    }
-    #info {
-      margin-top: 10px;
-      font-size: 14px;
-    }
-  </style>
 </head>
 <body>
-
-  <video id="remote-video" autoplay playsinline muted></video>
-  <div id="info">Connexion à la webcam distante...</div>
+  <video id="remote-video" autoplay playsinline></video>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
-    function getQueryUsername() {
-      const params = new URLSearchParams(window.location.search);
-      return params.get('user');
-    }
-
-    const remoteUsername = getQueryUsername();
-    const myUsername = localStorage.getItem('username') || 'inconnu';
-
-    const infoElem = document.getElementById('info');
-    const remoteVideo = document.getElementById('remote-video');
-
-    if (!remoteUsername) {
-      infoElem.textContent = "Erreur : nom d'utilisateur distant non spécifié.";
-      throw new Error("Utilisateur distant non spécifié");
-    }
+    // Récupérer le username distant de la query string
+    const params = new URLSearchParams(window.location.search);
+    const remoteUsername = params.get('user');
+    const myUsername = localStorage.getItem('username');
 
     const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
     let pc = null;
 
-    async function createPeerConnection() {
+    function createPeerConnection() {
       pc = new RTCPeerConnection(config);
 
       pc.onicecandidate = event => {
         if (event.candidate) {
-          console.log('Envoi ICE candidate vers', remoteUsername);
           socket.emit('signal', {
             to: remoteUsername,
             from: myUsername,
@@ -74,31 +33,19 @@
       };
 
       pc.ontrack = event => {
-        console.log('Track reçu', event.streams);
-        remoteVideo.srcObject = event.streams[0];
-        infoElem.textContent = `Webcam distante : ${remoteUsername}`;
+        const video = document.getElementById('remote-video');
+        video.srcObject = event.streams[0];
+        video.play().catch(console.warn);
       };
-
-      pc.onconnectionstatechange = () => {
-        console.log('État de la connexion:', pc.connectionState);
-        if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed' || pc.connectionState === 'closed') {
-          infoElem.textContent = 'Connexion perdue ou fermée.';
-          remoteVideo.srcObject = null;
-        }
-      };
-
-      return pc;
     }
 
     socket.on('signal', async ({ from, to, data }) => {
-      if (from !== remoteUsername || to !== myUsername) return;
+      if (from !== remoteUsername) return;
 
-      if (!pc) pc = await createPeerConnection();
+      if (!pc) createPeerConnection();
 
       if (data.sdp) {
-        console.log('Signal SDP reçu:', data.sdp.type);
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
         if (data.sdp.type === 'offer') {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -111,23 +58,14 @@
       } else if (data.candidate) {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          console.log('ICE candidate ajoutée');
-        } catch (err) {
-          console.error('Erreur ajout ICE candidate:', err);
+        } catch (e) {
+          console.error('Erreur ajout candidate:', e);
         }
       }
     });
 
-    // ** IMPORTANT **
-    // La popup distante est passive : elle n'initie pas l'appel. 
-    // L’initiateur est la page principale qui envoie l’offre.
-
-    // Nettoyage à la fermeture
-    window.addEventListener('beforeunload', () => {
-      if (pc) pc.close();
-      socket.disconnect();
-    });
+    // Demander à l’autre utilisateur de démarrer l’appel (optionnel)
+    socket.emit('ready for call', { to: remoteUsername, from: myUsername });
   </script>
-
 </body>
 </html>
