@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
   socket.on('webcam status update', ({ username, active }) => {
     console.log('webcam status update:', username, active);
     webcamStatus[username] = active;
+
     if (window.users) {
       window.users = window.users.map(u => u.username === username ? { ...u, webcamActive: active } : u);
       updateUserList(window.users);
@@ -23,9 +24,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const startWebcamBtn = document.getElementById('start-webcam-btn');
   if (startWebcamBtn) {
     let popupCheckInterval;
+
     startWebcamBtn.addEventListener('click', () => {
       openLocalWebcamPopup();
+
       socket.emit('webcam status', { username: myUsername, active: true });
+
       if (popupCheckInterval) clearInterval(popupCheckInterval);
       popupCheckInterval = setInterval(() => {
         if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
@@ -46,44 +50,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
   }
-
-  // --- GESTION WEBRTC SIGNALING ---
-
-  socket.on('webrtc offer', async ({ from, offer }) => {
-    let pc = peerConnections[from];
-    if (!pc) pc = await createPeerConnection(from);
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(offer));
-      const answer = await pc.createAnswer();
-      await pc.setLocalDescription(answer);
-      socket.emit('webrtc answer', {
-        to: from,
-        answer: pc.localDescription
-      });
-    } catch (err) {
-      console.error('Erreur traitement webrtc offer :', err);
-    }
-  });
-
-  socket.on('webrtc answer', async ({ from, answer }) => {
-    const pc = peerConnections[from];
-    if (!pc) return;
-    try {
-      await pc.setRemoteDescription(new RTCSessionDescription(answer));
-    } catch (err) {
-      console.error('Erreur traitement webrtc answer :', err);
-    }
-  });
-
-  socket.on('webrtc ice candidate', async ({ from, candidate }) => {
-    const pc = peerConnections[from];
-    if (!pc) return;
-    try {
-      await pc.addIceCandidate(new RTCIceCandidate(candidate));
-    } catch (err) {
-      console.error('Erreur ajout ice candidate :', err);
-    }
-  });
 });
 
 // --- Fonctions auxiliaires ---
@@ -99,6 +65,7 @@ function openLocalWebcamPopup() {
 
 function openRemoteWebcamPopup(username) {
   if (!window.remoteWebcamPopups) window.remoteWebcamPopups = {};
+
   if (!window.remoteWebcamPopups[username] || window.remoteWebcamPopups[username].closed) {
     window.remoteWebcamPopups[username] = window.open(
       `remote-webcam.html?user=${encodeURIComponent(username)}`,
@@ -127,25 +94,31 @@ async function createPeerConnection(remoteUsername) {
   if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
   const pc = new RTCPeerConnection(config);
+
   if (!localStream) {
     localStream = await startLocalStream();
     if (!localStream) return null;
   }
+
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
   pc.onicecandidate = event => {
     if (event.candidate) {
-      socket.emit('webrtc ice candidate', {
+      socket.emit('signal', {
         to: remoteUsername,
         from: myUsername,
-        candidate: event.candidate
+        data: { candidate: event.candidate }
       });
     }
   };
+
   pc.ontrack = event => {
     let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+
     if (!remoteVideo) {
       const container = document.getElementById('video-container');
       if (!container) return;
+
       remoteVideo = document.createElement('video');
       remoteVideo.id = `remoteVideo-${remoteUsername}`;
       remoteVideo.autoplay = true;
@@ -164,8 +137,10 @@ async function createPeerConnection(remoteUsername) {
       const wrapper = document.createElement('div');
       wrapper.appendChild(remoteVideo);
       wrapper.appendChild(label);
+
       container.appendChild(wrapper);
     }
+
     remoteVideo.srcObject = event.streams[0];
   };
 
@@ -181,18 +156,56 @@ async function callUser(remoteUsername) {
     const offer = await pc.createOffer();
     await pc.setLocalDescription(offer);
 
-    socket.emit('webrtc offer', {
+    socket.emit('signal', {
       to: remoteUsername,
       from: myUsername,
-      offer: pc.localDescription
+      data: { sdp: pc.localDescription }
     });
   } catch (err) {
     console.error("Erreur lors de l'appel à l'utilisateur:", err);
   }
 }
 
-// --- Met à jour la liste des utilisateurs affichée ---
-function updateUserList(users) {
+socket.on('signal', async ({ from, data }) => {
+  if (from === myUsername) return;
+
+  const pc = await createPeerConnection(from);
+  if (!pc) return;
+
+  try {
+    if (data.sdp) {
+      if (data.sdp.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('signal', {
+          to: from,
+          from: myUsername,
+          data: { sdp: pc.localDescription }
+        });
+      } else if (data.sdp.type === 'answer') {
+        if (pc.signalingState !== 'stable') {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        } else {
+          console.warn("Ignorer setRemoteDescription answer : signalingState stable");
+        }
+      }
+    } else if (data.candidate) {
+      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+    }
+  } catch (err) {
+    console.error("Erreur setRemoteDescription / createAnswer:", err);
+  }
+});
+
+
+// Démarrage localStream au chargement
+startLocalStream();
+
+
+
+  // Met à jour la liste des utilisateurs affichée
+ function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -210,6 +223,7 @@ function updateUserList(users) {
 
     const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
+    // Structure HTML avec âge, rôle, pseudo
     li.innerHTML = `
       <span class="role-icon"></span> 
       <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
@@ -219,6 +233,7 @@ function updateUserList(users) {
     const roleIconSpan = li.querySelector('.role-icon');
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
+
     // Supprimer ancienne icône webcam si présente
     const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
     if (oldCamIcon) oldCamIcon.remove();
@@ -250,6 +265,7 @@ function updateUserList(users) {
   roleIconSpan.appendChild(camIcon);
 }
 
+
     // Clic pseudo pour mention
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
@@ -264,42 +280,24 @@ function updateUserList(users) {
   });
 }
 
+
+// Mise à jour liste utilisateurs et appel WebRTC quand reçue
 socket.on('user list', (users) => {
-  window.users = users; // stocker globalement
-  // Met à jour webcamStatus pour chaque user
-  users.forEach(u => {
-    webcamStatus[u.username] = u.webcamActive || false;
-  });
+  window.users = users;  // garde copie globale
   updateUserList(users);
+
+  users.forEach(user => {
+    if (user.username !== myUsername) {
+      if (!peerConnections[user.username]) {
+        callUser(user.username);
+      }
+    }
+  });
 });
 
 
 
 
-
-function getUserListForClient() {
-  return Object.values(users).map(user => ({
-    username: user.username,
-    role: user.role,
-    gender: user.gender,
-    age: user.age,
-    webcamActive: !!user.webcamActive // ou true/false selon état actuel
-  }));
-}
-
-// Quand le serveur envoie la liste à tous les clients
-io.emit('user list', getUserListForClient());
-
-
-socket.on('webcam status', ({ username, active }) => {
-  if (users[username]) {
-    users[username].webcamActive = active;
-  }
-  io.emit('webcam status update', { username, active });
-
-  // Met à jour la liste complète, notamment webcamActive
-  io.emit('user list', getUserListForClient());
-});
 
 
 
@@ -1372,37 +1370,12 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     modalError.style.display = 'block';
   });
 
-socket.on('chat history full', (items) => {
-  const chatMessages = document.getElementById('chat-messages');
-  if (!chatMessages) return;
-  chatMessages.innerHTML = ''; // vide avant affichage
-
-  items.forEach(item => {
-    const msgElem = document.createElement('div');
-    msgElem.classList.add('chat-item');
-
-    if (item.type === 'message') {
-      msgElem.textContent = `[${new Date(item.timestamp).toLocaleTimeString()}] ${item.username}: ${item.message}`;
-    } else if (item.type === 'file') {
-      const time = new Date(item.timestamp).toLocaleTimeString();
-      msgElem.textContent = `[${time}] ${item.username} a envoyé une image : `;
-
-      const img = document.createElement('img');
-      img.src = item.data || `/uploads/${item.filename}`;
-      img.alt = 'Image uploadée';
-      img.style.maxWidth = '200px';
-      img.style.display = 'block';
-      img.style.marginTop = '5px';
-
-      msgElem.appendChild(img);
-    }
-
-    chatMessages.appendChild(msgElem);
+  socket.on('chat history', (messages) => {
+    const chatMessages = document.getElementById('chat-messages');
+    if (!chatMessages) return;
+    chatMessages.innerHTML = '';
+    messages.forEach(addMessageToChat);
   });
-
-  chatMessages.scrollTop = chatMessages.scrollHeight;
-});
-
 
   socket.on('chat message', addMessageToChat);
   socket.on('server message', (msg) => {
