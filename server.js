@@ -1033,6 +1033,14 @@ socket.on('request call', ({ to }) => {
     }
   });
 
+  socket.on('call user', ({ to, from }) => {
+  const targetSocket = io.sockets.sockets.get(to);
+  if (targetSocket) {
+    targetSocket.emit('call user', { from });
+  }
+});
+
+
   // Mise à jour du statut webcam (active ou non)
   socket.on('webcam status', ({ username, active }) => {
     webcamStatus[username] = active; // Mise à jour côté serveur
