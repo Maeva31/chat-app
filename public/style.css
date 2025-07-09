@@ -1015,19 +1015,10 @@ button:focus {
 
 
 
- .webcam-icon {
+.webcam-icon,
+.user-item .role-icon {
   position: absolute;
-  top: -6px;    /* place l'icône un peu au-dessus mais visible */
-  left: 0;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.webcam-icon .user-item .role-icon {
-  position: absolute;
-  top: -6px;    /* place l'icône un peu au-dessus mais visible */
+  top: -6px;
   left: 0;
   width: 16px;
   height: 16px;
