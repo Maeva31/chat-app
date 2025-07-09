@@ -316,28 +316,35 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
-  const { username, gender, age, invisible, password } = data;
+ let { username, gender, age, invisible, password } = data;
 
-  // Validation — ce que tu as écrit :
-  if (!username || username.length > 16 || /\s/.test(username)) {
-    return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
-  }
-  if (isNaN(age) || age < 18 || age > 89) {
-    return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
-  }
-  if (!gender) {
-    return socket.emit('username error', 'Genre non spécifié');
-  }
+// Normalisation simple
+username = typeof username === 'string' ? username.trim() : '';
+gender = (typeof gender === 'string' && gender.trim() !== '') ? gender.trim() : null;
+age = Number(age);
 
-  if (bannedUsers.has(username)) {
-    socket.emit('username error', 'Vous êtes banni du serveur.');
-    socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
-    return;
-  }
+if (!username || username.length > 16 || /\s/.test(username)) {
+  return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
+}
 
-  if (users[username] && users[username].id !== socket.id) {
-    return socket.emit('username exists', username);
-  }
+if (isNaN(age) || age < 18 || age > 89) {
+  return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
+}
+
+if (!gender) {
+  return socket.emit('username error', 'Genre non spécifié');
+}
+
+if (bannedUsers.has(username)) {
+  socket.emit('username error', 'Vous êtes banni du serveur.');
+  socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+  return;
+}
+
+if (users[username] && users[username].id !== socket.id) {
+  return socket.emit('username exists', username);
+}
+
 
   usernameToSocketId[username] = socket.id;
 
