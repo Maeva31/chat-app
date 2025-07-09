@@ -59,6 +59,20 @@ if (startWebcamBtn) {
   }
 });
 
+socket.on('request call', async ({ from }) => {
+  console.log('Demande appel WebRTC reçue de', from);
+  const pc = await createPeerConnection(from);
+  if (!pc) return;
+
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  socket.emit('signal', {
+    to: from,
+    from: myUsername,
+    data: { sdp: pc.localDescription }
+  });
+});
 
 
 
