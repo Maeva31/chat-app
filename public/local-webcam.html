@@ -4,48 +4,47 @@
   <meta charset="UTF-8" />
   <title>Webcam locale</title>
   <style>
-    body { margin: 0; background: #000; display: flex; justify-content: center; align-items: center; height: 100vh; }
-    video { width: 320px; height: 240px; border-radius: 8px; border: 2px solid #ccc; background: #222; }
+    /* Le body et html prennent toute la taille de la popup */
+    html, body {
+      margin: 0; padding: 0; height: 100%; width: 100%; background: black; overflow: hidden;
+      display: flex; justify-content: center; align-items: center;
+    }
+    video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover; /* Remplit toute la zone sans déformer */
+      background: black;
+      border: none; /* Pas de bordure */
+      margin: 0;
+      display: block;
+    }
   </style>
 </head>
 <body>
-  <video id="localVideo" autoplay muted playsinline></video>
+  <video id="localVideo" autoplay playsinline muted></video>
 
-  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    let localStream = null;
-    let myUsername = null;
-
-    // Recevoir le username de la page principale via postMessage
-    window.addEventListener('message', async (event) => {
-      if (event.data?.type === 'init' && event.data.username) {
-        myUsername = event.data.username;
-        await startLocalStream();
-        // Notifier serveur webcam active
-        socket.emit('webcam status', { username: myUsername, active: true });
-      }
-    });
+    let username = null;
 
     async function startLocalStream() {
       try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        const videoElem = document.getElementById('localVideo');
-        videoElem.srcObject = localStream;
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        document.getElementById('localVideo').srcObject = stream;
       } catch (err) {
-        alert("Impossible d'accéder à la webcam: " + err.message);
+        console.error("Erreur accès webcam :", err);
+        alert("Impossible d'accéder à la webcam : " + err.message);
       }
     }
 
-    window.addEventListener('beforeunload', () => {
-      // Quand la popup se ferme, prévenir le serveur que la webcam est inactive
-      if (myUsername) {
-        socket.emit('webcam status', { username: myUsername, active: false });
-      }
-      if (localStream) {
-        localStream.getTracks().forEach(track => track.stop());
+    window.addEventListener('message', event => {
+      if (!event.data) return;
+      if (event.data.type === 'init' && event.data.username) {
+        username = event.data.username;
+        console.log("Local webcam popup initialisé pour :", username);
       }
     });
+
+    startLocalStream();
   </script>
 </body>
 </html>
