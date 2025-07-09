@@ -223,26 +223,7 @@ startWebcamBtn.addEventListener('click', () => {
   // Démarre capture locale au chargement
   startLocalStream();
 
-  // Gestion modale webcam classique (aperçu local)
-const webcamModal = document.getElementById('webcam-modal');
-const webcamVideo = document.getElementById('webcam-video');
-let webcamStream = null;
-
-const usersList = document.getElementById('users');
-
-if (usersList && webcamVideo && webcamModal) {
-  usersList.addEventListener('click', async (event) => {
-    if (event.target.classList.contains('webcam-icon')) {
-      try {
-        webcamStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        webcamVideo.srcObject = webcamStream;
-        webcamModal.style.display = 'flex';
-      } catch (e) {
-        alert("Impossible d'accéder à la webcam : " + e.message);
-      }
-    }
-  });
-}
+ 
 
 
 
