@@ -1024,3 +1024,17 @@ button:focus {
   cursor: pointer;
   z-index: 10;
 }
+.webcam-icon.admin {
+  top: -6px;
+  left: 0px;
+}
+
+.webcam-icon.modo {
+  top: -6px;
+  left: 0px;
+}
+
+.webcam-icon.user {
+  top: -6px;
+  left: 0;
+}
