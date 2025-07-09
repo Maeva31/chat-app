@@ -960,8 +960,8 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
-    console.log('webcam status:', webcamStatus);
-    console.log('users:', window.users);
+  console.log('webcam status:', webcamStatus);
+  console.log('users:', window.users);
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -988,40 +988,44 @@ if (usernameInput && passwordInput) {
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
-  const roleIconSpan = li.querySelector('.role-icon');
-const icon = createRoleIcon(role);
-if (icon) roleIconSpan.appendChild(icon);
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
 
-if (webcamActive) {
-  let camIcon = roleIconSpan.querySelector('.webcam-icon');
-  if (!camIcon) {
-    camIcon = document.createElement('img');
-    camIcon.src = '/webcam.gif';
-    camIcon.alt = 'Webcam active';
-    camIcon.title = 'Webcam active - cliquer pour voir';
-    camIcon.classList.add('webcam-icon');
-    camIcon.style.width = '16px';
-    camIcon.style.height = '16px';
-    camIcon.style.cursor = 'pointer';
-    camIcon.style.position = 'absolute';
-    camIcon.style.top = '0';
-    camIcon.style.left = '0';
-    camIcon.style.zIndex = '9999';  // ++ z-index
+    if (webcamActive) {
+      let camIcon = roleIconSpan.querySelector('.webcam-icon');
+      if (!camIcon) {
+        camIcon = document.createElement('img');
+        camIcon.src = '/webcam.gif';
+        camIcon.alt = 'Webcam active';
+        camIcon.title = 'Webcam active - cliquer pour voir';
+        camIcon.classList.add('webcam-icon');
+        camIcon.style.width = '16px';
+        camIcon.style.height = '16px';
+        camIcon.style.cursor = 'pointer';
+        camIcon.style.position = 'absolute';
+        camIcon.style.top = '0';
+        camIcon.style.left = '0';
+        camIcon.style.zIndex = '9999';  // ++ z-index
 
-    roleIconSpan.style.position = 'relative';
+        roleIconSpan.style.position = 'relative';
 
-    camIcon.addEventListener('click', () => {
-      console.log('Clic sur webcam de', username);
-      window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
-    });
+        camIcon.addEventListener('click', () => {
+          console.log('Clic sur webcam de', username);
+          window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
+        });
 
-    roleIconSpan.appendChild(camIcon);
-  }
+        roleIconSpan.appendChild(camIcon);
+      }
+    } else {
+      const camIcon = roleIconSpan.querySelector('.webcam-icon');
+      if (camIcon) camIcon.remove();
+    }
 
-} else {
-  const camIcon = roleIconSpan.querySelector('.webcam-icon');
-  if (camIcon) camIcon.remove();
+    userList.appendChild(li);
+  });
 }
+
 
 
 
