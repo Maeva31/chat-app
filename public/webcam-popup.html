@@ -9,40 +9,38 @@
   </style>
 </head>
 <body>
-  <video id="local-video" autoplay playsinline muted></video>
+  <video id="remote-video" autoplay playsinline></video>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
 
-    // Récupérer le pseudo distant depuis la query string
+    // Récupère le pseudo distant de la query string
     const remoteUsername = new URLSearchParams(window.location.search).get('user');
     if (!remoteUsername) {
-      alert("Utilisateur non spécifié");
-      throw new Error("Utilisateur non spécifié");
+      alert("Utilisateur distant non spécifié");
+      throw new Error("Utilisateur distant non spécifié");
     }
 
-    // Ton pseudo local (celui qui regarde)
     const myUsername = localStorage.getItem('username');
     if (!myUsername) {
       alert("Tu dois être connecté pour voir une webcam.");
       throw new Error("Utilisateur local non connecté");
     }
 
-    const videoElem = document.getElementById('local-video');
+    const videoElem = document.getElementById('remote-video');
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
     let pc = null;
 
-    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-    // Création de la connexion WebRTC côté receveur
+    // Initialise la connexion WebRTC côté receveur (popup)
     async function startReceiving() {
       pc = new RTCPeerConnection(config);
 
-      pc.ontrack = (event) => {
+      pc.ontrack = event => {
         videoElem.srcObject = event.streams[0];
       };
 
-      pc.onicecandidate = (event) => {
+      pc.onicecandidate = event => {
         if (event.candidate) {
           socket.emit('signal', {
             to: remoteUsername,
@@ -52,11 +50,11 @@
         }
       };
 
-      // Demander au serveur de commencer la négociation pour voir la webcam de remoteUsername
+      // Demande au serveur de commencer la négociation (lui dira au streamer de faire l'offre)
       socket.emit('watch webcam', { from: myUsername, to: remoteUsername });
     }
 
-    // Réception des signaux WebRTC
+    // Écoute des signaux WebRTC
     socket.on('signal', async ({ from, data }) => {
       if (from !== remoteUsername) return;
 
@@ -64,7 +62,6 @@
 
       if (data.sdp) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
         if (data.sdp.type === 'offer') {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
@@ -78,8 +75,8 @@
       } else if (data.candidate) {
         try {
           await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (e) {
-          console.error("Erreur ICE candidate:", e);
+        } catch (err) {
+          console.error("Erreur ICE candidate:", err);
         }
       }
     });
