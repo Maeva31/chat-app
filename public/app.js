@@ -1006,17 +1006,18 @@ if (webcamActive) {
     camIcon.style.position = 'absolute';
     camIcon.style.top = '0';
     camIcon.style.left = '0';
-    camIcon.style.zIndex = '10';
+    camIcon.style.zIndex = '9999';  // ++ z-index
+
     roleIconSpan.style.position = 'relative';
 
-   camIcon.addEventListener('click', () => {
-  console.log('Clic sur webcam de', username);
-  window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
-});
-
+    camIcon.addEventListener('click', () => {
+      console.log('Clic sur webcam de', username);
+      window.open(`webcam-popup.html?user=${username}`, 'WebcamPopup', 'width=320,height=260');
+    });
 
     roleIconSpan.appendChild(camIcon);
   }
+
 } else {
   const camIcon = roleIconSpan.querySelector('.webcam-icon');
   if (camIcon) camIcon.remove();
