@@ -42,22 +42,30 @@ if (startWebcamBtn) {
   });
 }
 
-  const usersList = document.getElementById('users');
-  if (usersList) {
-    usersList.addEventListener('click', (e) => {
-      if (e.target.classList.contains('webcam-icon')) {
-        const username = e.target.dataset.username;
-        if (username) {
-          window.open(
-            `webcam-popup.html?user=${encodeURIComponent(username)}`,
-            'WebcamPopup',
-            'width=320,height=260'
-          );
-        }
+const usersList = document.getElementById('users');
+if (usersList) {
+  usersList.addEventListener('click', (e) => {
+    if (e.target.classList.contains('webcam-icon')) {
+      const username = e.target.dataset.username;
+      if (username) {
+        // Envoie la demande au serveur que je veux voir la webcam de "username"
+        const myUsername = localStorage.getItem('username');
+        socket.emit('watch webcam', { from: myUsername, to: username });
+
+        // Ouvre la popup webcam distante
+        window.open(
+          `webcam-popup.html?user=${encodeURIComponent(username)}`,
+          'WebcamPopup',
+          'width=320,height=260'
+        );
+
+        // NE PAS faire de getUserMedia ici
       }
-    });
-  }
-});
+    }
+  });
+}
+
+
 
 
 
@@ -269,23 +277,6 @@ if (webcamModal) {
 }
 
 
- /* // --- Gérer le clic sur l'icône webcam d’un autre utilisateur pour ouvrir sa popup webcam ---
-  document.getElementById('users').addEventListener('click', (event) => {
-    if (event.target.classList.contains('webcam-icon')) {
-      const userLi = event.target.closest('li.user-item');
-      if (!userLi) return;
-      const usernameSpan = userLi.querySelector('.username-span');
-      if (!usernameSpan) return;
-      const remoteUsername = usernameSpan.textContent.trim();
-
-      if (remoteUsername !== myUsername) {
-        const url = `webcam-popup.html?user=${encodeURIComponent(remoteUsername)}`;
-        window.open(url, `webcam-${remoteUsername}`, 'width=320,height=260');
-      }
-    }
-  });
-
-}); */
 
   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
