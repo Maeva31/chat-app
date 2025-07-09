@@ -959,7 +959,7 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
+function updateUserList(users) {
   console.log('webcam status:', webcamStatus);
   console.log('users:', window.users);
   const userList = document.getElementById('users');
@@ -1006,7 +1006,7 @@ if (usernameInput && passwordInput) {
         camIcon.style.position = 'absolute';
         camIcon.style.top = '0';
         camIcon.style.left = '0';
-        camIcon.style.zIndex = '9999';  // ++ z-index
+        camIcon.style.zIndex = '9999';
 
         roleIconSpan.style.position = 'relative';
 
@@ -1022,18 +1022,6 @@ if (usernameInput && passwordInput) {
       if (camIcon) camIcon.remove();
     }
 
-    userList.appendChild(li);
-  });
-}
-
-
-
-
-
-
-      
-    
-
     // Clic pseudo mention
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
@@ -1047,6 +1035,7 @@ if (usernameInput && passwordInput) {
     userList.appendChild(li);
   });
 }
+
 
 
 
