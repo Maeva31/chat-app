@@ -158,44 +158,7 @@ if (usersList) {
     }
   };
 
-  pc.ontrack = event => {
-    let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
 
-    if (!remoteVideo) {
-      const container = document.getElementById('video-container');
-      if (!container) return;
-
-      remoteVideo = document.createElement('video');
-      remoteVideo.id = `remoteVideo-${remoteUsername}`;
-      remoteVideo.autoplay = true;
-      remoteVideo.playsInline = true;
-      remoteVideo.style.width = '300px';
-      remoteVideo.style.height = '225px';
-      remoteVideo.style.border = '2px solid #ccc';
-      remoteVideo.style.borderRadius = '8px';
-      remoteVideo.style.margin = '5px';
-
-      const label = document.createElement('div');
-      label.textContent = remoteUsername;
-      label.style.color = 'white';
-      label.style.textAlign = 'center';
-
-      const wrapper = document.createElement('div');
-      wrapper.appendChild(remoteVideo);
-      wrapper.appendChild(label);
-
-      container.appendChild(wrapper);
-
-      remoteVideo.remoteStream = new MediaStream();
-      remoteVideo.srcObject = remoteVideo.remoteStream;
-    }
-
-    remoteVideo.remoteStream.addTrack(event.track);
-  };
-
-  peerConnections[remoteUsername] = pc;
-  return pc;
-}
 
 
 
