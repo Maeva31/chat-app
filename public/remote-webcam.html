@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Webcam distante</title>
+  <style>
+    body {
+      margin: 0;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    video {
+      max-width: 100%;
+      max-height: 100%;
+      border-radius: 8px;
+      border: 2px solid #ccc;
+      background: #222;
+    }
+  </style>
+</head>
+<body>
+  <video id="remote-video" autoplay playsinline></video>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const remoteUsername = urlParams.get('user');
+    const socket = io();
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    let pc = null;
+    const myUsername = localStorage.getItem('username') || 'unknown';
+
+    async function start() {
+      pc = new RTCPeerConnection(config);
+
+      pc.ontrack = e => {
+        const video = document.getElementById('remote-video');
+        if (video.srcObject !== e.streams[0]) {
+          video.srcObject = e.streams[0];
+        }
+      };
+
+      pc.onicecandidate = e => {
+        if (e.candidate) {
+          socket.emit('signal', { to: remoteUsername, from: myUsername, data: { candidate: e.candidate } });
+        }
+      };
+
+      socket.on('signal', async ({ from, data }) => {
+        if (from !== remoteUsername) return;
+
+        if (data.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          if (data.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('signal', { to: from, from: myUsername, data: { sdp: pc.localDescription } });
+          }
+        } else if (data.candidate) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          } catch (e) {
+            console.error('Erreur ajout ICE candidate:', e);
+          }
+        }
+      });
+
+      socket.emit('request call', { to: remoteUsername });
+    }
+
+    start();
+  </script>
+</body>
+</html>
