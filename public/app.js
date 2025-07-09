@@ -99,7 +99,31 @@ async function createPeerConnection(remoteUsername) {
   }
 
   // Ajout des pistes locales pour streaming vidéo
+async function createPeerConnection(remoteUsername) {
+  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
+
+  const pc = new RTCPeerConnection(config);
+
+  if (!localStream) {
+    localStream = await startLocalStream();
+    if (!localStream) return null;
+  }
+
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+
+  pc.onnegotiationneeded = async () => {
+    try {
+      const offer = await pc.createOffer();
+      await pc.setLocalDescription(offer);
+      socket.emit('signal', {
+        to: remoteUsername,
+        from: myUsername,
+        data: { sdp: pc.localDescription }
+      });
+    } catch (err) {
+      console.error('Erreur négociation:', err);
+    }
+  };
 
   pc.onicecandidate = event => {
     if (event.candidate) {
@@ -138,13 +162,17 @@ async function createPeerConnection(remoteUsername) {
       wrapper.appendChild(label);
 
       container.appendChild(wrapper);
+
+      remoteVideo.remoteStream = new MediaStream();
+      remoteVideo.srcObject = remoteVideo.remoteStream;
     }
 
-    remoteVideo.srcObject = event.streams[0];
+    remoteVideo.remoteStream.addTrack(event.track);
   };
 
   peerConnections[remoteUsername] = pc;
   return pc;
+}
 }
 
 // Démarrer un appel WebRTC à un utilisateur
