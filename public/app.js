@@ -274,13 +274,6 @@ startLocalStream();
 }
 
 
-
-
-
-
-
-
-
 // Mise à jour liste utilisateurs et appel WebRTC quand reçue
 socket.on('user list', (users) => {
   window.users = users;  // garde copie globale
@@ -295,17 +288,20 @@ socket.on('user list', (users) => {
   });
 });
 
-// Délégation clic pseudo pour mention
-document.getElementById('users')?.addEventListener('click', (e) => {
-  const span = e.target.closest('.username-span.clickable-username');
-  if (!span) return;
-  const username = span.textContent.trim();
-  const input = document.getElementById('message-input');
-  if (!input) return;
-  const mention = `@${username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
