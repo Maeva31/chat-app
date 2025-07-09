@@ -594,15 +594,7 @@ button:focus {
   min-width: 0;
 }
 
-/* Zone icône rôle (admin/modo), largeur fixe */
-.user-item .role-icon {
-  width: 24px;  /* largeur fixe, à ajuster */
-  flex-shrink: 0;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  top: -6px;
-}
+
 
 /* Icône admin/mode centrée dans le conteneur */
 .user-item .role-icon img,
@@ -1016,7 +1008,7 @@ button:focus {
 
 
 
- .webcam-icon {
+.webcam-icon {
   position: absolute;
   top: -6px;    /* place l'icône un peu au-dessus mais visible */
   left: 0;
@@ -1026,4 +1018,12 @@ button:focus {
   z-index: 10;
 }
 
-
+.user-item .role-icon {
+  position: absolute;
+  top: -6px;    /* place l'icône un peu au-dessus mais visible */
+  left: 0;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  z-index: 10;
+}
