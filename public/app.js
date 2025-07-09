@@ -969,11 +969,20 @@ function updateUserList(users) {
 
   window.users = users; // Stocke globalement pour pouvoir rafraîchir
 
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+  // Filtre les utilisateurs sans pseudo
+  const filteredUsers = users.filter(user => {
+    if (!user?.username?.trim()) {
+      console.warn('Utilisateur sans pseudo détecté et ignoré:', user);
+      return false;
+    }
+    return true;
+  });
+
+  filteredUsers.forEach(user => {
+    const username = user.username.trim();
+    const gender = user.gender?.trim() || 'Non spécifié';
+    const age = user.age || '?';
+    const role = user.role || 'user';
 
     const webcamActive = user.webcamActive || webcamStatus[username] || false;
 
@@ -1035,6 +1044,7 @@ function updateUserList(users) {
     userList.appendChild(li);
   });
 }
+
 
 
 
