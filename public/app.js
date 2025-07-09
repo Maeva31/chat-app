@@ -293,12 +293,6 @@ socket.on('user list', (users) => {
 });
 
 
-if (pc.signalingState === 'stable' && data.sdp.type === 'answer') {
-  // Erreur : ne pas appliquer l'answer dans l'état stable
-  console.warn("Tentative de setRemoteDescription answer en état stable, ignorer");
-  return;
-}
-await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
 
 
 
