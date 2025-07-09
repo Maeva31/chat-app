@@ -279,7 +279,7 @@ document.getElementById('users')?.addEventListener('click', (e) => {
 });
 
 
-  // ── 1) Stockage et mise à jour de la liste users ──
+   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
 
@@ -825,7 +825,7 @@ document.getElementById('users')?.addEventListener('click', (e) => {
     body.scrollTop = body.scrollHeight;
   });
 
-
+});
 
 
 
@@ -950,61 +950,65 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-function updateUserList(users) {
+  function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
-    const webcamActive = webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
 
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+
     li.innerHTML = `
-      <span class="role-icon"></span>
-      <span class="username-span clickable-username">${username}</span>
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
     const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
 
-    // Supprimer ancienne icône webcam si présente
-    const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
-    if (oldCamIcon) oldCamIcon.remove();
-
-    // Ajouter icône webcam si active
-    if (webcamActive) {
-      const camIcon = document.createElement('img');
-      camIcon.src = '/webcam.gif';
-      camIcon.alt = 'Webcam active';
-      camIcon.title = 'Webcam active - cliquer pour voir';
-      camIcon.classList.add('webcam-icon');
-      camIcon.style.width = '16px';
-      camIcon.style.height = '16px';
-      camIcon.style.cursor = 'pointer';
-      camIcon.style.position = 'absolute';
-      camIcon.style.top = '0';
-      camIcon.style.left = '0';
-      camIcon.style.zIndex = '10';
-
-      roleIconSpan.style.position = 'relative';
-
-      camIcon.dataset.username = username;
-      camIcon.addEventListener('click', () => {
-        openRemoteWebcamPopup(username);
-      });
-
-      roleIconSpan.appendChild(camIcon);
-    }
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
 
     userList.appendChild(li);
   });
 }
 
 
-
+function createRoleIcon(role) {
+  if (role === 'admin') {
+    const icon = document.createElement('img');
+    icon.src = '/diamond.ico'; // icône admin
+    icon.alt = 'Admin';
+    icon.title = 'Admin';
+    icon.classList.add('admin-icon');
+    return icon;
+  } else if (role === 'modo') {
+    const icon = document.createElement('img');
+    icon.src = '/favicon.ico'; // icône modo
+    icon.alt = 'Modérateur';
+    icon.title = 'Modérateur';
+    icon.classList.add('modo-icon');
+    return icon;
+  }
+  return null;
+}
 
 
  const logoutButton = document.getElementById('logoutButton');
