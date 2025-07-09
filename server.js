@@ -188,15 +188,15 @@ app.post('/upload', upload.single('file'), (req, res) => {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
-    socket.on('watch webcam', ({ from, to }) => {
-    const toSocketId = usernameToSocketId[to];
-    if (!toSocketId) {
-      socket.emit('error message', `Utilisateur ${to} non connecté`);
-      return;
-    }
-    io.to(toSocketId).emit('watch webcam request', { from });
-  });
-
+  socket.on('watch webcam', ({ from, to }) => {
+  const toSocketId = usernameToSocketId[to];
+  if (!toSocketId) {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    return;
+  }
+  // Demande au client "to" de commencer à envoyer sa webcam à "from"
+  io.to(toSocketId).emit('watch webcam request', { from });
+});
 
 
   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
@@ -204,7 +204,6 @@ io.on('connection', (socket) => {
       socket.emit('error message', 'Salon invalide pour upload de fichier.');
       return;
     }
-    
 
     // Recherche l'utilisateur AVANT d'émettre
     const user = Object.values(users).find(u => u.id === socket.id);
@@ -317,35 +316,28 @@ io.on('connection', (socket) => {
   updateRoomUserCounts();
 
   socket.on('set username', (data) => {
- let { username, gender, age, invisible, password } = data;
+  const { username, gender, age, invisible, password } = data;
 
-// Normalisation simple
-username = typeof username === 'string' ? username.trim() : '';
-gender = (typeof gender === 'string' && gender.trim() !== '') ? gender.trim() : null;
-age = Number(age);
+  // Validation — ce que tu as écrit :
+  if (!username || username.length > 16 || /\s/.test(username)) {
+    return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
+  }
+  if (isNaN(age) || age < 18 || age > 89) {
+    return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
+  }
+  if (!gender) {
+    return socket.emit('username error', 'Genre non spécifié');
+  }
 
-if (!username || username.length > 16 || /\s/.test(username)) {
-  return socket.emit('username error', 'Pseudo invalide (vide, espaces interdits, max 16 caractères)');
-}
+  if (bannedUsers.has(username)) {
+    socket.emit('username error', 'Vous êtes banni du serveur.');
+    socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
+    return;
+  }
 
-if (isNaN(age) || age < 18 || age > 89) {
-  return socket.emit('username error', 'Âge invalide (entre 18 et 89)');
-}
-
-if (!gender) {
-  return socket.emit('username error', 'Genre non spécifié');
-}
-
-if (bannedUsers.has(username)) {
-  socket.emit('username error', 'Vous êtes banni du serveur.');
-  socket.emit('redirect', 'https://banned.maevakonnect.fr'); // Redirection vers page bannis
-  return;
-}
-
-if (users[username] && users[username].id !== socket.id) {
-  return socket.emit('username exists', username);
-}
-
+  if (users[username] && users[username].id !== socket.id) {
+    return socket.emit('username exists', username);
+  }
 
   usernameToSocketId[username] = socket.id;
 
@@ -379,6 +371,13 @@ if (!userData.username || !userData.gender || !userData.age) {
   roomUsers[channel].push(userData);
 }
 
+
+    let channel = userChannels[socket.id] || defaultChannel;
+    socket.join(channel);
+
+    if (!roomUsers[channel]) roomUsers[channel] = [];
+    roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+    roomUsers[channel].push(userData);
 
     console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
 
