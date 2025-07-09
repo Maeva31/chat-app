@@ -142,45 +142,39 @@ startWebcamBtn.addEventListener('click', () => {
     };
 
     pc.ontrack = event => {
-   pc.ontrack = event => {
-  const container = document.getElementById('video-container');
-  if (!container) return;
+      const remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+      if (remoteVideo) {
+        remoteVideo.srcObject = event.streams[0];
+      } else {
+        const container = document.getElementById('video-container');
+        if (!container) return;
+        const videoElem = document.createElement('video');
+        videoElem.id = `remoteVideo-${remoteUsername}`;
+        videoElem.autoplay = true;
+        videoElem.playsInline = true;
+        videoElem.srcObject = event.streams[0];
+        videoElem.style.width = '300px';
+        videoElem.style.height = '225px';
+        videoElem.style.border = '2px solid #ccc';
+        videoElem.style.borderRadius = '8px';
+        videoElem.style.margin = '5px';
 
-  // Cherche un wrapper existant pour cet utilisateur
-  let wrapper = container.querySelector(`.remote-wrapper[data-user="${remoteUsername}"]`);
+        const label = document.createElement('div');
+        label.textContent = remoteUsername;
+        label.style.color = 'white';
+        label.style.textAlign = 'center';
 
-  if (!wrapper) {
-    // Crée wrapper + vidéo + label
-    wrapper = document.createElement('div');
-    wrapper.classList.add('remote-wrapper');
-    wrapper.dataset.user = remoteUsername;
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(videoElem);
+        wrapper.appendChild(label);
 
-    const videoElem = document.createElement('video');
-    videoElem.id = `remoteVideo-${remoteUsername}`;
-    videoElem.autoplay = true;
-    videoElem.playsInline = true;
-    videoElem.style.width = '300px';
-    videoElem.style.height = '225px';
-    videoElem.style.border = '2px solid #ccc';
-    videoElem.style.borderRadius = '8px';
-    videoElem.style.margin = '5px';
+        container.appendChild(wrapper);
+      }
+    };
 
-    const label = document.createElement('div');
-    label.textContent = remoteUsername;
-    label.style.color = 'white';
-    label.style.textAlign = 'center';
-
-    wrapper.appendChild(videoElem);
-    wrapper.appendChild(label);
-
-    container.appendChild(wrapper);
+    peerConnections[remoteUsername] = pc;
+    return pc;
   }
-
-  // Assigne le flux au <video> existant
-  const videoElem = wrapper.querySelector('video');
-  videoElem.srcObject = event.streams[0];
-};
-
 
   // Initie un appel WebRTC à un utilisateur
   async function callUser(remoteUsername) {
