@@ -19,24 +19,24 @@
 <body>
   <video id="localVideo" autoplay playsinline muted></video>
 
-  <script src="/socket.io/socket.io.js"></script>
   <script>
-    const socket = io();
-    const video = document.getElementById('localVideo');
     let localStream = null;
+    const video = document.getElementById('localVideo');
 
-    // Démarre webcam locale et l'affiche
     async function startLocalWebcam() {
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         video.srcObject = localStream;
+        // Informer la fenêtre parente que la webcam a démarré
+        if (window.opener) {
+          window.opener.postMessage({ type: 'webcamStarted' }, '*');
+        }
       } catch (e) {
         console.error("Erreur accès webcam locale :", e);
         alert("Impossible d'accéder à la webcam locale");
       }
     }
 
-    // Arrête la webcam proprement
     function stopLocalWebcam() {
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
@@ -44,18 +44,16 @@
       }
     }
 
-    // Arrête la webcam à la fermeture/rechargement de la fenêtre
     window.addEventListener('beforeunload', stopLocalWebcam);
 
-    // Attendre le message init depuis la fenêtre parente (pour récupérer username si besoin)
-    window.addEventListener('message', event => {
-      if (event.data?.type === 'init') {
-        // Ici tu peux récupérer event.data.username si nécessaire
+    // Démarre la webcam à l'ouverture ou sur message init
+    window.addEventListener('message', e => {
+      if (e.data?.type === 'init') {
         startLocalWebcam();
       }
     });
 
-    // Auto start pour cas où popup ouvre sans message (sécurité)
+    // Démarrage automatique au chargement pour sécurité
     startLocalWebcam();
   </script>
 </body>
