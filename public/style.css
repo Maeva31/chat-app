@@ -765,9 +765,7 @@ button:focus {
 .modal[style*="display: flex"] ~ #chat-container {
   display: none !important;
 }
-.user-item {
-  pointer-events: none; /* Empêche tout clic sur l’élément entier */
-}
+
 
 .user-item .clickable-username {
   pointer-events: auto; /* Autorise le clic uniquement ici */
