@@ -17,14 +17,13 @@ const MAX_ROOMS = 50;
 
 let users = {};           // { username: { id, username, gender, age, role, banned, muted, invisible } }
 let messageHistory = {};
-const uploadedFiles = [];
 let roomUsers = {};
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 let webcamStatus = {};  // { username: true/false }
 const usernameToSocketId = {};
-const users = {};
+
 
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
@@ -246,7 +245,7 @@ io.on('connection', (socket) => {
 
 
 
-   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
+  socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
     if (!channel || !savedRooms.includes(channel)) {
       socket.emit('error message', 'Salon invalide pour upload de fichier.');
       return;
@@ -256,23 +255,16 @@ io.on('connection', (socket) => {
     const user = Object.values(users).find(u => u.id === socket.id);
     if (!user) return;
 
-    // Prépare l'objet fichier avec channel pour filtrer plus tard
-    const fileData = {
+    // Émet avec role et gender
+    io.to(channel).emit('file uploaded', {
       username: user.username,
       role: user.role,
       gender: user.gender,
       filename,
       data,
       mimetype,
-      channel,
       timestamp: timestamp || new Date().toISOString()
-    };
-
-    // Stockage mémoire
-    uploadedFiles.push(fileData);
-
-    // Émet le fichier uploadé à tous dans le salon
-    io.to(channel).emit('file uploaded', fileData);
+    });
   });
 
   socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
@@ -959,22 +951,11 @@ io.on('connection', (socket) => {
     cleanupEmptyDynamicRooms();
   });
 
-socket.on('request history', (channel) => {
-  if (channel && messageHistory[channel]) {
-    const messages = messageHistory[channel];
-    const files = uploadedFiles.filter(file => file.channel === channel);
-
-    const combined = [
-      ...messages.map(msg => ({ ...msg, type: 'message' })),
-      ...files.map(file => ({ ...file, type: 'file' }))
-    ];
-
-    combined.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-
-    socket.emit('chat history full', combined);
-  }
-});
-
+  socket.on('request history', (roomName) => {
+    if (roomName && messageHistory[roomName]) {
+      socket.emit('chat history', messageHistory[roomName]);
+    }
+  });
 
   socket.on('disconnect', () => {
     for (const [username, id] of Object.entries(usernameToSocketId)) {
