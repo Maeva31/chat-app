@@ -912,14 +912,12 @@ if (usernameInput && passwordInput) {
 
   // Met à jour la liste des utilisateurs affichée
 function updateUserList(users) {
-  console.log('webcam status:', webcamStatus);
-  console.log('users:', window.users);
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
 
-  window.users = users; // Stocke globalement pour pouvoir rafraîchir
+  window.users = users; 
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
@@ -934,7 +932,6 @@ function updateUserList(users) {
 
     const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
-    // Structure HTML
     li.innerHTML = `
       <span class="role-icon"></span> 
       <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
@@ -945,7 +942,7 @@ function updateUserList(users) {
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
-    // Supprime ancienne icône webcam si elle existe pour éviter doublons
+    // Webcam icon
     const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
     if (oldCamIcon) oldCamIcon.remove();
 
@@ -964,30 +961,30 @@ function updateUserList(users) {
       camIcon.style.zIndex = '10';
       roleIconSpan.style.position = 'relative';
 
-      // Ajout obligatoire pour récupérer le username au clic
       camIcon.dataset.username = username;
 
       camIcon.addEventListener('click', () => {
-        console.log('Clic sur webcam de', username);
         openRemoteWebcamPopup(username);
       });
 
       roleIconSpan.appendChild(camIcon);
     }
 
-    // Clic pseudo mention (si tu veux garder ce comportement)
-    const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-    });
-
     userList.appendChild(li);
   });
 }
 
+// Puis délégation sur #users pour mentions
+document.getElementById('users').addEventListener('click', (e) => {
+  const span = e.target.closest('.username-span.clickable-username');
+  if (!span) return;
+  const username = span.textContent.trim();
+  const input = document.getElementById('message-input');
+  if (!input) return;
+  const mention = `@${username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
 
 
 
