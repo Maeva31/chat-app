@@ -98,17 +98,6 @@ async function createPeerConnection(remoteUsername) {
     if (!localStream) return null; // Pas de stream = pas de connection
   }
 
-  // Ajout des pistes locales pour streaming vidéo
-async function createPeerConnection(remoteUsername) {
-  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
-
-  const pc = new RTCPeerConnection(config);
-
-  if (!localStream) {
-    localStream = await startLocalStream();
-    if (!localStream) return null;
-  }
-
   localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
   pc.onnegotiationneeded = async () => {
@@ -173,7 +162,8 @@ async function createPeerConnection(remoteUsername) {
   peerConnections[remoteUsername] = pc;
   return pc;
 }
-}
+
+
 
 // Démarrer un appel WebRTC à un utilisateur
 async function callUser(remoteUsername) {
