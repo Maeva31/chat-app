@@ -5,13 +5,8 @@
   <title>Webcam Popup</title>
   <style>
     body {
-      margin: 0; 
-      background-color: #000;
-      display: flex; 
-      justify-content: center; 
-      align-items: center; 
-      height: 100vh;
-      overflow: hidden;
+      margin: 0; background: #000;
+      display: flex; justify-content: center; align-items: center; height: 100vh;
     }
     video {
       max-width: 100%;
@@ -29,7 +24,7 @@
   <script>
     const socket = io();
 
-    // Récupérer le paramètre user de l'URL
+    // Récupère le paramètre user cible dans l'URL
     const urlParams = new URLSearchParams(window.location.search);
     const targetUser = urlParams.get('user');
     const myUsername = localStorage.getItem('username');
@@ -40,22 +35,18 @@
 
     const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    // Si on regarde sa propre webcam, on affiche la locale
     async function startLocalWebcam() {
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
         videoElem.srcObject = localStream;
 
-        // Préviens le serveur que ta webcam est active (optionnel)
+        // Optionnel : préviens serveur que webcam est active
         socket.emit('webcam status', { username: myUsername, active: true });
-
-        // Ici, tu peux gérer l’envoi WebRTC aux autres utilisateurs (à faire dans la page principale)
       } catch (e) {
         alert("Impossible d'accéder à la webcam : " + e.message);
       }
     }
 
-    // Si on regarde la webcam d’un autre utilisateur, on crée une connexion WebRTC pour recevoir son flux
     async function startRemoteWebcam() {
       pc = new RTCPeerConnection(config);
 
@@ -73,7 +64,7 @@
         }
       };
 
-      // Demande au serveur de commencer la connexion WebRTC avec targetUser
+      // Demande au serveur d'initier l'appel WebRTC
       socket.emit('call user', { to: targetUser, from: myUsername });
 
       socket.on('signal', async ({ from, data }) => {
@@ -102,14 +93,13 @@
       });
     }
 
-    // Logique principale
+    // Démarre la webcam locale ou distante selon l'utilisateur
     if (targetUser === myUsername) {
       startLocalWebcam();
     } else {
       startRemoteWebcam();
     }
 
-    // Nettoyage à la fermeture
     window.addEventListener('beforeunload', () => {
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
