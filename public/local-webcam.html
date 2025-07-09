@@ -36,6 +36,17 @@
       }
     }
 
+    // Arrête la webcam proprement
+    function stopLocalWebcam() {
+      if (localStream) {
+        localStream.getTracks().forEach(track => track.stop());
+        localStream = null;
+      }
+    }
+
+    // Arrête la webcam à la fermeture/rechargement de la fenêtre
+    window.addEventListener('beforeunload', stopLocalWebcam);
+
     // Attendre le message init depuis la fenêtre parente (pour récupérer username si besoin)
     window.addEventListener('message', event => {
       if (event.data?.type === 'init') {
