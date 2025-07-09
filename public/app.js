@@ -263,19 +263,7 @@ function updateUserList(users) {
   });
 }
 
-// --- Mise à jour liste utilisateurs et appel WebRTC quand reçue ---
-socket.on('user list', (users) => {
-  window.users = users;
-  updateUserList(users);
 
-  users.forEach(user => {
-    if (user.username !== myUsername) {
-      if (!peerConnections[user.username]) {
-        callUser(user.username);
-      }
-    }
-  });
-});
 
 
 
