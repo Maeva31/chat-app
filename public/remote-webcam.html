@@ -17,60 +17,26 @@
   </style>
 </head>
 <body>
-  <div id="video-container"></div>
+  <video id="remoteVideo" autoplay playsinline muted></video>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
+    const remoteVideo = document.getElementById('remoteVideo');
 
-    // Récupère le username distant depuis la query string
     function getQueryUsername() {
       const params = new URLSearchParams(window.location.search);
       return params.get('user');
     }
     const remoteUsername = getQueryUsername();
 
-    // Crée une vidéo pour afficher le flux distant
-    let remoteVideo = null;
-    const container = document.getElementById('video-container');
-
-    function createRemoteVideo() {
-      remoteVideo = document.createElement('video');
-      remoteVideo.id = `remoteVideo-${remoteUsername}`;
-      remoteVideo.autoplay = true;
-      remoteVideo.playsInline = true;
-      remoteVideo.muted = false;
-      container.appendChild(remoteVideo);
-    }
-    createRemoteVideo();
-
-    // Gère réception signal pour afficher flux distant
-    const peerConnections = {};
     const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    let localStream = null;
+    let peerConnection = null;
 
-    async function startLocalStream() {
-      try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        return localStream;
-      } catch (err) {
-        console.error("Erreur accès webcam :", err.message);
-        return null;
-      }
-    }
+    async function createPeerConnection() {
+      peerConnection = new RTCPeerConnection(config);
 
-    async function createPeerConnection(remoteUsername) {
-      if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
-      const pc = new RTCPeerConnection(config);
-
-      if (!localStream) {
-        localStream = await startLocalStream();
-        if (!localStream) return null;
-      }
-
-      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
-
-      pc.onicecandidate = event => {
+      peerConnection.onicecandidate = event => {
         if (event.candidate) {
           socket.emit('signal', {
             to: remoteUsername,
@@ -80,37 +46,38 @@
         }
       };
 
-      pc.ontrack = event => {
-        if (remoteVideo) remoteVideo.srcObject = event.streams[0];
+      peerConnection.ontrack = event => {
+        if (event.streams && event.streams[0]) {
+          remoteVideo.srcObject = event.streams[0];
+        } else {
+          const inboundStream = new MediaStream();
+          inboundStream.addTrack(event.track);
+          remoteVideo.srcObject = inboundStream;
+        }
       };
-
-      peerConnections[remoteUsername] = pc;
-      return pc;
     }
 
-    // Gestion signaux WebRTC reçus
+    createPeerConnection();
+
     socket.on('signal', async ({ from, data }) => {
       if (from !== remoteUsername) return;
-      const pc = await createPeerConnection(from);
-      if (!pc) return;
-
       try {
         if (data.sdp) {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          await peerConnection.setRemoteDescription(new RTCSessionDescription(data.sdp));
           if (data.sdp.type === 'offer') {
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
+            const answer = await peerConnection.createAnswer();
+            await peerConnection.setLocalDescription(answer);
             socket.emit('signal', {
               to: from,
               from: localStorage.getItem('username'),
-              data: { sdp: pc.localDescription }
+              data: { sdp: peerConnection.localDescription }
             });
           }
         } else if (data.candidate) {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
-      } catch (e) {
-        console.error('Erreur gestion signal:', e);
+      } catch (err) {
+        console.error('Erreur signal:', err);
       }
     });
   </script>
