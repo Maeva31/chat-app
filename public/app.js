@@ -228,6 +228,38 @@ startWebcamBtn.addEventListener('click', () => {
     }
   });
 
+  socket.on('watch webcam request', async ({ from }) => {
+  // "from" est celui qui veut voir ta webcam
+  console.log(`Demande de voir ma webcam de la part de ${from}`);
+
+  // Si ce n’est pas déjà fait, démarre la capture locale webcam
+  if (!localStream) {
+    localStream = await startLocalStream();
+    if (!localStream) {
+      console.warn("Impossible de démarrer la webcam locale");
+      return;
+    }
+  }
+
+  // Crée une connexion WebRTC vers "from"
+  const pc = await createPeerConnection(from);
+  if (!pc) {
+    console.warn("Impossible de créer une connexion WebRTC");
+    return;
+  }
+
+  // Crée une offre SDP pour "from"
+  const offer = await pc.createOffer();
+  await pc.setLocalDescription(offer);
+
+  socket.emit('signal', {
+    to: from,
+    from: myUsername,
+    data: { sdp: pc.localDescription }
+  });
+});
+
+
   // Démarre capture locale au chargement
   startLocalStream();
 
