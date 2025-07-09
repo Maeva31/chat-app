@@ -41,15 +41,13 @@
       };
     }
 
-    socket.on('signal', async ({ from, to, data }) => {
-      // La popup distante ne s'occupe que des signaux venant de l'utilisateur distant
-      if (from !== remoteUsername || to !== myUsername) return;
+    createPeerConnection();
 
-      if (!pc) createPeerConnection();
+    socket.on('signal', async ({ from, to, data }) => {
+      if (from !== remoteUsername || to !== myUsername) return;
 
       if (data.sdp) {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-
         if (data.sdp.type === 'offer') {
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
