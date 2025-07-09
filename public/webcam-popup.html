@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <title>Webcam - Popup</title>
+  <title>Webcam Popup</title>
   <style>
     body {
       margin: 0; 
@@ -23,35 +23,98 @@
   </style>
 </head>
 <body>
-  <video id="local-video" autoplay playsinline muted></video>
+  <video id="video" autoplay playsinline muted></video>
 
+  <script src="/socket.io/socket.io.js"></script>
   <script>
+    const socket = io();
+
+    // Récupérer le paramètre user de l'URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const targetUser = urlParams.get('user');
+    const myUsername = localStorage.getItem('username');
+
+    const videoElem = document.getElementById('video');
     let localStream = null;
+    let pc = null;
 
-    // Écoute le message posté depuis la page principale
-    window.addEventListener('message', async (event) => {
-      if (!event.data || event.data.type !== 'init') return;
-      const username = event.data.username;
-      console.log('Popup webcam initialisée pour :', username);
-      await startWebcam();
-    });
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
-    async function startWebcam() {
-      if (localStream) return; // déjà démarré
+    // Si on regarde sa propre webcam, on affiche la locale
+    async function startLocalWebcam() {
       try {
         localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-        const videoElem = document.getElementById('local-video');
         videoElem.srcObject = localStream;
-      } catch (err) {
-        alert('Impossible d\'accéder à la webcam : ' + err.message);
+
+        // Préviens le serveur que ta webcam est active (optionnel)
+        socket.emit('webcam status', { username: myUsername, active: true });
+
+        // Ici, tu peux gérer l’envoi WebRTC aux autres utilisateurs (à faire dans la page principale)
+      } catch (e) {
+        alert("Impossible d'accéder à la webcam : " + e.message);
       }
     }
 
-    // Stopper la webcam quand la popup est fermée
+    // Si on regarde la webcam d’un autre utilisateur, on crée une connexion WebRTC pour recevoir son flux
+    async function startRemoteWebcam() {
+      pc = new RTCPeerConnection(config);
+
+      pc.ontrack = (event) => {
+        videoElem.srcObject = event.streams[0];
+      };
+
+      pc.onicecandidate = (event) => {
+        if (event.candidate) {
+          socket.emit('signal', {
+            to: targetUser,
+            from: myUsername,
+            data: { candidate: event.candidate }
+          });
+        }
+      };
+
+      // Demande au serveur de commencer la connexion WebRTC avec targetUser
+      socket.emit('call user', { to: targetUser, from: myUsername });
+
+      socket.on('signal', async ({ from, data }) => {
+        if (from !== targetUser) return;
+
+        if (data.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+
+          if (data.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+
+            socket.emit('signal', {
+              to: from,
+              from: myUsername,
+              data: { sdp: pc.localDescription }
+            });
+          }
+        } else if (data.candidate) {
+          try {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          } catch (err) {
+            console.error('Erreur ajout ICE candidate:', err);
+          }
+        }
+      });
+    }
+
+    // Logique principale
+    if (targetUser === myUsername) {
+      startLocalWebcam();
+    } else {
+      startRemoteWebcam();
+    }
+
+    // Nettoyage à la fermeture
     window.addEventListener('beforeunload', () => {
       if (localStream) {
         localStream.getTracks().forEach(track => track.stop());
       }
+      if (pc) pc.close();
     });
   </script>
 </body>
