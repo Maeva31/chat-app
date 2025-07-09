@@ -303,6 +303,7 @@ io.on('connection', (socket) => {
     // Écho au sender (pour affichage local)
     socket.emit('private file', fileMsg);
   });
+  
 
   function logout(socket) {
     const user = Object.values(users).find(u => u.id === socket.id);
@@ -956,6 +957,22 @@ io.on('connection', (socket) => {
       socket.emit('chat history', messageHistory[roomName]);
     }
   });
+
+  /* Historique des fichiers uploader */
+socket.on('request history', (channel) => {
+  if (channel && messageHistory[channel]) {
+    socket.emit('chat history', messageHistory[channel]);
+  }
+
+  // Envoie aussi les fichiers uploadés pour ce channel
+  uploadedFiles.forEach(file => {
+    if (file.channel === channel) {
+      socket.emit('file uploaded', file);
+    }
+  });
+});
+
+
 
   socket.on('disconnect', () => {
     for (const [username, id] of Object.entries(usernameToSocketId)) {
