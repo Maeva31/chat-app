@@ -135,18 +135,13 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50 Mo max
+  limits: { fileSize: 50 * 1024 * 1024 }, // ✅ 50 Mo max
   fileFilter: (req, file, cb) => {
-    const allowed = [
-      'image/png', 'image/jpeg', 'image/jpg', 'image/gif',
-      'audio/mpeg', 'audio/wav', 'audio/ogg',
-      'video/mp4', 'video/webm', 'video/ogg'
-    ];
+    const allowed = ['image/png', 'image/jpeg', 'image/jpg', 'image/gif'];
     if (allowed.includes(file.mimetype)) cb(null, true);
     else cb(new Error('Type de fichier non autorisé'));
   }
 });
-
 
 app.post('/upload', upload.single('file'), (req, res) => {
   const userId = req.body.userId; // id socket ou username
@@ -357,20 +352,8 @@ io.on('connection', (socket) => {
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
-   const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
-users[username] = userData;
-
-let channel = userChannels[socket.id] || defaultChannel;
-socket.join(channel);
-
-if (!userData.username || !userData.gender || !userData.age) {
-  console.warn(`Utilisateur avec données incomplètes ignoré :`, userData);
-} else {
-  if (!roomUsers[channel]) roomUsers[channel] = [];
-  roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
-  roomUsers[channel].push(userData);
-}
-
+    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
+    users[username] = userData;
 
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
