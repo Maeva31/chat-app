@@ -16,6 +16,30 @@ socket.on('webcam status update', ({ username, active }) => {
   }
 });
 
+function openLocalWebcamPopup() {
+  if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
+    window.localWebcamPopup = window.open('local-webcam.html', 'LocalWebcam', 'width=320,height=260');
+  } else {
+    window.localWebcamPopup.focus();
+  }
+}
+
+function openRemoteWebcamPopup(username) {
+  if (!window.remoteWebcamPopups) window.remoteWebcamPopups = {};
+
+  if (!window.remoteWebcamPopups[username] || window.remoteWebcamPopups[username].closed) {
+    window.remoteWebcamPopups[username] = window.open(
+      `remote-webcam.html?user=${encodeURIComponent(username)}`,
+      `RemoteWebcam-${username}`,
+      'width=320,height=260'
+    );
+  } else {
+    window.remoteWebcamPopups[username].focus();
+  }
+}
+
+
+
 document.addEventListener('DOMContentLoaded', () => {
   // Bouton "Activer ma webcam"
   const startWebcamBtn = document.getElementById('start-webcam-btn');
