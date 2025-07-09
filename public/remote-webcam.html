@@ -6,120 +6,113 @@
   <style>
     html, body {
       margin: 0; padding: 0; height: 100%; width: 100%; background: black; overflow: hidden;
-      display: flex; justify-content: center; align-items: center;
-      flex-direction: column;
-      color: white;
-      font-family: sans-serif;
-    }
-    #username-label {
-      position: absolute;
-      top: 0;
-      width: 100%;
-      text-align: center;
-      padding: 5px 0;
-      background: rgba(0,0,0,0.5);
-      font-weight: bold;
-      z-index: 10;
     }
     video {
-      width: 100%;
-      height: 100%;
+      width: 100vw;
+      height: 100vh;
       object-fit: cover;
-      background: black;
-      border: none;
-      margin: 0;
       display: block;
+      background: black;
     }
   </style>
 </head>
 <body>
-  <div id="username-label">Chargement...</div>
-  <video id="remoteVideo" autoplay playsinline></video>
+  <div id="video-container"></div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const socket = io();
-    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-    let pc = null;
-    let remoteUsername = null;
 
-    function getUsernameFromURL() {
+    // Récupère le username distant depuis la query string
+    function getQueryUsername() {
       const params = new URLSearchParams(window.location.search);
       return params.get('user');
     }
+    const remoteUsername = getQueryUsername();
 
-    async function createPeerConnection() {
-      pc = new RTCPeerConnection(config);
+    // Crée une vidéo pour afficher le flux distant
+    let remoteVideo = null;
+    const container = document.getElementById('video-container');
+
+    function createRemoteVideo() {
+      remoteVideo = document.createElement('video');
+      remoteVideo.id = `remoteVideo-${remoteUsername}`;
+      remoteVideo.autoplay = true;
+      remoteVideo.playsInline = true;
+      remoteVideo.muted = false;
+      container.appendChild(remoteVideo);
+    }
+    createRemoteVideo();
+
+    // Gère réception signal pour afficher flux distant
+    const peerConnections = {};
+    const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+    let localStream = null;
+
+    async function startLocalStream() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        return localStream;
+      } catch (err) {
+        console.error("Erreur accès webcam :", err.message);
+        return null;
+      }
+    }
+
+    async function createPeerConnection(remoteUsername) {
+      if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
+      const pc = new RTCPeerConnection(config);
+
+      if (!localStream) {
+        localStream = await startLocalStream();
+        if (!localStream) return null;
+      }
+
+      localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
 
       pc.onicecandidate = event => {
         if (event.candidate) {
           socket.emit('signal', {
             to: remoteUsername,
-            from: myUsername,
+            from: localStorage.getItem('username'),
             data: { candidate: event.candidate }
           });
         }
       };
 
       pc.ontrack = event => {
-        const remoteVideo = document.getElementById('remoteVideo');
-        remoteVideo.srcObject = event.streams[0];
+        if (remoteVideo) remoteVideo.srcObject = event.streams[0];
       };
+
+      peerConnections[remoteUsername] = pc;
+      return pc;
     }
 
-    const myUsername = localStorage.getItem('username') || 'unknown';
+    // Gestion signaux WebRTC reçus
+    socket.on('signal', async ({ from, data }) => {
+      if (from !== remoteUsername) return;
+      const pc = await createPeerConnection(from);
+      if (!pc) return;
 
-    async function start() {
-      remoteUsername = getUsernameFromURL();
-      if (!remoteUsername) {
-        document.getElementById('username-label').textContent = 'Utilisateur distant non spécifié';
-        return;
-      }
-      document.getElementById('username-label').textContent = `Webcam de ${remoteUsername}`;
-
-      await createPeerConnection();
-
-      socket.emit('request call', { to: remoteUsername });
-
-      socket.on('signal', async ({ from, data }) => {
-        if (from !== remoteUsername) return;
-
-        try {
-          if (data.sdp) {
-            await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-            if (data.sdp.type === 'offer') {
-              const answer = await pc.createAnswer();
-              await pc.setLocalDescription(answer);
-              socket.emit('signal', {
-                to: from,
-                from: myUsername,
-                data: { sdp: pc.localDescription }
-              });
-            }
-          } else if (data.candidate) {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-          }
-        } catch (err) {
-          console.error('Erreur WebRTC signal:', err);
-        }
-      });
-
-      socket.on('request call', ({ from }) => {
-        if (from === remoteUsername) {
-          pc.createOffer().then(offer => {
-            pc.setLocalDescription(offer).then(() => {
-              socket.emit('signal', {
-                to: from,
-                from: myUsername,
-                data: { sdp: pc.localDescription }
-              });
+      try {
+        if (data.sdp) {
+          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+          if (data.sdp.type === 'offer') {
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit('signal', {
+              to: from,
+              from: localStorage.getItem('username'),
+              data: { sdp: pc.localDescription }
             });
-          });
+          }
+        } else if (data.candidate) {
+          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
         }
-      });
-    }
-
-    start();
+      } catch (e) {
+        console.error('Erreur gestion signal:', e);
+      }
+    });
   </script>
 </body>
 </html>
