@@ -219,7 +219,6 @@ function updateUserList(users) {
     const roleIconSpan = li.querySelector('.role-icon');
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
-
     // Supprimer ancienne icône webcam si présente
     const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
     if (oldCamIcon) oldCamIcon.remove();
@@ -265,6 +264,14 @@ function updateUserList(users) {
   });
 }
 
+socket.on('user list', (users) => {
+  window.users = users; // stocker globalement
+  // Met à jour webcamStatus pour chaque user
+  users.forEach(u => {
+    webcamStatus[u.username] = u.webcamActive || false;
+  });
+  updateUserList(users);
+});
 
 
 
