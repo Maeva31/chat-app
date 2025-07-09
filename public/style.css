@@ -1014,20 +1014,10 @@ button:focus {
 }
 
 
-.webcam-icon {
-  position: absolute;
-  top: 0;
-  left: 0;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  z-index: 10;
-}
-
 
  .webcam-icon {
   position: absolute;
-  top: -4px;    /* place l'icône un peu au-dessus mais visible */
+  top: -6px;    /* place l'icône un peu au-dessus mais visible */
   left: 0;
   width: 16px;
   height: 16px;
