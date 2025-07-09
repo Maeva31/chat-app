@@ -66,11 +66,7 @@
 
       pc.onicecandidate = event => {
         if (event.candidate) {
-          socket.emit('signal', {
-            to: remoteUsername,
-            from: myUsername,
-            data: { candidate: event.candidate }
-          });
+          socket.emit('webrtc ice candidate', { to: remoteUsername, candidate: event.candidate });
         }
       };
 
@@ -82,59 +78,56 @@
       return pc;
     }
 
-    async function start() {
-      pc = await createPeerConnection();
+    // Gérer les signaux WebRTC reçus du serveur
+    socket.on('webrtc offer', async ({ from, offer }) => {
+      if (from !== remoteUsername) return;
 
-      // On demande au serveur de démarrer l'appel (offre)
-      socket.emit('call user', { to: remoteUsername, from: myUsername });
-    }
+      if (!pc) pc = await createPeerConnection();
 
-    // Gérer les signaux RTC
-    socket.on('signal', async ({ from, to, data }) => {
-      if (from !== remoteUsername || to !== myUsername) return;
+      await pc.setRemoteDescription(new RTCSessionDescription(offer));
 
-      if (!pc) {
-        pc = await createPeerConnection();
-      }
+      const answer = await pc.createAnswer();
+      await pc.setLocalDescription(answer);
 
-      if (data.sdp) {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        if (data.sdp.type === 'offer') {
-          const answer = await pc.createAnswer();
-          await pc.setLocalDescription(answer);
+      socket.emit('webrtc answer', { to: from, answer: pc.localDescription });
+    });
 
-          socket.emit('signal', {
-            to: from,
-            from: myUsername,
-            data: { sdp: pc.localDescription }
-          });
-        }
-      } else if (data.candidate) {
-        try {
-          await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-        } catch (e) {
-          console.error("Erreur ajout ICE candidate:", e);
-        }
+    socket.on('webrtc answer', async ({ from, answer }) => {
+      if (from !== remoteUsername) return;
+      if (!pc) return;
+
+      await pc.setRemoteDescription(new RTCSessionDescription(answer));
+    });
+
+    socket.on('webrtc ice candidate', async ({ from, candidate }) => {
+      if (from !== remoteUsername) return;
+      if (!pc) return;
+
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch (e) {
+        console.error("Erreur ajout ICE candidate:", e);
       }
     });
 
-    // Écoute appel entrant - ici on attend juste un signal 'call user' pour démarrer l'offre
-    socket.on('call user', async ({ to, from }) => {
-      if (to !== myUsername) return;
+    // Gérer l'appel entrant : serveur émet 'call user' pour démarrer offre
+    socket.on('call user', async ({ from }) => {
+      if (from !== remoteUsername) return;
 
       if (!pc) pc = await createPeerConnection();
 
       const offer = await pc.createOffer();
       await pc.setLocalDescription(offer);
 
-      socket.emit('signal', {
-        to: from,
-        from: myUsername,
-        data: { sdp: pc.localDescription }
-      });
+      socket.emit('webrtc offer', { to: from, offer: pc.localDescription });
     });
 
-    // Démarre tout à la charge de la page
+    // Démarre tout à la charge de la page : demande l'appel au remote
+    async function start() {
+      // On demande au serveur d'appeler le remote (pour initier)
+      socket.emit('call user', { to: remoteUsername, from: myUsername });
+    }
+
     start();
 
     // Nettoyage à la fermeture
