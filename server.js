@@ -17,13 +17,13 @@ const MAX_ROOMS = 50;
 
 let users = {};           // { username: { id, username, gender, age, role, banned, muted, invisible } }
 let messageHistory = {};
+const uploadedFiles = [];
 let roomUsers = {};
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 let webcamStatus = {};  // { username: true/false }
 const usernameToSocketId = {};
-let uploadedFiles = [];
 
 
 // Chargement des modérateurs
@@ -245,36 +245,35 @@ io.on('connection', (socket) => {
   });
 
 
-  
 
+   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
+    if (!channel || !savedRooms.includes(channel)) {
+      socket.emit('error message', 'Salon invalide pour upload de fichier.');
+      return;
+    }
 
-socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
-  const user = Object.values(users).find(u => u.id === socket.id);
-  if (!user) return;
+    // Recherche l'utilisateur AVANT d'émettre
+    const user = Object.values(users).find(u => u.id === socket.id);
+    if (!user) return;
 
-  if (!channel || !savedRooms.includes(channel)) {
-    socket.emit('error message', 'Salon invalide pour upload de fichier.');
-    return;
-  }
+    // Prépare l'objet fichier avec channel pour filtrer plus tard
+    const fileData = {
+      username: user.username,
+      role: user.role,
+      gender: user.gender,
+      filename,
+      data,
+      mimetype,
+      channel,
+      timestamp: timestamp || new Date().toISOString()
+    };
 
-  const fileData = {
-    username: user.username,
-    role: user.role,
-    gender: user.gender,
-    filename,
-    mimetype,
-    data,
-    channel,
-    timestamp: timestamp || new Date().toISOString()
-  };
+    // Stockage mémoire
+    uploadedFiles.push(fileData);
 
-  // Stocke le fichier uploadé en mémoire
-  uploadedFiles.push(fileData);
-
-  // Diffuse à tous dans le salon
-  io.to(channel).emit('file uploaded', fileData);
-});
-
+    // Émet le fichier uploadé à tous dans le salon
+    io.to(channel).emit('file uploaded', fileData);
+  });
 
   socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
@@ -960,19 +959,19 @@ socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
     cleanupEmptyDynamicRooms();
   });
 
-
-// Écoute demande d'historique complet (messages + fichiers) pour un salon donné
 socket.on('request history', (channel) => {
   if (channel && messageHistory[channel]) {
-    // Envoie l'historique des messages
-    socket.emit('chat history', messageHistory[channel]);
+    const messages = messageHistory[channel];
+    const files = uploadedFiles.filter(file => file.channel === channel);
 
-    // Envoie aussi tous les fichiers uploadés dans ce salon
-    uploadedFiles.forEach(file => {
-      if (file.channel === channel) {
-        socket.emit('file uploaded', file);
-      }
-    });
+    const combined = [
+      ...messages.map(msg => ({ ...msg, type: 'message' })),
+      ...files.map(file => ({ ...file, type: 'file' }))
+    ];
+
+    combined.sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+
+    socket.emit('chat history full', combined);
   }
 });
 
