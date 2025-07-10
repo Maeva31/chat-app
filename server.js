@@ -197,7 +197,6 @@ io.on('connection', (socket) => {
 
 
 // Quand un utilisateur se connecte et donne son pseudo : (wizz)
-io.on('connection', (socket) => {
   socket.on('set username', (username) => {
     usernameToSocketId[username] = socket.id;
     socket.username = username;
