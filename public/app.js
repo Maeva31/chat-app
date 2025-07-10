@@ -1052,25 +1052,21 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
 
   who.appendChild(document.createTextNode(from + ':'));
 
-  // Message texte
+  // Message
   const textSpan = document.createElement('span');
   textSpan.className = 'message-text';
   textSpan.textContent = text;
 
-  // 🕒 Horodatage sans crochets
+  // 🕒 Horodatage
   const timeSpan = document.createElement('span');
   timeSpan.className = 'timestamp';
   const now = new Date();
-  timeSpan.textContent = ` ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+  timeSpan.textContent = `[${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]`;
 
-  // Ajout à la ligne
   msgDiv.append(who, textSpan, timeSpan);
   bodyElem.appendChild(msgDiv);
   bodyElem.scrollTop = bodyElem.scrollHeight;
 }
-
-
-
 
   // ── 5) Clic pseudo ouvre la fenêtre privée ──
   document.addEventListener('click', e => {
@@ -1195,29 +1191,14 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
       msgDiv.appendChild(video);
 
     } else {
-    const link = document.createElement('a');
-link.href = `data:${mimetype};base64,${data}`;
-link.download = filename;
-link.target = '_blank';
-link.style.display = 'inline-flex';
-link.style.alignItems = 'center';
-link.style.marginTop = '4px';
-
-// Crée l’icône avec la classe sprite-button
-const icon = document.createElement('span');
-icon.className = 'sprite-button';
-
-// Crée un span pour le nom du fichier
-const filenameSpan = document.createElement('span');
-filenameSpan.textContent = filename;
-filenameSpan.style.marginLeft = '6px';
-
-// Ajoute les deux éléments dans le lien
-link.appendChild(icon);
-link.appendChild(filenameSpan);
-
-msgDiv.appendChild(link);
-
+      const link = document.createElement('a');
+      link.href = `data:${mimetype};base64,${data}`;
+      link.download = filename;
+      link.textContent = `📎 ${filename}`;
+      link.target = '_blank';
+      link.style.display = 'inline-block';
+      link.style.marginTop = '4px';
+      msgDiv.appendChild(link);
     }
 
     body.appendChild(msgDiv);
@@ -2312,30 +2293,13 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     wrapper.appendChild(video);
 
   } else {
-       const link = document.createElement('a');
-link.href = `data:${mimetype};base64,${data}`;
-link.download = filename;
-link.target = '_blank';
-link.style.display = 'inline-flex';
-link.style.alignItems = 'center';
-link.style.marginTop = '4px';
-
-// Crée l’icône avec la classe sprite-button
-const icon = document.createElement('span');
-icon.className = 'sprite-button';
-
-// Crée un span pour le nom du fichier
-const filenameSpan = document.createElement('span');
-filenameSpan.textContent = filename;
-filenameSpan.style.marginLeft = '6px';
-
-// Ajoute les deux éléments dans le lien
-link.appendChild(icon);
-link.appendChild(filenameSpan);
-
-msgDiv.appendChild(link);
-
-    }
+    const link = document.createElement('a');
+    link.href = `data:${mimetype};base64,${data}`;
+    link.download = filename;
+    link.textContent = `📎 ${filename}`;
+    link.target = '_blank';
+    wrapper.appendChild(link);
+  }
 
   chatMessages.appendChild(wrapper);
   setTimeout(() => {
