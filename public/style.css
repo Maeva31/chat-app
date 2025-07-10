@@ -813,7 +813,7 @@ button:focus {
 .sprite-button {
   width: 24px;
   height: 24px;
-  background: url('/icon/starbis.gif') no-repeat top center;
+  background: url('https://chat-app-91ml.onrender.com/icon/starbis.gif') no-repeat top center;
   background-size: 24px 48px;
   border: none;
   cursor: pointer;
