@@ -626,47 +626,11 @@ function updateActiveMicsDisplay() {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
-  const wiizzSound = new Audio('/wizz.mp3');
+  
   
     // Bouton Wiizz
-const wiizzBtn = document.createElement('button');
-wiizzBtn.title = 'Envoyer un Wiizz';
-wiizzBtn.style.background = 'transparent';
-wiizzBtn.style.border = 'none';
-wiizzBtn.style.cursor = 'pointer';
-wiizzBtn.style.marginRight = '5px';
-wiizzBtn.style.padding = '0';
-wiizzBtn.style.display = 'inline-flex';
-wiizzBtn.style.alignItems = 'center';
-wiizzBtn.style.justifyContent = 'center';
-
-const wiizzIcon = document.createElement('img');
-wiizzIcon.src = '/wizz.png';
-wiizzIcon.alt = 'Wiizz';
-wiizzIcon.style.width = '44px';
-wiizzIcon.style.height = '24px';
-wiizzIcon.style.verticalAlign = 'middle';
-
-wiizzBtn.appendChild(wiizzIcon);
-
-
-wiizzBtn.addEventListener('click', () => {
-  const now = Date.now();
-  const lastTime = wiizzCooldowns.get(username) || 0;
-
-  if (now - lastTime < 5000) {
-    alert('Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ' + username);
-    return;
-  }
-
-  wiizzCooldowns.set(username, now);
-  socket.emit('private wiizz', { to: username });
-
-  // Effet local immédiat
-  triggerWiizzEffect(win);
-});
-
-
+// Initialisation son unique en haut du script
+const wiizzSound = new Audio('/wizz.mp3');
 
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
@@ -687,29 +651,6 @@ socket.on('private wiizz', ({ from }) => {
   msgDiv.style.margin = '4px 0';
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
-
-  // Affichage bandeau d'alerte en haut de la fenêtre
-  const alertBanner = document.createElement('div');
-  alertBanner.textContent = `💥 ${from} t’a envoyé un Wiizz !`;
-  alertBanner.style.backgroundColor = 'orange';
-  alertBanner.style.color = 'black';
-  alertBanner.style.fontWeight = 'bold';
-  alertBanner.style.padding = '6px';
-  alertBanner.style.textAlign = 'center';
-  alertBanner.style.borderBottom = '2px solid #222';
-  alertBanner.style.position = 'absolute';
-  alertBanner.style.top = '0';
-  alertBanner.style.left = '0';
-  alertBanner.style.width = '100%';
-  alertBanner.style.zIndex = '999';
-
-  win.appendChild(alertBanner);
-
-  setTimeout(() => {
-    if (alertBanner && alertBanner.parentNode) {
-      alertBanner.parentNode.removeChild(alertBanner);
-    }
-  }, 3000);
 });
 
 function showCooldownBanner(username, win) {
@@ -758,6 +699,7 @@ function triggerWiizzEffect(win) {
     }
   }, 50);
 }
+
 
 
 
