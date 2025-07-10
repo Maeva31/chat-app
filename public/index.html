@@ -409,20 +409,17 @@
 <div id="private-chat-container" class="private-chat-container"></div>
 
     <script>
-      function muta()
-{
-var kml=document.getElementById("muto");
-if(kml.style.textDecoration=="line-through")
-{
-kml.style.textDecoration="";
-muti=false;
-}
-else
-{
-kml.style.textDecoration="line-through";	
-muti=true;
-}
-}
+ const voxo = document.getElementById('voxo');
+let micOn = true; // État initial
+
+voxo.addEventListener('click', () => {
+  micOn = !micOn;
+  voxo.textContent = micOn ? 'Mic ON' : 'Mic OFF';
+
+  // Ici tu peux envoyer l’état au serveur via socket ou autre
+  socket.emit('toggle mic', { username: myUsername, active: micOn });
+});
+
     </script>
 
     
