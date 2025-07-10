@@ -1060,3 +1060,28 @@ button:focus {
   to { top: 0; opacity: 1; }
 }
 
+/* Wiizz envoyés */
+.wiizz-message.sent {
+  text-align: right;
+}
+.wiizz-message.sent span {
+  background-color: #fff3cd; /* Jaune pâle */
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* Wiizz reçus */
+.wiizz-message.received {
+  text-align: left;
+}
+.wiizz-message.received span {
+  background-color: #ffe0e0; /* Rose pâle */
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-block;
+}
+inline-block;
+}
+
+
