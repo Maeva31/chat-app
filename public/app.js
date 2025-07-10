@@ -357,9 +357,9 @@ socket.on('user list', (users) => {
       icon.src = '/diamond.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
-      icon.style.width = '17px';
-      icon.style.height = '15px';
-      icon.style.marginRight = '6px';
+      icon.style.width = '20px';
+      icon.style.height = '17px';
+      icon.style.marginRight = '3px';
       icon.style.verticalAlign = 'middle';
       return icon;
     } else if (role === 'modo') {
@@ -367,9 +367,9 @@ socket.on('user list', (users) => {
       icon.src = '/favicon.ico';
       icon.alt = 'Modérateur';
       icon.title = 'Modérateur';
-      icon.style.width = '16px';
-      icon.style.height = '16px';
-      icon.style.marginRight = '6px';
+      icon.style.width = '20px';
+      icon.style.height = '17px';
+      icon.style.marginRight = '3px';
       icon.style.verticalAlign = 'middle';
       return icon;
     }
