@@ -641,7 +641,7 @@ wiizzBtn.style.justifyContent = 'center';
 const wiizzIcon = document.createElement('img');
 wiizzIcon.src = '/wizz.png';
 wiizzIcon.alt = 'Wiizz';
-wiizzIcon.style.width = '24px';
+wiizzIcon.style.width = '44px';
 wiizzIcon.style.height = '24px';
 wiizzIcon.style.verticalAlign = 'middle';
 
@@ -693,45 +693,42 @@ socket.on('private wiizz', ({ from }) => {
 
   let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
-  // Si la fenêtre n'existe pas, on l'ouvre automatiquement
-  if (!win) {
-    const userObj = userCache[from] || {};
-    openPrivateChat(from, userObj.role, userObj.gender);
-    win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-  }
+  // Ne pas créer de nouvelle fenêtre si elle n'existe pas
+  if (!win) return;
 
   // Effet tremblement + son
-  if (win) {
-    triggerWiizzEffect(win);
+  triggerWiizzEffect(win);
 
-    const body = win.querySelector('.private-chat-body');
-    const msgDiv = document.createElement('div');
-    msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
-    msgDiv.style.margin = '4px 0';
-    body.appendChild(msgDiv);
-    body.scrollTop = body.scrollHeight;
-  } else {
-    // Si vraiment aucune fenêtre, secoue la page entière (body)
-    const body = document.body;
-    const original = body.style.transform;
-    let count = 0;
-    const interval = setInterval(() => {
-      const x = (Math.random() - 0.5) * 5;
-      const y = (Math.random() - 0.5) * 5;
-      body.style.transform = `translate(${x}px, ${y}px)`;
-      count++;
-      if (count > 8) {
-        clearInterval(interval);
-        body.style.transform = original;
-      }
-    }, 50);
+  // Message texte dans la fenêtre
+  const body = win.querySelector('.private-chat-body');
+  const msgDiv = document.createElement('div');
+  msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
+  msgDiv.style.margin = '4px 0';
+  body.appendChild(msgDiv);
+  body.scrollTop = body.scrollHeight;
 
-    // Lecture du son même sans fenêtre
-    if (wiizzSound) {
-      wiizzSound.currentTime = 0;
-      wiizzSound.play().catch(() => {});
+  // Affichage bandeau d'alerte temporaire en haut de la fenêtre
+  const alertBanner = document.createElement('div');
+  alertBanner.textContent = `💥 ${from} t’a envoyé un Wiizz !`;
+  alertBanner.style.backgroundColor = 'orange';
+  alertBanner.style.color = 'black';
+  alertBanner.style.fontWeight = 'bold';
+  alertBanner.style.padding = '6px';
+  alertBanner.style.textAlign = 'center';
+  alertBanner.style.borderBottom = '2px solid #222';
+  alertBanner.style.position = 'absolute';
+  alertBanner.style.top = '0';
+  alertBanner.style.left = '0';
+  alertBanner.style.width = '100%';
+  alertBanner.style.zIndex = '999';
+
+  win.appendChild(alertBanner);
+
+  setTimeout(() => {
+    if (alertBanner.parentNode) {
+      alertBanner.parentNode.removeChild(alertBanner);
     }
-  }
+  }, 3000);
 });
 
 
