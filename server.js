@@ -210,12 +210,15 @@ io.on('connection', (socket) => {
     }
   });
 
-  socket.on('disconnect', () => {
-    if (socket.username) {
-      delete usernameToSocketId[socket.username];
-    }
-  });
+socket.on('private wiizz', ({ to }) => {
+  const targetSocketId = usernameToSocketId[to];
+  const fromUsername = socketIdToUsername[socket.id];
+
+  if (targetSocketId && fromUsername && fromUsername !== to) {
+    io.to(targetSocketId).emit('private wiizz', { from: fromUsername });
+  }
 });
+
 
 
   
