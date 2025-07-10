@@ -629,6 +629,7 @@ function updateActiveMicsDisplay() {
   let users = [];
   let userCache = {};
   // Initialisation son unique en haut du script
+// Initialisation son unique en haut du script
 const wiizzSound = new Audio('/wizz.mp3');
 const wiizzCooldowns = new Map();
 
@@ -738,6 +739,15 @@ function setupWiizzButton(username, win, container) {
 
   return wiizzBtn;
 }
+
+// Exemple d'insertion dans une fenêtre privée :
+// const wiizzBtn = setupWiizzButton(username, win, container);
+// inputBar.append(emojiBtn, wiizzBtn, input);
+
+// INSERTION AUTOMATIQUE DANS openPrivateChat (extrait à intégrer dans ta fonction) :
+// const wiizzBtn = setupWiizzButton(username, win, container);
+// inputBar.append(emojiBtn, wiizzBtn, input);
+
 
 
 
