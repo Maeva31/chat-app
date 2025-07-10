@@ -44,49 +44,59 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // --- Bouton activer/désactiver micro ---
-  const voxoBtn = document.getElementById('voxo');
-  if (voxoBtn) {
-    voxoBtn.textContent = 'Mic OFF';  // initialisation texte
+const voxoBtn = document.getElementById('voxo');
+const voxiContainer = document.getElementById('voxi');  // ton cadre où afficher le pseudo
 
-    voxoBtn.addEventListener('click', async () => {
-      if (!micEnabled) {
-        const audio = await startLocalAudio();
-        if (!audio) {
-          alert("Micro non disponible ou accès refusé.");
-          return;
-        }
-        localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
-        micEnabled = true;
-        voxoBtn.textContent = 'Mic ON';
+if (voxoBtn && voxiContainer) {
+  voxoBtn.textContent = 'Mic OFF';  // état initial
+  let micEnabled = false;
 
-        // Ajouter pistes audio aux connexions existantes si absent
-        Object.values(peerConnections).forEach(pc => {
-          const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
-          if (!hasAudioSender) {
-            localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
-          } else {
-            pc.getSenders().forEach(sender => {
-              if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
-            });
-          }
-        });
-      } else {
-        // Désactiver micro local
-        if (localAudioStream) {
-          localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
-        }
-        micEnabled = false;
-        voxoBtn.textContent = 'Mic OFF';
-
-        // Désactiver audio sur les connexions
-        Object.values(peerConnections).forEach(pc => {
-          pc.getSenders().forEach(sender => {
-            if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
-          });
-        });
+  voxoBtn.addEventListener('click', async () => {
+    if (!micEnabled) {
+      const audio = await startLocalAudio();
+      if (!audio) {
+        alert("Micro non disponible ou accès refusé.");
+        return;
       }
-    });
-  }
+      localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
+      micEnabled = true;
+      voxoBtn.textContent = 'Mic ON';
+
+      // Afficher ton pseudo dans le cadre voxi
+      voxiContainer.textContent = myUsername;
+
+      // Ajout piste audio aux connexions si besoin...
+      Object.values(peerConnections).forEach(pc => {
+        const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
+        if (!hasAudioSender) {
+          localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+        } else {
+          pc.getSenders().forEach(sender => {
+            if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
+          });
+        }
+      });
+    } else {
+      // Désactiver micro local
+      if (localAudioStream) {
+        localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
+      }
+      micEnabled = false;
+      voxoBtn.textContent = 'Mic OFF';
+
+      // Retirer ton pseudo du cadre voxi (ou le vider)
+      voxiContainer.textContent = '';
+
+      // Désactiver audio sur les connexions
+      Object.values(peerConnections).forEach(pc => {
+        pc.getSenders().forEach(sender => {
+          if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
+        });
+      });
+    }
+  });
+}
+
 
   // --- Gestion clic icône webcam distante ---
   const usersList = document.getElementById('users');
