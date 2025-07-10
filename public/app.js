@@ -1026,39 +1026,51 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text, role, gender) {
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'private-message';
 
-    const who = document.createElement('span');
-    who.style.fontWeight = 'bold';
-    who.style.marginRight = '4px';
-    who.style.display = 'inline-flex';
-    who.style.alignItems = 'center';
+  let userRole = role;
+  let userGender = gender;
 
-    let userRole = role;
-    let userGender = gender;
-
-    if (!userRole || !userGender) {
-      const cachedUser = userCache[from];
-      if (cachedUser) {
-        userRole = userRole || cachedUser.role;
-        userGender = userGender || cachedUser.gender;
-      }
+  if (!userRole || !userGender) {
+    const cachedUser = userCache[from];
+    if (cachedUser) {
+      userRole = userRole || cachedUser.role;
+      userGender = userGender || cachedUser.gender;
     }
-
-    const icon = createRoleIcon(userRole);
-    if (icon) who.appendChild(icon);
-
-    who.appendChild(document.createTextNode(from + ': '));
-
-    who.style.color = userRole === 'admin' ? usernameColors.admin
-                  : userRole === 'modo' ? usernameColors.modo
-                  : (usernameColors[userGender] || usernameColors.default);
-
-    msgDiv.append(who, document.createTextNode(text));
-    bodyElem.appendChild(msgDiv);
-    bodyElem.scrollTop = bodyElem.scrollHeight;
   }
+
+  // Pseudo
+  const who = document.createElement('span');
+  who.className = 'username';
+  who.style.color = userRole === 'admin' ? usernameColors.admin
+                : userRole === 'modo' ? usernameColors.modo
+                : (usernameColors[userGender] || usernameColors.default);
+
+  const icon = createRoleIcon(userRole);
+  if (icon) who.appendChild(icon);
+
+  who.appendChild(document.createTextNode(from + ':'));
+
+  // Message texte
+  const textSpan = document.createElement('span');
+  textSpan.className = 'message-text';
+  textSpan.textContent = text;
+
+  // 🕒 Horodatage sans crochets
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'timestamp';
+  const now = new Date();
+  timeSpan.textContent = ` ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+  // Ajout à la ligne
+  msgDiv.append(who, textSpan, timeSpan);
+  bodyElem.appendChild(msgDiv);
+  bodyElem.scrollTop = bodyElem.scrollHeight;
+}
+
+
+
 
   // ── 5) Clic pseudo ouvre la fenêtre privée ──
   document.addEventListener('click', e => {
