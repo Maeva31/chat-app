@@ -1009,7 +1009,7 @@ button:focus {
 .private-message .timestamp {
   margin-left: 8px;
   color: #aaa;
-  font-size: 0.75em;
+  font-size: 0.95em;
   font-style: italic;
   white-space: nowrap;
 }
