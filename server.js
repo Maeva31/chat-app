@@ -22,8 +22,8 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 let webcamStatus = {};  // { username: true/false }
-const usernameToSocketId = {};     // username → socket.id
-const socketIdToUsername = {};     // socket.id → username
+const usernameToSocketId = {};     // username → socket.id wizz
+const socketIdToUsername = {};     // socket.id → username wizz
 
 
 
@@ -195,13 +195,26 @@ function getUserListForClient() {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
-socket.on('private wiizz', ({ to }) => {
-  const targetSocketId = usernameToSocketId[to];
-  const fromUsername = socketIdToUsername[socket.id];
 
-  if (targetSocketId && fromUsername) {
-    io.to(targetSocketId).emit('private wiizz', { from: fromUsername });
-  }
+// Quand un utilisateur se connecte et donne son pseudo : (wizz)
+io.on('connection', (socket) => {
+  socket.on('set username', (username) => {
+    usernameToSocketId[username] = socket.id;
+    socket.username = username;
+  });
+
+  socket.on('private wiizz', ({ to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (toSocketId) {
+      io.to(toSocketId).emit('private wiizz', { from: socket.username });
+    }
+  });
+
+  socket.on('disconnect', () => {
+    if (socket.username) {
+      delete usernameToSocketId[socket.username];
+    }
+  });
 });
 
 
