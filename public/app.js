@@ -749,7 +749,9 @@ function showCooldownBanner(username, win) {
 }
 
 
-
+    // Assemblage inputBar : emoji avant upload
+    const wiizzBtn = setupWiizzButton(username, win, container);
+inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
 // --- Intégration bouton Wiizz dans openPrivateChat ---
 // const wiizzBtn = setupWiizzButton(username, win, container);
 // inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
@@ -900,9 +902,6 @@ function showCooldownBanner(username, win) {
     sendBtn.style.marginLeft = '5px';
     sendBtn.style.padding = '4px 8px';
 
-    // Assemblage inputBar : emoji avant upload
-    const wiizzBtn = setupWiizzButton(username, win, container);
-inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
 
 
 
