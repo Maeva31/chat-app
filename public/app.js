@@ -634,13 +634,16 @@ wiizzBtn.style.border = 'none';
 wiizzBtn.style.cursor = 'pointer';
 wiizzBtn.style.marginRight = '5px';
 wiizzBtn.style.padding = '0';
+wiizzBtn.style.display = 'inline-flex'; // 🔥 important pour aligner
+wiizzBtn.style.alignItems = 'center';
+
 
 const wiizzIcon = document.createElement('img');
 wiizzIcon.src = '/wizz.png';
 wiizzIcon.alt = 'Wiizz';
 wiizzIcon.style.width = '45px';
 wiizzIcon.style.height = '24px';
-wiizzIcon.style.verticalAlign = '-15px';
+wiizzIcon.style.verticalAlign = 'middle';
 
 
 wiizzBtn.addEventListener('click', () => {
