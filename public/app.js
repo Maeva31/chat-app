@@ -634,13 +634,18 @@ wiizzBtn.style.border = 'none';
 wiizzBtn.style.cursor = 'pointer';
 wiizzBtn.style.marginRight = '5px';
 wiizzBtn.style.padding = '0';
+wiizzBtn.style.display = 'inline-flex';
+wiizzBtn.style.alignItems = 'center';
+wiizzBtn.style.justifyContent = 'center';
 
 const wiizzIcon = document.createElement('img');
 wiizzIcon.src = '/wizz.png';
 wiizzIcon.alt = 'Wiizz';
-wiizzIcon.style.width = '45px';
+wiizzIcon.style.width = '24px';
 wiizzIcon.style.height = '24px';
 wiizzIcon.style.verticalAlign = 'middle';
+
+wiizzBtn.appendChild(wiizzIcon);
 
 
 wiizzBtn.addEventListener('click', () => {
