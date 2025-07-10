@@ -9,6 +9,7 @@
   <link rel="stylesheet" href="style.css" />
 </head>
 
+  
   <style>
 #voxi {
   position: absolute;
@@ -435,144 +436,7 @@ voxo.addEventListener('click', () => {
     
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="app.js"></script>
-
-    <style>
-    /* Thèmes */
-    body:not(.light):not(.dark) {
-        /* background: none !important; */
-    }
-
-    body.light {
-        background-color: #020312;
-    }
-
-    body.dark {
-        background-color: #000000;
-    }
-
-    /* Toggle Switch */
-    .theme-switch {
-        display: inline-flex;
-        align-items: center;
-        cursor: pointer;
-        gap: 10px;
-        margin: 0rem;
-        position: relative;
-        z-index: 10;
-    }
-
-    .theme-switch input {
-        display: none;
-    }
-
-    .slider {
-        width: 50px;
-        height: 25px;
-        background: #cb26eb;
-        border-radius: 999px;
-        position: relative;
-        transition: background-color 0.3s;
-    }
-
-    .slider::before {
-        content: "";
-        position: absolute;
-        width: 20px;
-        height: 20px;
-        left: 2px;
-        top: 2px;
-        background-color: white;
-        border-radius: 50%;
-        transition: transform 0.3s;
-    }
-
-    input:checked + .slider {
-        background: linear-gradient(270deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1));
-        background-size: 600% 600%;
-        animation: gradientMove 3s ease infinite;
-    }
-
-    @keyframes gradientMove {
-        0% { background-position: 0% 50%; }
-        50% { background-position: 100% 50%; }
-        100% { background-position: 0% 50%; }
-    }
-
-    input:checked + .slider::before {
-        transform: translateX(25px);
-    }
-
-    .icon {
-        font-size: 1.5rem;
-        transition: transform 0.4s ease;
-    }
-
-    input:checked ~ .icon {
-        transform: rotate(360deg);
-    }
-
-    /* Fond étoilé animé */
-    .bg {
-        background-size: cover;
-        height: 100%;
-        width: 100%;
-        position: fixed;
-        top: 0;
-        left: 0;
-        z-index: -3; /* Assurez-vous que c'est derrière le contenu */
-    }
-
-    .bg:before {
-        content: "";
-        width: 100%;
-        height: 100%;
-        /* background: #000; */
-        position: fixed;
-        z-index: -2; /* Assurez-vous que c'est derrière les étoiles */
-        top: 0;
-        left: 0;
-        opacity: 0.3;
-    }
-
-    /* Nouveau fond d'étoiles animé */
-.star-field {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -1; /* Assurez-vous que les étoiles sont bien derrière tout le contenu */
-    pointer-events: none;
-    overflow: hidden; /* Pour éviter que les étoiles ne dépassent */
-}
-
-
-    .star {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 2px;
-        height: 2px;
-        background: linear-gradient(90deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1)); /* Couleur etoiles */
-        border-radius: 50%;
-        opacity: 0;
-        animation: move-star 6s linear infinite;
-    }
-
-    @keyframes move-star {
-        0% {
-            transform: translate(var(--x), var(--y)) scale(1);
-            opacity: 0;
-        }
-        5% {
-            opacity: 1;
-        }
-        100% {
-            transform: translate(0px, 0px) scale(0);
-            opacity: 0;
-        }
-    }
-</style>
+    
 
 </body>
 </html>
