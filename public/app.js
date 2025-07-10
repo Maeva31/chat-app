@@ -4,6 +4,8 @@ const webcamStatus = {};  // { username: true/false }
 const peerConnections = {};
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 
+let users = [];
+let userCache = {};
 let localStream = null;         // vidéo locale (webcam)
 let localAudioStream = null;    // audio locale (micro)
 const myUsername = localStorage.getItem('username');
@@ -452,8 +454,6 @@ function updateActiveMicsDisplay() {
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
-  let users = [];
-  let userCache = {};
 
   socket.on('user list', list => {
     users = list;
