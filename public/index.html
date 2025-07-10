@@ -323,12 +323,13 @@
   });
 </script>
 
-  <!-- Mic -->
-    
-    <div id="voxi" style="
+
+<div id="private-chat-container" class="private-chat-container"></div>
+
+<div id="voxi" style="
   position: absolute;
-  top: 100px;
-  left: 200px;
+  top: 743px;
+  left: 1235px;
   width: 150px;
   height: 95px;
   background-color: #ffffff;
@@ -348,6 +349,7 @@
     background-color: #dddddd;
     line-height: 20px;
     text-align: center;
+    color: #000000;
     cursor: pointer;
     user-select: none;
   ">Mic ON</div>
@@ -359,8 +361,9 @@
     width: 38px;
     height: 20px;
     background-color: #dddddd;
+    color: #000000;
     cursor: pointer;
-  "></div>
+  ">Kill</div>
 
   <div id="muto" style="
     position: absolute;
@@ -372,6 +375,7 @@
     user-select: none;
     padding: 2px 4px;
     border: 1px solid #ccc;
+    color: #000000;
   ">mute</div>
 
   <div id="micra" style="
@@ -383,10 +387,6 @@
     background-color: #000000;
   "></div>
 </div>
-
-
-<div id="private-chat-container" class="private-chat-container"></div>
-
     
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="app.js"></script>
