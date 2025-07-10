@@ -976,66 +976,40 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
   }
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
-function appendPrivateMessage(bodyElem, from, text, role, gender) {
-  const myUsername = localStorage.getItem('username');
-  const isSent = from === myUsername;
+  function appendPrivateMessage(bodyElem, from, text, role, gender) {
+    const msgDiv = document.createElement('div');
+    msgDiv.style.margin = '4px 0';
 
-  const msgDiv = document.createElement('div');
-  msgDiv.classList.add('private-msg', isSent ? 'sent' : 'received');
+    const who = document.createElement('span');
+    who.style.fontWeight = 'bold';
+    who.style.marginRight = '4px';
+    who.style.display = 'inline-flex';
+    who.style.alignItems = 'center';
 
-  const meta = document.createElement('div');
-  meta.classList.add('meta');
+    let userRole = role;
+    let userGender = gender;
 
-  const who = document.createElement('span');
-  who.classList.add('user');
-  who.style.fontWeight = 'bold';
-  who.style.marginRight = '6px';
-  who.style.display = 'inline-flex';
-  who.style.alignItems = 'center';
-
-  let userRole = role;
-  let userGender = gender;
-
-  if (!userRole || !userGender) {
-    const cachedUser = userCache[from];
-    if (cachedUser) {
-      userRole = userRole || cachedUser.role;
-      userGender = userGender || cachedUser.gender;
+    if (!userRole || !userGender) {
+      const cachedUser = userCache[from];
+      if (cachedUser) {
+        userRole = userRole || cachedUser.role;
+        userGender = userGender || cachedUser.gender;
+      }
     }
-  }
 
-  const icon = createRoleIcon(userRole);
-  if (icon) who.appendChild(icon);
+    const icon = createRoleIcon(userRole);
+    if (icon) who.appendChild(icon);
 
-  const displayName = isSent ? 'Vous' : from;
-  who.appendChild(document.createTextNode(displayName));
+    who.appendChild(document.createTextNode(from + ': '));
 
-  const time = document.createElement('span');
-  time.classList.add('time');
-  time.textContent = `[${getCurrentTimeString()}]`;
-
-  // Couleur du pseudo selon rôle/genre
-  who.style.color = userRole === 'admin' ? usernameColors.admin
+    who.style.color = userRole === 'admin' ? usernameColors.admin
                   : userRole === 'modo' ? usernameColors.modo
                   : (usernameColors[userGender] || usernameColors.default);
 
-  meta.append(who, time);
-
-  const messageText = document.createElement('div');
-  messageText.classList.add('text');
-  messageText.innerHTML = sanitizeHTML(text);
-
-  msgDiv.append(meta, messageText);
-  bodyElem.appendChild(msgDiv);
-  bodyElem.scrollTop = bodyElem.scrollHeight;
-}
-
-  // Heure
-  function getCurrentTimeString() {
-  const now = new Date();
-  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
+    msgDiv.append(who, document.createTextNode(text));
+    bodyElem.appendChild(msgDiv);
+    bodyElem.scrollTop = bodyElem.scrollHeight;
+  }
 
   // ── 5) Clic pseudo ouvre la fenêtre privée ──
   document.addEventListener('click', e => {
