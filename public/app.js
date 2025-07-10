@@ -452,9 +452,6 @@ function updateActiveMicsDisplay() {
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
-  let users = [];
-  let userCache = {};
-  const wiizzCooldowns = new Map(); // Anti-spam par utilisateur
 
 
 
@@ -629,8 +626,11 @@ function updateActiveMicsDisplay() {
   
   
     // Bouton Wiizz
-// Initialisation son unique en haut du script
+  let users = [];
+  let userCache = {};
+  // Initialisation son unique en haut du script
 const wiizzSound = new Audio('/wizz.mp3');
+const wiizzCooldowns = new Map();
 
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
@@ -699,6 +699,46 @@ function triggerWiizzEffect(win) {
     }
   }, 50);
 }
+
+function setupWiizzButton(username, win, container) {
+  const wiizzBtn = document.createElement('button');
+  wiizzBtn.title = 'Envoyer un Wiizz';
+  wiizzBtn.style.background = 'transparent';
+  wiizzBtn.style.border = 'none';
+  wiizzBtn.style.cursor = 'pointer';
+  wiizzBtn.style.marginRight = '5px';
+  wiizzBtn.style.padding = '0';
+  wiizzBtn.style.display = 'inline-flex';
+  wiizzBtn.style.alignItems = 'center';
+  wiizzBtn.style.justifyContent = 'center';
+
+  const wiizzIcon = document.createElement('img');
+  wiizzIcon.src = '/wizz.png';
+  wiizzIcon.alt = 'Wiizz';
+  wiizzIcon.style.width = '44px';
+  wiizzIcon.style.height = '24px';
+  wiizzIcon.style.verticalAlign = 'middle';
+  wiizzBtn.appendChild(wiizzIcon);
+
+  wiizzBtn.addEventListener('click', () => {
+    const now = Date.now();
+    const lastTime = wiizzCooldowns.get(username) || 0;
+
+    if (now - lastTime < 5000) {
+      showCooldownBanner(username, win);
+      return;
+    }
+
+    wiizzCooldowns.set(username, now);
+    socket.emit('private wiizz', { to: username });
+
+    // Effet local immédiat
+    triggerWiizzEffect(win);
+  });
+
+  return wiizzBtn;
+}
+
 
 
 
