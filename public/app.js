@@ -1258,8 +1258,33 @@ if (msg.username === 'Système') {
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) chatMessages.innerHTML = '';
     selectChannelInUI(currentChannel);
+    updateMicroFrameVisibility(currentChannel);
     selectedUser = null;
   });
+
+  function updateMicroFrameVisibility(channelName) {
+  const voxi = document.getElementById('voxi');
+  if (!voxi) return;
+
+  if (channelName === 'Musique', 'Gaming') {
+    voxi.style.visibility = 'visible';
+  } else {
+    voxi.style.visibility = 'hidden';
+  }
+}
+
+updateMicroFrameVisibility(currentChannel);
+
+  socket.on('joinedRoom', (newChannel) => {
+  currentChannel = newChannel;
+  localStorage.setItem('currentChannel', newChannel);
+  const chatMessages = document.getElementById('chat-messages');
+  if (chatMessages) chatMessages.innerHTML = '';
+  selectChannelInUI(newChannel);
+  updateMicroFrameVisibility(newChannel);  // <-- Ajout ici
+  selectedUser = null;
+  socket.emit('request history', newChannel);
+});
 
   // Envoi message
   function sendMessage() {
