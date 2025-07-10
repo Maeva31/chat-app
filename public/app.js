@@ -631,15 +631,15 @@ socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
 
+  // Création automatique si la fenêtre n'existe pas
   let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  if (!win) {
+    win = createPrivateChatWindow(from); // ← tu dois avoir une fonction pour créer une fenêtre MP
+    container.appendChild(win);
+  }
 
-  // Ne pas créer de nouvelle fenêtre si elle n'existe pas
-  if (!win) return;
-
-  // Effet tremblement + son
   triggerWiizzEffect(win);
 
-  // Message dans la fenêtre
   const body = win.querySelector('.private-chat-body');
   const msgDiv = document.createElement('div');
   msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
@@ -647,6 +647,7 @@ socket.on('private wiizz', ({ from }) => {
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
 });
+
 
 function showCooldownBanner(username, win) {
   const existing = win.querySelector('.wiizz-cooldown-banner');
@@ -664,7 +665,7 @@ function showCooldownBanner(username, win) {
   cooldownBanner.style.position = 'absolute';
   cooldownBanner.style.top = '0';
   cooldownBanner.style.left = '0';
-  cooldownBanner.style.width = '100%';
+  cooldownBanner.style.width = '397px';
   cooldownBanner.style.zIndex = '999';
 
   win.appendChild(cooldownBanner);
@@ -715,21 +716,26 @@ function setupWiizzButton(username, win, container) {
   wiizzIcon.style.verticalAlign = 'middle';
   wiizzBtn.appendChild(wiizzIcon);
 
-  wiizzBtn.addEventListener('click', () => {
-    const now = Date.now();
-    const lastTime = wiizzCooldowns.get(username) || 0;
+wiizzBtn.addEventListener('click', () => {
+  const now = Date.now();
+  const lastTime = wiizzCooldowns.get(username) || 0;
 
-    if (now - lastTime < 5000) {
-      showCooldownBanner(username, win);
-      return;
-    }
+  if (now - lastTime < 5000) {
+    const winCheck = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (winCheck) showCooldownBanner(username, winCheck);
+    return;
+  }
 
-    wiizzCooldowns.set(username, now);
-    socket.emit('private wiizz', { to: username });
+  wiizzCooldowns.set(username, now);
+  socket.emit('private wiizz', { to: username });
 
-    // Effet local immédiat
-    triggerWiizzEffect(win);
-  });
+  // Effet local immédiat si la fenêtre est visible
+  const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (winTarget) {
+    triggerWiizzEffect(winTarget);
+  }
+});
+
 
   return wiizzBtn;
 }
