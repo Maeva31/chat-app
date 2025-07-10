@@ -329,118 +329,32 @@
 
 
 <div id="voxi">
-  <div id="voxo"><b>Mic ON</b></div>
-  <div id="voxz"><b>Kill</b></div>
-  <div id="muto"><b>mute</b></div>
+  <div id="voxo">Mic ON</div>
+  <div id="voxz">Kill</div>
+  <div id="muto">mute</div>
   <div id="micra"></div>
 </div>
 
-
-
 <style>
   #voxi {
-  position: absolute;
-  top: 743px;      /* tu peux ajuster ou déplacer dynamiquement */
-  left: 1235px;     /* idem */
-  width: 150px;
-  height: 95px;
-  background-color: #ffffff;
-  visibility: hidden; /* visible uniquement quand tu veux */
-  font-family: Arial, sans-serif;
-  z-index: 50;
-  border: 1px solid #ccc;
-  padding: 5px;
-  box-sizing: border-box;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-  user-select: none;
-  cursor: move;
-  transition: top 0.3s ease, left 0.3s ease;
-}
-
-#voxo, #voxz {
-  position: absolute;
-  top: 3px;
-  height: 20px;
-  background-color: #dddddd;
-  color: #000000;
-  cursor: pointer;
-  user-select: none;
-  line-height: 20px;
-  text-align: center;
-  border-radius: 4px;
-  font-size: 13px;
-}
-
-#voxo {
-  left: 3px;
-  width: 60px;
-}
-
-#voxz {
-  left: 78px;
-  width: 38px;
-}
-
-#muto {
-  position: absolute;
-  top: 13px;
-  left: 117px;
-  font-size: 10px;
-  background-color: #eeeeee;
-  cursor: pointer;
-  user-select: none;
-  padding: 2px 4px;
-  border: 1px solid #ccc;
-  color: #000000;
-  border-radius: 4px;
-}
-
-#micra {
-  position: absolute;
-  top: 0;
-  left: 138px;
-  width: 10px;
-  height: 10px;
-  background-color: #000000;
-  border-radius: 50%;
-}
+    position: fixed;
+    top: 743px;
+    left: 1235px;
+    width: 150px;
+    height: 95px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    user-select: none;
+    cursor: default; /* pas déplacable */
+    z-index: 50;
+  }
+  
 </style>
-    <script>
-      function limitVoxiPosition() {
-  const voxi = document.getElementById('voxi');
-  if (!voxi) return;
 
-  // Récupère la position actuelle en pixels (parseInt car style.left/top sont en string)
-  let left = parseInt(voxi.style.left, 10) || 850;
-  let top = parseInt(voxi.style.top, 10) || 736;
-
-  const winWidth = window.innerWidth;
-  const winHeight = window.innerHeight;
-
-  const voxiRect = voxi.getBoundingClientRect();
-
-  // Limite à gauche et en haut (>= 0)
-  if (left < 0) left = 0;
-  if (top < 0) top = 0;
-
-  // Limite à droite et en bas (fenêtre moins largeur/hauteur voxi)
-  if (left + voxiRect.width > winWidth) {
-    left = winWidth - voxiRect.width;
-  }
-  if (top + voxiRect.height > winHeight) {
-    top = winHeight - voxiRect.height;
-  }
-
-  // Applique la position corrigée
-  voxi.style.left = left + 'px';
-  voxi.style.top = top + 'px';
-}
-
-// Exécute la fonction au chargement et au redimensionnement
-window.addEventListener('load', limitVoxiPosition);
-window.addEventListener('resize', limitVoxiPosition);
-    </script>
     
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="app.js"></script>
