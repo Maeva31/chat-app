@@ -15,7 +15,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // --- Webcam status update ---
   socket.on('webcam status update', ({ username, active }) => {
-    console.log('webcam status update:', username, active);
     webcamStatus[username] = active;
 
     if (window.users) {
@@ -154,10 +153,13 @@ async function createPeerConnection(remoteUsername) {
 
   const pc = new RTCPeerConnection(config);
 
+  // Assure que vidéo locale est prête
   if (!localStream) {
     localStream = await startLocalStream();
     if (!localStream) return null;
   }
+
+  // Assure que audio locale est prête si micro activé
   if (!localAudioStream && micEnabled) {
     localAudioStream = await startLocalAudio();
     if (!localAudioStream) {
@@ -219,7 +221,7 @@ async function createPeerConnection(remoteUsername) {
         remoteAudio = document.createElement('audio');
         remoteAudio.id = `remoteAudio-${remoteUsername}`;
         remoteAudio.autoplay = true;
-        remoteAudio.controls = true; // facultatif : contrôle audio
+        remoteAudio.controls = true; // facultatif
         remoteAudio.style.display = 'block';
         remoteAudio.style.margin = '5px';
 
@@ -285,19 +287,8 @@ socket.on('signal', async ({ from, data }) => {
   }
 });
 
-
-
-
-// Démarrage localStream au chargement
-// startLocalStream();
-
-// Optionnel démarrer micro automatiquement
-// startLocalAudio();
-
-
-
-  // Met à jour la liste des utilisateurs affichée
- function updateUserList(users) {
+// --- Gestion de la liste utilisateurs et appels WebRTC ---
+function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -315,7 +306,6 @@ socket.on('signal', async ({ from, data }) => {
 
     const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
 
-    // Structure HTML avec âge, rôle, pseudo
     li.innerHTML = `
       <span class="role-icon"></span> 
       <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
@@ -332,31 +322,29 @@ socket.on('signal', async ({ from, data }) => {
 
     // Ajouter icône webcam si active
     if (webcamActive) {
-  const camIcon = document.createElement('img');
-  camIcon.src = '/webcam.gif';
-  camIcon.alt = 'Webcam active';
-  camIcon.title = 'Webcam active - cliquer pour voir';
-  camIcon.classList.add('webcam-icon');
+      const camIcon = document.createElement('img');
+      camIcon.src = '/webcam.gif';
+      camIcon.alt = 'Webcam active';
+      camIcon.title = 'Webcam active - cliquer pour voir';
+      camIcon.classList.add('webcam-icon');
 
-  // Ajoute classe selon rôle
-  if (role === 'admin') {
-    camIcon.classList.add('admin');
-  } else if (role === 'modo') {
-    camIcon.classList.add('modo');
-  } else {
-    camIcon.classList.add('user');
-  }
+      if (role === 'admin') {
+        camIcon.classList.add('admin');
+      } else if (role === 'modo') {
+        camIcon.classList.add('modo');
+      } else {
+        camIcon.classList.add('user');
+      }
 
-  roleIconSpan.style.position = 'relative';
+      roleIconSpan.style.position = 'relative';
 
-  camIcon.dataset.username = username;
-  camIcon.addEventListener('click', () => {
-    openRemoteWebcamPopup(username);
-  });
+      camIcon.dataset.username = username;
+      camIcon.addEventListener('click', () => {
+        openRemoteWebcamPopup(username);
+      });
 
-  roleIconSpan.appendChild(camIcon);
-}
-
+      roleIconSpan.appendChild(camIcon);
+    }
 
     // Clic pseudo pour mention
     const usernameSpan = li.querySelector('.username-span');
@@ -372,10 +360,8 @@ socket.on('signal', async ({ from, data }) => {
   });
 }
 
-
-// Mise à jour liste utilisateurs et appel WebRTC quand reçue
 socket.on('user list', (users) => {
-  window.users = users;  // garde copie globale
+  window.users = users;
   updateUserList(users);
 
   users.forEach(user => {
@@ -386,6 +372,36 @@ socket.on('user list', (users) => {
     }
   });
 });
+
+// Note: fonctions utilitaires `getUsernameColor`, `createRoleIcon` et variables comme `selectedUser` doivent être définies ailleurs dans ton code.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
