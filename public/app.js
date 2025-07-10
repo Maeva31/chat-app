@@ -880,7 +880,10 @@ function setupWiizzButton(username, win, container) {
     sendBtn.style.padding = '4px 8px';
 
     // Assemblage inputBar : emoji avant upload
-    inputBar.append(emojiBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+    const wiizzBtn = setupWiizzButton(username, win, container);
+inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+
+
 
     sendBtn.onclick = () => {
       const text = input.value.trim();
