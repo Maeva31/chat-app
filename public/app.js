@@ -658,7 +658,7 @@ socket.on('private wiizz', ({ from }) => {
   msgDiv.classList.add('wiizz-message', 'received');
   msgDiv.innerHTML = `
     <span style="color:orange;font-weight:bold;">
-      <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+      <img src="/wizz.png" style="height:25px; width:44px; vertical-align:middle; margin-right:4px;">
       ${from} t’a envoyé un Wiizz ! <span style="font-size:11px;color:#888;">[${getCurrentTimeString()}]</span>
     </span>`;
   msgDiv.style.margin = '4px 0';
@@ -751,7 +751,7 @@ function setupWiizzButton(username, win, container) {
       const myUsername = localStorage.getItem('username') || 'Vous';
       msgDiv.innerHTML = `
         <span style="color:orange;font-weight:bold;">
-          <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+          <img src="/wizz.png" style="height:25px; width:44px; vertical-align:middle; margin-right:4px;">
           Vous avez envoyé un Wiizz à ${username} ! <span style="font-size:11px;color:#888;">[${getCurrentTimeString()}]</span>
         </span>`;
       msgDiv.style.margin = '4px 0';
