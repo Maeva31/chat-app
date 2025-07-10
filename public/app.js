@@ -728,13 +728,15 @@ function setupWiizzButton(username, win, container) {
   wiizzBtn.style.width = '44px';
   wiizzBtn.style.height = '25px';
 
-  const wiizzIcon = document.createElement('img');
-  wiizzIcon.src = '/wizz.png';
-  wiizzIcon.alt = 'Wiizz';
-  wiizzIcon.style.width = '44px';
-  wiizzIcon.style.height = '25px';
-  wiizzIcon.style.verticalAlign = 'middle';
-  wiizzBtn.appendChild(wiizzIcon);
+const wiizzIcon = document.createElement('img');
+wiizzIcon.src = '/wizz.png';
+wiizzIcon.alt = 'Wiizz';
+wiizzIcon.style.width = '44px';
+wiizzIcon.style.height = '25px';
+wiizzIcon.style.position = 'relative';
+wiizzIcon.style.top = '-4px';  // ou -2px, -6px selon l'ajustement visuel voulu
+wiizzBtn.appendChild(wiizzIcon);
+
 
   const cooldownOverlay = document.createElement('div');
   cooldownOverlay.style.position = 'absolute';
