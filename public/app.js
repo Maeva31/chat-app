@@ -456,7 +456,7 @@ function updateActiveMicsDisplay() {
   let userCache = {};
   const wiizzCooldowns = new Map(); // Anti-spam par utilisateur
 
-  const wiizzSound = new Audio('/wizz.mp3');
+
 
   socket.on('user list', list => {
     users = list;
@@ -666,27 +666,6 @@ wiizzBtn.addEventListener('click', () => {
 
 
 
-function triggerWiizzEffect(win) {
-  if (wiizzSound) {
-    wiizzSound.currentTime = 0;
-    wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
-  }
-
-  const originalStyle = win.style.transform;
-  let count = 0;
-
-  const interval = setInterval(() => {
-    const x = (Math.random() - 0.5) * 10;
-    const y = (Math.random() - 0.5) * 10;
-    win.style.transform = `translate(${x}px, ${y}px)`;
-    count++;
-    if (count > 10) {
-      clearInterval(interval);
-      win.style.transform = originalStyle;
-    }
-  }, 50);
-}
-
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
@@ -699,7 +678,7 @@ socket.on('private wiizz', ({ from }) => {
   // Effet tremblement + son
   triggerWiizzEffect(win);
 
-  // Message texte dans la fenêtre
+  // Message dans la fenêtre
   const body = win.querySelector('.private-chat-body');
   const msgDiv = document.createElement('div');
   msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
@@ -707,7 +686,7 @@ socket.on('private wiizz', ({ from }) => {
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
 
-  // Affichage bandeau d'alerte temporaire en haut de la fenêtre
+  // Affichage bandeau d'alerte en haut de la fenêtre
   const alertBanner = document.createElement('div');
   alertBanner.textContent = `💥 ${from} t’a envoyé un Wiizz !`;
   alertBanner.style.backgroundColor = 'orange';
@@ -725,11 +704,60 @@ socket.on('private wiizz', ({ from }) => {
   win.appendChild(alertBanner);
 
   setTimeout(() => {
-    if (alertBanner.parentNode) {
+    if (alertBanner && alertBanner.parentNode) {
       alertBanner.parentNode.removeChild(alertBanner);
     }
   }, 3000);
 });
+
+function showCooldownBanner(username, win) {
+  const existing = win.querySelector('.wiizz-cooldown-banner');
+  if (existing) existing.remove();
+
+  const cooldownBanner = document.createElement('div');
+  cooldownBanner.classList.add('wiizz-cooldown-banner');
+  cooldownBanner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
+  cooldownBanner.style.backgroundColor = '#ffc107';
+  cooldownBanner.style.color = 'black';
+  cooldownBanner.style.fontWeight = 'bold';
+  cooldownBanner.style.padding = '6px';
+  cooldownBanner.style.textAlign = 'center';
+  cooldownBanner.style.borderBottom = '2px solid #222';
+  cooldownBanner.style.position = 'absolute';
+  cooldownBanner.style.top = '0';
+  cooldownBanner.style.left = '0';
+  cooldownBanner.style.width = '100%';
+  cooldownBanner.style.zIndex = '999';
+
+  win.appendChild(cooldownBanner);
+
+  setTimeout(() => {
+    if (cooldownBanner && cooldownBanner.parentNode) {
+      cooldownBanner.parentNode.removeChild(cooldownBanner);
+    }
+  }, 3000);
+}
+
+function triggerWiizzEffect(win) {
+  wiizzSound.currentTime = 0;
+  wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
+
+  const originalStyle = win.style.transform;
+  let count = 0;
+
+  const interval = setInterval(() => {
+    const x = (Math.random() - 0.5) * 10;
+    const y = (Math.random() - 0.5) * 10;
+    win.style.transform = `translate(${x}px, ${y}px)`;
+    count++;
+    if (count > 10) {
+      clearInterval(interval);
+      win.style.transform = originalStyle;
+    }
+  }, 50);
+}
+
+
 
 
 
