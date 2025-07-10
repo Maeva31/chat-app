@@ -1262,16 +1262,19 @@ if (msg.username === 'Système') {
     selectedUser = null;
   });
 
-  function updateMicroFrameVisibility(channelName) {
+function updateMicroFrameVisibility(channelName) {
   const voxi = document.getElementById('voxi');
   if (!voxi) return;
 
-  if (channelName === 'Musique', 'Gaming') {
+  const salonsAvecMicro = ['Musique', 'Gaming'];
+
+  if (salonsAvecMicro.includes(channelName)) {
     voxi.style.visibility = 'visible';
   } else {
     voxi.style.visibility = 'hidden';
   }
 }
+
 
 updateMicroFrameVisibility(currentChannel);
 
