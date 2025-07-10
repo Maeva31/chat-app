@@ -239,15 +239,22 @@ socket.on('private wiizz', ({ to }) => {
 
   // écouteur 'signal' pour WebRTC
   socket.on('signal', ({ to, from, data }) => {
+  // ✅ Si l'expéditeur est en mode invisible, bloquer l'envoi du signal
+  if (users[from]?.invisible) {
+    console.warn(`🔒 Signal bloqué : ${from} est en mode invisible`);
+    return;
+  }
+
   const toSocketId = usernameToSocketId[to];
   if (toSocketId) {
     io.to(toSocketId).emit('signal', { from, data });
-    console.log(`Signal envoyé de ${from} vers ${to}`);
+    console.log(`📡 Signal envoyé de ${from} vers ${to}`);
   } else {
     socket.emit('error message', `Utilisateur ${to} non connecté`);
     console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
   }
 });
+
 
 
   socket.on('watch webcam', ({ from, to }) => {
