@@ -626,6 +626,8 @@ function updateActiveMicsDisplay() {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
+  const wiizzSound = new Audio('/wizz.mp3');
+  
     // Bouton Wiizz
 const wiizzBtn = document.createElement('button');
 wiizzBtn.title = 'Envoyer un Wiizz';
