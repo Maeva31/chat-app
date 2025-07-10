@@ -1726,49 +1726,61 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
 });
 
 // --- Upload fichier ---
-const uploadInput = document.getElementById('file-input');    // input type="file"
-const uploadButton = document.getElementById('upload-btn');   // bouton 📎 ou autre
+function displayFileMessage(msg, container) {
+  // msg: { filename, mimetype, data (base64) }
 
-if (uploadInput && uploadButton) {
-  uploadButton.addEventListener('click', () => {
-    uploadInput.click();
-  });
+  const msgDiv = document.createElement('div');
+  msgDiv.style.margin = '4px 0';
 
-  uploadInput.addEventListener('change', () => {
-    const file = uploadInput.files[0];
-    if (!file) return;
+  // Création de l'icône selon type
+  const iconsByType = {
+    'image': 'icon/photo.gif',
+    'audio': 'icon/mp3.gif',
+    'video': 'icon/movie.gif',
+    'file': 'icon/file.gif',
+  };
 
-    const MAX_SIZE = 50 * 1024 * 1024; // 50 Mo max
-    if (file.size > MAX_SIZE) {
-      showBanner('Le fichier est trop volumineux (50 Mo max conseillés).', 'error');
-      uploadInput.value = ''; // reset input
-      return;
+  let fileTypeCategory = 'file';
+  if (msg.mimetype.startsWith('image/')) fileTypeCategory = 'image';
+  else if (msg.mimetype.startsWith('audio/')) fileTypeCategory = 'audio';
+  else if (msg.mimetype.startsWith('video/')) fileTypeCategory = 'video';
+
+  const iconImg = document.createElement('img');
+  iconImg.src = iconsByType[fileTypeCategory] || iconsByType['file'];
+  iconImg.alt = fileTypeCategory;
+  iconImg.title = `Ouvrir ${msg.filename}`;
+  iconImg.style.width = '32px';
+  iconImg.style.height = '32px';
+  iconImg.style.cursor = 'pointer';
+
+  iconImg.addEventListener('click', () => {
+    const popup = window.open('', '_blank', 'width=600,height=400,resizable=yes,scrollbars=yes');
+    if (!popup) return alert('Popup bloquée, autorisez les popups.');
+
+    let content = '';
+    if (fileTypeCategory === 'image') {
+      content = `<img src="data:${msg.mimetype};base64,${msg.data}" alt="${msg.filename}" style="max-width:100%;max-height:100%">`;
+    } else if (fileTypeCategory === 'audio') {
+      content = `<audio controls autoplay style="width:100%"><source src="data:${msg.mimetype};base64,${msg.data}"></audio>`;
+    } else if (fileTypeCategory === 'video') {
+      content = `<video controls autoplay style="max-width:100%;max-height:100%"><source src="data:${msg.mimetype};base64,${msg.data}"></video>`;
+    } else {
+      content = `<a href="data:${msg.mimetype};base64,${msg.data}" download="${msg.filename}" style="font-size:16px;">Télécharger ${msg.filename}</a>`;
     }
 
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const arrayBuffer = reader.result;
-
-      const base64 = btoa(
-        new Uint8Array(arrayBuffer)
-          .reduce((data, byte) => data + String.fromCharCode(byte), '')
-      );
-
-      socket.emit('upload file', {
-        filename: file.name,
-        mimetype: file.type,
-        data: base64,
-        channel: currentChannel,
-        timestamp: new Date().toISOString()
-      });
-
-      uploadInput.value = ''; // reset après l'envoi
-    };
-
-    reader.readAsArrayBuffer(file);
+    popup.document.title = msg.filename;
+    popup.document.body.style.margin = '0';
+    popup.document.body.style.display = 'flex';
+    popup.document.body.style.justifyContent = 'center';
+    popup.document.body.style.alignItems = 'center';
+    popup.document.body.style.height = '100vh';
+    popup.document.body.innerHTML = content;
   });
-}  // <-- fermeture du if uploadInput && uploadButton
+
+  msgDiv.appendChild(iconImg);
+  container.appendChild(msgDiv);
+}
+// <-- fermeture du if uploadInput && uploadButton
 
 // Affichage d’un fichier uploadé
 
