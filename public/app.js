@@ -734,7 +734,7 @@ wiizzIcon.alt = 'Wiizz';
 wiizzIcon.style.width = '44px';
 wiizzIcon.style.height = '25px';
 wiizzIcon.style.position = 'relative';
-wiizzIcon.style.top = '-4px';  // ou -2px, -6px selon l'ajustement visuel voulu
+wiizzIcon.style.top = '8px';  // ou -2px, -6px selon l'ajustement visuel voulu
 wiizzBtn.appendChild(wiizzIcon);
 
 
