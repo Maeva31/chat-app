@@ -3,8 +3,12 @@ const socket = io();
 const webcamStatus = {};  // { username: true/false }
 const peerConnections = {};
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-let localStream = null;
+
+let localStream = null;         // vidéo locale (webcam)
+let localAudioStream = null;    // audio locale (micro)
 const myUsername = localStorage.getItem('username');
+
+let micEnabled = false;
 
 document.addEventListener('DOMContentLoaded', () => {
   window.socket = socket;
@@ -37,6 +41,50 @@ document.addEventListener('DOMContentLoaded', () => {
           socket.emit('webcam status', { username: myUsername, active: false });
         }
       }, 500);
+    });
+  }
+
+  // --- Bouton activer/désactiver micro ---
+  const voxoBtn = document.getElementById('voxo');
+  if (voxoBtn) {
+    voxoBtn.textContent = 'Mic OFF';
+    voxoBtn.addEventListener('click', async () => {
+      if (!micEnabled) {
+        const audio = await startLocalAudio();
+        if (!audio) {
+          alert("Micro non disponible ou accès refusé.");
+          return;
+        }
+        localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
+        micEnabled = true;
+        voxoBtn.textContent = 'Mic ON';
+
+        // Ajouter pistes audio aux connexions existantes si absent
+        Object.values(peerConnections).forEach(pc => {
+          const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
+          if (!hasAudioSender) {
+            localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+          } else {
+            pc.getSenders().forEach(sender => {
+              if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
+            });
+          }
+        });
+      } else {
+        // Désactiver micro local
+        if (localAudioStream) {
+          localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
+        }
+        micEnabled = false;
+        voxoBtn.textContent = 'Mic OFF';
+
+        // Désactiver audio sur les connexions
+        Object.values(peerConnections).forEach(pc => {
+          pc.getSenders().forEach(sender => {
+            if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
+          });
+        });
+      }
     });
   }
 
@@ -90,6 +138,17 @@ async function startLocalStream() {
   }
 }
 
+async function startLocalAudio() {
+  if (localAudioStream) return localAudioStream;
+  try {
+    localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
+    return localAudioStream;
+  } catch (err) {
+    console.error("Erreur accès micro :", err.message);
+    return null;
+  }
+}
+
 async function createPeerConnection(remoteUsername) {
   if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
 
@@ -99,8 +158,20 @@ async function createPeerConnection(remoteUsername) {
     localStream = await startLocalStream();
     if (!localStream) return null;
   }
+  if (!localAudioStream && micEnabled) {
+    localAudioStream = await startLocalAudio();
+    if (!localAudioStream) {
+      console.warn("Pas de micro disponible");
+    }
+  }
 
-  localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  // Ajout piste vidéo
+  localStream.getVideoTracks().forEach(track => pc.addTrack(track, localStream));
+
+  // Ajout piste audio si dispo et micro activé
+  if (localAudioStream && micEnabled) {
+    localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+  }
 
   pc.onicecandidate = event => {
     if (event.candidate) {
@@ -113,35 +184,51 @@ async function createPeerConnection(remoteUsername) {
   };
 
   pc.ontrack = event => {
-    let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
+    if (event.track.kind === 'video') {
+      let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
 
-    if (!remoteVideo) {
-      const container = document.getElementById('video-container');
-      if (!container) return;
+      if (!remoteVideo) {
+        const container = document.getElementById('video-container');
+        if (!container) return;
 
-      remoteVideo = document.createElement('video');
-      remoteVideo.id = `remoteVideo-${remoteUsername}`;
-      remoteVideo.autoplay = true;
-      remoteVideo.playsInline = true;
-      remoteVideo.style.width = '300px';
-      remoteVideo.style.height = '225px';
-      remoteVideo.style.border = '2px solid #ccc';
-      remoteVideo.style.borderRadius = '8px';
-      remoteVideo.style.margin = '5px';
+        remoteVideo = document.createElement('video');
+        remoteVideo.id = `remoteVideo-${remoteUsername}`;
+        remoteVideo.autoplay = true;
+        remoteVideo.playsInline = true;
+        remoteVideo.style.width = '300px';
+        remoteVideo.style.height = '225px';
+        remoteVideo.style.border = '2px solid #ccc';
+        remoteVideo.style.borderRadius = '8px';
+        remoteVideo.style.margin = '5px';
 
-      const label = document.createElement('div');
-      label.textContent = remoteUsername;
-      label.style.color = 'white';
-      label.style.textAlign = 'center';
+        const label = document.createElement('div');
+        label.textContent = remoteUsername;
+        label.style.color = 'white';
+        label.style.textAlign = 'center';
 
-      const wrapper = document.createElement('div');
-      wrapper.appendChild(remoteVideo);
-      wrapper.appendChild(label);
+        const wrapper = document.createElement('div');
+        wrapper.appendChild(remoteVideo);
+        wrapper.appendChild(label);
 
-      container.appendChild(wrapper);
+        container.appendChild(wrapper);
+      }
+      remoteVideo.srcObject = event.streams[0];
+    } else if (event.track.kind === 'audio') {
+      let remoteAudio = document.getElementById(`remoteAudio-${remoteUsername}`);
+      if (!remoteAudio) {
+        remoteAudio = document.createElement('audio');
+        remoteAudio.id = `remoteAudio-${remoteUsername}`;
+        remoteAudio.autoplay = true;
+        remoteAudio.controls = true; // facultatif : contrôle audio
+        remoteAudio.style.display = 'block';
+        remoteAudio.style.margin = '5px';
+
+        const audioContainer = document.getElementById('audio-container');
+        if (!audioContainer) return;
+        audioContainer.appendChild(remoteAudio);
+      }
+      remoteAudio.srcObject = event.streams[0];
     }
-
-    remoteVideo.srcObject = event.streams[0];
   };
 
   peerConnections[remoteUsername] = pc;
@@ -199,8 +286,13 @@ socket.on('signal', async ({ from, data }) => {
 });
 
 
+
+
 // Démarrage localStream au chargement
-startLocalStream();
+// startLocalStream();
+
+// Optionnel démarrer micro automatiquement
+// startLocalAudio();
 
 
 
