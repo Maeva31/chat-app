@@ -1041,7 +1041,6 @@ button:focus {
 
 .wiizz-cooldown-banner {
   animation: slideDown 0.3s ease;
-  width: 385px;
   background-color: #ffc107;
   color: black;
   font-weight: bold;
@@ -1050,12 +1049,11 @@ button:focus {
   border-bottom: 2px solid #222;
   position: absolute;
   top: 0;
-
-  /* Centrage horizontal */
-  left: 50%;
-  transform: translateX(-50%);
+  left: 0;
+  right: 0; /* ⬅️ AJOUTÉ : prend toute la largeur */
   z-index: 999;
 }
+
 
 @keyframes slideDown {
   from { top: -50px; opacity: 0; }
