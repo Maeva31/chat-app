@@ -47,7 +47,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }, 500);
 });
-
+}
 
   // --- Bouton activer/désactiver micro ---
 const voxoBtn = document.getElementById('voxo');
