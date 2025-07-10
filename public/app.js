@@ -710,7 +710,7 @@ function setupWiizzButton(username, win, container) {
   const wiizzIcon = document.createElement('img');
   wiizzIcon.src = '/wizz.png';
   wiizzIcon.alt = 'Wiizz';
-  wiizzIcon.style.width = '44px';
+  wiizzIcon.style.width = '24px';
   wiizzIcon.style.height = '24px';
   wiizzIcon.style.verticalAlign = 'middle';
   wiizzBtn.appendChild(wiizzIcon);
@@ -733,6 +733,11 @@ function setupWiizzButton(username, win, container) {
 
   return wiizzBtn;
 }
+
+// --- Intégration bouton Wiizz dans openPrivateChat ---
+// const wiizzBtn = setupWiizzButton(username, win, container);
+// inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+
 
     // Upload fichier
     const fileInput = document.createElement('input');
