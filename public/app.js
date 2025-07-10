@@ -368,7 +368,7 @@ socket.on('user list', (users) => {
       icon.alt = 'Modérateur';
       icon.title = 'Modérateur';
       icon.style.width = '20px';
-      icon.style.height = '17px';
+      icon.style.height = '20px';
       icon.style.marginRight = '3px';
       icon.style.verticalAlign = 'middle';
       return icon;
