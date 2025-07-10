@@ -49,7 +49,6 @@ const voxiContainer = document.getElementById('voxi');  // ton cadre où affiche
 
 if (voxoBtn && voxiContainer) {
   voxoBtn.textContent = 'Mic OFF';  // état initial
-  let micEnabled = false;
 
   voxoBtn.addEventListener('click', async () => {
     if (!micEnabled) {
@@ -385,7 +384,28 @@ socket.on('user list', (users) => {
 });
 
 
-// Note: fonctions utilitaires `getUsernameColor`, `createRoleIcon` et variables comme `selectedUser` doivent être définies ailleurs dans ton code.
+function updateActiveMicsDisplay() {
+  const voxiUsers = document.getElementById('voxi-users');
+  if (!voxiUsers) return;
+
+  voxiUsers.innerHTML = '';
+
+  const pseudosToShow = Array.from(activeMics).slice(0, 5);
+  if (pseudosToShow.length === 0) {
+    voxiUsers.textContent = 'Personne ne parle';
+    return;
+  }
+
+  pseudosToShow.forEach(pseudo => {
+    const div = document.createElement('div');
+    div.textContent = pseudo;
+    div.style.padding = '2px 5px';
+    div.style.borderBottom = '1px solid #ccc';
+    div.style.color = '#000';
+    voxiUsers.appendChild(div);
+  });
+}
+
 
 
 
