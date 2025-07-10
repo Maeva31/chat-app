@@ -902,6 +902,8 @@ button:focus {
 
   max-height: 300px;  /* Hauteur max fixée pour limiter la taille */
   width: 497px;       /* Largeur fixe, ajustable */
+  position: relative;
+
 }
 
 /* Header de la fenêtre privée */
