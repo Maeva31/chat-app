@@ -1083,34 +1083,69 @@ socket.on('private wiizz', ({ to }) => {
 
   // Transmission des offres SDP entre pairs
   socket.on('webrtc offer', ({ to, offer }) => {
-    const targetSocket = io.sockets.sockets.get(to);
-    if (targetSocket) {
-      targetSocket.emit('webrtc offer', { from: socket.id, offer });
-    }
-  });
+  if (users[to]?.invisible) {
+    console.warn(`🔒 Offre bloquée : ${to} est en mode invisible`);
+    socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
+    return;
+  }
+
+  const targetSocket = io.sockets.sockets.get(to);
+  if (targetSocket) {
+    targetSocket.emit('webrtc offer', { from: socket.id, offer });
+  }
+});
+
 
   // Transmission des réponses SDP entre pairs
   socket.on('webrtc answer', ({ to, answer }) => {
-    const targetSocket = io.sockets.sockets.get(to);
-    if (targetSocket) {
-      targetSocket.emit('webrtc answer', { from: socket.id, answer });
-    }
-  });
+  if (users[to]?.invisible) {
+    console.warn(`🔒 Réponse bloquée : ${to} est en mode invisible`);
+    return;
+  }
+
+  if (users[socketIdToUsername[socket.id]]?.invisible) {
+    console.warn(`🔒 Réponse bloquée : l'utilisateur est invisible`);
+    return;
+  }
+
+  const targetSocket = io.sockets.sockets.get(to);
+  if (targetSocket) {
+    targetSocket.emit('webrtc answer', { from: socket.id, answer });
+  }
+});
+
 
   // Transmission des ICE candidates entre pairs
   socket.on('webrtc ice candidate', ({ to, candidate }) => {
-    const targetSocket = io.sockets.sockets.get(to);
-    if (targetSocket) {
-      targetSocket.emit('webrtc ice candidate', { from: socket.id, candidate });
-    }
-  });
+  if (users[to]?.invisible || users[socketIdToUsername[socket.id]]?.invisible) {
+    console.warn(`🔒 ICE bloqué entre invisible(s)`);
+    return;
+  }
+
+  const targetSocket = io.sockets.sockets.get(to);
+  if (targetSocket) {
+    targetSocket.emit('webrtc ice candidate', { from: socket.id, candidate });
+  }
+});
+
 
   socket.on('call user', ({ to, from }) => {
+  if (users[to]?.invisible) {
+    socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
+    return;
+  }
+
+  if (users[socketIdToUsername[socket.id]]?.invisible) {
+    console.warn(`🔒 Appel bloqué : utilisateur en mode invisible`);
+    return;
+  }
+
   const targetSocket = io.sockets.sockets.get(to);
   if (targetSocket) {
     targetSocket.emit('call user', { from });
   }
 });
+
 
 
 
