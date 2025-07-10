@@ -1006,6 +1006,13 @@ button:focus {
   flex: 1;
 }
 
+.private-message .timestamp {
+  margin-left: 8px;
+  color: #aaa;
+  font-size: 0.75em;
+  font-style: italic;
+  white-space: nowrap;
+}
 
 
 /* Bouton démarrer webcam */
