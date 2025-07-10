@@ -454,6 +454,8 @@ function updateActiveMicsDisplay() {
    // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
+  const wiizzCooldowns = new Map(); // Anti-spam par utilisateur
+
   const wiizzSound = new Audio('/wizz.mp3');
 
   socket.on('user list', list => {
@@ -639,14 +641,23 @@ wiizzIcon.alt = 'Wiizz';
 wiizzIcon.style.width = '24px';
 wiizzIcon.style.height = '24px';
 
-wiizzBtn.appendChild(wiizzIcon);
-
 wiizzBtn.addEventListener('click', () => {
+  const now = Date.now();
+  const lastTime = wiizzCooldowns.get(username) || 0;
+
+  if (now - lastTime < 5000) {
+    alert('Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ' + username);
+    return;
+  }
+
+  wiizzCooldowns.set(username, now);
   socket.emit('private wiizz', { to: username });
 
   // Effet local immédiat
   triggerWiizzEffect(win);
 });
+
+
 
 function triggerWiizzEffect(win) {
   if (wiizzSound) {
@@ -668,6 +679,53 @@ function triggerWiizzEffect(win) {
     }
   }, 50);
 }
+
+socket.on('private wiizz', ({ from }) => {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
+
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+
+  // Si la fenêtre n'existe pas, on l'ouvre automatiquement
+  if (!win) {
+    const userObj = userCache[from] || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+    win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  }
+
+  // Effet tremblement + son
+  if (win) {
+    triggerWiizzEffect(win);
+
+    const body = win.querySelector('.private-chat-body');
+    const msgDiv = document.createElement('div');
+    msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
+    msgDiv.style.margin = '4px 0';
+    body.appendChild(msgDiv);
+    body.scrollTop = body.scrollHeight;
+  } else {
+    // Si vraiment aucune fenêtre, secoue la page entière (body)
+    const body = document.body;
+    const original = body.style.transform;
+    let count = 0;
+    const interval = setInterval(() => {
+      const x = (Math.random() - 0.5) * 5;
+      const y = (Math.random() - 0.5) * 5;
+      body.style.transform = `translate(${x}px, ${y}px)`;
+      count++;
+      if (count > 8) {
+        clearInterval(interval);
+        body.style.transform = original;
+      }
+    }, 50);
+
+    // Lecture du son même sans fenêtre
+    if (wiizzSound) {
+      wiizzSound.currentTime = 0;
+      wiizzSound.play().catch(() => {});
+    }
+  }
+});
 
 
 
