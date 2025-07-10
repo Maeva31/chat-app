@@ -8,6 +8,81 @@
   <title>Chat</title>
   <link rel="stylesheet" href="style.css" />
 </head>
+
+  <style>
+#voxi {
+    position: fixed;
+    bottom: 11px;       /* distance du bas de la fenêtre */
+    left: 600px;         /* distance du bord gauche de la fenêtre, ajuste selon besoin */
+    width: 150px;
+    height: 95px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    padding: 5px;
+    box-sizing: border-box;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    z-index: 9999;
+    user-select: none;
+    cursor: default;
+    font-family: Arial, sans-serif;
+}
+
+#voxo, #voxz {
+  position: absolute;
+  top: 3px;
+  height: 20px;
+  background-color: #dddddd;
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+#voxo {
+  left: 3px;
+  width: 60px;
+  font-weight: bold;
+}
+
+#voxz {
+  left: 78px;
+  width: 38px;
+  font-weight: normal;
+}
+
+#muto {
+  position: absolute;
+  top: 13px;
+  left: 117px;
+  font-size: 10px;
+  background-color: #eeeeee;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 6px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  color: #000000;
+  font-weight: normal;
+}
+
+#micra {
+  position: absolute;
+  top: 0;
+  left: 138px;
+  width: 10px;
+  height: 10px;
+  background-color: #000000;
+  border-radius: 50%;
+}
+
+
+</style>
+  
 <body>
 
   <!-- Bandeau d'erreur -->
@@ -100,81 +175,6 @@
 
   <!-- Wrapper principal -->
   <main>
-
-
-<style>
-#voxi {
-    position: fixed;
-    bottom: 11px;       /* distance du bas de la fenêtre */
-    left: 600px;         /* distance du bord gauche de la fenêtre, ajuste selon besoin */
-    width: 150px;
-    height: 95px;
-    background-color: #fff;
-    border: 1px solid #ccc;
-    padding: 5px;
-    box-sizing: border-box;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    z-index: 9999;
-    user-select: none;
-    cursor: default;
-    font-family: Arial, sans-serif;
-}
-
-#voxo, #voxz {
-  position: absolute;
-  top: 3px;
-  height: 20px;
-  background-color: #dddddd;
-  color: #000000;
-  cursor: pointer;
-  user-select: none;
-  line-height: 20px;
-  text-align: center;
-  border-radius: 4px;
-  font-size: 13px;
-  padding: 0 4px;
-}
-
-#voxo {
-  left: 3px;
-  width: 60px;
-  font-weight: bold;
-}
-
-#voxz {
-  left: 78px;
-  width: 38px;
-  font-weight: normal;
-}
-
-#muto {
-  position: absolute;
-  top: 13px;
-  left: 117px;
-  font-size: 10px;
-  background-color: #eeeeee;
-  cursor: pointer;
-  user-select: none;
-  padding: 2px 6px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  color: #000000;
-  font-weight: normal;
-}
-
-#micra {
-  position: absolute;
-  top: 0;
-  left: 138px;
-  width: 10px;
-  height: 10px;
-  background-color: #000000;
-  border-radius: 50%;
-}
-
-
-</style>
     
     <!-- Sidebar gauche : salons -->
     <aside id="channel-sidebar">
