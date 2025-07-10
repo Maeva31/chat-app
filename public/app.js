@@ -445,13 +445,15 @@ function updateActiveMicsDisplay() {
 
 
 
-// MP PRIVE
+
+
+
+
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
-  const wiizzSound = new Audio('/wizz.mp3');
 
   socket.on('user list', list => {
     users = list;
@@ -621,35 +623,62 @@ function updateActiveMicsDisplay() {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
-    // Bouton Wiizz
-const wiizzBtn = document.createElement('button');
-wiizzBtn.title = 'Envoyer un Wiizz';
-wiizzBtn.style.background = 'transparent';
-wiizzBtn.style.border = 'none';
-wiizzBtn.style.cursor = 'pointer';
-wiizzBtn.style.marginRight = '5px';
-wiizzBtn.style.padding = '0';
+    // Initialisation son unique en haut du script
+const wiizzSound = new Audio('/wizz.mp3');
+const wiizzCooldowns = new Map();
 
-const wiizzIcon = document.createElement('img');
-wiizzIcon.src = '/wizz.png';
-wiizzIcon.alt = 'Wiizz';
-wiizzIcon.style.width = '24px';
-wiizzIcon.style.height = '24px';
+socket.on('private wiizz', ({ from }) => {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
 
-wiizzBtn.appendChild(wiizzIcon);
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
-wiizzBtn.addEventListener('click', () => {
-  socket.emit('private wiizz', { to: username });
+  // Ne pas créer de nouvelle fenêtre si elle n'existe pas
+  if (!win) return;
 
-  // Effet local immédiat
+  // Effet tremblement + son
   triggerWiizzEffect(win);
+
+  // Message dans la fenêtre
+  const body = win.querySelector('.private-chat-body');
+  const msgDiv = document.createElement('div');
+  msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
+  msgDiv.style.margin = '4px 0';
+  body.appendChild(msgDiv);
+  body.scrollTop = body.scrollHeight;
 });
 
+function showCooldownBanner(username, win) {
+  const existing = win.querySelector('.wiizz-cooldown-banner');
+  if (existing) existing.remove();
+
+  const cooldownBanner = document.createElement('div');
+  cooldownBanner.classList.add('wiizz-cooldown-banner');
+  cooldownBanner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
+  cooldownBanner.style.backgroundColor = '#ffc107';
+  cooldownBanner.style.color = 'black';
+  cooldownBanner.style.fontWeight = 'bold';
+  cooldownBanner.style.padding = '6px';
+  cooldownBanner.style.textAlign = 'center';
+  cooldownBanner.style.borderBottom = '2px solid #222';
+  cooldownBanner.style.position = 'absolute';
+  cooldownBanner.style.top = '0';
+  cooldownBanner.style.left = '0';
+  cooldownBanner.style.width = '100%';
+  cooldownBanner.style.zIndex = '999';
+
+  win.appendChild(cooldownBanner);
+
+  setTimeout(() => {
+    if (cooldownBanner && cooldownBanner.parentNode) {
+      cooldownBanner.parentNode.removeChild(cooldownBanner);
+    }
+  }, 3000);
+}
+
 function triggerWiizzEffect(win) {
-  if (wiizzSound) {
-    wiizzSound.currentTime = 0;
-    wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
-  }
+  wiizzSound.currentTime = 0;
+  wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
 
   const originalStyle = win.style.transform;
   let count = 0;
@@ -666,7 +695,44 @@ function triggerWiizzEffect(win) {
   }, 50);
 }
 
+function setupWiizzButton(username, win, container) {
+  const wiizzBtn = document.createElement('button');
+  wiizzBtn.title = 'Envoyer un Wiizz';
+  wiizzBtn.style.background = 'transparent';
+  wiizzBtn.style.border = 'none';
+  wiizzBtn.style.cursor = 'pointer';
+  wiizzBtn.style.marginRight = '5px';
+  wiizzBtn.style.padding = '0';
+  wiizzBtn.style.display = 'inline-flex';
+  wiizzBtn.style.alignItems = 'center';
+  wiizzBtn.style.justifyContent = 'center';
 
+  const wiizzIcon = document.createElement('img');
+  wiizzIcon.src = '/wizz.png';
+  wiizzIcon.alt = 'Wiizz';
+  wiizzIcon.style.width = '44px';
+  wiizzIcon.style.height = '24px';
+  wiizzIcon.style.verticalAlign = 'middle';
+  wiizzBtn.appendChild(wiizzIcon);
+
+  wiizzBtn.addEventListener('click', () => {
+    const now = Date.now();
+    const lastTime = wiizzCooldowns.get(username) || 0;
+
+    if (now - lastTime < 5000) {
+      showCooldownBanner(username, win);
+      return;
+    }
+
+    wiizzCooldowns.set(username, now);
+    socket.emit('private wiizz', { to: username });
+
+    // Effet local immédiat
+    triggerWiizzEffect(win);
+  });
+
+  return wiizzBtn;
+}
 
     // Upload fichier
     const fileInput = document.createElement('input');
@@ -814,8 +880,7 @@ function triggerWiizzEffect(win) {
     sendBtn.style.padding = '4px 8px';
 
     // Assemblage inputBar : emoji avant upload
-    inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
-
+    inputBar.append(emojiBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
 
     sendBtn.onclick = () => {
       const text = input.value.trim();
@@ -1045,7 +1110,7 @@ function triggerWiizzEffect(win) {
 
 
 
-// Fin MP
+
 
 
 
