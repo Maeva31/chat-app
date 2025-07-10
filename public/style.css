@@ -244,7 +244,7 @@ main {
   min-width: 0;         /* important en flexbox pour éviter débordement */
   padding: 1em;
   font-size: 1em;
-  border-radius: 5px;
+  border-radius: 30px;
   border: none;
   background-color: #121212;
   color: white;
