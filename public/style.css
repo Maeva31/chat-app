@@ -989,20 +989,23 @@ button:focus {
   display: flex;
   align-items: center;
   margin: 4px 0;
+  font-size: 0.95em;
+  line-height: 1.4;
 }
 
 .private-message .username {
   font-weight: bold;
-  color: #ffd700;
   margin-right: 6px;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
 }
 
 .private-message .message-text {
-  flex: 1;
-  color: #fff;
   word-break: break-word;
+  flex: 1;
 }
+
 
 
 /* Bouton démarrer webcam */
