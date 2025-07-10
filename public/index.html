@@ -326,67 +326,110 @@
 
 <div id="private-chat-container" class="private-chat-container"></div>
 
-<div id="voxi" style="
+
+
+<div id="voxi">
+  <div id="voxo">Mic ON</div>
+  <div id="voxz">Kill</div>
+  <div id="muto">mute</div>
+  <div id="micra"></div>
+</div>
+
+
+<style>
+  #voxi {
   position: absolute;
-  top: 743px;
-  left: 1235px;
+  top: 100px;      /* tu peux ajuster ou déplacer dynamiquement */
+  left: 200px;     /* idem */
   width: 150px;
   height: 95px;
   background-color: #ffffff;
-  visibility: hidden;
+  visibility: hidden; /* visible uniquement quand tu veux */
   font-family: Arial, sans-serif;
   z-index: 50;
   border: 1px solid #ccc;
   padding: 5px;
   box-sizing: border-box;
-">
-  <div id="voxo" style="
-    position: absolute;
-    top: 3px;
-    left: 3px;
-    width: 60px;
-    height: 20px;
-    background-color: #dddddd;
-    line-height: 20px;
-    text-align: center;
-    color: #000000;
-    cursor: pointer;
-    user-select: none;
-  ">Mic ON</div>
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  user-select: none;
+  cursor: move;
+  transition: top 0.3s ease, left 0.3s ease;
+}
 
-  <div id="voxz" style="
-    position: absolute;
-    top: 3px;
-    left: 78px;
-    width: 38px;
-    height: 20px;
-    background-color: #dddddd;
-    color: #000000;
-    cursor: pointer;
-  ">Kill</div>
+#voxo, #voxz {
+  position: absolute;
+  top: 3px;
+  height: 20px;
+  background-color: #dddddd;
+  color: #000000;
+  cursor: pointer;
+  user-select: none;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 13px;
+}
 
-  <div id="muto" style="
-    position: absolute;
-    top: 13px;
-    left: 119px;
-    font-size: 10px;
-    background-color: #eeeeee;
-    cursor: pointer;
-    user-select: none;
-    padding: 2px 4px;
-    border: 1px solid #ccc;
-    color: #000000;
-  ">mute</div>
+#voxo {
+  left: 3px;
+  width: 60px;
+}
 
-  <div id="micra" style="
-    position: absolute;
-    top: 0;
-    left: 138px;
-    width: 10px;
-    height: 10px;
-    background-color: #000000;
-  "></div>
-</div>
+#voxz {
+  left: 78px;
+  width: 38px;
+}
+
+#muto {
+  position: absolute;
+  top: 13px;
+  left: 119px;
+  font-size: 10px;
+  background-color: #eeeeee;
+  cursor: pointer;
+  user-select: none;
+  padding: 2px 4px;
+  border: 1px solid #ccc;
+  color: #000000;
+  border-radius: 4px;
+}
+
+#micra {
+  position: absolute;
+  top: 0;
+  left: 138px;
+  width: 10px;
+  height: 10px;
+  background-color: #000000;
+  border-radius: 50%;
+}
+
+/* Responsive */
+
+@media (max-width: 1024px) {
+  #voxi {
+    top: auto !important;
+    left: auto !important;
+    bottom: 10px !important;
+    right: 10px !important;
+    width: 140px !important;
+    height: 90px !important;
+    visibility: visible !important;
+  }
+}
+
+@media (max-width: 480px) {
+  #voxi {
+    width: 120px !important;
+    height: 80px !important;
+    padding: 4px !important;
+    bottom: 5px !important;
+    right: 5px !important;
+  }
+}
+
+</style>
     
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="app.js"></script>
