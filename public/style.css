@@ -1041,7 +1041,7 @@ button:focus {
 
 .wiizz-cooldown-banner {
   animation: slideDown 0.3s ease;
-  width: 397px;
+  width: 390px;
   background-color: #ffc107;
   color: black;
   font-weight: bold;
