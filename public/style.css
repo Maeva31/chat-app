@@ -877,59 +877,113 @@ button:focus {
 /* MP */
 
 /* Conteneur général des fenêtres privées */
-/* Conteneur de chaque message */
-.private-chat-body .message {
-  margin: 8px 0;
+#private-chat-container {
+  position: fixed;
+  bottom: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none; /* Pour ne pas bloquer les clics en arrière-plan */
+  z-index: 10000;
+}
+
+/* Fenêtre privée */
+.private-chat-window {
+  pointer-events: auto; /* Permet d’interagir avec la fenêtre */
+  /* background: #1a0055; */
+  border: 2px solid #8e44ad;
+  border-radius: 10px;
+  box-shadow: 0 0 10px #8e44ad;
+  color: #d6a8ff;
   display: flex;
   flex-direction: column;
-  max-width: 80%;
+  font-family: Arial, sans-serif;
+  user-select: none;
+
+  max-height: 300px;  /* Hauteur max fixée pour limiter la taille */
+  width: 497px;       /* Largeur fixe, ajustable */
 }
 
-/* Reçu : aligné à gauche */
-.private-chat-body .message.received {
-  align-items: flex-start;
-}
-
-/* Envoyé : aligné à droite */
-.private-chat-body .message.sent {
-  align-items: flex-end;
-  margin-left: auto;
-}
-
-/* Pseudo de l’expéditeur */
-.private-chat-body .message .sender-name {
-  font-size: 0.75em;
-  font-weight: bold;
-  color: #bbb;
-  margin-bottom: 2px;
-}
-
-/* Bulle contenant le texte */
-.private-chat-body .message .bubble {
-  background: #e4dbff;
-  color: #222;
+/* Header de la fenêtre privée */
+.private-chat-header {
+  background: #3a0a8a;
   padding: 8px 12px;
-  border-radius: 12px;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.3);
-  position: relative;
-  word-wrap: break-word;
-  white-space: pre-wrap;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  color: white;
+  user-select: none;
+  cursor: move;
+  border-radius: 6px;
 }
 
-/* Différent pour les messages envoyés */
-.private-chat-body .message.sent .bubble {
-  background: #c0ffe1;
+/* Bouton fermer */
+.private-chat-header button {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: #f55;
+  font-size: 20px;
+  cursor: pointer;
+  user-select: none;
+  transition: color 0.2s ease;
 }
 
-/* Heure dans la bulle, alignée à droite */
-.private-chat-body .message .timestamp {
-  font-size: 0.7em;
-  color: #888;
-  text-align: right;
-  margin-top: 4px;
+.private-chat-header button:hover {
+  color: #ff8888;
 }
 
+/* Corps de la fenêtre (zone des messages) */
+.private-chat-body {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto; /* Barre de défilement verticale */
+  background: #5f30bde6;
+  font-size: 0.9em;
+  line-height: 1.3;
+  color: #ddd;
 
+  white-space: pre-wrap;      /* Retours à la ligne automatiques */
+  word-wrap: break-word;      /* Coupe les mots trop longs */
+  overflow-wrap: break-word;  /* Support moderne pour word-wrap */
+}
+
+/* Barre d’entrée message */
+.private-chat-input {
+  display: flex;
+  padding: 8px;
+  background: #2b006e;
+  border-top: 1px solid #5e1aff;
+  border-radius: 6px;
+}
+
+.private-chat-input input[type="text"],
+.private-chat-input input {
+  flex: 1;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 1em;
+  outline: none;
+  color: #111;
+}
+
+.private-chat-input button {
+  margin-left: 8px;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #6a00d1;
+  color: white;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.private-chat-input button:hover {
+  background: #8f00ff;
+}
 
 /* Bouton démarrer webcam */
 /* Style spécifique pour le bouton start-webcam-btn */
@@ -1006,29 +1060,6 @@ button:focus {
   to { top: 0; opacity: 1; }
 }
 
-/* Wiizz envoyés */
-.wiizz-message.sent {
-  text-align: right;
-}
-.wiizz-message.sent span {
-  background-color: #fff3cd; /* Jaune pâle */
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-block;
-}
-
-/* Wiizz reçus */
-.wiizz-message.received {
-  text-align: left;
-}
-.wiizz-message.received span {
-  background-color: #ffe0e0; /* Rose pâle */
-  padding: 4px 8px;
-  border-radius: 6px;
-  display: inline-block;
-}
-inline-block;
-}
 .wizz-icon {
   height: 25px;
   width: 44px;
