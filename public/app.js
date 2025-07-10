@@ -710,7 +710,7 @@ function setupWiizzButton(username, win, container) {
   const wiizzIcon = document.createElement('img');
   wiizzIcon.src = '/wizz.png';
   wiizzIcon.alt = 'Wiizz';
-  wiizzIcon.style.width = '24px';
+  wiizzIcon.style.width = '44px';
   wiizzIcon.style.height = '24px';
   wiizzIcon.style.verticalAlign = 'middle';
   wiizzBtn.appendChild(wiizzIcon);
