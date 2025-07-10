@@ -192,6 +192,14 @@ function getUserListForClient() {
 
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
+
+  socket.on('private wiizz', ({ to }) => {
+  const toSocketId = usernameToSocketId[to];
+  if (toSocketId) {
+    io.to(toSocketId).emit('private wiizz', { from: socket.username });
+  }
+});
+
   
     // Envoi initial de la liste utilisateurs au client connecté
   socket.emit('user list', getUserListForClient());
