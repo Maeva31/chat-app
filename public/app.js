@@ -11,7 +11,7 @@ const myUsername = localStorage.getItem('username');
 let micEnabled = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-  window.socket = socket;
+
 
   // --- Webcam status update ---
   socket.on('webcam status update', ({ username, active }) => {
@@ -623,9 +623,13 @@ function updateActiveMicsDisplay() {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
-    // Initialisation son unique en haut du script
-const wiizzSound = new Audio('/wizz.mp3');
-const wiizzCooldowns = new Map();
+  const myUsername = localStorage.getItem('username');
+  if (myUsername) {
+  socket.emit('set username', myUsername); // 🔥 Ici on envoie le pseudo au serveur pour qu'il l’associe à socket.id
+}
+
+  const wiizzSound = new Audio('/wizz.mp3');
+  const wiizzCooldowns = new Map();
 
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
