@@ -221,15 +221,6 @@ io.on('connection', (socket) => {
   }
 });
 
-  socket.on('signal-audio', ({ to, from, data }) => {
-  const toSocketId = usernameToSocketId[to];
-  if (toSocketId) {
-    io.to(toSocketId).emit('signal-audio', { from, data });
-  } else {
-    socket.emit('error message', `Utilisateur ${to} non connecté`);
-  }
-});
-
 
   socket.on('watch webcam', ({ from, to }) => {
     const toSocketId = usernameToSocketId[to];
