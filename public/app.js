@@ -624,7 +624,12 @@ function updateActiveMicsDisplay() {
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
     // Initialisation son unique en haut du script
-        // Initialisation son unique en haut du script
+        // WIZZZ
+function getCurrentTimeString() {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
 const wiizzSound = new Audio('/wizz.mp3');
 const wiizzCooldowns = new Map();       // Pour éviter d'en envoyer trop souvent
 const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souvent
@@ -636,37 +641,30 @@ socket.on('private wiizz', ({ from }) => {
   const now = Date.now();
   const lastTime = lastWiizzReceived.get(from) || 0;
 
-  if (now - lastTime < 5000) return; // ⛔ Ignore les Wiizz trop rapprochés
+  if (now - lastTime < 5000) return;
 
   lastWiizzReceived.set(from, now);
 
   let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
   if (!win) {
-    win = createPrivateChatWindow(from); // 🔁 À adapter selon ta logique
+    win = createPrivateChatWindow(from); // ⚠️ Assure-toi que cette fonction existe
     container.appendChild(win);
   }
 
   triggerWiizzEffect(win);
 
   const body = win.querySelector('.private-chat-body');
-
-  // Évite les doublons d'affichage dans le texte
-  const existing = body.querySelector('.wiizz-message');
-  if (!existing) {
-    const msgDiv = document.createElement('div');
-    msgDiv.classList.add('wiizz-message');
-    msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">
+  const msgDiv = document.createElement('div');
+  msgDiv.classList.add('wiizz-message', 'received');
+  msgDiv.innerHTML = `
+    <span style="color:orange;font-weight:bold;">
       <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
-      ${from} t’a envoyé un Wiizz !
+      ${from} t’a envoyé un Wiizz ! <span style="font-size:11px;color:#888;">[${getCurrentTimeString()}]</span>
     </span>`;
-    msgDiv.style.margin = '4px 0';
-    body.appendChild(msgDiv);
-    body.scrollTop = body.scrollHeight;
-  }
+  msgDiv.style.margin = '4px 0';
+  body.appendChild(msgDiv);
+  body.scrollTop = body.scrollHeight;
 });
-
-
-
 
 function showCooldownBanner(username, win) {
   const existing = win.querySelector('.wiizz-cooldown-banner');
@@ -694,7 +692,6 @@ function showCooldownBanner(username, win) {
   }, 3000);
 }
 
-
 function triggerWiizzEffect(win) {
   wiizzSound.currentTime = 0;
   wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
@@ -713,7 +710,6 @@ function triggerWiizzEffect(win) {
     }
   }, 50);
 }
-
 
 function setupWiizzButton(username, win, container) {
   const wiizzBtn = document.createElement('button');
@@ -746,11 +742,27 @@ function setupWiizzButton(username, win, container) {
     socket.emit('private wiizz', { to: username });
 
     const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (winTarget) triggerWiizzEffect(winTarget);
+    if (winTarget) {
+      triggerWiizzEffect(winTarget);
+
+      const body = winTarget.querySelector('.private-chat-body');
+      const msgDiv = document.createElement('div');
+      msgDiv.classList.add('wiizz-message', 'sent');
+      const myUsername = localStorage.getItem('username') || 'Vous';
+      msgDiv.innerHTML = `
+        <span style="color:orange;font-weight:bold;">
+          <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+          Vous avez envoyé un Wiizz à ${username} ! <span style="font-size:11px;color:#888;">[${getCurrentTimeString()}]</span>
+        </span>`;
+      msgDiv.style.margin = '4px 0';
+      body.appendChild(msgDiv);
+      body.scrollTop = body.scrollHeight;
+    }
   });
 
   return wiizzBtn;
 }
+
 
 
 
