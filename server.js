@@ -22,7 +22,9 @@ let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
 let webcamStatus = {};  // { username: true/false }
-const usernameToSocketId = {};
+const usernameToSocketId = {};     // username → socket.id
+const socketIdToUsername = {};     // socket.id → username
+
 
 
 // Chargement des modérateurs
@@ -397,6 +399,8 @@ socket.on('private wiizz', ({ to }) => {
   }
 
   usernameToSocketId[username] = socket.id;
+  socketIdToUsername[socket.id] = username;
+
 
   if (requiresPassword(username)) {
     if (!password) {
@@ -972,6 +976,7 @@ socket.on('private wiizz', ({ to }) => {
     for (const [username, id] of Object.entries(usernameToSocketId)) {
   if (id === socket.id) {
     delete usernameToSocketId[username];
+    delete socketIdToUsername[socket.id];
     break;
   }
 }
