@@ -624,62 +624,76 @@ function updateActiveMicsDisplay() {
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
     // Initialisation son unique en haut du script
+        // Initialisation son unique en haut du script
 const wiizzSound = new Audio('/wizz.mp3');
-const wiizzCooldowns = new Map();
+const wiizzCooldowns = new Map();       // Pour éviter d'en envoyer trop souvent
+const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souvent
 
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
 
-  // Création automatique si la fenêtre n'existe pas
+  const now = Date.now();
+  const lastTime = lastWiizzReceived.get(from) || 0;
+
+  if (now - lastTime < 5000) return; // ⛔ Ignore les Wiizz trop rapprochés
+
+  lastWiizzReceived.set(from, now);
+
   let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
   if (!win) {
-    win = createPrivateChatWindow(from); // ← tu dois avoir une fonction pour créer une fenêtre MP
+    win = createPrivateChatWindow(from); // 🔁 À adapter selon ta logique
     container.appendChild(win);
   }
 
   triggerWiizzEffect(win);
 
   const body = win.querySelector('.private-chat-body');
-  const msgDiv = document.createElement('div');
-  /* msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`; */
-  msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">
-  <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
-  ${from} t’a envoyé un Wiizz !
-</span>`;
-  msgDiv.style.margin = '4px 0';
-  body.appendChild(msgDiv);
-  body.scrollTop = body.scrollHeight;
+
+  // Évite les doublons d'affichage dans le texte
+  const existing = body.querySelector('.wiizz-message');
+  if (!existing) {
+    const msgDiv = document.createElement('div');
+    msgDiv.classList.add('wiizz-message');
+    msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">
+      <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+      ${from} t’a envoyé un Wiizz !
+    </span>`;
+    msgDiv.style.margin = '4px 0';
+    body.appendChild(msgDiv);
+    body.scrollTop = body.scrollHeight;
+  }
 });
+
+
 
 
 function showCooldownBanner(username, win) {
   const existing = win.querySelector('.wiizz-cooldown-banner');
   if (existing) existing.remove();
 
-  const cooldownBanner = document.createElement('div');
-  cooldownBanner.classList.add('wiizz-cooldown-banner');
-  cooldownBanner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
-  cooldownBanner.style.backgroundColor = '#ffc107';
-  cooldownBanner.style.color = 'black';
-  cooldownBanner.style.fontWeight = 'bold';
-  cooldownBanner.style.padding = '6px';
-  cooldownBanner.style.textAlign = 'center';
-  cooldownBanner.style.borderBottom = '2px solid #222';
-  cooldownBanner.style.position = 'absolute';
-  cooldownBanner.style.top = '0';
-  cooldownBanner.style.left = '0';
-  cooldownBanner.style.width = '397px';
-  cooldownBanner.style.zIndex = '999';
+  const banner = document.createElement('div');
+  banner.classList.add('wiizz-cooldown-banner');
+  banner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
+  banner.style.backgroundColor = '#ffc107';
+  banner.style.color = 'black';
+  banner.style.fontWeight = 'bold';
+  banner.style.padding = '6px';
+  banner.style.textAlign = 'center';
+  banner.style.borderBottom = '2px solid #222';
+  banner.style.position = 'absolute';
+  banner.style.top = '0';
+  banner.style.left = '0';
+  banner.style.width = '397px';
+  banner.style.zIndex = '999';
 
-  win.appendChild(cooldownBanner);
+  win.appendChild(banner);
 
   setTimeout(() => {
-    if (cooldownBanner && cooldownBanner.parentNode) {
-      cooldownBanner.parentNode.removeChild(cooldownBanner);
-    }
+    if (banner.parentNode) banner.remove();
   }, 3000);
 }
+
 
 function triggerWiizzEffect(win) {
   wiizzSound.currentTime = 0;
@@ -700,6 +714,7 @@ function triggerWiizzEffect(win) {
   }, 50);
 }
 
+
 function setupWiizzButton(username, win, container) {
   const wiizzBtn = document.createElement('button');
   wiizzBtn.title = 'Envoyer un Wiizz';
@@ -708,9 +723,6 @@ function setupWiizzButton(username, win, container) {
   wiizzBtn.style.cursor = 'pointer';
   wiizzBtn.style.marginRight = '5px';
   wiizzBtn.style.padding = '0';
-  wiizzBtn.style.display = 'inline-flex';
-  wiizzBtn.style.alignItems = 'center';
-  wiizzBtn.style.justifyContent = 'center';
 
   const wiizzIcon = document.createElement('img');
   wiizzIcon.src = '/wizz.png';
@@ -720,29 +732,27 @@ function setupWiizzButton(username, win, container) {
   wiizzIcon.style.verticalAlign = 'middle';
   wiizzBtn.appendChild(wiizzIcon);
 
-wiizzBtn.addEventListener('click', () => {
-  const now = Date.now();
-  const lastTime = wiizzCooldowns.get(username) || 0;
+  wiizzBtn.addEventListener('click', () => {
+    const now = Date.now();
+    const lastTime = wiizzCooldowns.get(username) || 0;
 
-  if (now - lastTime < 5000) {
-    const winCheck = document.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (winCheck) showCooldownBanner(username, winCheck);
-    return;
-  }
+    if (now - lastTime < 5000) {
+      const winCheck = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+      if (winCheck) showCooldownBanner(username, winCheck);
+      return;
+    }
 
-  wiizzCooldowns.set(username, now);
-  socket.emit('private wiizz', { to: username });
+    wiizzCooldowns.set(username, now);
+    socket.emit('private wiizz', { to: username });
 
-  // Effet local immédiat si la fenêtre est visible
-  const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
-  if (winTarget) {
-    triggerWiizzEffect(winTarget);
-  }
-});
-
+    const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (winTarget) triggerWiizzEffect(winTarget);
+  });
 
   return wiizzBtn;
 }
+
+
 
 // --- Intégration bouton Wiizz dans openPrivateChat ---
 // const wiizzBtn = setupWiizzButton(username, win, container);
