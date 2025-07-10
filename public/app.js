@@ -46,7 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
   // --- Bouton activer/désactiver micro ---
   const voxoBtn = document.getElementById('voxo');
   if (voxoBtn) {
-    voxoBtn.textContent = 'Mic OFF';
+    voxoBtn.textContent = 'Mic OFF';  // initialisation texte
+
     voxoBtn.addEventListener('click', async () => {
       if (!micEnabled) {
         const audio = await startLocalAudio();
@@ -221,11 +222,11 @@ async function createPeerConnection(remoteUsername) {
         remoteAudio = document.createElement('audio');
         remoteAudio.id = `remoteAudio-${remoteUsername}`;
         remoteAudio.autoplay = true;
-        remoteAudio.controls = true; // facultatif
+        remoteAudio.controls = false; // tu peux activer si tu veux
         remoteAudio.style.display = 'block';
         remoteAudio.style.margin = '5px';
 
-        const audioContainer = document.getElementById('audio-container');
+        const audioContainer = document.getElementById('voxo');  // utilisation de #voxo comme container audio
         if (!audioContainer) return;
         audioContainer.appendChild(remoteAudio);
       }
@@ -372,6 +373,7 @@ socket.on('user list', (users) => {
     }
   });
 });
+
 
 // Note: fonctions utilitaires `getUsernameColor`, `createRoleIcon` et variables comme `selectedUser` doivent être définies ailleurs dans ton code.
 
