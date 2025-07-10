@@ -1725,6 +1725,8 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
   });
 });
 
+const uploadInput = document.getElementById('file-input');    // input type="file"
+const uploadButton = document.getElementById('upload-btn');   // bouton 📎 ou autre
 // --- Upload fichier ---
 function displayFileMessage(msg, container) {
   // msg: { filename, mimetype, data (base64) }
