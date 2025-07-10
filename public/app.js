@@ -5,6 +5,8 @@ const peerConnections = {};
 const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
 let localStream = null;
 const myUsername = localStorage.getItem('username');
+let users = [];
+let userCache = {};
 
 document.addEventListener('DOMContentLoaded', () => {
   window.socket = socket;
@@ -199,8 +201,7 @@ socket.on('signal', async ({ from, data }) => {
 });
 
 
-// Démarrage localStream au chargement
-startLocalStream();
+
 
 
 
@@ -281,35 +282,15 @@ startLocalStream();
 }
 
 
-// Mise à jour liste utilisateurs et appel WebRTC quand reçue
-socket.on('user list', (users) => {
-  window.users = users;  // garde copie globale
-  updateUserList(users);
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
-  let users = [];
-  let userCache = {};
+  
 
   socket.on('user list', list => {
     users = list;
     userCache = {};
+    window.users = users;  // garde copie globale
     list.forEach(u => {
       userCache[u.username] = u;
     });
@@ -1928,7 +1909,5 @@ function addMessageToChat(message) {
   chatMessages.appendChild(wrapper);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
-
-});
 
 });
