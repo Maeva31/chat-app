@@ -1850,10 +1850,10 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
 
   // Affichage du fichier
   const iconsByType = {
-  image: 'icon/photo.gif',
-  audio: 'icon/mp3.gif',
-  video: 'icon/movie.gif',
-  file:  'icon/file.gif',
+  image: '/photo.gif',
+  audio: '/mp3.gif',
+  video: '/movie.gif',
+  file:  '/file.gif',
 };
 
 function displayFileMessage({ mimetype, data, filename }, chatMessages) {
