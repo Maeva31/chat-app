@@ -455,6 +455,8 @@ function updateActiveMicsDisplay() {
   let users = [];
   let userCache = {};
 
+
+
   socket.on('user list', list => {
     users = list;
     userCache = {};
@@ -518,122 +520,121 @@ function updateActiveMicsDisplay() {
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
   function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
+  const container = document.getElementById('private-chat-container');
+  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (win) {
+    container.appendChild(win);
+    return;
+  }
+
+  if (!role || !gender) {
+    const cachedUser = userCache[username];
+    if (cachedUser) {
+      role = role || cachedUser.role;
+      gender = gender || cachedUser.gender;
     }
+  }
 
-    if (!role || !gender) {
-      const cachedUser = userCache[username];
-      if (cachedUser) {
-        role = role || cachedUser.role;
-        gender = gender || cachedUser.gender;
-      }
-    }
+  win = document.createElement('div');
+  win.classList.add('private-chat-window');
+  win.dataset.user = username;
 
-    // Création fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
+  const header = document.createElement('div');
+  header.classList.add('private-chat-header');
 
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
+  const icon = createRoleIcon(role);
+  if (icon) header.appendChild(icon);
 
-    const icon = createRoleIcon(role);
-    if (icon) header.appendChild(icon);
+  const title = document.createElement('span');
+  title.classList.add('username-text');
+  title.textContent = username;
+  title.style.color = (role === 'admin') ? usernameColors.admin
+                    : (role === 'modo') ? usernameColors.modo
+                    : (usernameColors[gender] || usernameColors.default);
 
-    const title = document.createElement('span');
-    title.classList.add('username-text');
-    title.textContent = username;
-    title.style.color = (role === 'admin') ? usernameColors.admin
-                      : (role === 'modo') ? usernameColors.modo
-                      : (usernameColors[gender] || usernameColors.default);
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.onclick = () => container.removeChild(win);
+  header.append(title, closeBtn);
 
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
+  const body = document.createElement('div');
+  body.classList.add('private-chat-body');
 
-    header.append(title, closeBtn);
+  const inputBar = document.createElement('div');
+  inputBar.classList.add('private-chat-input');
+  inputBar.style.position = 'relative';
 
-    // Body
-    const body = document.createElement('div');
-    body.classList.add('private-chat-body');
+  const input = document.createElement('input');
+  input.placeholder = 'Message…';
 
-    // Barre d'input
-    const inputBar = document.createElement('div');
-    inputBar.classList.add('private-chat-input');
-    inputBar.style.position = 'relative';
+  const emojiBtn = document.createElement('button');
+  emojiBtn.textContent = '😊';
+  emojiBtn.title = 'Insérer un émoji';
+  emojiBtn.style.fontSize = '20px';
+  emojiBtn.style.background = 'transparent';
+  emojiBtn.style.border = 'none';
+  emojiBtn.style.cursor = 'pointer';
+  emojiBtn.style.marginRight = '5px';
 
-    const input = document.createElement('input');
-    input.placeholder = 'Message…';
+  // ✅ Une seule déclaration ici
+  const emojiPicker = document.createElement('div');
+  emojiPicker.classList.add('emoji-picker');
+  emojiPicker.style.display = 'none';
+  emojiPicker.style.position = 'absolute';
+  emojiPicker.style.bottom = '40px';
+  emojiPicker.style.left = '0';
+  emojiPicker.style.background = '#222';
+  emojiPicker.style.padding = '8px';
+  emojiPicker.style.borderRadius = '8px';
+  emojiPicker.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+  emojiPicker.style.zIndex = '1000';
+  emojiPicker.style.maxWidth = '200px';
+  emojiPicker.style.flexWrap = 'wrap';
 
-    // Boutons emoji & upload
-    const emojiBtn = document.createElement('button');
-    emojiBtn.textContent = '😊';
-    emojiBtn.title = 'Insérer un émoji';
-    emojiBtn.style.fontSize = '20px';
-    emojiBtn.style.background = 'transparent';
-    emojiBtn.style.border = 'none';
-    emojiBtn.style.cursor = 'pointer';
-    emojiBtn.style.marginRight = '5px';
-
-    const emojiPicker = document.createElement('div');
-    emojiPicker.classList.add('emoji-picker');
-    emojiPicker.style.display = 'none';
-    emojiPicker.style.position = 'absolute';
-    emojiPicker.style.bottom = '40px';
-    emojiPicker.style.left = '0';
-    emojiPicker.style.background = '#222';
-    emojiPicker.style.padding = '8px';
-    emojiPicker.style.borderRadius = '8px';
-    emojiPicker.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
-    emojiPicker.style.zIndex = '1000';
-    emojiPicker.style.maxWidth = '200px';
-    emojiPicker.style.flexWrap = 'wrap';
-
-    const emojis = ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶'];
-    emojis.forEach(e => {
-      const span = document.createElement('span');
-      span.textContent = e;
-      span.style.cursor = 'pointer';
-      span.style.fontSize = '22px';
-      span.style.margin = '4px';
-      span.addEventListener('click', () => {
-        const start = input.selectionStart;
-        const end = input.selectionEnd;
-        input.value = input.value.slice(0, start) + e + input.value.slice(end);
-        input.selectionStart = input.selectionEnd = start + e.length;
-        input.focus();
-        emojiPicker.style.display = 'none';
-      });
-      emojiPicker.appendChild(span);
-    });
-
-    emojiBtn.addEventListener('click', e => {
-      e.stopPropagation();
-      emojiPicker.style.display = (emojiPicker.style.display === 'none') ? 'flex' : 'none';
-    });
-
-    document.addEventListener('click', () => {
+  const emojis = ['😀','😁','😂','🤣','😃','😄','😅','😆','😉','😊','😋','😎','😍','😘','😗','😙','😚','🙂','🤗','🤩','🤔','🤨','😐','😑','😶'];
+  emojis.forEach(e => {
+    const span = document.createElement('span');
+    span.textContent = e;
+    span.style.cursor = 'pointer';
+    span.style.fontSize = '22px';
+    span.style.margin = '4px';
+    span.addEventListener('click', () => {
+      const start = input.selectionStart;
+      const end = input.selectionEnd;
+      input.value = input.value.slice(0, start) + e + input.value.slice(end);
+      input.selectionStart = input.selectionEnd = start + e.length;
+      input.focus();
       emojiPicker.style.display = 'none';
     });
+    emojiPicker.appendChild(span);
+  });
 
-    emojiPicker.addEventListener('click', e => e.stopPropagation());
+  emojiBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    emojiPicker.style.display = (emojiPicker.style.display === 'none') ? 'flex' : 'none';
+  });
 
+  document.addEventListener('click', () => {
+    emojiPicker.style.display = 'none';
+  });
+
+  emojiPicker.addEventListener('click', e => e.stopPropagation());
+
+}
+
+  
 
   // Wizz 
 
 const myUsername = localStorage.getItem('username');
 if (myUsername) {
-  socket.emit('set username', myUsername); // Envoie le pseudo au serveur pour l’associer à socket.id
+  socket.emit('set username', myUsername);
 }
 
 const wiizzSound = new Audio('/wizz.mp3');
 const wiizzCooldowns = new Map();
 
+// Réception d’un Wiizz
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
@@ -727,7 +728,8 @@ function setupWiizzButton(username, win, container) {
 
   return wiizzBtn;
 }
-  }
+
+
 
 
     // Upload fichier
@@ -874,18 +876,14 @@ function setupWiizzButton(username, win, container) {
     sendBtn.style.cursor = 'pointer';
     sendBtn.style.marginLeft = '5px';
     sendBtn.style.padding = '4px 8px';
-
     // Assemblage inputBar : emoji avant upload
-    const wiizzBtn = setupWiizzButton(username, win, container);
+const wiizzBtn = setupWiizzButton(username, win, container);
 inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
-
-
 
     sendBtn.onclick = () => {
       const text = input.value.trim();
       if (!text) return;
       socket.emit('private message', { to: username, message: text });
-      const myUsername = localStorage.getItem('username') || 'moi';
       appendPrivateMessage(body, myUsername, text);
       input.value = '';
     };
