@@ -286,14 +286,6 @@ socket.on('user list', (users) => {
   window.users = users;  // garde copie globale
   updateUserList(users);
 
-  users.forEach(user => {
-    if (user.username !== myUsername) {
-      if (!peerConnections[user.username]) {
-        callUser(user.username);
-      }
-    }
-  });
-});
 
 
 
@@ -1377,6 +1369,11 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     messages.forEach(addMessageToChat);
   });
 
+  socket.on('file uploaded', (message) => {
+  addMessageToChat(message);
+  });
+
+
   socket.on('chat message', addMessageToChat);
   socket.on('server message', (msg) => {
   const message = {
@@ -1799,12 +1796,16 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
+function addMessageToChat(message) {
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
+
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
 
   // Timestamp
   const timeSpan = document.createElement('span');
-  timeSpan.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
+  timeSpan.textContent = new Date(message.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
   timeSpan.style.color = '#888';
   timeSpan.style.fontStyle = 'italic';
   timeSpan.style.marginRight = '5px';
@@ -1820,14 +1821,14 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.top = '2px';
 
   let color = 'white';
-  if (role === 'admin') color = 'red';
-  else if (role === 'modo') color = 'limegreen';
-  else if (gender === 'Femme') color = '#f0f';
-  else if (gender === 'Homme') color = 'dodgerblue';
+  if (message.role === 'admin') color = 'red';
+  else if (message.role === 'modo') color = 'limegreen';
+  else if (message.gender === 'Femme') color = '#f0f';
+  else if (message.gender === 'Homme') color = 'dodgerblue';
   usernameContainer.style.color = color;
 
-  if (role === 'admin' || role === 'modo') {
-    const icon = createRoleIcon(role);
+  if (message.role === 'admin' || message.role === 'modo') {
+    const icon = createRoleIcon(message.role);
     if (icon) {
       icon.style.width = '17px';
       icon.style.height = '15px';
@@ -1838,95 +1839,96 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   }
 
   const clickableUsername = document.createElement('span');
-  clickableUsername.textContent = username;
+  clickableUsername.textContent = message.username;
   clickableUsername.style.cursor = 'pointer';
 
   clickableUsername.addEventListener('click', () => {
-    insertMention(username);
+    insertMention(message.username);
   });
 
   usernameContainer.appendChild(clickableUsername);
   wrapper.appendChild(usernameContainer);
 
-  // Affichage du fichier
-  if (mimetype.startsWith('image/')) {
-    const img = document.createElement('img');
-    img.src = `data:${mimetype};base64,${data}`;
-    img.style.maxWidth = '100px';
-    img.style.cursor = 'pointer';
-    img.style.border = '2px solid #ccc';
-    img.style.borderRadius = '8px';
-    img.style.padding = '4px';
+  // Gestion contenu message ou fichier
+  if (message.data && message.mimetype) {
+    // Message fichier (uploadé)
+    if (message.mimetype.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = `data:${message.mimetype};base64,${message.data}`;
+      img.style.maxWidth = '100px';
+      img.style.cursor = 'pointer';
+      img.style.border = '2px solid #ccc';
+      img.style.borderRadius = '8px';
+      img.style.padding = '4px';
 
-    const link = document.createElement('a');
-    link.href = '#';
-    link.style.cursor = 'pointer';
-    link.appendChild(img);
+      const link = document.createElement('a');
+      link.href = '#';
+      link.style.cursor = 'pointer';
+      link.appendChild(img);
 
-    link.addEventListener('click', (e) => {
-      e.preventDefault();
-      const newWindow = window.open();
-      if (newWindow) {
-        newWindow.document.write(`
-          <html>
-            <head><title>${filename}</title></head>
-            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-              <img src="${img.src}" alt="${filename}" style="max-width:100vw; max-height:100vh;" />
-            </body>
-          </html>
-        `);
-        newWindow.document.close();
-      } else {
-        alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
-      }
-    });
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const newWindow = window.open();
+        if (newWindow) {
+          newWindow.document.write(`
+            <html>
+              <head><title>${message.filename}</title></head>
+              <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+                <img src="${img.src}" alt="${message.filename}" style="max-width:100vw; max-height:100vh;" />
+              </body>
+            </html>
+          `);
+          newWindow.document.close();
+        } else {
+          alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
+        }
+      });
 
-    img.onload = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(link);
+      wrapper.appendChild(link);
 
-  } else if (mimetype.startsWith('audio/')) {
-    const audio = document.createElement('audio');
-    audio.controls = true;
-    audio.src = `data:${mimetype};base64,${data}`;
-    audio.style.marginTop = '4px';
-    audio.style.border = '2px solid #ccc';
-    audio.style.borderRadius = '8px';
-    audio.style.padding = '4px';
-    audio.style.backgroundColor = '#f9f9f9';
-    audio.onloadeddata = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(audio);
+    } else if (message.mimetype.startsWith('audio/')) {
+      const audio = document.createElement('audio');
+      audio.controls = true;
+      audio.src = `data:${message.mimetype};base64,${message.data}`;
+      audio.style.marginTop = '4px';
+      audio.style.border = '2px solid #ccc';
+      audio.style.borderRadius = '8px';
+      audio.style.padding = '4px';
+      audio.style.backgroundColor = '#f9f9f9';
+      wrapper.appendChild(audio);
 
-  } else if (mimetype.startsWith('video/')) {
-    const video = document.createElement('video');
-    video.controls = true;
-    video.src = `data:${mimetype};base64,${data}`;
-    video.style.maxWidth = '300px';
-    video.style.maxHeight = '300px';
-    video.style.marginTop = '4px';
-    video.style.border = '2px solid #ccc';
-    video.style.borderRadius = '8px';
-    video.style.padding = '4px';
-    video.style.backgroundColor = '#000';
-    video.onloadeddata = () => {
-      chatMessages.scrollTop = chatMessages.scrollHeight;
-    };
-    wrapper.appendChild(video);
+    } else if (message.mimetype.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.controls = true;
+      video.src = `data:${message.mimetype};base64,${message.data}`;
+      video.style.maxWidth = '300px';
+      video.style.maxHeight = '300px';
+      video.style.marginTop = '4px';
+      video.style.border = '2px solid #ccc';
+      video.style.borderRadius = '8px';
+      video.style.padding = '4px';
+      video.style.backgroundColor = '#000';
+      wrapper.appendChild(video);
 
-  } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    wrapper.appendChild(link);
+    } else {
+      const link = document.createElement('a');
+      link.href = `data:${message.mimetype};base64,${message.data}`;
+      link.download = message.filename;
+      link.textContent = `📎 ${message.filename}`;
+      link.target = '_blank';
+      wrapper.appendChild(link);
+    }
+  } else if (message.text) {
+    // Message texte simple
+    const textSpan = document.createElement('span');
+    textSpan.textContent = message.text;
+    wrapper.appendChild(textSpan);
   }
 
   chatMessages.appendChild(wrapper);
-  setTimeout(() => {
-    chatMessages.scrollTop = chatMessages.scrollHeight;
-  }, 0);
+  chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+});
+
 });
