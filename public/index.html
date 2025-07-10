@@ -405,6 +405,41 @@
   
 </style>
 
+    <script>
+      function limitVoxiPosition() {
+  const voxi = document.getElementById('voxi');
+  if (!voxi) return;
+
+  // Récupère position actuelle (en pixels)
+  let left = parseInt(voxi.style.left, 10) || 0;
+  let top = parseInt(voxi.style.top, 10) || 0;
+
+  const winWidth = window.innerWidth;
+  const winHeight = window.innerHeight;
+
+  const voxiRect = voxi.getBoundingClientRect();
+
+  // Limite gauche et haut (>= 0)
+  if (left < 0) left = 0;
+  if (top < 0) top = 0;
+
+  // Limite droite et bas (fenêtre - largeur/hauteur du cadre)
+  if (left + voxiRect.width > winWidth) {
+    left = winWidth - voxiRect.width;
+  }
+  if (top + voxiRect.height > winHeight) {
+    top = winHeight - voxiRect.height;
+  }
+
+  // Applique la position corrigée
+  voxi.style.left = left + '946px';
+  voxi.style.top = top + '745px';
+}
+
+// Appelle cette fonction au chargement et à chaque redimensionnement
+window.addEventListener('load', limitVoxiPosition);
+window.addEventListener('resize', limitVoxiPosition);
+    </script>
     
   <script src="/socket.io/socket.io.js"></script>
   <script type="module" src="app.js"></script>
