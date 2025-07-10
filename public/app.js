@@ -1184,27 +1184,27 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
 
     } else {
     const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.target = '_blank';
-    link.style.display = 'inline-flex';
-    link.style.alignItems = 'center';
-    link.style.marginTop = '4px';
+link.href = `data:${mimetype};base64,${data}`;
+link.download = filename;
+link.target = '_blank';
+link.style.display = 'inline-flex';
+link.style.alignItems = 'center';
+link.style.marginTop = '4px';
 
-    // Crée l’icône avec la classe sprite-button
-    const icon = document.createElement('span');
-    icon.className = 'sprite-button';
+// Crée l’icône avec la classe sprite-button
+const icon = document.createElement('span');
+icon.className = 'sprite-button';
 
-    // Crée un span pour le nom du fichier
-    const filenameSpan = document.createElement('span');
-    filenameSpan.textContent = filename;
-    filenameSpan.style.marginLeft = '6px';
+// Crée un span pour le nom du fichier
+const filenameSpan = document.createElement('span');
+filenameSpan.textContent = filename;
+filenameSpan.style.marginLeft = '6px';
 
-    // Ajoute les deux éléments dans le lien
-    link.appendChild(icon);
-    link.appendChild(filenameSpan);
+// Ajoute les deux éléments dans le lien
+link.appendChild(icon);
+link.appendChild(filenameSpan);
 
-    msgDiv.appendChild(link);
+msgDiv.appendChild(link);
 
     }
 
@@ -2300,13 +2300,30 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     wrapper.appendChild(video);
 
   } else {
-    const link = document.createElement('a');
-    link.href = `data:${mimetype};base64,${data}`;
-    link.download = filename;
-    link.textContent = `📎 ${filename}`;
-    link.target = '_blank';
-    wrapper.appendChild(link);
-  }
+       const link = document.createElement('a');
+link.href = `data:${mimetype};base64,${data}`;
+link.download = filename;
+link.target = '_blank';
+link.style.display = 'inline-flex';
+link.style.alignItems = 'center';
+link.style.marginTop = '4px';
+
+// Crée l’icône avec la classe sprite-button
+const icon = document.createElement('span');
+icon.className = 'sprite-button';
+
+// Crée un span pour le nom du fichier
+const filenameSpan = document.createElement('span');
+filenameSpan.textContent = filename;
+filenameSpan.style.marginLeft = '6px';
+
+// Ajoute les deux éléments dans le lien
+link.appendChild(icon);
+link.appendChild(filenameSpan);
+
+msgDiv.appendChild(link);
+
+    }
 
   chatMessages.appendChild(wrapper);
   setTimeout(() => {
