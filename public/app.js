@@ -11,7 +11,7 @@ const myUsername = localStorage.getItem('username');
 let micEnabled = false;
 
 document.addEventListener('DOMContentLoaded', () => {
-
+  window.socket = socket;
 
   // --- Webcam status update ---
   socket.on('webcam status update', ({ username, active }) => {
@@ -623,40 +623,83 @@ function updateActiveMicsDisplay() {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
-
-  // Wizz 
-
-  const myUsername = localStorage.getItem('username');
-if (myUsername) {
-  socket.emit('set username', myUsername); // Associe le socket.id à l’utilisateur
-}
-
+    // Initialisation son unique en haut du script
 const wiizzSound = new Audio('/wizz.mp3');
 const wiizzCooldowns = new Map();
 
-// Réception d’un Wiizz privé
 socket.on('private wiizz', ({ from }) => {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
 
-  // Ne pas traiter si la fenêtre est fermée
-  const win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-  if (!win) return;
+  // Création automatique si la fenêtre n'existe pas
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  if (!win) {
+    win = createPrivateChatWindow(from); // ← tu dois avoir une fonction pour créer une fenêtre MP
+    container.appendChild(win);
+  }
 
   triggerWiizzEffect(win);
 
   const body = win.querySelector('.private-chat-body');
   const msgDiv = document.createElement('div');
+  /* msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`; */
   msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">
-    <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
-    ${from} t’a envoyé un Wiizz !
-  </span>`;
+  <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+  ${from} t’a envoyé un Wiizz !
+</span>`;
   msgDiv.style.margin = '4px 0';
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
 });
 
-// Bouton Wiizz
+
+function showCooldownBanner(username, win) {
+  const existing = win.querySelector('.wiizz-cooldown-banner');
+  if (existing) existing.remove();
+
+  const cooldownBanner = document.createElement('div');
+  cooldownBanner.classList.add('wiizz-cooldown-banner');
+  cooldownBanner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
+  cooldownBanner.style.backgroundColor = '#ffc107';
+  cooldownBanner.style.color = 'black';
+  cooldownBanner.style.fontWeight = 'bold';
+  cooldownBanner.style.padding = '6px';
+  cooldownBanner.style.textAlign = 'center';
+  cooldownBanner.style.borderBottom = '2px solid #222';
+  cooldownBanner.style.position = 'absolute';
+  cooldownBanner.style.top = '0';
+  cooldownBanner.style.left = '0';
+  cooldownBanner.style.width = '397px';
+  cooldownBanner.style.zIndex = '999';
+
+  win.appendChild(cooldownBanner);
+
+  setTimeout(() => {
+    if (cooldownBanner && cooldownBanner.parentNode) {
+      cooldownBanner.parentNode.removeChild(cooldownBanner);
+    }
+  }, 3000);
+}
+
+function triggerWiizzEffect(win) {
+  wiizzSound.currentTime = 0;
+  wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
+
+  const originalStyle = win.style.transform;
+  let count = 0;
+
+  const interval = setInterval(() => {
+    const x = (Math.random() - 0.5) * 10;
+    const y = (Math.random() - 0.5) * 10;
+    win.style.transform = `translate(${x}px, ${y}px)`;
+    count++;
+    if (count > 10) {
+      clearInterval(interval);
+      win.style.transform = originalStyle;
+    }
+  }, 50);
+}
+
 function setupWiizzButton(username, win, container) {
   const wiizzBtn = document.createElement('button');
   wiizzBtn.title = 'Envoyer un Wiizz';
@@ -677,81 +720,30 @@ function setupWiizzButton(username, win, container) {
   wiizzIcon.style.verticalAlign = 'middle';
   wiizzBtn.appendChild(wiizzIcon);
 
-  wiizzBtn.addEventListener('click', () => {
-    const now = Date.now();
-    const lastTime = wiizzCooldowns.get(username) || 0;
+wiizzBtn.addEventListener('click', () => {
+  const now = Date.now();
+  const lastTime = wiizzCooldowns.get(username) || 0;
 
+  if (now - lastTime < 5000) {
     const winCheck = document.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (!winCheck) return; // Ne pas envoyer si la fenêtre est fermée
+    if (winCheck) showCooldownBanner(username, winCheck);
+    return;
+  }
 
-    if (now - lastTime < 5000) {
-      showCooldownBanner(username, winCheck);
-      return;
-    }
+  wiizzCooldowns.set(username, now);
+  socket.emit('private wiizz', { to: username });
 
-    wiizzCooldowns.set(username, now);
-    socket.emit('private wiizz', { to: username }); // Envoi au serveur
-  });
+  // Effet local immédiat si la fenêtre est visible
+  const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+  if (winTarget) {
+    triggerWiizzEffect(winTarget);
+  }
+});
+
 
   return wiizzBtn;
 }
 
-// Effet visuel + audio du Wiizz
-function triggerWiizzEffect(win) {
-  wiizzSound.currentTime = 0;
-  wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
-
-  const originalStyle = win.style.transform;
-  let count = 0;
-
-  const interval = setInterval(() => {
-    const x = (Math.random() - 0.5) * 10;
-    const y = (Math.random() - 0.5) * 10;
-    win.style.transform = `translate(${x}px, ${y}px)`;
-    count++;
-    if (count > 10) {
-      clearInterval(interval);
-      win.style.transform = originalStyle;
-    }
-  }, 50);
-}
-
-// Bannière Cooldown
-function showCooldownBanner(username, win) {
-  const existing = win.querySelector('.wiizz-cooldown-banner');
-  if (existing) existing.remove();
-
-  const cooldownBanner = document.createElement('div');
-  cooldownBanner.classList.add('wiizz-cooldown-banner');
-  cooldownBanner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
-  cooldownBanner.style.backgroundColor = '#ffc107';
-  cooldownBanner.style.color = 'black';
-  cooldownBanner.style.fontWeight = 'bold';
-  cooldownBanner.style.padding = '6px';
-  cooldownBanner.style.textAlign = 'center';
-  cooldownBanner.style.borderBottom = '2px solid #222';
-  cooldownBanner.style.position = 'absolute';
-  cooldownBanner.style.top = '0';
-  cooldownBanner.style.left = '0';
-  cooldownBanner.style.right = '0';
-  cooldownBanner.style.zIndex = '999';
-
-  win.appendChild(cooldownBanner);
-
-  setTimeout(() => {
-    if (cooldownBanner && cooldownBanner.parentNode) {
-      cooldownBanner.parentNode.removeChild(cooldownBanner);
-    }
-  }, 3000);
-}
-
-  return wiizzBtn;
-}
-
-
-    // Assemblage inputBar : emoji avant upload
-    const wiizzBtn = setupWiizzButton(username, win, container);
-inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
 // --- Intégration bouton Wiizz dans openPrivateChat ---
 // const wiizzBtn = setupWiizzButton(username, win, container);
 // inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
@@ -902,6 +894,9 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
     sendBtn.style.marginLeft = '5px';
     sendBtn.style.padding = '4px 8px';
 
+    // Assemblage inputBar : emoji avant upload
+    const wiizzBtn = setupWiizzButton(username, win, container);
+inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
 
 
 
@@ -956,7 +951,7 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
     });
 
     container.appendChild(win);
-  
+  }
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
   function appendPrivateMessage(bodyElem, from, text, role, gender) {
