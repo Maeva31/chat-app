@@ -454,7 +454,7 @@ function updateActiveMicsDisplay() {
    // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
-  const wiizzSound = new Audio('/sounds/wizz.mp3');
+  const wiizzSound = new Audio('/wizz.mp3');
 
   socket.on('user list', list => {
     users = list;
