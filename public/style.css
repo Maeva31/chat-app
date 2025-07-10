@@ -1050,7 +1050,7 @@ button:focus {
   position: absolute;
   top: 0;
   left: 0;
-  right: 0; /* ⬅️ AJOUTÉ : prend toute la largeur */
+  right: 0; /* prend toute la largeur */
   z-index: 999;
 }
 
