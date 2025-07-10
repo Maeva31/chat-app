@@ -642,7 +642,11 @@ socket.on('private wiizz', ({ from }) => {
 
   const body = win.querySelector('.private-chat-body');
   const msgDiv = document.createElement('div');
-  msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`;
+  /* msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">💥 ${from} t’a envoyé un Wiizz !</span>`; */
+  msgDiv.innerHTML = `<span style="color:orange;font-weight:bold;">
+  <img src="/wizz.png" style="height:16px; width:16px; vertical-align:middle; margin-right:4px;">
+  ${from} t’a envoyé un Wiizz !
+</span>`;
   msgDiv.style.margin = '4px 0';
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
