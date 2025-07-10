@@ -445,15 +445,13 @@ function updateActiveMicsDisplay() {
 
 
 
-
-
-
-
+// MP PRIVE
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
+  const wiizzSound = new Audio('/wizz.mp3');
 
   socket.on('user list', list => {
     users = list;
@@ -623,6 +621,53 @@ function updateActiveMicsDisplay() {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
+    // Bouton Wiizz
+const wiizzBtn = document.createElement('button');
+wiizzBtn.title = 'Envoyer un Wiizz';
+wiizzBtn.style.background = 'transparent';
+wiizzBtn.style.border = 'none';
+wiizzBtn.style.cursor = 'pointer';
+wiizzBtn.style.marginRight = '5px';
+wiizzBtn.style.padding = '0';
+
+const wiizzIcon = document.createElement('img');
+wiizzIcon.src = '/wizz.png';
+wiizzIcon.alt = 'Wiizz';
+wiizzIcon.style.width = '24px';
+wiizzIcon.style.height = '24px';
+
+wiizzBtn.appendChild(wiizzIcon);
+
+wiizzBtn.addEventListener('click', () => {
+  socket.emit('private wiizz', { to: username });
+
+  // Effet local immédiat
+  triggerWiizzEffect(win);
+});
+
+function triggerWiizzEffect(win) {
+  if (wiizzSound) {
+    wiizzSound.currentTime = 0;
+    wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
+  }
+
+  const originalStyle = win.style.transform;
+  let count = 0;
+
+  const interval = setInterval(() => {
+    const x = (Math.random() - 0.5) * 10;
+    const y = (Math.random() - 0.5) * 10;
+    win.style.transform = `translate(${x}px, ${y}px)`;
+    count++;
+    if (count > 10) {
+      clearInterval(interval);
+      win.style.transform = originalStyle;
+    }
+  }, 50);
+}
+
+
+
     // Upload fichier
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
@@ -769,7 +814,8 @@ function updateActiveMicsDisplay() {
     sendBtn.style.padding = '4px 8px';
 
     // Assemblage inputBar : emoji avant upload
-    inputBar.append(emojiBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+    inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+
 
     sendBtn.onclick = () => {
       const text = input.value.trim();
@@ -999,7 +1045,7 @@ function updateActiveMicsDisplay() {
 
 
 
-
+// Fin MP
 
 
 
