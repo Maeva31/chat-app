@@ -985,6 +985,26 @@ button:focus {
   background: #8f00ff;
 }
 
+.private-message {
+  display: flex;
+  align-items: center;
+  margin: 4px 0;
+}
+
+.private-message .username {
+  font-weight: bold;
+  color: #ffd700;
+  margin-right: 6px;
+  white-space: nowrap;
+}
+
+.private-message .message-text {
+  flex: 1;
+  color: #fff;
+  word-break: break-word;
+}
+
+
 /* Bouton démarrer webcam */
 /* Style spécifique pour le bouton start-webcam-btn */
 #start-webcam-btn {
@@ -1067,5 +1087,3 @@ button:focus {
   margin-right: 4px;
   animation: pulseWizz 1s ease;
 }
-
-
