@@ -635,7 +635,7 @@ wiizzBtn.style.cursor = 'pointer';
 wiizzBtn.style.marginRight = '5px';
 wiizzBtn.style.padding = '0';
 wiizzBtn.style.display = 'inline-flex'; // 🔥 important pour aligner
-wiizzBtn.style.alignItems = 'center';
+
 
 
 const wiizzIcon = document.createElement('img');
