@@ -877,78 +877,6 @@ button:focus {
 /* MP */
 
 /* Conteneur général des fenêtres privées */
-#private-chat-container {
-  position: fixed;
-  bottom: 0;
-  right: 0;
-  width: 100%;
-  height: 100%;
-  pointer-events: none; /* Pour ne pas bloquer les clics en arrière-plan */
-  z-index: 10000;
-}
-
-/* Fenêtre privée */
-.private-chat-window {
-  pointer-events: auto; /* Permet d’interagir avec la fenêtre */
-  /* background: #1a0055; */
-  border: 2px solid #8e44ad;
-  border-radius: 10px;
-  box-shadow: 0 0 10px #8e44ad;
-  color: #d6a8ff;
-  display: flex;
-  flex-direction: column;
-  font-family: Arial, sans-serif;
-  user-select: none;
-
-  max-height: 300px;  /* Hauteur max fixée pour limiter la taille */
-  width: 497px;       /* Largeur fixe, ajustable */
-}
-
-/* Header de la fenêtre privée */
-.private-chat-header {
-  background: #3a0a8a;
-  padding: 8px 12px;
-  display: flex;
-  align-items: center;
-  font-weight: bold;
-  font-size: 1.1em;
-  color: white;
-  user-select: none;
-  cursor: move;
-  border-radius: 6px;
-}
-
-/* Bouton fermer */
-.private-chat-header button {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: #f55;
-  font-size: 20px;
-  cursor: pointer;
-  user-select: none;
-  transition: color 0.2s ease;
-}
-
-.private-chat-header button:hover {
-  color: #ff8888;
-}
-
-/* Corps de la fenêtre (zone des messages) */
-/* Corps des messages (zone de discussion privée) */
-.private-chat-body {
-  flex: 1;
-  padding: 10px;
-  overflow-y: auto;
-  background: #5f30bde6;
-  font-size: 0.9em;
-  line-height: 1.4;
-  color: #ddd;
-  white-space: pre-wrap;
-  word-wrap: break-word;
-  overflow-wrap: break-word;
-}
-
 /* Conteneur de chaque message */
 .private-chat-body .message {
   margin: 8px 0;
@@ -957,25 +885,26 @@ button:focus {
   max-width: 80%;
 }
 
-/* Alignement à gauche pour les messages reçus */
+/* Reçu : aligné à gauche */
 .private-chat-body .message.received {
   align-items: flex-start;
 }
 
-/* Alignement à droite pour les messages envoyés */
+/* Envoyé : aligné à droite */
 .private-chat-body .message.sent {
   align-items: flex-end;
   margin-left: auto;
 }
 
-/* Style du pseudo */
+/* Pseudo de l’expéditeur */
 .private-chat-body .message .sender-name {
   font-size: 0.75em;
+  font-weight: bold;
   color: #bbb;
   margin-bottom: 2px;
 }
 
-/* Style de la bulle de message */
+/* Bulle contenant le texte */
 .private-chat-body .message .bubble {
   background: #e4dbff;
   color: #222;
@@ -983,20 +912,23 @@ button:focus {
   border-radius: 12px;
   box-shadow: 0 1px 2px rgba(0,0,0,0.3);
   position: relative;
+  word-wrap: break-word;
+  white-space: pre-wrap;
 }
 
-/* Couleur différente pour l'expéditeur */
+/* Différent pour les messages envoyés */
 .private-chat-body .message.sent .bubble {
   background: #c0ffe1;
 }
 
-/* Heure du message */
+/* Heure dans la bulle, alignée à droite */
 .private-chat-body .message .timestamp {
   font-size: 0.7em;
-  color: #aaa;
-  margin-top: 2px;
+  color: #888;
   text-align: right;
+  margin-top: 4px;
 }
+
 
 
 /* Bouton démarrer webcam */
