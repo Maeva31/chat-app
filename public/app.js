@@ -1052,21 +1052,23 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
 
   who.appendChild(document.createTextNode(from + ':'));
 
-  // Message
+  // Message texte
   const textSpan = document.createElement('span');
   textSpan.className = 'message-text';
   textSpan.textContent = text;
 
-  // 🕒 Horodatage
+  // 🕒 Horodatage sans crochets
   const timeSpan = document.createElement('span');
   timeSpan.className = 'timestamp';
   const now = new Date();
-  timeSpan.textContent = `[${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}]`;
+  timeSpan.textContent = ` ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
 
+  // Ajout à la ligne
   msgDiv.append(who, textSpan, timeSpan);
   bodyElem.appendChild(msgDiv);
   bodyElem.scrollTop = bodyElem.scrollHeight;
 }
+
 
   // ── 5) Clic pseudo ouvre la fenêtre privée ──
   document.addEventListener('click', e => {
