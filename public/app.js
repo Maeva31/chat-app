@@ -638,8 +638,10 @@ wiizzBtn.style.padding = '0';
 const wiizzIcon = document.createElement('img');
 wiizzIcon.src = '/wizz.png';
 wiizzIcon.alt = 'Wiizz';
-wiizzIcon.style.width = '24px';
+wiizzIcon.style.width = '45px';
 wiizzIcon.style.height = '24px';
+wiizzIcon.style.verticalAlign = '-15px';
+
 
 wiizzBtn.addEventListener('click', () => {
   const now = Date.now();
