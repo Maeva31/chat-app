@@ -906,7 +906,7 @@ button:focus {
 
 /* Header de la fenêtre privée */
 .private-chat-header {
-  background: #000;
+  background: #121212;
   padding: 8px 12px;
   display: flex;
   align-items: center;
