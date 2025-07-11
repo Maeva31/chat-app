@@ -451,9 +451,16 @@ function updateActiveMicsDisplay() {
 
 
 
+  function updateAllInputStyles() {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
 
-
-
+  container.querySelectorAll('.private-chat-window').forEach(win => {
+    if (win._inputField) {
+      applyStyleToInput(win._inputField, currentStyle);
+    }
+  });
+}
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
@@ -578,8 +585,6 @@ function updateActiveMicsDisplay() {
     inputBar.style.alignItems = 'center';
 
     const input = document.createElement('input');
-    win._inputField = input; // garde la référence
-    applyStyleToInput(input, currentStyle); // applique le style initial
     input.placeholder = 'Message…';
     input.style.backgroundColor = '#333';  // fond sombre pour l’input
     input.style.color = '#fff';             // texte clair
@@ -588,24 +593,14 @@ function updateActiveMicsDisplay() {
     input.style.flexGrow = '1';             // pour que l’input prenne tout l’espace horizontal
     input.style.padding = '6px 8px';
     input.style.outline = 'none';
+    win._inputField = input; // garde la référence
+    applyStyleToInput(input, currentStyle); // applique le style initial
     if (currentStyle) {
     if (currentStyle.color) input.style.color = currentStyle.color;
     input.style.fontWeight = currentStyle.bold ? 'bold' : 'normal';
     input.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
     input.style.fontFamily = currentStyle.font || 'Arial';
   }
-
-
-  function updateAllInputStyles() {
-  const container = document.getElementById('private-chat-container');
-  if (!container) return;
-
-  container.querySelectorAll('.private-chat-window').forEach(win => {
-    if (win._inputField) {
-      applyStyleToInput(win._inputField, currentStyle);
-    }
-  });
-}
 
 
 
