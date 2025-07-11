@@ -1,7 +1,6 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-  
 
 function updateAllInputStyles() {
   const container = document.getElementById('private-chat-container');
