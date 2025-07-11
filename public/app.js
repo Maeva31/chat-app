@@ -1,7 +1,5 @@
 const socket = io();
 
-document.addEventListener('DOMContentLoaded', () => {
-
   function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
@@ -63,6 +61,9 @@ document.addEventListener('DOMContentLoaded', () => {
     userList.appendChild(li);
   });
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+
 
 
 function updateAllInputStyles() {
