@@ -13,27 +13,41 @@ let micEnabled = false;
 document.addEventListener('DOMContentLoaded', () => {
   window.socket = socket;
 
-// --- Webcam status update ---
-socket.on('webcam status update', ({ username, active }) => {
-  // Supposons que window.users contient la liste des utilisateurs avec leur propriété invisible
-  const user = window.users?.find(u => u.username === username);
-  if (user && user.invisible) {
-    // Ignore la mise à jour webcam si utilisateur invisible
-    return;
+  // --- Webcam status update ---
+  socket.on('webcam status update', ({ username, active }) => {
+    webcamStatus[username] = active;
+
+    if (window.users) {
+      window.users = window.users.map(u => u.username === username ? { ...u, webcamActive: active } : u);
+      updateUserList(window.users);
+    }
+  });
+
+  // --- Bouton activer webcam locale ---
+  const startWebcamBtn = document.getElementById('start-webcam-btn');
+  if (startWebcamBtn) {
+    let popupCheckInterval;
+
+    startWebcamBtn.addEventListener('click', () => {
+  openLocalWebcamPopup();
+
+  // ✅ Ne pas signaler "visible" si invisibleMode est actif
+  if (!invisibleMode) {
+    socket.emit('webcam status', { username: myUsername, active: true });
   }
 
-  // Sinon on met à jour le statut webcam
-  webcamStatus[username] = active;
-
-  if (window.users) {
-    window.users = window.users.map(u =>
-      u.username === username ? { ...u, webcamActive: active } : u
-    );
-    updateUserList(window.users);
-  }
+  if (popupCheckInterval) clearInterval(popupCheckInterval);
+  popupCheckInterval = setInterval(() => {
+    if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
+      clearInterval(popupCheckInterval);
+      // ✅ Signaler "webcam off" uniquement si non invisible
+      if (!invisibleMode) {
+        socket.emit('webcam status', { username: myUsername, active: false });
+      }
+    }
+  }, 500);
 });
-
-
+}
 
   // --- Bouton activer/désactiver micro ---
 const voxoBtn = document.getElementById('voxo');
