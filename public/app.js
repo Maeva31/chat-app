@@ -571,9 +571,29 @@ function updateActiveMicsDisplay() {
     const inputBar = document.createElement('div');
     inputBar.classList.add('private-chat-input');
     inputBar.style.position = 'relative';
+    inputBar.style.backgroundColor = '#121212';   // fond sombre
+    inputBar.style.padding = '6px';
+    inputBar.style.borderRadius = '8px';
+    inputBar.style.display = 'flex';
+    inputBar.style.alignItems = 'center';
 
     const input = document.createElement('input');
     input.placeholder = 'Message…';
+    input.style.backgroundColor = '#333';  // fond sombre pour l’input
+    input.style.color = '#fff';             // texte clair
+    input.style.border = '1px solid #555';
+    input.style.borderRadius = '4px';
+    input.style.flexGrow = '1';             // pour que l’input prenne tout l’espace horizontal
+    input.style.padding = '6px 8px';
+    input.style.outline = 'none';
+    if (currentStyle) {
+    if (currentStyle.color) input.style.color = currentStyle.color;
+    input.style.fontWeight = currentStyle.bold ? 'bold' : 'normal';
+    input.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
+    input.style.fontFamily = currentStyle.font || 'Arial';
+  }
+
+
 
     // Boutons emoji & upload
     const emojiBtn = document.createElement('button');
@@ -824,7 +844,7 @@ wiizzBtn.appendChild(wiizzIcon);
     fileInput.style.display = 'none';
 
     const uploadBtn = document.createElement('button');
-    uploadBtn.textContent = '📁';
+    uploadBtn.textContent = '🌐';
     uploadBtn.title = 'Envoyer un fichier';
     uploadBtn.style.fontSize = '20px';
     uploadBtn.style.background = 'transparent';
