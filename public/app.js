@@ -1,28 +1,47 @@
-socket.on('user list', list => {
-  users = list;
-  userCache = {};
-  list.forEach(u => {
-    userCache[u.username] = u;
-  });
+const socket = io();
 
-  updateUserList(list);
+document.addEventListener('DOMContentLoaded', () => {
 
+function updateAllInputStyles() {
   const container = document.getElementById('private-chat-container');
-  if (container) {
-    container.querySelectorAll('.private-chat-window').forEach(win => {
-      const username = win.dataset.user;
-      const user = userCache[username];
-      const title = win.querySelector('.private-chat-header span.username-text');
-      if (user && title) {
-        // Détermine la couleur selon rôle ou genre
-        title.style.color = user.role === 'admin' ? usernameColors.admin
-                          : user.role === 'modo' ? usernameColors.modo
-                          : (usernameColors[user.gender] || usernameColors.default);
-      }
-    });
-  }
+  if (!container) return;
+
+  container.querySelectorAll('.private-chat-window').forEach(win => {
+    if (win._inputField) {
+      applyStyleToInput(win._inputField, currentStyle);
+    }
+  });
+}
 });
 
+
+   // ── 1) Stockage et mise à jour de la liste users ──
+  let users = [];
+  let userCache = {};
+
+  socket.on('user list', list => {
+    users = list;
+    userCache = {};
+    list.forEach(u => {
+      userCache[u.username] = u;
+    });
+    updateUserList(list);
+
+    // Mise à jour couleurs fenêtres privées
+    const container = document.getElementById('private-chat-container');
+    if (container) {
+      container.querySelectorAll('.private-chat-window').forEach(win => {
+        const username = win.dataset.user;
+        const user = userCache[username];
+        const title = win.querySelector('.private-chat-header span.username-text');
+        if (user && title) {
+          title.style.color = (user.role === 'admin') ? usernameColors.admin
+                            : (user.role === 'modo') ? usernameColors.modo
+                            : (usernameColors[user.gender] || usernameColors.default);
+        }
+      });
+    }
+  });
 
   // ── 2) Couleurs selon rôle/genre ──
   const usernameColors = {
