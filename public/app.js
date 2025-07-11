@@ -970,13 +970,21 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
 
 
     sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
-      socket.emit('private message', { to: username, message: text });
-      const myUsername = localStorage.getItem('username') || 'moi';
-      appendPrivateMessage(body, myUsername, text);
-      input.value = '';
-    };
+  const text = input.value.trim();
+  if (!text) return;
+
+  socket.emit('private message', { 
+    to: username, 
+    message: text,
+    style: currentStyle  // <-- envoie le style avec le message
+  });
+
+  const myUsername = localStorage.getItem('username') || 'moi';
+  appendPrivateMessage(body, myUsername, text, null, null, currentStyle);  // <-- applique localement aussi
+
+  input.value = '';
+  };
+
 
     input.addEventListener('keypress', e => {
       if (e.key === 'Enter') sendBtn.click();
@@ -1023,7 +1031,7 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
   }
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
-  function appendPrivateMessage(bodyElem, from, text, role, gender) {
+function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) {
   const msgDiv = document.createElement('div');
   msgDiv.className = 'private-message';
 
@@ -1055,7 +1063,18 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
   textSpan.className = 'message-text';
   textSpan.textContent = text;
 
-  // 🕒 Horodatage sans crochets
+  // **Appliquer style perso s’il est fourni**
+  if (style) {
+    textSpan.style.color = style.color || '#fff';
+    textSpan.style.fontWeight = style.bold ? 'bold' : 'normal';
+    textSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
+    textSpan.style.fontFamily = style.font || 'Arial';
+  } else {
+    // Style par défaut ou selon rôle/genre
+    textSpan.style.color = '#fff';
+  }
+
+  // Horodatage
   const timeSpan = document.createElement('span');
   timeSpan.className = 'timestamp';
   const now = new Date();
@@ -1066,6 +1085,7 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
   bodyElem.appendChild(msgDiv);
   bodyElem.scrollTop = bodyElem.scrollHeight;
 }
+
 
 
   // ── 5) Clic pseudo ouvre la fenêtre privée ──
@@ -1079,23 +1099,26 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
   });
 
   // ── 6) Réception message privé ──
-  socket.on('private message', ({ from, message, role, gender }) => {
-    const myUsername = localStorage.getItem('username');
-    if (from === myUsername) return;
+  socket.on('private message', ({ from, message, role, gender, style }) => {
+  const myUsername = localStorage.getItem('username');
+  if (from === myUsername) return;
 
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  const container = document.getElementById('private-chat-container');
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
-    if (!win) {
-      const userObj = userCache[from] || {};
-      openPrivateChat(from, userObj.role, userObj.gender);
-      win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-    }
-    if (!win) return;
+  if (!win) {
+    const userObj = userCache[from] || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+    win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  }
+  if (!win) return;
 
-    const body = win.querySelector('.private-chat-body');
-    appendPrivateMessage(body, from, message, role, gender);
-  });
+  const body = win.querySelector('.private-chat-body');
+
+  // Appliquer style reçu, sinon null (donc style par défaut)
+  appendPrivateMessage(body, from, message, role, gender, style || null);
+});
+
 
   // ── 7) Réception fichier privé ──
   socket.on('private file', ({ from, filename, data, mimetype, timestamp, role, gender }) => {
