@@ -47,6 +47,14 @@ function emitWebcamStatus(active) {
   socket.emit('webcam status', { username: myUsername, active });
 }
 
+function updateWebcamButtonVisibility() {
+  if (!startWebcamBtn) return;
+  startWebcamBtn.style.display = invisibleMode ? 'none' : 'inline-block';
+}
+
+// Appelle cette fonction au chargement et à chaque changement de mode invisible
+updateWebcamButtonVisibility();
+
 
   // --- Bouton activer/désactiver micro ---
 const voxoBtn = document.getElementById('voxo');
