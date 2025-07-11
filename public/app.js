@@ -1,50 +1,17 @@
 const socket = io();
 
-function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
+document.addEventListener('DOMContentLoaded', () => {
 
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
+function updateAllInputStyles() {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
 
-    const li = document.createElement('li');
-    li.classList.add('user-item');
-
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
-
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
-
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
-
-    // Plus aucune gestion d'icône webcam ni d'événements associés
-
-    userList.appendChild(li);
+  container.querySelectorAll('.private-chat-window').forEach(win => {
+    if (win._inputField) {
+      applyStyleToInput(win._inputField, currentStyle);
+    }
   });
 }
-
-document.addEventListener('DOMContentLoaded', () => {
-  function updateAllInputStyles() {
-    const container = document.getElementById('private-chat-container');
-    if (!container) return;
-
-    container.querySelectorAll('.private-chat-window').forEach(win => {
-      if (win._inputField) {
-        applyStyleToInput(win._inputField, currentStyle);
-      }
-    });
-  }
-});
 
 
 
@@ -841,7 +808,7 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
     body.appendChild(msgDiv);
     body.scrollTop = body.scrollHeight;
   });
-
+});
 
 
 
@@ -965,6 +932,66 @@ if (usernameInput && passwordInput) {
     return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
   }
 
+  // Met à jour la liste des utilisateurs affichée
+  function updateUserList(users) {
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
+
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
+
+    const li = document.createElement('li');
+    li.classList.add('user-item');
+
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+
+    li.innerHTML = `
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+    `;
+
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
+
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
+    userList.appendChild(li);
+  });
+}
+
+
+function createRoleIcon(role) {
+  if (role === 'admin') {
+    const icon = document.createElement('img');
+    icon.src = '/diamond.ico'; // icône admin
+    icon.alt = 'Admin';
+    icon.title = 'Admin';
+    icon.classList.add('admin-icon');
+    return icon;
+  } else if (role === 'modo') {
+    const icon = document.createElement('img');
+    icon.src = '/favicon.ico'; // icône modo
+    icon.alt = 'Modérateur';
+    icon.title = 'Modérateur';
+    icon.classList.add('modo-icon');
+    return icon;
+  }
+  return null;
+}
 
 
  const logoutButton = document.getElementById('logoutButton');
@@ -1243,36 +1270,8 @@ if (msg.username === 'Système') {
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) chatMessages.innerHTML = '';
     selectChannelInUI(currentChannel);
-    updateMicroFrameVisibility(currentChannel);
     selectedUser = null;
   });
-
-function updateMicroFrameVisibility(channelName) {
-  const voxi = document.getElementById('voxi');
-  if (!voxi) return;
-
-  const salonsAvecMicro = ['Musique', 'Gaming'];
-
-  if (salonsAvecMicro.includes(channelName)) {
-    voxi.style.visibility = 'visible';
-  } else {
-    voxi.style.visibility = 'hidden';
-  }
-}
-
-
-updateMicroFrameVisibility(currentChannel);
-
-  socket.on('joinedRoom', (newChannel) => {
-  currentChannel = newChannel;
-  localStorage.setItem('currentChannel', newChannel);
-  const chatMessages = document.getElementById('chat-messages');
-  if (chatMessages) chatMessages.innerHTML = '';
-  selectChannelInUI(newChannel);
-  updateMicroFrameVisibility(newChannel);  // <-- Ajout ici
-  selectedUser = null;
-  socket.emit('request history', newChannel);
-});
 
   // Envoi message
   function sendMessage() {
@@ -1696,14 +1695,14 @@ function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
 }
 
-function applyStyleToInput(input, style) {
-  if (!input || !style) return;
+function applyStyleToInput(style) {
+  const input = document.getElementById('message-input');
+  if (!input) return;
   input.style.color = style.color;
   input.style.fontWeight = style.bold ? 'bold' : 'normal';
   input.style.fontStyle = style.italic ? 'italic' : 'normal';
   input.style.fontFamily = style.font;
 }
-
 
 const currentStyle = loadSavedStyle();
 styleColor.value = currentStyle.color;
@@ -1734,13 +1733,9 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
       font: styleFont.value
     };
     saveStyle(newStyle);
-    Object.assign(currentStyle, newStyle);  // Met à jour currentStyle
-
-    applyStyleToInput(document.getElementById('message-input'), currentStyle);
-    updateAllInputStyles();  // Met à jour tous les inputs privés
+    applyStyleToInput(newStyle);
   });
 });
-
 
 // --- Upload fichier ---
 const uploadInput = document.getElementById('file-input');    // input type="file"
