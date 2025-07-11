@@ -245,15 +245,15 @@ socket.on('private wiizz', ({ to }) => {
     return;
   }
 
-  const toSocketId = usernameToSocketId[to];
-  if (toSocketId) {
-    io.to(toSocketId).emit('signal', { from, data });
-    console.log(`📡 Signal envoyé de ${from} vers ${to}`);
-  } else {
-    socket.emit('error message', `Utilisateur ${to} non connecté`);
-    console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
-  }
-});
+const toSocketId = usernameToSocketId[to];
+if (toSocketId) {
+  io.to(toSocketId).emit('signal', { from, data });
+  // console.log(`📡 Signal envoyé de ${from} vers ${to}`);
+} else {
+  socket.emit('error message', `Utilisateur ${to} non connecté`);
+  // console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
+}
+
 
 
 
