@@ -2,18 +2,20 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  function updateAllInputStyles() {
-    const container = document.getElementById('private-chat-container');
-    if (!container) return;
+function updateAllInputStyles() {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
 
-    container.querySelectorAll('.private-chat-window').forEach(win => {
-      if (win._inputField) {
-        applyStyleToInput(win._inputField, currentStyle);
-      }
-    });
-  }
+  container.querySelectorAll('.private-chat-window').forEach(win => {
+    if (win._inputField) {
+      applyStyleToInput(win._inputField, currentStyle);
+    }
+  });
+}
 
-  // ── 1) Stockage et mise à jour de la liste users ──
+
+
+   // ── 1) Stockage et mise à jour de la liste users ──
   let users = [];
   let userCache = {};
 
@@ -52,7 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     default: '#aaa'
   };
 
-  // Création icône selon rôle (unique fonction)
+  // Création icône selon rôle
   function createRoleIcon(role) {
     if (role === 'admin') {
       const icon = document.createElement('img');
@@ -144,8 +146,15 @@ document.addEventListener('DOMContentLoaded', () => {
     input.style.padding = '6px 8px';
     input.style.outline = 'none';
     win._inputField = input; // garde la référence
-
     applyStyleToInput(input, currentStyle); // applique le style initial
+    if (currentStyle) {
+    if (currentStyle.color) input.style.color = currentStyle.color;
+    input.style.fontWeight = currentStyle.bold ? 'bold' : 'normal';
+    input.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
+    input.style.fontFamily = currentStyle.font || 'Arial';
+  }
+
+
 
     // Boutons emoji & upload
     const emojiBtn = document.createElement('button');
@@ -200,187 +209,195 @@ document.addEventListener('DOMContentLoaded', () => {
 
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
-    // --- Wiizz code ---
+    // Initialisation son unique en haut du script
+        // WIZZZ
+function getCurrentTimeString() {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
 
-    function getCurrentTimeString() {
-      const now = new Date();
-      return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+const wiizzSound = new Audio('/wizz.mp3');
+const wiizzCooldowns = new Map();       // Pour éviter d'en envoyer trop souvent
+const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souvent
+
+// Réception d’un Wiizz
+socket.on('private wiizz', ({ from }) => {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
+
+  const now = Date.now();
+  const lastTime = lastWiizzReceived.get(from) || 0;
+  if (now - lastTime < 5000) return;
+  lastWiizzReceived.set(from, now);
+
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  if (!win) {
+    win = createPrivateChatWindow(from);
+    container.appendChild(win);
+  }
+
+  triggerWiizzEffect(win);
+
+  const body = win.querySelector('.private-chat-body');
+  const msgDiv = document.createElement('div');
+  msgDiv.classList.add('wiizz-message', 'received');
+  msgDiv.innerHTML = `
+    <span style="color:orange;font-weight:bold;">
+      <img src="/wizz.png" style="height:25px; width:44px; vertical-align:middle; margin-right:4px;">
+      ${from} t’a envoyé un Wiizz ! <span style="font-size:11px; color:#888; font-style:italic;">${getCurrentTimeString()}</span>
+    </span>`;
+  msgDiv.style.margin = '4px 0';
+  body.appendChild(msgDiv);
+  body.scrollTop = body.scrollHeight;
+});
+
+// Affiche une bannière temporaire de cooldown
+function showCooldownBanner(username, win) {
+  const existing = win.querySelector('.wiizz-cooldown-banner');
+  if (existing) existing.remove();
+
+  const banner = document.createElement('div');
+  banner.classList.add('wiizz-cooldown-banner');
+  banner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
+  banner.style.backgroundColor = '#ffc107';
+  banner.style.color = 'black';
+  banner.style.fontWeight = 'bold';
+  banner.style.padding = '6px';
+  banner.style.textAlign = 'center';
+  banner.style.borderBottom = '2px solid #222';
+  banner.style.position = 'absolute';
+  banner.style.top = '0';
+  banner.style.left = '0';
+  banner.style.width = '397px';
+  banner.style.zIndex = '999';
+
+  win.appendChild(banner);
+
+  setTimeout(() => {
+    if (banner.parentNode) banner.remove();
+  }, 3000);
+}
+
+// Effet tremblement + son
+function triggerWiizzEffect(win) {
+  wiizzSound.currentTime = 0;
+  wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
+
+  const originalStyle = win.style.transform;
+  let count = 0;
+
+  const interval = setInterval(() => {
+    const x = (Math.random() - 0.5) * 10;
+    const y = (Math.random() - 0.5) * 10;
+    win.style.transform = `translate(${x}px, ${y}px)`;
+    count++;
+    if (count > 10) {
+      clearInterval(interval);
+      win.style.transform = originalStyle;
+    }
+  }, 50);
+}
+
+// Création du bouton Wiizz avec gestion complète du cooldown
+function setupWiizzButton(username, win, container) {
+  if (win.querySelector('.wiizz-button')) return null; // Empêche plusieurs boutons
+
+  const wiizzBtn = document.createElement('button');
+  wiizzBtn.classList.add('wiizz-button');
+  wiizzBtn.title = 'Envoyer un Wiizz';
+  wiizzBtn.style.background = 'transparent';
+  wiizzBtn.style.border = 'none';
+  wiizzBtn.style.cursor = 'pointer';
+  wiizzBtn.style.marginRight = '5px';
+  wiizzBtn.style.padding = '0';
+  wiizzBtn.style.position = 'relative';
+  wiizzBtn.style.width = '44px';
+  wiizzBtn.style.height = '25px';
+
+const wiizzIcon = document.createElement('img');
+wiizzIcon.src = '/wizz.png';
+wiizzIcon.alt = 'Wiizz';
+wiizzIcon.style.width = '44px';
+wiizzIcon.style.height = '25px';
+wiizzIcon.style.position = 'relative';
+wiizzIcon.style.top = '2px';  // ou -2px, -6px selon l'ajustement visuel voulu
+wiizzBtn.appendChild(wiizzIcon);
+
+
+  const cooldownOverlay = document.createElement('div');
+  cooldownOverlay.style.position = 'absolute';
+  cooldownOverlay.style.top = '0';
+  cooldownOverlay.style.left = '0';
+  cooldownOverlay.style.width = '100%';
+  cooldownOverlay.style.height = '100%';
+  cooldownOverlay.style.display = 'flex';
+  cooldownOverlay.style.alignItems = 'center';
+  cooldownOverlay.style.justifyContent = 'center';
+  cooldownOverlay.style.background = 'rgba(0,0,0,0.5)';
+  cooldownOverlay.style.color = 'white';
+  cooldownOverlay.style.fontWeight = 'bold';
+  cooldownOverlay.style.fontSize = '14px';
+  cooldownOverlay.style.zIndex = '2';
+  cooldownOverlay.style.pointerEvents = 'none'; // Permet de cliquer à travers si affiché
+
+  wiizzBtn.appendChild(cooldownOverlay);
+  cooldownOverlay.style.display = 'none'; // caché par défaut
+
+  wiizzBtn.addEventListener('click', () => {
+    const now = Date.now();
+    const lastTime = wiizzCooldowns.get(username) || 0;
+    const timeDiff = now - lastTime;
+
+    if (timeDiff < 5000) {
+      const winCheck = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+      if (winCheck) showCooldownBanner(username, winCheck);
+      return;
     }
 
-    const wiizzSound = new Audio('/wizz.mp3');
-    const wiizzCooldowns = new Map();       // Pour éviter d'en envoyer trop souvent
-    const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souvent
+    wiizzCooldowns.set(username, now);
+    socket.emit('private wiizz', { to: username });
 
-    socket.on('private wiizz', ({ from }) => {
-      const container = document.getElementById('private-chat-container');
-      if (!container) return;
+    const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
+    if (winTarget) {
+      triggerWiizzEffect(winTarget);
 
-      const now = Date.now();
-      const lastTime = lastWiizzReceived.get(from) || 0;
-      if (now - lastTime < 5000) return;
-      lastWiizzReceived.set(from, now);
-
-      let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-      if (!win) {
-        openPrivateChat(from);
-        win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-      }
-
-      triggerWiizzEffect(win);
-
-      const body = win.querySelector('.private-chat-body');
+      const body = winTarget.querySelector('.private-chat-body');
       const msgDiv = document.createElement('div');
-      msgDiv.classList.add('wiizz-message', 'received');
+      msgDiv.classList.add('wiizz-message', 'sent');
+      const myUsername = localStorage.getItem('username') || 'Vous';
       msgDiv.innerHTML = `
         <span style="color:orange;font-weight:bold;">
           <img src="/wizz.png" style="height:25px; width:44px; vertical-align:middle; margin-right:4px;">
-          ${from} t’a envoyé un Wiizz ! <span style="font-size:11px; color:#888; font-style:italic;">${getCurrentTimeString()}</span>
+          Vous avez envoyé un Wiizz à ${username} ! <span style="font-size:11px; color:#888; font-style:italic;">${getCurrentTimeString()}</span>
         </span>`;
       msgDiv.style.margin = '4px 0';
       body.appendChild(msgDiv);
       body.scrollTop = body.scrollHeight;
-    });
-
-    function showCooldownBanner(username, win) {
-      const existing = win.querySelector('.wiizz-cooldown-banner');
-      if (existing) existing.remove();
-
-      const banner = document.createElement('div');
-      banner.classList.add('wiizz-cooldown-banner');
-      banner.textContent = `⏱️ Tu dois attendre 5 secondes avant de renvoyer un Wiizz à ${username}`;
-      banner.style.backgroundColor = '#ffc107';
-      banner.style.color = 'black';
-      banner.style.fontWeight = 'bold';
-      banner.style.padding = '6px';
-      banner.style.textAlign = 'center';
-      banner.style.borderBottom = '2px solid #222';
-      banner.style.position = 'absolute';
-      banner.style.top = '0';
-      banner.style.left = '0';
-      banner.style.width = '397px';
-      banner.style.zIndex = '999';
-
-      win.appendChild(banner);
-
-      setTimeout(() => {
-        if (banner.parentNode) banner.remove();
-      }, 3000);
     }
 
-    function triggerWiizzEffect(win) {
-      wiizzSound.currentTime = 0;
-      wiizzSound.play().catch(err => console.warn('Impossible de jouer le son :', err));
+    // Activation du cooldown visuel
+    wiizzBtn.disabled = true;
+    cooldownOverlay.style.display = 'flex';
 
-      const originalStyle = win.style.transform;
-      let count = 0;
+    let remaining = 5;
+    cooldownOverlay.textContent = remaining;
 
-      const interval = setInterval(() => {
-        const x = (Math.random() - 0.5) * 10;
-        const y = (Math.random() - 0.5) * 10;
-        win.style.transform = `translate(${x}px, ${y}px)`;
-        count++;
-        if (count > 10) {
-          clearInterval(interval);
-          win.style.transform = originalStyle;
-        }
-      }, 50);
-    }
+    const countdown = setInterval(() => {
+      remaining--;
+      cooldownOverlay.textContent = remaining;
+      if (remaining <= 0) {
+        clearInterval(countdown);
+        cooldownOverlay.style.display = 'none';
+        wiizzBtn.disabled = false;
+      }
+    }, 1000);
+  });
 
-    function setupWiizzButton(username, win, container) {
-      if (win.querySelector('.wiizz-button')) return null;
+  return wiizzBtn;
+}
 
-      const wiizzBtn = document.createElement('button');
-      wiizzBtn.classList.add('wiizz-button');
-      wiizzBtn.title = 'Envoyer un Wiizz';
-      wiizzBtn.style.background = 'transparent';
-      wiizzBtn.style.border = 'none';
-      wiizzBtn.style.cursor = 'pointer';
-      wiizzBtn.style.marginRight = '5px';
-      wiizzBtn.style.padding = '0';
-      wiizzBtn.style.position = 'relative';
-      wiizzBtn.style.width = '44px';
-      wiizzBtn.style.height = '25px';
 
-      const wiizzIcon = document.createElement('img');
-      wiizzIcon.src = '/wizz.png';
-      wiizzIcon.alt = 'Wiizz';
-      wiizzIcon.style.width = '44px';
-      wiizzIcon.style.height = '25px';
-      wiizzIcon.style.position = 'relative';
-      wiizzIcon.style.top = '2px';
-      wiizzBtn.appendChild(wiizzIcon);
 
-      const cooldownOverlay = document.createElement('div');
-      cooldownOverlay.style.position = 'absolute';
-      cooldownOverlay.style.top = '0';
-      cooldownOverlay.style.left = '0';
-      cooldownOverlay.style.width = '100%';
-      cooldownOverlay.style.height = '100%';
-      cooldownOverlay.style.display = 'flex';
-      cooldownOverlay.style.alignItems = 'center';
-      cooldownOverlay.style.justifyContent = 'center';
-      cooldownOverlay.style.background = 'rgba(0,0,0,0.5)';
-      cooldownOverlay.style.color = 'white';
-      cooldownOverlay.style.fontWeight = 'bold';
-      cooldownOverlay.style.fontSize = '14px';
-      cooldownOverlay.style.zIndex = '2';
-      cooldownOverlay.style.pointerEvents = 'none';
-
-      wiizzBtn.appendChild(cooldownOverlay);
-      cooldownOverlay.style.display = 'none';
-
-      wiizzBtn.addEventListener('click', () => {
-        const now = Date.now();
-        const lastTime = wiizzCooldowns.get(username) || 0;
-        const timeDiff = now - lastTime;
-
-        if (timeDiff < 5000) {
-          const winCheck = document.querySelector(`.private-chat-window[data-user="${username}"]`);
-          if (winCheck) showCooldownBanner(username, winCheck);
-          return;
-        }
-
-        wiizzCooldowns.set(username, now);
-        socket.emit('private wiizz', { to: username });
-
-        const winTarget = document.querySelector(`.private-chat-window[data-user="${username}"]`);
-        if (winTarget) {
-          triggerWiizzEffect(winTarget);
-
-          const body = winTarget.querySelector('.private-chat-body');
-          const msgDiv = document.createElement('div');
-          msgDiv.classList.add('wiizz-message', 'sent');
-          const myUsername = localStorage.getItem('username') || 'Vous';
-          msgDiv.innerHTML = `
-            <span style="color:orange;font-weight:bold;">
-              <img src="/wizz.png" style="height:25px; width:44px; vertical-align:middle; margin-right:4px;">
-              Vous avez envoyé un Wiizz à ${username} ! <span style="font-size:11px; color:#888; font-style:italic;">${getCurrentTimeString()}</span>
-            </span>`;
-          msgDiv.style.margin = '4px 0';
-          body.appendChild(msgDiv);
-          body.scrollTop = body.scrollHeight;
-        }
-
-        // Cooldown visuel
-        wiizzBtn.disabled = true;
-        cooldownOverlay.style.display = 'flex';
-
-        let remaining = 5;
-        cooldownOverlay.textContent = remaining;
-
-        const countdown = setInterval(() => {
-          remaining--;
-          cooldownOverlay.textContent = remaining;
-          if (remaining <= 0) {
-            clearInterval(countdown);
-            cooldownOverlay.style.display = 'none';
-            wiizzBtn.disabled = false;
-          }
-        }, 1000);
-      });
-
-      return wiizzBtn;
-    }
 
     // Upload fichier
     const fileInput = document.createElement('input');
@@ -529,23 +546,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Assemblage inputBar : emoji avant upload
     const wiizzBtn = setupWiizzButton(username, win, container);
-    inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
+
+
 
     sendBtn.onclick = () => {
-      const text = input.value.trim();
-      if (!text) return;
+  const text = input.value.trim();
+  if (!text) return;
 
-      socket.emit('private message', { 
-        to: username, 
-        message: text,
-        style: currentStyle  // <-- envoie le style avec le message
-      });
+  socket.emit('private message', { 
+    to: username, 
+    message: text,
+    style: currentStyle  // <-- envoie le style avec le message
+  });
 
-      const myUsername = localStorage.getItem('username') || 'moi';
-      appendPrivateMessage(body, myUsername, text, null, null, currentStyle);  // <-- applique localement aussi
+  const myUsername = localStorage.getItem('username') || 'moi';
+  appendPrivateMessage(body, myUsername, text, null, null, currentStyle);  // <-- applique localement aussi
 
-      input.value = '';
-    };
+  input.value = '';
+  };
+
 
     input.addEventListener('keypress', e => {
       if (e.key === 'Enter') sendBtn.click();
@@ -592,59 +612,62 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // ── 4) Ajoute un message dans la fenêtre privée ──
-  function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = 'private-message';
+function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) {
+  const msgDiv = document.createElement('div');
+  msgDiv.className = 'private-message';
 
-    let userRole = role;
-    let userGender = gender;
+  let userRole = role;
+  let userGender = gender;
 
-    if (!userRole || !userGender) {
-      const cachedUser = userCache[from];
-      if (cachedUser) {
-        userRole = userRole || cachedUser.role;
-        userGender = userGender || cachedUser.gender;
-      }
+  if (!userRole || !userGender) {
+    const cachedUser = userCache[from];
+    if (cachedUser) {
+      userRole = userRole || cachedUser.role;
+      userGender = userGender || cachedUser.gender;
     }
-
-    // Pseudo
-    const who = document.createElement('span');
-    who.className = 'username';
-    who.style.color = userRole === 'admin' ? usernameColors.admin
-                  : userRole === 'modo' ? usernameColors.modo
-                  : (usernameColors[userGender] || usernameColors.default);
-
-    const icon = createRoleIcon(userRole);
-    if (icon) who.appendChild(icon);
-
-    who.appendChild(document.createTextNode(from + ':'));
-
-    // Message texte
-    const textSpan = document.createElement('span');
-    textSpan.className = 'message-text';
-    textSpan.textContent = text;
-
-    // **Appliquer style perso s’il est fourni**
-    if (style) {
-      textSpan.style.color = style.color || '#fff';
-      textSpan.style.fontWeight = style.bold ? 'bold' : 'normal';
-      textSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
-      textSpan.style.fontFamily = style.font || 'Arial';
-    } else {
-      textSpan.style.color = '#fff';
-    }
-
-    // Horodatage
-    const timeSpan = document.createElement('span');
-    timeSpan.className = 'timestamp';
-    const now = new Date();
-    timeSpan.textContent = ` ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-
-    // Ajout à la ligne
-    msgDiv.append(who, textSpan, timeSpan);
-    bodyElem.appendChild(msgDiv);
-    bodyElem.scrollTop = bodyElem.scrollHeight;
   }
+
+  // Pseudo
+  const who = document.createElement('span');
+  who.className = 'username';
+  who.style.color = userRole === 'admin' ? usernameColors.admin
+                : userRole === 'modo' ? usernameColors.modo
+                : (usernameColors[userGender] || usernameColors.default);
+
+  const icon = createRoleIcon(userRole);
+  if (icon) who.appendChild(icon);
+
+  who.appendChild(document.createTextNode(from + ':'));
+
+  // Message texte
+  const textSpan = document.createElement('span');
+  textSpan.className = 'message-text';
+  textSpan.textContent = text;
+
+  // **Appliquer style perso s’il est fourni**
+  if (style) {
+    textSpan.style.color = style.color || '#fff';
+    textSpan.style.fontWeight = style.bold ? 'bold' : 'normal';
+    textSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
+    textSpan.style.fontFamily = style.font || 'Arial';
+  } else {
+    // Style par défaut ou selon rôle/genre
+    textSpan.style.color = '#fff';
+  }
+
+  // Horodatage
+  const timeSpan = document.createElement('span');
+  timeSpan.className = 'timestamp';
+  const now = new Date();
+  timeSpan.textContent = ` ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+
+  // Ajout à la ligne
+  msgDiv.append(who, textSpan, timeSpan);
+  bodyElem.appendChild(msgDiv);
+  bodyElem.scrollTop = bodyElem.scrollHeight;
+}
+
+
 
   // ── 5) Clic pseudo ouvre la fenêtre privée ──
   document.addEventListener('click', e => {
@@ -658,23 +681,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // ── 6) Réception message privé ──
   socket.on('private message', ({ from, message, role, gender, style }) => {
-    const myUsername = localStorage.getItem('username');
-    if (from === myUsername) return;
+  const myUsername = localStorage.getItem('username');
+  if (from === myUsername) return;
 
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  const container = document.getElementById('private-chat-container');
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
 
-    if (!win) {
-      const userObj = userCache[from] || {};
-      openPrivateChat(from, userObj.role, userObj.gender);
-      win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-    }
-    if (!win) return;
+  if (!win) {
+    const userObj = userCache[from] || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+    win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  }
+  if (!win) return;
 
-    const body = win.querySelector('.private-chat-body');
+  const body = win.querySelector('.private-chat-body');
 
-    appendPrivateMessage(body, from, message, role, gender, style || null);
-  });
+  // Appliquer style reçu, sinon null (donc style par défaut)
+  appendPrivateMessage(body, from, message, role, gender, style || null);
+});
+
 
   // ── 7) Réception fichier privé ──
   socket.on('private file', ({ from, filename, data, mimetype, timestamp, role, gender }) => {
@@ -783,6 +808,7 @@ document.addEventListener('DOMContentLoaded', () => {
     body.appendChild(msgDiv);
     body.scrollTop = body.scrollHeight;
   });
+});
 
 
 
@@ -1678,12 +1704,12 @@ function applyStyleToInput(inputElement, style) {
 }
 
 
-  const currentStyle = loadSavedStyle();
-  styleColor.value = currentStyle.color;
-  styleBold.checked = currentStyle.bold;
-  styleItalic.checked = currentStyle.italic;
-  styleFont.value = currentStyle.font;
-  applyStyleToInput(document.getElementById('message-input'), currentStyle);
+const currentStyle = loadSavedStyle();
+styleColor.value = currentStyle.color;
+styleBold.checked = currentStyle.bold;
+styleItalic.checked = currentStyle.italic;
+styleFont.value = currentStyle.font;
+applyStyleToInput(currentStyle);
 
 
 // 🎨 toggle menu
