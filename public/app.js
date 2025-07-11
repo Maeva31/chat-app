@@ -1695,14 +1695,14 @@ function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
 }
 
-function applyStyleToInput(style) {
-  const input = document.getElementById('message-input');
-  if (!input) return;
+function applyStyleToInput(input, style) {
+  if (!input || !style) return;
   input.style.color = style.color;
   input.style.fontWeight = style.bold ? 'bold' : 'normal';
   input.style.fontStyle = style.italic ? 'italic' : 'normal';
   input.style.fontFamily = style.font;
 }
+
 
 const currentStyle = loadSavedStyle();
 styleColor.value = currentStyle.color;
