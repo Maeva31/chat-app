@@ -31,20 +31,23 @@ document.addEventListener('DOMContentLoaded', () => {
     startWebcamBtn.addEventListener('click', () => {
   openLocalWebcamPopup();
 
-startWebcamBtn.addEventListener('click', () => {
-  openLocalWebcamPopup();
-
-  socket.emit('webcam status', { username: myUsername, active: true });
+  // ✅ Ne pas signaler "visible" si invisibleMode est actif
+  if (!invisibleMode) {
+    socket.emit('webcam status', { username: myUsername, active: true });
+  }
 
   if (popupCheckInterval) clearInterval(popupCheckInterval);
   popupCheckInterval = setInterval(() => {
     if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
       clearInterval(popupCheckInterval);
-      socket.emit('webcam status', { username: myUsername, active: false });
+      // ✅ Signaler "webcam off" uniquement si non invisible
+      if (!invisibleMode) {
+        socket.emit('webcam status', { username: myUsername, active: false });
+      }
     }
   }, 500);
 });
-
+}
 
   // --- Bouton activer/désactiver micro ---
 const voxoBtn = document.getElementById('voxo');
