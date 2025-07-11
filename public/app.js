@@ -1,455 +1,6 @@
 const socket = io();
 
-const webcamStatus = {};  // { username: true/false }
-const peerConnections = {};
-const config = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
-
-let localStream = null;         // vidéo locale (webcam)
-let localAudioStream = null;    // audio locale (micro)
-const myUsername = localStorage.getItem('username');
-
-let micEnabled = false;
-
 document.addEventListener('DOMContentLoaded', () => {
-  window.socket = socket;
-
-  // --- Webcam status update ---
-  socket.on('webcam status update', ({ username, active }) => {
-    webcamStatus[username] = active;
-
-    if (window.users) {
-      window.users = window.users.map(u => u.username === username ? { ...u, webcamActive: active } : u);
-      updateUserList(window.users);
-    }
-  });
-
-  // --- Bouton activer webcam locale ---
-  const startWebcamBtn = document.getElementById('start-webcam-btn');
-  if (startWebcamBtn) {
-    let popupCheckInterval;
-
-    startWebcamBtn.addEventListener('click', () => {
-  openLocalWebcamPopup();
-
-  // ✅ Ne pas signaler "visible" si invisibleMode est actif
-  if (!invisibleMode) {
-    socket.emit('webcam status', { username: myUsername, active: true });
-  }
-
-  if (popupCheckInterval) clearInterval(popupCheckInterval);
-  popupCheckInterval = setInterval(() => {
-    if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
-      clearInterval(popupCheckInterval);
-      // ✅ Signaler "webcam off" uniquement si non invisible
-      if (!invisibleMode) {
-        socket.emit('webcam status', { username: myUsername, active: false });
-      }
-    }
-  }, 500);
-});
-}
-
-  // --- Bouton activer/désactiver micro ---
-const voxoBtn = document.getElementById('voxo');
-const voxiContainer = document.getElementById('voxi');  // ton cadre où afficher le pseudo
-
-if (voxoBtn && voxiContainer) {
-  voxoBtn.textContent = 'Mic OFF';  // état initial
-
-  voxoBtn.addEventListener('click', async () => {
-    if (!micEnabled) {
-      const audio = await startLocalAudio();
-      if (!audio) {
-        alert("Micro non disponible ou accès refusé.");
-        return;
-      }
-      localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
-      micEnabled = true;
-      voxoBtn.textContent = 'Mic ON';
-
-      // Afficher ton pseudo dans le cadre voxi
-      voxiContainer.textContent = myUsername;
-
-      // Ajout piste audio aux connexions si besoin...
-      Object.values(peerConnections).forEach(pc => {
-        const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
-        if (!hasAudioSender) {
-          localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
-        } else {
-          pc.getSenders().forEach(sender => {
-            if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
-          });
-        }
-      });
-    } else {
-      // Désactiver micro local
-      if (localAudioStream) {
-        localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
-      }
-      micEnabled = false;
-      voxoBtn.textContent = 'Mic OFF';
-
-      // Retirer ton pseudo du cadre voxi (ou le vider)
-      voxiContainer.textContent = '';
-
-      // Désactiver audio sur les connexions
-      Object.values(peerConnections).forEach(pc => {
-        pc.getSenders().forEach(sender => {
-          if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
-        });
-      });
-    }
-  });
-}
-
-
-  // --- Gestion clic icône webcam distante ---
-  const usersList = document.getElementById('users');
-  if (usersList) {
-    usersList.addEventListener('click', e => {
-      if (e.target.classList.contains('webcam-icon')) {
-        const username = e.target.dataset.username;
-        if (username) openRemoteWebcamPopup(username);
-      }
-    });
-  }
-});
-
-// --- Fonctions auxiliaires ---
-
-function openLocalWebcamPopup() {
-  if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
-    window.localWebcamPopup = window.open('local-webcam.html', 'LocalWebcam', 'width=320,height=260');
-  } else {
-    window.localWebcamPopup.focus();
-    window.localWebcamPopup.postMessage({ type: 'init', username: myUsername }, '*');
-  }
-}
-
-function openRemoteWebcamPopup(username) {
-  if (!window.remoteWebcamPopups) window.remoteWebcamPopups = {};
-
-  if (!window.remoteWebcamPopups[username] || window.remoteWebcamPopups[username].closed) {
-    window.remoteWebcamPopups[username] = window.open(
-      `remote-webcam.html?user=${encodeURIComponent(username)}`,
-      `RemoteWebcam-${username}`,
-      'width=320,height=260'
-    );
-  } else {
-    window.remoteWebcamPopups[username].focus();
-  }
-}
-
-async function startLocalStream() {
-  if (localStream) return localStream;
-  try {
-    localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-    const localVideo = document.getElementById('localVideo');
-    if (localVideo) localVideo.srcObject = localStream;
-    return localStream;
-  } catch (err) {
-    console.error("Erreur accès webcam :", err.message);
-    return null;
-  }
-}
-
-async function startLocalAudio() {
-  if (localAudioStream) return localAudioStream;
-  try {
-    localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true, video: false });
-    return localAudioStream;
-  } catch (err) {
-    console.error("Erreur accès micro :", err.message);
-    return null;
-  }
-}
-
-async function createPeerConnection(remoteUsername) {
-  if (peerConnections[remoteUsername]) return peerConnections[remoteUsername];
-
-  const pc = new RTCPeerConnection(config);
-
-  // Assure que vidéo locale est prête
-  if (!localStream) {
-    localStream = await startLocalStream();
-    if (!localStream) return null;
-  }
-
-  // Assure que audio locale est prête si micro activé
-  if (!localAudioStream && micEnabled) {
-    localAudioStream = await startLocalAudio();
-    if (!localAudioStream) {
-      console.warn("Pas de micro disponible");
-    }
-  }
-
-  // Ajout piste vidéo
-  localStream.getVideoTracks().forEach(track => pc.addTrack(track, localStream));
-
-  // Ajout piste audio si dispo et micro activé
-  if (localAudioStream && micEnabled) {
-    localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
-  }
-
-  pc.onicecandidate = event => {
-    if (event.candidate) {
-      socket.emit('signal', {
-        to: remoteUsername,
-        from: myUsername,
-        data: { candidate: event.candidate }
-      });
-    }
-  };
-
-  pc.ontrack = event => {
-    if (event.track.kind === 'video') {
-      let remoteVideo = document.getElementById(`remoteVideo-${remoteUsername}`);
-
-      if (!remoteVideo) {
-        const container = document.getElementById('video-container');
-        if (!container) return;
-
-        remoteVideo = document.createElement('video');
-        remoteVideo.id = `remoteVideo-${remoteUsername}`;
-        remoteVideo.autoplay = true;
-        remoteVideo.playsInline = true;
-        remoteVideo.style.width = '300px';
-        remoteVideo.style.height = '225px';
-        remoteVideo.style.border = '2px solid #ccc';
-        remoteVideo.style.borderRadius = '8px';
-        remoteVideo.style.margin = '5px';
-
-        const label = document.createElement('div');
-        label.textContent = remoteUsername;
-        label.style.color = 'white';
-        label.style.textAlign = 'center';
-
-        const wrapper = document.createElement('div');
-        wrapper.appendChild(remoteVideo);
-        wrapper.appendChild(label);
-
-        container.appendChild(wrapper);
-      }
-      remoteVideo.srcObject = event.streams[0];
-    } else if (event.track.kind === 'audio') {
-      let remoteAudio = document.getElementById(`remoteAudio-${remoteUsername}`);
-      if (!remoteAudio) {
-        remoteAudio = document.createElement('audio');
-        remoteAudio.id = `remoteAudio-${remoteUsername}`;
-        remoteAudio.autoplay = true;
-        remoteAudio.controls = false; // tu peux activer si tu veux
-        remoteAudio.style.display = 'block';
-        remoteAudio.style.margin = '5px';
-
-        const audioContainer = document.getElementById('voxo');  // utilisation de #voxo comme container audio
-        if (!audioContainer) return;
-        audioContainer.appendChild(remoteAudio);
-      }
-      remoteAudio.srcObject = event.streams[0];
-    }
-  };
-
-  peerConnections[remoteUsername] = pc;
-  return pc;
-}
-
-async function callUser(remoteUsername) {
-  const pc = await createPeerConnection(remoteUsername);
-  if (!pc) return;
-
-  try {
-    const offer = await pc.createOffer();
-    await pc.setLocalDescription(offer);
-
-    socket.emit('signal', {
-      to: remoteUsername,
-      from: myUsername,
-      data: { sdp: pc.localDescription }
-    });
-  } catch (err) {
-    console.error("Erreur lors de l'appel à l'utilisateur:", err);
-  }
-}
-
-socket.on('signal', async ({ from, data }) => {
-  if (from === myUsername) return;
-
-  const pc = await createPeerConnection(from);
-  if (!pc) return;
-
-  try {
-    if (data.sdp) {
-      if (data.sdp.type === 'offer') {
-        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        socket.emit('signal', {
-          to: from,
-          from: myUsername,
-          data: { sdp: pc.localDescription }
-        });
-      } else if (data.sdp.type === 'answer') {
-        if (pc.signalingState !== 'stable') {
-          await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        } else {
-          console.warn("Ignorer setRemoteDescription answer : signalingState stable");
-        }
-      }
-    } else if (data.candidate) {
-      await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-    }
-  } catch (err) {
-    console.error("Erreur setRemoteDescription / createAnswer:", err);
-  }
-});
-
-// --- Gestion de la liste utilisateurs et appels WebRTC ---
-function updateUserList(users) {
-  const userList = document.getElementById('users');
-  if (!userList) return;
-  userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
-
-  users.forEach(user => {
-    const username = user?.username || 'Inconnu';
-    const age = user?.age || '?';
-    const gender = user?.gender || 'non spécifié';
-    const role = user?.role || 'user';
-    const webcamActive = webcamStatus[username] || false;
-
-    const li = document.createElement('li');
-    li.classList.add('user-item');
-
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
-
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
-
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
-
-    // Supprimer ancienne icône webcam si présente
-    const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
-    if (oldCamIcon) oldCamIcon.remove();
-
-    // Ajouter icône webcam si active
-    if (webcamActive) {
-      const camIcon = document.createElement('img');
-      camIcon.src = '/webcam.gif';
-      camIcon.alt = 'Webcam active';
-      camIcon.title = 'Webcam active - cliquer pour voir';
-      camIcon.classList.add('webcam-icon');
-
-      if (role === 'admin') {
-        camIcon.classList.add('admin');
-      } else if (role === 'modo') {
-        camIcon.classList.add('modo');
-      } else {
-        camIcon.classList.add('user');
-      }
-
-      roleIconSpan.style.position = 'relative';
-
-      camIcon.dataset.username = username;
-      camIcon.addEventListener('click', () => {
-        openRemoteWebcamPopup(username);
-      });
-
-      roleIconSpan.appendChild(camIcon);
-    }
-
-    // Clic pseudo pour mention
-    const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
-
-    userList.appendChild(li);
-  });
-}
-
-socket.on('user list', (users) => {
-  window.users = users;
-  updateUserList(users);
-
-  users.forEach(user => {
-  if (!invisibleMode && user.username !== myUsername) {
-    callUser(user.username);
-  }
-});
-
-});
-
-
-function updateActiveMicsDisplay() {
-  const voxiUsers = document.getElementById('voxi-users');
-  if (!voxiUsers) return;
-
-  voxiUsers.innerHTML = '';
-
-  const pseudosToShow = Array.from(activeMics).slice(0, 5);
-  if (pseudosToShow.length === 0) {
-    voxiUsers.textContent = 'Personne ne parle';
-    return;
-  }
-
-  pseudosToShow.forEach(pseudo => {
-    const div = document.createElement('div');
-    div.textContent = pseudo;
-    div.style.padding = '2px 5px';
-    div.style.borderBottom = '1px solid #ccc';
-    div.style.color = '#000';
-    voxiUsers.appendChild(div);
-  });
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 function updateAllInputStyles() {
   const container = document.getElementById('private-chat-container');
@@ -1257,7 +808,7 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
     body.appendChild(msgDiv);
     body.scrollTop = body.scrollHeight;
   });
-
+});
 
 
 
@@ -1380,6 +931,48 @@ if (usernameInput && passwordInput) {
     if (parts.length > 1) return parts[1].trim();
     return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
   }
+
+  // Met à jour la liste des utilisateurs affichée
+  function updateUserList(users) {
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
+
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
+
+    const li = document.createElement('li');
+    li.classList.add('user-item');
+
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+
+    li.innerHTML = `
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+    `;
+
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
+
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
+    userList.appendChild(li);
+  });
+}
+
 
 
 
@@ -1659,36 +1252,8 @@ if (msg.username === 'Système') {
     const chatMessages = document.getElementById('chat-messages');
     if (chatMessages) chatMessages.innerHTML = '';
     selectChannelInUI(currentChannel);
-    updateMicroFrameVisibility(currentChannel);
     selectedUser = null;
   });
-
-function updateMicroFrameVisibility(channelName) {
-  const voxi = document.getElementById('voxi');
-  if (!voxi) return;
-
-  const salonsAvecMicro = ['Musique', 'Gaming'];
-
-  if (salonsAvecMicro.includes(channelName)) {
-    voxi.style.visibility = 'visible';
-  } else {
-    voxi.style.visibility = 'hidden';
-  }
-}
-
-
-updateMicroFrameVisibility(currentChannel);
-
-  socket.on('joinedRoom', (newChannel) => {
-  currentChannel = newChannel;
-  localStorage.setItem('currentChannel', newChannel);
-  const chatMessages = document.getElementById('chat-messages');
-  if (chatMessages) chatMessages.innerHTML = '';
-  selectChannelInUI(newChannel);
-  updateMicroFrameVisibility(newChannel);  // <-- Ajout ici
-  selectedUser = null;
-  socket.emit('request history', newChannel);
-});
 
   // Envoi message
   function sendMessage() {
@@ -2112,14 +1677,14 @@ function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
 }
 
-function applyStyleToInput(input, style) {
-  if (!input || !style) return;
+function applyStyleToInput(style) {
+  const input = document.getElementById('message-input');
+  if (!input) return;
   input.style.color = style.color;
   input.style.fontWeight = style.bold ? 'bold' : 'normal';
   input.style.fontStyle = style.italic ? 'italic' : 'normal';
   input.style.fontFamily = style.font;
 }
-
 
 const currentStyle = loadSavedStyle();
 styleColor.value = currentStyle.color;
@@ -2150,13 +1715,9 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
       font: styleFont.value
     };
     saveStyle(newStyle);
-    Object.assign(currentStyle, newStyle);  // Met à jour currentStyle
-
-    applyStyleToInput(document.getElementById('message-input'), currentStyle);
-    updateAllInputStyles();  // Met à jour tous les inputs privés
+    applyStyleToInput(newStyle);
   });
 });
-
 
 // --- Upload fichier ---
 const uploadInput = document.getElementById('file-input');    // input type="file"
