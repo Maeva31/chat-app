@@ -967,15 +967,23 @@ if (usernameInput && passwordInput) {
   // Met à jour la liste des utilisateurs affichée
   function updateUserList(users) {
   const userList = document.getElementById('users');
+  console.log('updateUserList called, userList exists:', !!userList);
+  console.log('users:', users);
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
+
+  if (users.length === 0) {
+    console.warn('La liste des utilisateurs est vide.');
+  }
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
+
+    console.log(`Ajout utilisateur: ${username}, rôle: ${role}, genre: ${gender}`);
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -1004,6 +1012,7 @@ if (usernameInput && passwordInput) {
     userList.appendChild(li);
   });
 }
+
 
 
 
