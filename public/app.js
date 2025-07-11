@@ -2,16 +2,21 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
-function updateAllInputStyles() {
+function updateAllPrivateMessagesStyle() {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
 
   container.querySelectorAll('.private-chat-window').forEach(win => {
-    if (win._inputField) {
-      applyStyleToInput(win._inputField, currentStyle);
-    }
+    const messages = win.querySelectorAll('.private-message .message-text');
+    messages.forEach(msgSpan => {
+      msgSpan.style.color = currentStyle.color || '#fff';
+      msgSpan.style.fontWeight = currentStyle.bold ? 'bold' : 'normal';
+      msgSpan.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
+      msgSpan.style.fontFamily = currentStyle.font || 'Arial';
+    });
   });
 }
+
 
 
 
@@ -1734,12 +1739,14 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
       font: styleFont.value
     };
     saveStyle(newStyle);
-    Object.assign(currentStyle, newStyle);  // Met à jour currentStyle
+    Object.assign(currentStyle, newStyle);
 
     applyStyleToInput(document.getElementById('message-input'), currentStyle);
-    updateAllInputStyles();  // Met à jour tous les inputs privés
+    updateAllInputStyles();
+    updateAllPrivateMessagesStyle(); // <-- ici
   });
 });
+
 
 // --- Upload fichier ---
 const uploadInput = document.getElementById('file-input');    // input type="file"
