@@ -446,9 +446,12 @@ socket.on('private wiizz', ({ to }) => {
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
 
-    if (!roomUsers[channel]) roomUsers[channel] = [];
+   if (!roomUsers[channel]) roomUsers[channel] = [];
     roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+    if (!userData.invisible) {
     roomUsers[channel].push(userData);
+    }
+
 
     console.log(`👤 Connecté : ${username} (${gender}, ${age} ans) dans #${channel} rôle=${role} invisible=${userData.invisible}`);
 
@@ -797,53 +800,70 @@ socket.on('private wiizz', ({ to }) => {
           }
           return;
 
-        case '/invisible':
-          if (user.role !== 'admin') {
-            socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
-            return;
-          }
-          if (args.length < 2) {
-            socket.emit('error message', 'Usage : /invisible on | off');
-            return;
-          }
-          const param = args[1].toLowerCase();
-          const channel = userChannels[socket.id];
-          if (param === 'on') {
-            user.invisible = true;
-            if (roomUsers[channel]) {
-              const u = roomUsers[channel].find(u => u.id === socket.id);
-              if (u) u.invisible = true;
-            }
-            socket.emit('server message', 'Mode invisible activé.');
-            console.log(`🔍 ${user.username} a activé le mode invisible.`);
-            emitUserList(channel);
-            updateRoomUserCounts();
-          } else if (param === 'off') {
-            user.invisible = false;
-            if (roomUsers[channel]) {
-              const u = roomUsers[channel].find(u => u.id === socket.id);
-              if (u) u.invisible = false;
-            }
-            socket.emit('server message', 'Mode invisible désactivé.');
-            console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
-            emitUserList(channel);
-            updateRoomUserCounts();
-            io.to(channel).emit('chat message', {
-              username: 'Système',
-              message: `${user.username} est maintenant visible.`,
-              timestamp: new Date().toISOString(),
-              channel
-            });
-          } else {
-            socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
-          }
-          return;
+case '/invisible':
+  if (user.role !== 'admin') {
+    socket.emit('error message', 'Commande /invisible réservée aux administrateurs.');
+    return;
+  }
 
-        default:
-          socket.emit('error message', 'Commande inconnue.');
-          return;
-      }
+  if (args.length < 2) {
+    socket.emit('error message', 'Usage : /invisible on | off');
+    return;
+  }
+
+  const param = args[1].toLowerCase();
+  const channel = userChannels[socket.id];
+
+  if (param === 'on') {
+    user.invisible = true;
+
+    // 🔁 Supprime l'utilisateur du tableau roomUsers[channel]
+    if (roomUsers[channel]) {
+      roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
     }
+
+    // 🔄 Met à jour la liste visible pour tous les autres
+    emitUserList(channel);
+    updateRoomUserCounts();
+
+    socket.emit('server message', 'Mode invisible activé.');
+    console.log(`🔍 ${user.username} a activé le mode invisible.`);
+
+  } else if (param === 'off') {
+    user.invisible = false;
+
+    // 🔁 Réinsère l'utilisateur s'il n'est pas déjà présent
+    if (roomUsers[channel] && !roomUsers[channel].find(u => u.id === socket.id)) {
+      roomUsers[channel].push({
+        id: socket.id,
+        username: user.username,
+        role: user.role,
+        gender: user.gender,
+        age: user.age,
+        invisible: false
+      });
+    }
+
+    emitUserList(channel);
+    updateRoomUserCounts();
+
+    socket.emit('server message', 'Mode invisible désactivé.');
+    console.log(`🔍 ${user.username} a désactivé le mode invisible.`);
+
+    io.to(channel).emit('chat message', {
+      username: 'Système',
+      message: `${user.username} est maintenant visible.`,
+      timestamp: new Date().toISOString(),
+      channel
+    });
+
+  } else {
+    socket.emit('error message', 'Paramètre invalide. Usage : /invisible on | off');
+  }
+
+  return;
+    }
+  }
 
     const message = {
       username: user.username,
