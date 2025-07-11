@@ -192,6 +192,23 @@ app.post('/upload', upload.single('file'), (req, res) => {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
+  // Quand un utilisateur se connecte et donne son pseudo : (wizz)
+  socket.on('set username', (username) => {
+    usernameToSocketId[username] = socket.id;
+    socket.username = username;
+  });
+
+
+
+socket.on('private wiizz', ({ to }) => {
+  const targetSocketId = usernameToSocketId[to];
+  const fromUsername = socketIdToUsername[socket.id];
+
+  if (targetSocketId && fromUsername && fromUsername !== to) {
+    io.to(targetSocketId).emit('private wiizz', { from: fromUsername });
+  }
+});
+
   socket.on('upload file', ({ filename, mimetype, data, channel, timestamp }) => {
     if (!channel || !savedRooms.includes(channel)) {
       socket.emit('error message', 'Salon invalide pour upload de fichier.');
