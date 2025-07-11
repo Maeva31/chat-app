@@ -21,8 +21,12 @@ if (voxoBtn && voxiContainer) {
       micEnabled = true;
       voxoBtn.textContent = 'Mic ON';
 
-      // Afficher ton pseudo dans le cadre voxi
-      voxiContainer.textContent = myUsername;
+      // Afficher pseudo SEULEMENT si salon Musique ou Gaming
+      if (currentChannel === 'Musique' || currentChannel === 'Gaming') {
+        voxiContainer.textContent = myUsername;
+      } else {
+        voxiContainer.textContent = '';  // ne rien afficher sinon
+      }
 
       // Ajout piste audio aux connexions si besoin...
       Object.values(peerConnections).forEach(pc => {
@@ -43,7 +47,7 @@ if (voxoBtn && voxiContainer) {
       micEnabled = false;
       voxoBtn.textContent = 'Mic OFF';
 
-      // Retirer ton pseudo du cadre voxi (ou le vider)
+      // Retirer pseudo du cadre voxi (toujours vider)
       voxiContainer.textContent = '';
 
       // Désactiver audio sur les connexions
@@ -55,6 +59,7 @@ if (voxoBtn && voxiContainer) {
     }
   });
 }
+
 
 
 function updateAllInputStyles() {
