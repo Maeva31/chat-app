@@ -2,21 +2,16 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
-function updateAllPrivateMessagesStyle() {
+function updateAllInputStyles() {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
 
   container.querySelectorAll('.private-chat-window').forEach(win => {
-    const messages = win.querySelectorAll('.private-message .message-text');
-    messages.forEach(msgSpan => {
-      msgSpan.style.color = currentStyle.color || '#fff';
-      msgSpan.style.fontWeight = currentStyle.bold ? 'bold' : 'normal';
-      msgSpan.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
-      msgSpan.style.fontFamily = currentStyle.font || 'Arial';
-    });
+    if (win._inputField) {
+      applyStyleToInput(win._inputField, currentStyle);
+    }
   });
 }
-
 
 
 
@@ -1700,14 +1695,14 @@ function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
 }
 
-function applyStyleToInput(input, style) {
-  if (!input || !style) return;
+function applyStyleToInput(style) {
+  const input = document.getElementById('message-input');
+  if (!input) return;
   input.style.color = style.color;
   input.style.fontWeight = style.bold ? 'bold' : 'normal';
   input.style.fontStyle = style.italic ? 'italic' : 'normal';
   input.style.fontFamily = style.font;
 }
-
 
 const currentStyle = loadSavedStyle();
 styleColor.value = currentStyle.color;
@@ -1715,7 +1710,6 @@ styleBold.checked = currentStyle.bold;
 styleItalic.checked = currentStyle.italic;
 styleFont.value = currentStyle.font;
 applyStyleToInput(currentStyle);
-
 
 // 🎨 toggle menu
 colorTextBtn.addEventListener('click', (e) => {
@@ -1739,14 +1733,9 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
       font: styleFont.value
     };
     saveStyle(newStyle);
-    Object.assign(currentStyle, newStyle);
-
-    applyStyleToInput(document.getElementById('message-input'), currentStyle);
-    updateAllInputStyles();
-    updateAllPrivateMessagesStyle(); // <-- ici
+    applyStyleToInput(newStyle);
   });
 });
-
 
 // --- Upload fichier ---
 const uploadInput = document.getElementById('file-input');    // input type="file"
