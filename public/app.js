@@ -2,6 +2,69 @@ const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
 
+  function updateUserList(users) {
+  const userList = document.getElementById('users');
+  if (!userList) return;
+  userList.innerHTML = '';
+  if (!Array.isArray(users)) return;
+
+  users.forEach(user => {
+    const username = user?.username || 'Inconnu';
+    const age = user?.age || '?';
+    const gender = user?.gender || 'non spécifié';
+    const role = user?.role || 'user';
+    const webcamActive = webcamStatus[username] || false;
+
+    const li = document.createElement('li');
+    li.classList.add('user-item');
+
+    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+
+    li.innerHTML = `
+      <span class="role-icon"></span> 
+      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
+      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
+    `;
+
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
+
+    // Supprimer ancienne icône webcam si présente
+    const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
+    if (oldCamIcon) oldCamIcon.remove();
+
+    // Ajouter icône webcam si active
+    if (webcamActive) {
+      const camIcon = document.createElement('img');
+      camIcon.src = '/webcam.gif';
+      camIcon.alt = 'Webcam active';
+      camIcon.title = 'Webcam active - cliquer pour voir';
+      camIcon.classList.add('webcam-icon');
+
+      if (role === 'admin') {
+        camIcon.classList.add('admin');
+      } else if (role === 'modo') {
+        camIcon.classList.add('modo');
+      } else {
+        camIcon.classList.add('user');
+      }
+
+      roleIconSpan.style.position = 'relative';
+
+      camIcon.dataset.username = username;
+      camIcon.addEventListener('click', () => {
+        openRemoteWebcamPopup(username);
+      });
+
+      roleIconSpan.appendChild(camIcon);
+    }
+
+    userList.appendChild(li);
+  });
+}
+
+
 function updateAllInputStyles() {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
