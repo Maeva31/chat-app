@@ -1,5 +1,34 @@
 const socket = io();
 
+function updateAllPrivateChatsStyle(style) {
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
+
+  // Mise à jour des inputs dans les fenêtres privées
+  container.querySelectorAll('.private-chat-window').forEach(win => {
+    if (win._inputField) {
+      applyStyleToInputField(win._inputField, style);
+    }
+
+    // Mise à jour des messages textes dans la fenêtre privée
+    const messages = win.querySelectorAll('.private-message .message-text');
+    messages.forEach(msgSpan => {
+      msgSpan.style.color = style.color || '#fff';
+      msgSpan.style.fontWeight = style.bold ? 'bold' : 'normal';
+      msgSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
+      msgSpan.style.fontFamily = style.font || 'Arial';
+    });
+  });
+}
+
+function applyStyleToInputField(input, style) {
+  input.style.color = style.color || '#fff';
+  input.style.fontWeight = style.bold ? 'bold' : 'normal';
+  input.style.fontStyle = style.italic ? 'italic' : 'normal';
+  input.style.fontFamily = style.font || 'Arial';
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
 
 function updateAllInputStyles() {
@@ -646,14 +675,18 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
 
   // **Appliquer style perso s’il est fourni**
   if (style) {
-    textSpan.style.color = style.color || '#fff';
-    textSpan.style.fontWeight = style.bold ? 'bold' : 'normal';
-    textSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
-    textSpan.style.fontFamily = style.font || 'Arial';
-  } else {
-    // Style par défaut ou selon rôle/genre
-    textSpan.style.color = '#fff';
-  }
+  textSpan.style.color = style.color || '#fff';
+  textSpan.style.fontWeight = style.bold ? 'bold' : 'normal';
+  textSpan.style.fontStyle = style.italic ? 'italic' : 'normal';
+  textSpan.style.fontFamily = style.font || 'Arial';
+} else {
+  // Appliquer le style global courant
+  textSpan.style.color = currentStyle.color || '#fff';
+  textSpan.style.fontWeight = currentStyle.bold ? 'bold' : 'normal';
+  textSpan.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
+  textSpan.style.fontFamily = currentStyle.font || 'Arial';
+}
+
 
   // Horodatage
   const timeSpan = document.createElement('span');
@@ -1734,8 +1767,13 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     };
     saveStyle(newStyle);
     applyStyleToInput(newStyle);
+
+    // AJOUT À FAIRE ICI :
+    Object.assign(currentStyle, newStyle);
+    updateAllPrivateChatsStyle(newStyle);
   });
 });
+
 
 // --- Upload fichier ---
 const uploadInput = document.getElementById('file-input');    // input type="file"
