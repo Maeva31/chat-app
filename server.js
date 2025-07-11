@@ -202,12 +202,7 @@ io.on('connection', (socket) => {
     socket.username = username;
   });
 
-  socket.on('private wiizz', ({ to }) => {
-    const toSocketId = usernameToSocketId[to];
-    if (toSocketId) {
-      io.to(toSocketId).emit('private wiizz', { from: socket.username });
-    }
-  });
+
 
 socket.on('private wiizz', ({ to }) => {
   const targetSocketId = usernameToSocketId[to];
@@ -237,13 +232,23 @@ socket.on('private wiizz', ({ to }) => {
     io.emit('user list', getUserListForClient());
   });
 
-  // écouteur 'signal' pour WebRTC
   socket.on('signal', ({ to, from, data }) => {
-  // ✅ Si l'expéditeur est en mode invisible, bloquer l'envoi du signal
+  // Si l'expéditeur est en mode invisible, bloquer l'envoi du signal
   if (users[from]?.invisible) {
     console.warn(`🔒 Signal bloqué : ${from} est en mode invisible`);
     return;
   }
+
+  const toSocketId = usernameToSocketId[to];
+  if (toSocketId) {
+    io.to(toSocketId).emit('signal', { from, data });
+    // console.log(`📡 Signal envoyé de ${from} vers ${to}`);
+  } else {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    // console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
+  }
+});
+
 
 const toSocketId = usernameToSocketId[to];
 if (toSocketId) {
@@ -1101,23 +1106,24 @@ case '/invisible':
 
   // --- DEBUT AJOUT WEBRTC AUDIO/VIDEO SIGNALING ---
 
-  // Transmission des offres SDP entre pairs
-  socket.on('webrtc offer', ({ to, offer }) => {
+
+// Transmission des offres SDP entre pairs
+socket.on('webrtc offer', ({ to, offer }) => {
   if (users[to]?.invisible) {
     console.warn(`🔒 Offre bloquée : ${to} est en mode invisible`);
     socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
     return;
   }
 
-  const targetSocket = io.sockets.sockets.get(to);
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
   if (targetSocket) {
     targetSocket.emit('webrtc offer', { from: socket.id, offer });
   }
 });
 
-
-  // Transmission des réponses SDP entre pairs
-  socket.on('webrtc answer', ({ to, answer }) => {
+// Transmission des réponses SDP entre pairs
+socket.on('webrtc answer', ({ to, answer }) => {
   if (users[to]?.invisible) {
     console.warn(`🔒 Réponse bloquée : ${to} est en mode invisible`);
     return;
@@ -1128,28 +1134,29 @@ case '/invisible':
     return;
   }
 
-  const targetSocket = io.sockets.sockets.get(to);
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
   if (targetSocket) {
     targetSocket.emit('webrtc answer', { from: socket.id, answer });
   }
 });
 
-
-  // Transmission des ICE candidates entre pairs
-  socket.on('webrtc ice candidate', ({ to, candidate }) => {
+// Transmission des ICE candidates entre pairs
+socket.on('webrtc ice candidate', ({ to, candidate }) => {
   if (users[to]?.invisible || users[socketIdToUsername[socket.id]]?.invisible) {
     console.warn(`🔒 ICE bloqué entre invisible(s)`);
     return;
   }
 
-  const targetSocket = io.sockets.sockets.get(to);
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
   if (targetSocket) {
     targetSocket.emit('webrtc ice candidate', { from: socket.id, candidate });
   }
 });
 
-
-  socket.on('call user', ({ to, from }) => {
+// Transmission appel utilisateur
+socket.on('call user', ({ to, from }) => {
   if (users[to]?.invisible) {
     socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
     return;
@@ -1160,11 +1167,13 @@ case '/invisible':
     return;
   }
 
-  const targetSocket = io.sockets.sockets.get(to);
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
   if (targetSocket) {
     targetSocket.emit('call user', { from });
   }
 });
+
 
 
 
