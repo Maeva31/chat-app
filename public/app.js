@@ -824,7 +824,7 @@ wiizzBtn.appendChild(wiizzIcon);
     fileInput.style.display = 'none';
 
     const uploadBtn = document.createElement('button');
-    uploadBtn.textContent = '🌐';
+    uploadBtn.textContent = '📁';
     uploadBtn.title = 'Envoyer un fichier';
     uploadBtn.style.fontSize = '20px';
     uploadBtn.style.background = 'transparent';
