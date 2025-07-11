@@ -1695,12 +1695,12 @@ function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
 }
 
-function applyStyleToInput(inputElement, style) {
-  if (!inputElement) return;
-  inputElement.style.color = style.color;
-  inputElement.style.fontWeight = style.bold ? 'bold' : 'normal';
-  inputElement.style.fontStyle = style.italic ? 'italic' : 'normal';
-  inputElement.style.fontFamily = style.font;
+function applyStyleToInput(input, style) {
+  if (!input || !style) return;
+  input.style.color = style.color;
+  input.style.fontWeight = style.bold ? 'bold' : 'normal';
+  input.style.fontStyle = style.italic ? 'italic' : 'normal';
+  input.style.fontFamily = style.font;
 }
 
 
