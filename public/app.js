@@ -1733,7 +1733,10 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
       font: styleFont.value
     };
     saveStyle(newStyle);
-    applyStyleToInput(newStyle);
+    Object.assign(currentStyle, newStyle);  // Met à jour currentStyle
+
+    applyStyleToInput(document.getElementById('message-input'), currentStyle);
+    updateAllInputStyles();  // Met à jour tous les inputs privés
   });
 });
 
