@@ -100,10 +100,34 @@ function updateRoomUserCounts() {
 // Envoie la liste des utilisateurs en excluant les invisibles
 function emitUserList(channel) {
   if (!roomUsers[channel]) return;
-  // Exclure les users invisibles
-  const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
-  io.to(channel).emit('user list', visibleUsers);
+
+  // Parcourir tous les sockets dans la salle
+  const clients = io.sockets.adapter.rooms.get(channel);
+  if (!clients) return;
+
+  for (const socketId of clients) {
+    const socket = io.sockets.sockets.get(socketId);
+    if (!socket) continue;
+    const username = socketIdToUsername[socketId];
+    if (!username) continue;
+
+    const user = users[username];
+    if (!user) continue;
+
+    // Liste filtrée selon visibilité du client
+    let listToSend;
+    if (user.invisible) {
+      // Utilisateur invisible ne doit pas voir les invisibles (même lui)
+      listToSend = roomUsers[channel].filter(u => !u.invisible);
+    } else {
+      // Utilisateur normal voit tous sauf invisibles (car invisible ne sont pas dans roomUsers)
+      listToSend = roomUsers[channel].filter(u => !u.invisible);
+    }
+
+    socket.emit('user list', listToSend);
+  }
 }
+
 
 function cleanupEmptyDynamicRooms() {
   for (const room of savedRooms) {
