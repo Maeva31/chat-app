@@ -28,10 +28,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if (startWebcamBtn) {
     let popupCheckInterval;
 
-    startWebcamBtn.addEventListener('click', () => {
+startWebcamBtn.addEventListener('click', () => {
   openLocalWebcamPopup();
 
-  // ✅ Ne pas signaler "visible" si invisibleMode est actif
+  // Ne pas émettre le statut webcam si invisible
   if (!invisibleMode) {
     socket.emit('webcam status', { username: myUsername, active: true });
   }
@@ -40,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
   popupCheckInterval = setInterval(() => {
     if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
       clearInterval(popupCheckInterval);
-      // ✅ Signaler "webcam off" uniquement si non invisible
+      // Ne pas émettre "webcam off" si invisible
       if (!invisibleMode) {
         socket.emit('webcam status', { username: myUsername, active: false });
       }
