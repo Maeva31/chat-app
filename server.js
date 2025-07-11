@@ -25,6 +25,9 @@ let roomUsers = {};
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
+const usernameToSocketId = {};
+const socketIdToUsername = {};
+
 
 // Chargement des modérateurs
 let modData = { admins: [], modos: [] };
@@ -192,14 +195,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
-  // Quand un utilisateur se connecte et donne son pseudo : (wizz)
-  socket.on('set username', (username) => {
-    usernameToSocketId[username] = socket.id;
-    socket.username = username;
-  });
-
-
-
 socket.on('private wiizz', ({ to }) => {
   const targetSocketId = usernameToSocketId[to];
   const fromUsername = socketIdToUsername[socket.id];
@@ -349,6 +344,9 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
     if (users[username] && users[username].id !== socket.id) {
       return socket.emit('username exists', username);
     }
+
+    usernameToSocketId[username] = socket.id;
+    socketIdToUsername[socket.id] = username;
 
     // VÉRIFICATION : Mot de passe pour les rôles privilégiés
     if (requiresPassword(username)) {
@@ -926,10 +924,14 @@ case '/removeadmin':
     }
   });
 
-  socket.on('disconnect', () => {
+ socket.on('disconnect', () => {
   const user = Object.values(users).find(u => u.id === socket.id);
   if (user) {
     console.log(`❌ Déconnexion : ${user.username}`);
+
+    // Supprimer mappings username↔socketId
+    delete usernameToSocketId[user.username];
+    delete socketIdToUsername[socket.id];
 
     // SUPPRESSION des rôles temporaires à la déconnexion
     tempMods.admins.delete(user.username);
@@ -947,22 +949,20 @@ case '/removeadmin':
       }
     }
 
-  
-
-
-      for (const channel in roomUsers) {
-        roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
-        emitUserList(channel);
-      }
-
-      delete users[user.username];
-      delete userChannels[socket.id];
-
-      cleanupEmptyDynamicRooms();
-    } else {
-      console.log(`❌ Déconnexion inconnue : ${socket.id}`);
+    for (const channel in roomUsers) {
+      roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
+      emitUserList(channel);
     }
-  });
+
+    delete users[user.username];
+    delete userChannels[socket.id];
+
+    cleanupEmptyDynamicRooms();
+  } else {
+    console.log(`❌ Déconnexion inconnue : ${socket.id}`);
+  }
+});
+
   
     socket.on('private message', ({ to, message, style, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
