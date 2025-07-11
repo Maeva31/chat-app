@@ -1,6 +1,6 @@
 const socket = io();
 
-  function updateUserList(users) {
+function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -11,7 +11,6 @@ const socket = io();
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
-    const webcamActive = webcamStatus[username] || false;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
@@ -28,55 +27,25 @@ const socket = io();
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
-    // Supprimer ancienne icône webcam si présente
-    const oldCamIcon = roleIconSpan.querySelector('.webcam-icon');
-    if (oldCamIcon) oldCamIcon.remove();
-
-    // Ajouter icône webcam si active
-    if (webcamActive) {
-      const camIcon = document.createElement('img');
-      camIcon.src = '/webcam.gif';
-      camIcon.alt = 'Webcam active';
-      camIcon.title = 'Webcam active - cliquer pour voir';
-      camIcon.classList.add('webcam-icon');
-
-      if (role === 'admin') {
-        camIcon.classList.add('admin');
-      } else if (role === 'modo') {
-        camIcon.classList.add('modo');
-      } else {
-        camIcon.classList.add('user');
-      }
-
-      roleIconSpan.style.position = 'relative';
-
-      camIcon.dataset.username = username;
-      camIcon.addEventListener('click', () => {
-        openRemoteWebcamPopup(username);
-      });
-
-      roleIconSpan.appendChild(camIcon);
-    }
+    // Plus aucune gestion d'icône webcam ni d'événements associés
 
     userList.appendChild(li);
   });
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  function updateAllInputStyles() {
+    const container = document.getElementById('private-chat-container');
+    if (!container) return;
 
-
-
-function updateAllInputStyles() {
-  const container = document.getElementById('private-chat-container');
-  if (!container) return;
-
-  container.querySelectorAll('.private-chat-window').forEach(win => {
-    if (win._inputField) {
-      applyStyleToInput(win._inputField, currentStyle);
-    }
-  });
-}
+    container.querySelectorAll('.private-chat-window').forEach(win => {
+      if (win._inputField) {
+        applyStyleToInput(win._inputField, currentStyle);
+      }
+    });
+  }
 });
+
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
