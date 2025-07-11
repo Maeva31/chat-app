@@ -381,12 +381,11 @@ socket.on('user list', (users) => {
   updateUserList(users);
 
   users.forEach(user => {
-  if (user.username !== myUsername && !invisibleMode) {
-    if (!peerConnections[user.username]) {
-      callUser(user.username);
-    }
+  if (!invisibleMode && user.username !== myUsername) {
+    callUser(user.username);
   }
 });
+
 });
 
 
