@@ -818,20 +818,13 @@ wiizzBtn.appendChild(wiizzIcon);
 
 
 
-
-
-// --- Intégration bouton Wiizz dans openPrivateChat ---
-// const wiizzBtn = setupWiizzButton(username, win, container);
-// inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, sendBtn);
-
-
     // Upload fichier
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.style.display = 'none';
 
     const uploadBtn = document.createElement('button');
-    uploadBtn.textContent = '📎';
+    uploadBtn.textContent = '🌐';
     uploadBtn.title = 'Envoyer un fichier';
     uploadBtn.style.fontSize = '20px';
     uploadBtn.style.background = 'transparent';
