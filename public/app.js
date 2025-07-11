@@ -136,7 +136,7 @@ function updateAllInputStyles() {
     inputBar.style.display = 'flex';
     inputBar.style.alignItems = 'center';
 
-    const input = document.createElement('input');
+      const input = document.createElement('input');
     input.placeholder = 'Message…';
     input.style.backgroundColor = '#333';  // fond sombre pour l’input
     input.style.color = '#fff';             // texte clair
@@ -153,7 +153,6 @@ function updateAllInputStyles() {
     input.style.fontStyle = currentStyle.italic ? 'italic' : 'normal';
     input.style.fontFamily = currentStyle.font || 'Arial';
   }
-
 
 
     // Boutons emoji & upload
@@ -1695,29 +1694,22 @@ function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
 }
 
-function applyStyleToInput(style) {
-  // Input principal
-  const input = document.getElementById('message-input');
-  if (input) {
-    input.style.color = style.color;
-    input.style.fontWeight = style.bold ? 'bold' : 'normal';
-    input.style.fontStyle = style.italic ? 'italic' : 'normal';
-    input.style.fontFamily = style.font;
+function applyStyleToInput(inputOrStyle, style) {
+  let input, styleObj;
+  if (style === undefined) {
+    // appelé avec style seul
+    input = document.getElementById('message-input');
+    styleObj = inputOrStyle;
+  } else {
+    // appelé avec input et style
+    input = inputOrStyle;
+    styleObj = style;
   }
-
-  // Inputs des fenêtres privées ouvertes
-  const container = document.getElementById('private-chat-container');
-  if (container) {
-    container.querySelectorAll('.private-chat-window').forEach(win => {
-      const inputPrivate = win._inputField;
-      if (inputPrivate) {
-        inputPrivate.style.color = style.color;
-        inputPrivate.style.fontWeight = style.bold ? 'bold' : 'normal';
-        inputPrivate.style.fontStyle = style.italic ? 'italic' : 'normal';
-        inputPrivate.style.fontFamily = style.font;
-      }
-    });
-  }
+  if (!input) return;
+  input.style.color = styleObj.color;
+  input.style.fontWeight = styleObj.bold ? 'bold' : 'normal';
+  input.style.fontStyle = styleObj.italic ? 'italic' : 'normal';
+  input.style.fontFamily = styleObj.font;
 }
 
 
