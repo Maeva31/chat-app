@@ -3,6 +3,36 @@ const socket = io();
 document.addEventListener('DOMContentLoaded', () => {
 
 
+// Salon vox
+function updateMicroFrameVisibility(channelName) {
+  const voxi = document.getElementById('voxi');
+  if (!voxi) return;
+
+  const salonsAvecMicro = ['Musique', 'Gaming'];
+
+  if (salonsAvecMicro.includes(channelName)) {
+    voxi.style.visibility = 'visible';
+  } else {
+    voxi.style.visibility = 'hidden';
+  }
+}
+
+
+updateMicroFrameVisibility(currentChannel);
+
+  socket.on('joinedRoom', (newChannel) => {
+  currentChannel = newChannel;
+  localStorage.setItem('currentChannel', newChannel);
+  const chatMessages = document.getElementById('chat-messages');
+  if (chatMessages) chatMessages.innerHTML = '';
+  selectChannelInUI(newChannel);
+  updateMicroFrameVisibility(newChannel);  // <-- Ajout ici
+  selectedUser = null;
+  socket.emit('request history', newChannel);
+});
+
+
+
 
 function updateAllInputStyles() {
   const container = document.getElementById('private-chat-container');
