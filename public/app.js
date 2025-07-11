@@ -13,47 +13,26 @@ let micEnabled = false;
 document.addEventListener('DOMContentLoaded', () => {
   window.socket = socket;
 
-  // --- Webcam status update ---
-  socket.on('webcam status update', ({ username, active }) => {
-    webcamStatus[username] = active;
+// --- Webcam status update ---
+socket.on('webcam status update', ({ username, active }) => {
+  // Supposons que window.users contient la liste des utilisateurs avec leur propriété invisible
+  const user = window.users?.find(u => u.username === username);
+  if (user && user.invisible) {
+    // Ignore la mise à jour webcam si utilisateur invisible
+    return;
+  }
 
-    if (window.users) {
-      window.users = window.users.map(u => u.username === username ? { ...u, webcamActive: active } : u);
-      updateUserList(window.users);
-    }
-  });
+  // Sinon on met à jour le statut webcam
+  webcamStatus[username] = active;
 
-  // --- Bouton activer webcam locale ---
-  const startWebcamBtn = document.getElementById('start-webcam-btn');
-  if (startWebcamBtn) {
-    let popupCheckInterval;
-
-startWebcamBtn.addEventListener('click', () => {
-  openLocalWebcamPopup();
-  emitWebcamStatus(true);
-
-  if (popupCheckInterval) clearInterval(popupCheckInterval);
-  popupCheckInterval = setInterval(() => {
-    if (!window.localWebcamPopup || window.localWebcamPopup.closed) {
-      clearInterval(popupCheckInterval);
-      emitWebcamStatus(false);
-    }
-  }, 500);
+  if (window.users) {
+    window.users = window.users.map(u =>
+      u.username === username ? { ...u, webcamActive: active } : u
+    );
+    updateUserList(window.users);
+  }
 });
-}
 
-function emitWebcamStatus(active) {
-  if (invisibleMode) return; // Ne rien faire si invisible
-  socket.emit('webcam status', { username: myUsername, active });
-}
-
-function updateWebcamButtonVisibility() {
-  if (!startWebcamBtn) return;
-  startWebcamBtn.style.display = invisibleMode ? 'none' : 'inline-block';
-}
-
-// Appelle cette fonction au chargement et à chaque changement de mode invisible
-updateWebcamButtonVisibility();
 
 
   // --- Bouton activer/désactiver micro ---
