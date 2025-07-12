@@ -1,6 +1,5 @@
 const socket = io();
 
-let invisibleMode = localStorage.getItem('invisibleMode') === 'true';
 
 
 function updateAllPrivateChatsStyle(style) {
