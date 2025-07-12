@@ -226,6 +226,84 @@ socket.on('private wiizz', ({ to }) => {
     });
   });
 
+    socket.on('moderation', ({ cmd, target }) => {
+    const sender = socketIdToUsername[socket.id];
+    const senderData = users[sender];
+    const targetSocketId = usernameToSocketId[target];
+    const targetData = users[target];
+
+    if (!sender || !senderData || !targetData) return;
+    const isAdmin = senderData.role === 'admin';
+    const isModo = senderData.role === 'modo';
+
+    // Seuls modo/admin peuvent modérer
+    if (!isAdmin && !isModo) return;
+
+    switch (cmd) {
+      case 'kick':
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('kicked', { by: sender });
+          io.sockets.sockets.get(targetSocketId)?.disconnect(true);
+        }
+        break;
+
+      case 'ban':
+        if (!isAdmin) return;
+        bannedUsers.add(target);
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('banned', { by: sender });
+          io.sockets.sockets.get(targetSocketId)?.disconnect(true);
+        }
+        break;
+
+      case 'mute':
+        mutedUsers.add(target);
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('muted', { by: sender });
+        }
+        break;
+
+      case 'unmute':
+        mutedUsers.delete(target);
+        if (targetSocketId) {
+          io.to(targetSocketId).emit('unmuted', { by: sender });
+        }
+        break;
+
+      case 'promote':
+        if (!isAdmin) return;
+        if (!modData.modos.includes(target)) {
+          modData.modos.push(target);
+          fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+        }
+        break;
+
+      case 'addadmin':
+        if (!isAdmin) return;
+        if (!modData.admins.includes(target)) {
+          modData.admins.push(target);
+          fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+        }
+        break;
+
+      case 'removemodo':
+        if (!isAdmin) return;
+        modData.modos = modData.modos.filter(name => name !== target);
+        fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+        break;
+
+      case 'removeadmin':
+        if (!isAdmin) return;
+        modData.admins = modData.admins.filter(name => name !== target);
+        fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+        break;
+
+      default:
+        console.log('❌ Commande de modération inconnue :', cmd);
+    }
+  });
+
+
 socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) => {
     const sender = Object.values(users).find(u => u.id === socket.id);
     if (!sender) return;
