@@ -1616,6 +1616,125 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     });
   }
 
+  function showModerationMenu(targetUsername, x, y) {
+  const existing = document.getElementById('moderation-menu');
+  if (existing) existing.remove();
+
+  const myUsername = localStorage.getItem('username');
+  const me = userCache[myUsername];
+  if (!me || (me.role !== 'admin' && me.role !== 'modo')) return;
+
+  const isAdmin = me.role === 'admin';
+
+  const menu = document.createElement('div');
+  menu.id = 'moderation-menu';
+  menu.classList.add('moderation-context-menu');
+  Object.assign(menu.style, {
+    position: 'absolute',
+    left: x + 'px',
+    top: y + 'px',
+    background: '#222',
+    color: '#fff',
+    border: '1px solid #555',
+    borderRadius: '6px',
+    padding: '6px 0',
+    fontSize: '14px',
+    minWidth: '160px',
+    zIndex: '9999',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
+  });
+
+  const actions = [
+    { label: '👢 Kick', cmd: 'kick' },
+    { label: '🚫 Ban', cmd: 'ban', adminOnly: true },
+    { label: '🔇 Mute', cmd: 'mute' },
+    { label: '🔊 Unmute', cmd: 'unmute' },
+    { label: '👑 Promote Modo', cmd: 'promote', adminOnly: true },
+    { label: '🟡 Add Admin', cmd: 'addadmin', adminOnly: true },
+    { label: '❌ Remove Modo', cmd: 'removemodo', adminOnly: true },
+    { label: '❌ Remove Admin', cmd: 'removeadmin', adminOnly: true }
+  ];
+
+  actions.forEach(({ label, cmd, adminOnly }) => {
+    if (adminOnly && !isAdmin) return;
+
+    const item = document.createElement('div');
+    item.textContent = label;
+    item.style.padding = '6px 12px';
+    item.style.cursor = 'pointer';
+
+    item.addEventListener('mouseover', () => item.style.background = '#444');
+    item.addEventListener('mouseout', () => item.style.background = 'transparent');
+
+    item.addEventListener('click', () => {
+      showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} ${targetUsername} ?`, () => {
+        socket.emit('moderation', { cmd, target: targetUsername });
+        menu.remove();
+      });
+    });
+
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+
+  const close = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 10);
+}
+
+function showConfirmBox(message, onConfirm) {
+  const overlay = document.createElement('div');
+  overlay.className = 'confirm-overlay';
+
+  const box = document.createElement('div');
+  box.className = 'confirm-box';
+  box.innerHTML = `
+    <p class="confirm-message">${message}</p>
+    <div class="confirm-buttons">
+      <button class="btn-confirm-yes">✅ Oui</button>
+      <button class="btn-confirm-no">❌ Non</button>
+    </div>
+  `;
+
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  overlay.querySelector('.btn-confirm-yes').onclick = () => {
+    onConfirm();
+    overlay.remove();
+  };
+  overlay.querySelector('.btn-confirm-no').onclick = () => {
+    overlay.remove();
+  };
+}
+
+document.addEventListener('click', (e) => {
+  const ageBox = e.target.closest('.gender-square');
+  if (!ageBox) return;
+
+  const userItem = ageBox.closest('.user-item');
+  if (!userItem) return;
+
+  const usernameSpan = userItem.querySelector('.username-span');
+  if (!usernameSpan) return;
+
+  const username = usernameSpan.textContent.trim();
+  const userObj = userCache[username];
+  if (!userObj) return;
+
+  const rect = ageBox.getBoundingClientRect();
+  const x = rect.right + window.scrollX;
+  const y = rect.top + window.scrollY;
+
+  showModerationMenu(username, x, y);
+});
+
+
   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
   socket.on('banned', () => {
     showBanner('🚫 Vous avez été banni du serveur.', 'error');
