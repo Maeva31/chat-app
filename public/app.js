@@ -918,7 +918,7 @@ let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
 let isAdmin = false;
 
 // Ensuite seulement, ajoute le listener du bouton
-document.getElementById('toggle-invisible').addEventListener('click', () => {
+document.getElementById('toggle-invisible-btn').addEventListener('click', () => {
   invisibleMode = !invisibleMode;
   localStorage.setItem('invisibleMode', invisibleMode);
   showBanner(invisibleMode ? 'Mode invisible activé' : 'Mode invisible désactivé', 'info');
