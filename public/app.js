@@ -991,20 +991,37 @@ if (usernameInput && passwordInput) {
 
     const roleIconSpan = li.querySelector('.role-icon');
     const genderSquare = li.querySelector('.gender-square');
+    const usernameSpan = li.querySelector('.username-span');
 
-// Récupère l'utilisateur connecté
-const me = users.find(u => u.username === localStorage.getItem('username'));
-const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
+    // Icone de rôle
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
 
-if (isModOrAdmin) {
-  genderSquare.style.cursor = 'pointer';  // Curseur clic
+    // Clique sur le pseudo = mentionner
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
 
-  genderSquare.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    showModerationMenu(username, e.pageX, e.pageY);  // Affiche le menu modération
+    // Clique sur âge = modération
+    const me = userCache[localStorage.getItem('username')];
+    const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
+    if (isModOrAdmin) {
+      genderSquare.style.cursor = 'pointer';
+      genderSquare.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showModerationMenu(username, e.pageX, e.pageY);
+      });
+    }
+
+    userList.appendChild(li);
   });
 }
+
 function showModerationMenu(targetUsername, x, y) {
   const existing = document.getElementById('moderation-menu');
   if (existing) existing.remove();
@@ -1039,7 +1056,10 @@ function showModerationMenu(targetUsername, x, y) {
     { label: '🚫 Ban', cmd: 'ban', adminOnly: true },
     { label: '🔇 Mute', cmd: 'mute' },
     { label: '🔊 Unmute', cmd: 'unmute' },
-    { label: '👑 Promote Modo', cmd: 'promote', adminOnly: true }
+    { label: '👑 Promote Modo', cmd: 'promote', adminOnly: true },
+    { label: '🟡 Add Admin', cmd: 'addadmin', adminOnly: true },
+    { label: '❌ Remove Modo', cmd: 'removemodo', adminOnly: true },
+    { label: '❌ Remove Admin', cmd: 'removeadmin', adminOnly: true }
   ];
 
   actions.forEach(({ label, cmd, adminOnly }) => {
@@ -1056,7 +1076,7 @@ function showModerationMenu(targetUsername, x, y) {
     item.addEventListener('click', () => {
       showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} ${targetUsername} ?`, () => {
         socket.emit('moderation', { cmd, target: targetUsername });
-        menu.remove(); // ✅ menu fermé après validation
+        menu.remove();
       });
     });
 
@@ -1099,6 +1119,7 @@ function showConfirmBox(message, onConfirm) {
     overlay.remove();
   };
 }
+
 
 
 
