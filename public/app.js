@@ -1,7 +1,5 @@
 const socket = io();
 
-
-
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
@@ -913,19 +911,9 @@ if (usernameInput && passwordInput) {
   }
 
   // Variables pour mode invisible
-// Déclare invisibleMode en premier (chargement depuis localStorage)
-let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
-let isAdmin = false;
-
-// Ensuite seulement, ajoute le listener du bouton
-const invisibleBtn = document.getElementById('toggle-invisible-btn');
-document.getElementById('toggle-invisible-btn').addEventListener('click', () => {
-  invisibleMode = !invisibleMode;
-  localStorage.setItem('invisibleMode', invisibleMode);
-  showBanner(invisibleMode ? 'Mode invisible activé' : 'Mode invisible désactivé', 'info');
-});
-
-
+  const invisibleBtn = document.getElementById('toggle-invisible-btn');
+  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+  let isAdmin = false;
 
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
@@ -1002,11 +990,14 @@ document.getElementById('toggle-invisible-btn').addEventListener('click', () => 
     `;
 
     const roleIconSpan = li.querySelector('.role-icon');
+    const genderSquare = li.querySelector('.gender-square');
+    const usernameSpan = li.querySelector('.username-span');
+
+    // Icone de rôle
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
-    // Clic pseudo pour insérer mention dans input
-    const usernameSpan = li.querySelector('.username-span');
+    // Clique sur le pseudo = mentionner
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${username} `;
@@ -1015,11 +1006,9 @@ document.getElementById('toggle-invisible-btn').addEventListener('click', () => 
       selectedUser = username;
     });
 
-    // Clic sur carré d’âge pour menu modération (si admin/modo)
-    const genderSquare = li.querySelector('.gender-square');
+    // Clique sur âge = modération
     const me = userCache[localStorage.getItem('username')];
     const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
-
     if (isModOrAdmin) {
       genderSquare.style.cursor = 'pointer';
       genderSquare.addEventListener('click', (e) => {
@@ -1032,8 +1021,6 @@ document.getElementById('toggle-invisible-btn').addEventListener('click', () => 
     userList.appendChild(li);
   });
 }
-
-
 
 function showModerationMenu(targetUsername, x, y) {
   const existing = document.getElementById('moderation-menu');
@@ -1132,6 +1119,7 @@ function showConfirmBox(message, onConfirm) {
     overlay.remove();
   };
 }
+
 
 
 
@@ -1510,10 +1498,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   // --- fin ajout ---
 
   modalError.style.display = 'none';
-  const payload = { username, gender, age, password };
-if (invisibleMode === true) payload.invisible = true;
-socket.emit('set username', payload);
-
+  socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
 }
 
 
@@ -1691,15 +1676,13 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   const savedPassword = localStorage.getItem('password'); // <-- ajout
 
   if (!hasSentUserInfo && savedUsername && savedAge) {
-    const payload = {
-  username: savedUsername,
-  gender: savedGender || 'non spécifié',
-  age: savedAge,
-  password: savedPassword || ''
-};
-if (invisibleMode === true) payload.invisible = true;
-socket.emit('set username', payload);
-
+    socket.emit('set username', {
+      username: savedUsername,
+      gender: savedGender || 'non spécifié',
+      age: savedAge,
+      invisible: invisibleMode,
+      password: savedPassword || ''  // <-- ajout
+    });
     currentChannel = 'Général';
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
