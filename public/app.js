@@ -1622,8 +1622,19 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   if (existing) existing.remove();
 
   const myUsername = localStorage.getItem('username');
+  if (targetUsername === myUsername) return; // 🔒 Ne pas ouvrir le menu sur soi-même
   const me = userCache[myUsername];
   if (!me || (me.role !== 'admin' && me.role !== 'modo')) return;
+
+  const target = userCache[targetUsername];
+if (!target) return;
+
+// 🔒 Ne pas autoriser un /addadmin à ouvrir le menu sur un vrai admin/modo
+const isRealAdmin = me.isRealAdmin === true;
+const isTargetProtected = target.isRealAdmin === true;
+
+if (!isRealAdmin && isTargetProtected) return;
+
 
   const isAdmin = me.role === 'admin';
 
