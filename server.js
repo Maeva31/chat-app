@@ -105,10 +105,16 @@ function updateRoomUserCounts() {
 // Envoie la liste des utilisateurs en excluant les invisibles
 function emitUserList(channel) {
   if (!roomUsers[channel]) return;
-  // Exclure les users invisibles
-  const visibleUsers = roomUsers[channel].filter(u => !u.invisible);
-  io.to(channel).emit('user list', visibleUsers);
+  
+  console.log(`📤 Envoi liste utilisateurs dans ${channel}:`);
+  roomUsers[channel].forEach(u => {
+    console.log(`   - ${u.username} (invisible=${u.invisible})`);
+  });
+
+  io.to(channel).emit('user list', roomUsers[channel]);
 }
+
+
 
 function cleanupEmptyDynamicRooms() {
   for (const room of savedRooms) {
