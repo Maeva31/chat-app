@@ -1,5 +1,8 @@
 const socket = io();
 
+let invisibleMode = localStorage.getItem('invisibleMode') === 'true';
+
+
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
@@ -1498,7 +1501,10 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
   // --- fin ajout ---
 
   modalError.style.display = 'none';
-  socket.emit('set username', { username, gender, age, invisible: invisibleMode, password });
+  const payload = { username, gender, age, password };
+if (invisibleMode === true) payload.invisible = true;
+socket.emit('set username', payload);
+
 }
 
 
@@ -1676,13 +1682,15 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   const savedPassword = localStorage.getItem('password'); // <-- ajout
 
   if (!hasSentUserInfo && savedUsername && savedAge) {
-    socket.emit('set username', {
-      username: savedUsername,
-      gender: savedGender || 'non spécifié',
-      age: savedAge,
-      invisible: invisibleMode,
-      password: savedPassword || ''  // <-- ajout
-    });
+    const payload = {
+  username: savedUsername,
+  gender: savedGender || 'non spécifié',
+  age: savedAge,
+  password: savedPassword || ''
+};
+if (invisibleMode === true) payload.invisible = true;
+socket.emit('set username', payload);
+
     currentChannel = 'Général';
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
