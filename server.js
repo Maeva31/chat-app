@@ -428,142 +428,143 @@ socket.on('chat message', (msg) => {
     const isUserAdmin = user.role === 'admin';
     const isPrivilegedAdmin = isUserAdmin && passwords[user.username];
 
-    if (['/ban', '/kick', '/mute'].includes(cmd)) {
-      if (!targetUser || targetName === user.username || (isUserModo && isTargetProtected) || (isUserAdmin && isTargetProtected && !isPrivilegedAdmin)) {
-        socket.emit('error message', 'Action non autorisée ou utilisateur invalide.');
-        return;
+if (['/ban', '/kick', '/mute'].includes(cmd)) {
+  if (
+    !targetUser ||
+    targetName === user.username ||
+    (isUserModo && isTargetProtected) ||
+    (isUserAdmin && isTargetProtected && !isPrivilegedAdmin)
+  ) {
+    socket.emit('error message', 'Action non autorisée ou utilisateur invalide.');
+    return;
+  }
+}
+
+switch (cmd) {
+  case '/ban':
+    bannedUsers.add(targetName);
+    io.to(targetUser.id).emit('banned');
+    io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
+    setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(), 1500);
+    io.to(channel).emit('server message', `${targetName} a été banni par ${user.username}.`);
+    console.log(`⚠️ ${user.username} a banni ${targetName}`);
+    break;
+
+  case '/kick':
+    io.to(targetUser.id).emit('kicked');
+    io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
+    setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(), 1500);
+    io.to(channel).emit('server message', `${targetName} a été expulsé par ${user.username}.`);
+    console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
+    break;
+
+  case '/mute':
+    mutedUsers.add(targetName);
+    io.to(targetUser.id).emit('muted');
+    io.to(channel).emit('server message', `${targetName} a été muté par ${user.username}.`);
+    console.log(`⚠️ ${user.username} a muté ${targetName}`);
+    break;
+
+  case '/unmute':
+    if (mutedUsers.has(targetName)) {
+      mutedUsers.delete(targetName);
+      io.to(targetUser.id).emit('unmuted');
+      io.to(channel).emit('server message', `${targetName} a été unmuté par ${user.username}.`);
+      console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
+    } else {
+      socket.emit('error message', `${targetName} n'est pas muté.`);
+    }
+    break;
+
+  case '/unban':
+    if (bannedUsers.has(targetName)) {
+      bannedUsers.delete(targetName);
+    } else {
+      socket.emit('error message', `${targetName} n'est pas banni.`);
+    }
+    break;
+
+  case '/addmodo':
+  case '/addadmin': {
+    const isTrueAdmin = modData.admins.includes(user.username);
+    if (!isTrueAdmin) return socket.emit('error message', 'Seuls les vrais admins peuvent ajouter un rôle.');
+    if (!targetUser) return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
+
+    const isAdmin = cmd === '/addadmin';
+    const setName = isAdmin ? tempMods.admins : tempMods.modos;
+    const removeName = isAdmin ? tempMods.modos : tempMods.admins;
+
+    if (!setName.has(targetName)) {
+      setName.add(targetName);
+      removeName.delete(targetName);
+
+      users[targetName].role = isAdmin ? 'admin' : 'modo';
+      io.to(channel).emit('role update', { username: targetName, newRole: users[targetName].role });
+      fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+
+      const roleLabel = isAdmin ? 'administrateur' : 'modérateur';
+      io.to(channel).emit('server message', `${targetName} est maintenant ${roleLabel} temporaire (ajouté par ${user.username}).`);
+      console.log(`⚠️ ${user.username} a promu ${targetName} comme ${roleLabel} temporaire.`);
+    } else {
+      socket.emit('error message', `${targetName} est déjà ${isAdmin ? 'admin' : 'modo'}.`);
+    }
+    break;
+  }
+
+  case '/removemodo':
+  case '/removeadmin': {
+    if (!isPrivilegedAdmin)
+      return socket.emit('error message', "Seul un admin authentifié peut retirer un rôle.");
+
+    if (!targetUser)
+      return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
+
+    if (targetName === user.username)
+      return socket.emit('error message', 'Impossible de retirer votre propre rôle.');
+
+    const wasAdmin = tempMods.admins.has(targetName) || modData.admins.includes(targetName);
+    const wasModo = tempMods.modos.has(targetName) || modData.modos.includes(targetName);
+
+    tempMods.admins.delete(targetName);
+    tempMods.modos.delete(targetName);
+
+    modData.admins = modData.admins.filter(u => u !== targetName);
+    modData.modos = modData.modos.filter(u => u !== targetName);
+    fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+
+    if (users[targetName]) {
+      users[targetName].role = 'user';
+      io.to(channel).emit('role update', { username: targetName, newRole: 'user' });
+
+      if (wasModo) {
+        io.to(channel).emit('server message', `${user.username} a retiré le rôle modérateur de ${targetName}.`);
+        console.log(`⚠️ ${user.username} a retiré le rôle modo à ${targetName}.`);
+      }
+
+      if (wasAdmin) {
+        io.to(channel).emit('server message', `${user.username} a retiré le rôle administrateur de ${targetName}.`);
+        console.log(`⚠️ ${user.username} a retiré le rôle admin à ${targetName}.`);
+      }
+
+      if (users[targetName].invisible) {
+        users[targetName].invisible = false;
+        const targetSocketId = users[targetName].id;
+        const targetChannel = userChannels[targetSocketId];
+
+        if (roomUsers[targetChannel]) {
+          const u = roomUsers[targetChannel].find(u => u.id === targetSocketId);
+          if (u) u.invisible = false;
+        }
+
+        io.to(targetSocketId).emit('server message', "Vous avez perdu votre rôle, le mode invisible est désactivé.");
+        emitUserList(targetChannel);
+        updateRoomUserCounts();
       }
     }
-
-    switch (cmd) {
-      case '/ban':
-        bannedUsers.add(targetName);
-        io.to(targetUser.id).emit('banned');
-        io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
-        setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(), 1500);
-        io.emit('server message', `${targetName} a été banni par ${user.username}.`);
-        console.log(`⚠️ ${user.username} a banni ${targetName}`);
-        break;
-
-
-      case '/kick':
-        io.to(targetUser.id).emit('kicked');
-        io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
-        setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(), 1500);
-        io.emit('server message', `${targetName} a été expulsé par ${user.username}.`);
-        console.log(`⚠️ ${user.username} a expulsé ${targetName}`);
-        break;
-
-
-      case '/mute':
-        mutedUsers.add(targetName);
-        io.to(targetUser.id).emit('muted');
-        io.emit('server message', `${targetName} a été muté par ${user.username}.`);
-        console.log(`⚠️ ${user.username} a muté ${targetName}`);
-        break;
-
-
-      case '/unmute':
-        if (mutedUsers.has(targetName)) {
-          mutedUsers.delete(targetName);
-          io.to(targetUser.id).emit('unmuted');
-          io.emit('server message', `${targetName} a été unmuté par ${user.username}.`);
-          console.log(`⚠️ ${user.username} a unmuté ${targetName}`);
-        } else {
-          socket.emit('error message', `${targetName} n'est pas muté.`);
-        }
-        break;
-
-
-      case '/unban':
-        if (bannedUsers.has(targetName)) {
-          bannedUsers.delete(targetName);
-        } else {
-          socket.emit('error message', `${targetName} n'est pas banni.`);
-        }
-        break;
-
-      case '/addmodo':
-      case '/addadmin':
-        const isTrueAdmin = modData.admins.includes(user.username);
-        if (!isTrueAdmin) return socket.emit('error message', 'Seuls les vrais admins peuvent ajouter un rôle.');
-        if (!targetUser) return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
-
-        const isAdmin = cmd === '/addadmin';
-        const setName = isAdmin ? tempMods.admins : tempMods.modos;
-        const removeName = isAdmin ? tempMods.modos : tempMods.admins;
-
-        if (!setName.has(targetName)) {
-          setName.add(targetName);
-          removeName.delete(targetName);
-          
-          users[targetName].role = isAdmin ? 'admin' : 'modo';
-          io.emit('role update', { username: targetName, newRole: users[targetName].role });
-          fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-
-          const roleLabel = isAdmin ? 'administrateur' : 'modérateur';
-          io.emit('server message', `${targetName} est maintenant ${roleLabel} temporaire (ajouté par ${user.username}).`);
-          console.log(`⚠️ ${user.username} a promu ${targetName} comme ${roleLabel} temporaire.`);
-        } else {
-          socket.emit('error message', `${targetName} est déjà ${isAdmin ? 'admin' : 'modo'}.`);
-        }
-        break;
-
-
-case '/removemodo':
-case '/removeadmin':
-  if (!isPrivilegedAdmin)
-    return socket.emit('error message', "Seul un admin authentifié peut retirer un rôle.");
-
-  if (!targetUser)
-    return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
-
-  if (targetName === user.username)
-    return socket.emit('error message', 'Impossible de retirer votre propre rôle.');
-
-  // Vérifie s’il avait un rôle
-  const wasAdmin = tempMods.admins.has(targetName) || modData.admins.includes(targetName);
-  const wasModo = tempMods.modos.has(targetName) || modData.modos.includes(targetName);
-
-  // Supprimer des rôles temporaires
-  tempMods.admins.delete(targetName);
-  tempMods.modos.delete(targetName);
-
-  // Supprimer des rôles persistants
-  modData.admins = modData.admins.filter(u => u !== targetName);
-  modData.modos = modData.modos.filter(u => u !== targetName);
-  fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
-
-  // Mise à jour du rôle
-  if (users[targetName]) {
-    users[targetName].role = 'user';
-    io.emit('role update', { username: targetName, newRole: 'user' });
-
-    if (wasModo) {
-      io.emit('server message', `${user.username} a retiré le rôle modérateur de ${targetName}.`);
-      console.log(`⚠️ ${user.username} a retiré le rôle modo à ${targetName}.`);
-    }
-
-    if (wasAdmin) {
-      io.emit('server message', `${user.username} a retiré le rôle administrateur de ${targetName}.`);
-      console.log(`⚠️ ${user.username} a retiré le rôle admin à ${targetName}.`);
-    }
-
-    // Gestion du mode invisible si perte de rôle
-    if (users[targetName].invisible) {
-      users[targetName].invisible = false;
-      const targetSocketId = users[targetName].id;
-      const targetChannel = userChannels[targetSocketId];
-
-      const userInRoom = roomUsers[targetChannel]?.find(u => u.id === targetSocketId);
-      if (userInRoom) userInRoom.invisible = false;
-
-      io.to(targetSocketId).emit('server message', "Vous avez perdu votre rôle, le mode invisible est désactivé.");
-      emitUserList(targetChannel);
-      updateRoomUserCounts();
-    }
+    break;
   }
-  break;
+
+
 
 
 
