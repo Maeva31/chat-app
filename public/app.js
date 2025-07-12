@@ -1615,7 +1615,8 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       e.stopPropagation();
     });
   }
-
+  
+  
   function showModerationMenu(targetUsername, x, y) {
   const existing = document.getElementById('moderation-menu');
   if (existing) existing.remove();
@@ -1667,11 +1668,25 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     item.addEventListener('mouseout', () => item.style.background = 'transparent');
 
     item.addEventListener('click', () => {
-      showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} ${targetUsername} ?`, () => {
-        socket.emit('moderation', { cmd, target: targetUsername });
-        menu.remove();
-      });
-    });
+  showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} ${targetUsername} ?`, () => {
+    if (cmd === 'promote') {
+      socket.emit('chat message', `/addmodo ${targetUsername}`);
+    } else if (cmd === 'addadmin') {
+      socket.emit('chat message', `/addadmin ${targetUsername}`);
+    } else if (cmd === 'removemodo') {
+      socket.emit('chat message', `/removemodo ${targetUsername}`);
+    } else if (cmd === 'removeadmin') {
+      socket.emit('chat message', `/removeadmin ${targetUsername}`);
+    } else {
+      // ✅ toutes les autres commandes passent ici
+      socket.emit('chat message', `/${cmd} ${targetUsername}`);
+    }
+
+    menu.remove();
+  });
+});
+
+
 
     menu.appendChild(item);
   });
@@ -1733,6 +1748,11 @@ document.addEventListener('click', (e) => {
 
   showModerationMenu(username, x, y);
 });
+
+function moderateUser(action, target) {
+  socket.emit('moderation', { action, target });
+}
+
 
 
   // Modération - Banni, kické, mute, unmute, erreurs, pas de permission
@@ -2163,4 +2183,3 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     chatMessages.scrollTop = chatMessages.scrollHeight;
   }, 0);
 });
- 
