@@ -485,7 +485,8 @@ socket.on('chat message', (msg) => {
 
       case '/addmodo':
       case '/addadmin':
-        if (!isUserAdmin) return socket.emit('error message', 'Seuls les admins peuvent ajouter un rôle.');
+        const isTrueAdmin = modData.admins.includes(user.username);
+        if (!isTrueAdmin) return socket.emit('error message', 'Seuls les vrais admins peuvent ajouter un rôle.');
         if (!targetUser) return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
 
         const isAdmin = cmd === '/addadmin';
