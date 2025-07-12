@@ -936,6 +936,7 @@ case '/unban':
     }
   });
 
+  // Menu modération
   socket.on('moderation', ({ cmd, target }) => {
   const sender = Object.values(users).find(u => u.id === socket.id);
   const targetUser = users[target];
