@@ -1,4 +1,3 @@
-
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -361,24 +360,13 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
     }
 
     // Récupérer invisible si l'utilisateur existait déjà
+    const invisibleFromClient = invisible === true;
+    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
+
     const role = getUserRole(username);
-
-// Si l'utilisateur existait déjà, on garde son invisibilité. Sinon, invisible = false par défaut.
-const prevInvisible = users[username]?.invisible ?? false;
-
-const userData = {
-  username,
-  gender,
-  age,
-  id: socket.id,
-  role,
-  banned: false,
-  muted: false,
-  invisible: prevInvisible
-};
-
-users[username] = userData;
-
+    // Par défaut invisible = false, sauf si récupéré
+    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
+    users[username] = userData;
 
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
@@ -947,73 +935,6 @@ case '/unban':
       socket.emit('chat history', messageHistory[roomName]);
     }
   });
-
-  // Menu modération
-  socket.on('moderation', ({ cmd, target }) => {
-  const sender = Object.values(users).find(u => u.id === socket.id);
-  const targetUser = users[target];
-  if (!sender || !targetUser) return;
-
-  const isSenderAdmin = sender.role === 'admin';
-  const isSenderModo = sender.role === 'modo';
-  const isTargetProtected = targetUser.role === 'admin' || targetUser.role === 'modo';
-  const isPrivilegedAdmin = isSenderAdmin && passwords[sender.username];
-
-  // Vérifications rôles
-  if (!isSenderAdmin && !isSenderModo) return;
-  if (cmd === 'ban' || cmd === 'promote') {
-    if (!isPrivilegedAdmin) return socket.emit('error message', 'Seuls les admins authentifiés peuvent utiliser cette commande.');
-  }
-  if (isSenderModo && isTargetProtected) return socket.emit('error message', 'Impossible : cible protégée.');
-
-  switch (cmd) {
-    case 'kick':
-      io.to(targetUser.id).emit('kicked');
-      io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
-      setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(true), 1500);
-      break;
-
-    case 'ban':
-      bannedUsers.add(target);
-      io.to(targetUser.id).emit('banned');
-      io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
-      setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(true), 1500);
-      break;
-
-    case 'mute':
-      mutedUsers.add(target);
-      io.to(targetUser.id).emit('muted');
-      break;
-
-    case 'unmute':
-      mutedUsers.delete(target);
-      io.to(targetUser.id).emit('unmuted');
-      break;
-
-    case 'promote':
-      if (!tempMods.modos.has(target)) {
-        tempMods.modos.add(target);
-        if (users[target]) users[target].role = 'modo';
-        io.emit('role update', { username: target, newRole: 'modo' });
-        io.emit('server message', `${target} a été promu modérateur.`);
-      }
-      break;
-  }
-
-  // Message système dans le salon
-  const channel = userChannels[targetUser.id];
-  if (channel) {
-    io.to(channel).emit('chat message', {
-      username: 'Système',
-      message: `${target} a été ${cmd} par ${sender.username}`,
-      timestamp: new Date().toISOString(),
-      channel
-    });
-  }
-
-  console.log(`🛠️ Modération : ${sender.username} → ${cmd} ${target}`);
-});
-
 
  socket.on('disconnect', () => {
   const user = Object.values(users).find(u => u.id === socket.id);
