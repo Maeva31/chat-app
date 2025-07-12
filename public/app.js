@@ -1694,6 +1694,70 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   }
 });
 
+socket.on('role update', ({ username, newRole }) => {
+  if (userCache[username]) {
+    userCache[username].role = newRole;
+  }
+
+  if (users) {
+    users = users.map(u => u.username === username ? { ...u, role: newRole } : u);
+  }
+
+  updateUserList(users); // met à jour la couleur dans la liste d’utilisateurs
+
+  // ✅ Mise à jour des couleurs dans les fenêtres privées
+  const container = document.getElementById('private-chat-container');
+  if (container) {
+    container.querySelectorAll('.private-chat-window').forEach(win => {
+      const winUsername = win.dataset.user;
+      if (winUsername === username) {
+        const title = win.querySelector('.private-chat-header span.username-text');
+        if (title) {
+          title.style.color =
+            newRole === 'admin' ? usernameColors.admin :
+            newRole === 'modo' ? usernameColors.modo :
+            getUsernameColor(userCache[username]?.gender || 'non spécifié');
+        }
+
+        const icon = win.querySelector('.private-chat-header img');
+        if (icon) icon.remove(); // Supprime l’ancien icône
+
+        const newIcon = createRoleIcon(newRole);
+        if (newIcon) {
+          const header = win.querySelector('.private-chat-header');
+          header.insertBefore(newIcon, title); // Ajoute le nouvel icône
+        }
+      }
+    });
+  }
+});
+
+socket.on('user list', list => {
+  users = list;
+  userCache = {};
+  list.forEach(u => {
+    userCache[u.username] = u;
+  });
+  updateUserList(list);
+
+  // Mise à jour couleurs fenêtres privées
+  const container = document.getElementById('private-chat-container');
+  if (container) {
+    container.querySelectorAll('.private-chat-window').forEach(win => {
+      const username = win.dataset.user;
+      const user = userCache[username];
+      const title = win.querySelector('.private-chat-header span.username-text');
+      if (user && title) {
+        title.style.color = user.role === 'admin'
+          ? usernameColors.admin
+          : user.role === 'modo'
+          ? usernameColors.modo
+          : getUsernameColor(user.gender);
+      }
+    });
+  }
+});
+
 
 
   // --- Fin ajout mode invisible ---
