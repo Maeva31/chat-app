@@ -1,3 +1,4 @@
+
 import express from 'express';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -360,13 +361,24 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
     }
 
     // Récupérer invisible si l'utilisateur existait déjà
-    const invisibleFromClient = invisible === true;
-    const prevInvisible = users[username]?.invisible ?? invisibleFromClient;
-
     const role = getUserRole(username);
-    // Par défaut invisible = false, sauf si récupéré
-    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
-    users[username] = userData;
+
+// Si l'utilisateur existait déjà, on garde son invisibilité. Sinon, invisible = false par défaut.
+const prevInvisible = users[username]?.invisible ?? false;
+
+const userData = {
+  username,
+  gender,
+  age,
+  id: socket.id,
+  role,
+  banned: false,
+  muted: false,
+  invisible: prevInvisible
+};
+
+users[username] = userData;
+
 
     let channel = userChannels[socket.id] || defaultChannel;
     socket.join(channel);
