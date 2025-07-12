@@ -496,6 +496,7 @@ socket.on('chat message', (msg) => {
         if (!setName.has(targetName)) {
           setName.add(targetName);
           removeName.delete(targetName);
+          
           users[targetName].role = isAdmin ? 'admin' : 'modo';
           io.emit('role update', { username: targetName, newRole: users[targetName].role });
           fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
@@ -509,42 +510,62 @@ socket.on('chat message', (msg) => {
         break;
 
 
-        case '/removemodo':
-        case '/removeadmin':
-          if (!isPrivilegedAdmin) return socket.emit('error message', "Seul un admin authentifié peut retirer un rôle.");
-          if (!targetUser) return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
-          if (targetName === user.username) return socket.emit('error message', 'Impossible de retirer votre propre rôle.');
+case '/removemodo':
+case '/removeadmin':
+  if (!isPrivilegedAdmin)
+    return socket.emit('error message', "Seul un admin authentifié peut retirer un rôle.");
 
-          const toRemove = cmd === '/removeadmin' ? tempMods.admins : tempMods.modos;
-          toRemove.delete(targetName);
-          modData.admins = modData.admins.filter(u => u !== targetName);
-          modData.modos = modData.modos.filter(u => u !== targetName);
-          fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
+  if (!targetUser)
+    return socket.emit('error message', `Utilisateur ${targetName || '?'} introuvable.`);
 
-          if (users[targetName]) {
-            users[targetName].role = 'user';
-            io.emit('role update', { username: targetName, newRole: 'user' });
+  if (targetName === user.username)
+    return socket.emit('error message', 'Impossible de retirer votre propre rôle.');
 
-            const roleRemoved = cmd === '/removeadmin' ? 'administrateur' : 'modérateur';
-            io.emit('server message', `${user.username} a retiré le rôle ${roleRemoved} de ${targetName}.`);
-            console.log(`⚠️ ${user.username} a retiré ${roleRemoved} à ${targetName}.`);
+  // Vérifie s’il avait un rôle
+  const wasAdmin = tempMods.admins.has(targetName) || modData.admins.includes(targetName);
+  const wasModo = tempMods.modos.has(targetName) || modData.modos.includes(targetName);
 
-            if (users[targetName].invisible) {
-              users[targetName].invisible = false;
-              const targetSocketId = users[targetName].id;
-              const targetChannel = userChannels[targetSocketId];
+  // Supprimer des rôles temporaires
+  tempMods.admins.delete(targetName);
+  tempMods.modos.delete(targetName);
 
-              if (roomUsers[targetChannel]) {
-                const u = roomUsers[targetChannel].find(u => u.id === targetSocketId);
-                if (u) u.invisible = false;
-              }
+  // Supprimer des rôles persistants
+  modData.admins = modData.admins.filter(u => u !== targetName);
+  modData.modos = modData.modos.filter(u => u !== targetName);
+  fs.writeFileSync('moderators.json', JSON.stringify(modData, null, 2));
 
-              io.to(targetSocketId).emit('server message', "Vous avez perdu votre rôle, le mode invisible est désactivé.");
-              emitUserList(targetChannel);
-              updateRoomUserCounts();
-            }
-          }
-          break;
+  // Mise à jour du rôle
+  if (users[targetName]) {
+    users[targetName].role = 'user';
+    io.emit('role update', { username: targetName, newRole: 'user' });
+
+    if (wasModo) {
+      io.emit('server message', `${user.username} a retiré le rôle modérateur de ${targetName}.`);
+      console.log(`⚠️ ${user.username} a retiré le rôle modo à ${targetName}.`);
+    }
+
+    if (wasAdmin) {
+      io.emit('server message', `${user.username} a retiré le rôle administrateur de ${targetName}.`);
+      console.log(`⚠️ ${user.username} a retiré le rôle admin à ${targetName}.`);
+    }
+
+    // Gestion du mode invisible si perte de rôle
+    if (users[targetName].invisible) {
+      users[targetName].invisible = false;
+      const targetSocketId = users[targetName].id;
+      const targetChannel = userChannels[targetSocketId];
+
+      const userInRoom = roomUsers[targetChannel]?.find(u => u.id === targetSocketId);
+      if (userInRoom) userInRoom.invisible = false;
+
+      io.to(targetSocketId).emit('server message', "Vous avez perdu votre rôle, le mode invisible est désactivé.");
+      emitUserList(targetChannel);
+      updateRoomUserCounts();
+    }
+  }
+  break;
+
+
 
 
       case '/invisible':
