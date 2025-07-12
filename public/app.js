@@ -913,9 +913,18 @@ if (usernameInput && passwordInput) {
   }
 
   // Variables pour mode invisible
-  const invisibleBtn = document.getElementById('toggle-invisible-btn');
-  let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
-  let isAdmin = false;
+// Déclare invisibleMode en premier (chargement depuis localStorage)
+let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
+let isAdmin = false;
+
+// Ensuite seulement, ajoute le listener du bouton
+document.getElementById('toggle-invisible').addEventListener('click', () => {
+  invisibleMode = !invisibleMode;
+  localStorage.setItem('invisibleMode', invisibleMode);
+  showBanner(invisibleMode ? 'Mode invisible activé' : 'Mode invisible désactivé', 'info');
+});
+
+
 
   // Mets à jour le bouton (texte + couleur)
   function updateInvisibleButton() {
