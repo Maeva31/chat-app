@@ -990,14 +990,10 @@ if (usernameInput && passwordInput) {
     `;
 
     const roleIconSpan = li.querySelector('.role-icon');
-    const genderSquare = li.querySelector('.gender-square');
-    const usernameSpan = li.querySelector('.username-span');
-
-    // Icone de rôle
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
-    // Clique sur le pseudo = mentionner
+    const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${username} `;
@@ -1006,21 +1002,10 @@ if (usernameInput && passwordInput) {
       selectedUser = username;
     });
 
-    // Clique sur âge = modération
-    const me = userCache[localStorage.getItem('username')];
-    const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
-    if (isModOrAdmin) {
-      genderSquare.style.cursor = 'pointer';
-      genderSquare.addEventListener('click', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        showModerationMenu(username, e.pageX, e.pageY);
-      });
-    }
-
     userList.appendChild(li);
   });
 }
+
 
 function showModerationMenu(targetUsername, x, y) {
   const existing = document.getElementById('moderation-menu');
@@ -1121,23 +1106,6 @@ function showConfirmBox(message, onConfirm) {
 }
 
 
-
-
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
-
-    const usernameSpan = li.querySelector('.username-span');
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
-
-    userList.appendChild(li);
-  });
-}
 
 
 function createRoleIcon(role) {
