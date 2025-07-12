@@ -918,6 +918,7 @@ let invisibleMode = localStorage.getItem('invisibleMode') === 'true' || false;
 let isAdmin = false;
 
 // Ensuite seulement, ajoute le listener du bouton
+const invisibleBtn = document.getElementById('toggle-invisible-btn');
 document.getElementById('toggle-invisible-btn').addEventListener('click', () => {
   invisibleMode = !invisibleMode;
   localStorage.setItem('invisibleMode', invisibleMode);
