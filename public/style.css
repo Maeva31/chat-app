@@ -1098,3 +1098,11 @@ button:focus {
   margin-right: 4px;
   animation: pulseWizz 1s ease;
 }
+
+.moderation-context-menu {
+  animation: fadeIn 0.15s ease;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
