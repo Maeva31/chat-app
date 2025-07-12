@@ -1656,16 +1656,16 @@ if (!isRealAdmin && isTargetProtected) return;
     boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
   });
 
-  const actions = [
-    { label: '👢 Kick', cmd: 'kick' },
-    { label: '🚫 Ban', cmd: 'ban', adminOnly: true },
-    { label: '🔇 Mute', cmd: 'mute' },
-    { label: '🔊 Unmute', cmd: 'unmute' },
-    { label: '👑 Promote Modo', cmd: 'promote', adminOnly: true },
-    { label: '🟡 Add Admin', cmd: 'addadmin', adminOnly: true },
-    { label: '❌ Remove Modo', cmd: 'removemodo', adminOnly: true },
-    { label: '❌ Remove Admin', cmd: 'removeadmin', adminOnly: true }
-  ];
+    const actions = [
+      { label: '👢 Kick', cmd: 'kick' },
+      { label: '🚫 Ban', cmd: 'ban', adminOnly: true },
+      { label: '🔇 Mute', cmd: 'mute' },
+      { label: '🔊 Unmute', cmd: 'unmute' },
+      { label: '👑 Ajouté Modo', cmd: 'promote', adminOnly: true },
+      { label: '🟡 Ajouté Admin', cmd: 'addadmin', adminOnly: true },
+      { label: '❌ Retirer Modo/Admin', cmd: ['removemodo', 'removeadmin'], adminOnly: true }
+    ];
+
 
   actions.forEach(({ label, cmd, adminOnly }) => {
     if (adminOnly && !isAdmin) return;
@@ -1678,24 +1678,30 @@ if (!isRealAdmin && isTargetProtected) return;
     item.addEventListener('mouseover', () => item.style.background = '#444');
     item.addEventListener('mouseout', () => item.style.background = 'transparent');
 
-    item.addEventListener('click', () => {
-  showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} ${targetUsername} ?`, () => {
-    if (cmd === 'promote') {
-      socket.emit('chat message', `/addmodo ${targetUsername}`);
-    } else if (cmd === 'addadmin') {
-      socket.emit('chat message', `/addadmin ${targetUsername}`);
-    } else if (cmd === 'removemodo') {
-      socket.emit('chat message', `/removemodo ${targetUsername}`);
-    } else if (cmd === 'removeadmin') {
-      socket.emit('chat message', `/removeadmin ${targetUsername}`);
-    } else {
-      // ✅ toutes les autres commandes passent ici
-      socket.emit('chat message', `/${cmd} ${targetUsername}`);
-    }
+item.addEventListener('click', () => {
+  const cmdMap = {
+    promote: 'addmodo',
+    addadmin: 'addadmin',
+    removemodo: 'removemodo',
+    removeadmin: 'removeadmin',
+    kick: 'kick',
+    ban: 'ban',
+    mute: 'mute',
+    unmute: 'unmute'
+  };
 
+  const cmds = Array.isArray(cmd) ? cmd : [cmd];
+  const cmdList = cmds.map(c => cmdMap[c]?.toUpperCase() || c.toUpperCase()).join(' + ');
+
+  showConfirmBox(`Es-tu sûr de vouloir ${cmdList} pour ${targetUsername} ?`, () => {
+    cmds.forEach(c => {
+      const realCommand = cmdMap[c] || c;
+      socket.emit('chat message', `/${realCommand} ${targetUsername}`);
+    });
     menu.remove();
   });
 });
+
 
 
 
