@@ -966,20 +966,21 @@ if (usernameInput && passwordInput) {
   }
 
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
+ function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
 
-  const me = userCache[localStorage.getItem('username')];
+  const myUsername = localStorage.getItem('username');
+  const me = users.find(u => u.username === myUsername);
   const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
 
-    // 🔴 Ne pas afficher les utilisateurs en mode invisible sauf si c'est moi ou un admin/modo
-    if (user?.invisible && (!isModOrAdmin && username !== me?.username)) return;
+    // ✅ Filtrage des invisibles
+    if (user?.invisible && (!isModOrAdmin && username !== myUsername)) return;
 
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
@@ -996,6 +997,20 @@ if (usernameInput && passwordInput) {
       <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
     `;
 
+    const roleIconSpan = li.querySelector('.role-icon');
+    const icon = createRoleIcon(role);
+    if (icon) roleIconSpan.appendChild(icon);
+
+    const usernameSpan = li.querySelector('.username-span');
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+      selectedUser = username;
+    });
+
+    // ✅ Ajout du menu modération si admin/modo
     const genderSquare = li.querySelector('.gender-square');
     if (isModOrAdmin) {
       genderSquare.style.cursor = 'pointer';
