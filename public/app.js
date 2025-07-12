@@ -972,8 +972,15 @@ if (usernameInput && passwordInput) {
   userList.innerHTML = '';
   if (!Array.isArray(users)) return;
 
+  const me = userCache[localStorage.getItem('username')];
+  const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
+
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
+
+    // 🔴 Ne pas afficher les utilisateurs en mode invisible sauf si c'est moi ou un admin/modo
+    if (user?.invisible && (!isModOrAdmin && username !== me?.username)) return;
+
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
@@ -990,9 +997,6 @@ if (usernameInput && passwordInput) {
     `;
 
     const genderSquare = li.querySelector('.gender-square');
-    const me = userCache[localStorage.getItem('username')];
-    const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
-
     if (isModOrAdmin) {
       genderSquare.style.cursor = 'pointer';
       genderSquare.addEventListener('click', (e) => {
@@ -1005,6 +1009,7 @@ if (usernameInput && passwordInput) {
     userList.appendChild(li);
   });
 }
+
 
 function showModerationMenu(targetUsername, x, y) {
   const existing = document.getElementById('moderation-menu');
