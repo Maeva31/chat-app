@@ -980,7 +980,8 @@ if (usernameInput && passwordInput) {
     const username = user?.username || 'Inconnu';
 
     // ✅ Filtrage des invisibles
-    if (user?.invisible && (!isModOrAdmin && username !== myUsername)) return;
+    if (user && user.invisible === true && !isModOrAdmin && username !== myUsername) return;
+
 
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
