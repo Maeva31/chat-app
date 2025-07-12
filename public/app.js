@@ -979,9 +979,11 @@ if (usernameInput && passwordInput) {
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
 
-    // ✅ Filtrage des invisibles
-    if (user && user.invisible === true && !isModOrAdmin && username !== myUsername) return;
+    // 🔍 Log de débogage
+    console.log(`👤 ${username} — invisible:`, user.invisible);
 
+    // ✅ Filtrage strict des invisibles
+    if (user && user.invisible === true && !isModOrAdmin && username !== myUsername) return;
 
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
@@ -1011,9 +1013,8 @@ if (usernameInput && passwordInput) {
       selectedUser = username;
     });
 
-    // ✅ Ajout du menu modération si admin/modo
-    const genderSquare = li.querySelector('.gender-square');
     if (isModOrAdmin) {
+      const genderSquare = li.querySelector('.gender-square');
       genderSquare.style.cursor = 'pointer';
       genderSquare.addEventListener('click', (e) => {
         e.preventDefault();
@@ -1025,6 +1026,7 @@ if (usernameInput && passwordInput) {
     userList.appendChild(li);
   });
 }
+
 
 
 function showModerationMenu(targetUsername, x, y) {
