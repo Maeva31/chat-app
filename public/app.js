@@ -993,6 +993,7 @@ if (usernameInput && passwordInput) {
     const icon = createRoleIcon(role);
     if (icon) roleIconSpan.appendChild(icon);
 
+    // Clic pseudo pour insérer mention dans input
     const usernameSpan = li.querySelector('.username-span');
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
@@ -1002,9 +1003,24 @@ if (usernameInput && passwordInput) {
       selectedUser = username;
     });
 
+    // Clic sur carré d’âge pour menu modération (si admin/modo)
+    const genderSquare = li.querySelector('.gender-square');
+    const me = userCache[localStorage.getItem('username')];
+    const isModOrAdmin = me && (me.role === 'admin' || me.role === 'modo');
+
+    if (isModOrAdmin) {
+      genderSquare.style.cursor = 'pointer';
+      genderSquare.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        showModerationMenu(username, e.pageX, e.pageY);
+      });
+    }
+
     userList.appendChild(li);
   });
 }
+
 
 
 function showModerationMenu(targetUsername, x, y) {
