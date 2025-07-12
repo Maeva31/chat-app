@@ -936,6 +936,72 @@ case '/unban':
     }
   });
 
+  socket.on('moderation', ({ cmd, target }) => {
+  const sender = Object.values(users).find(u => u.id === socket.id);
+  const targetUser = users[target];
+  if (!sender || !targetUser) return;
+
+  const isSenderAdmin = sender.role === 'admin';
+  const isSenderModo = sender.role === 'modo';
+  const isTargetProtected = targetUser.role === 'admin' || targetUser.role === 'modo';
+  const isPrivilegedAdmin = isSenderAdmin && passwords[sender.username];
+
+  // Vérifications rôles
+  if (!isSenderAdmin && !isSenderModo) return;
+  if (cmd === 'ban' || cmd === 'promote') {
+    if (!isPrivilegedAdmin) return socket.emit('error message', 'Seuls les admins authentifiés peuvent utiliser cette commande.');
+  }
+  if (isSenderModo && isTargetProtected) return socket.emit('error message', 'Impossible : cible protégée.');
+
+  switch (cmd) {
+    case 'kick':
+      io.to(targetUser.id).emit('kicked');
+      io.to(targetUser.id).emit('redirect', 'https://maevakonnect.fr');
+      setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(true), 1500);
+      break;
+
+    case 'ban':
+      bannedUsers.add(target);
+      io.to(targetUser.id).emit('banned');
+      io.to(targetUser.id).emit('redirect', 'https://banned.maevakonnect.fr');
+      setTimeout(() => io.sockets.sockets.get(targetUser.id)?.disconnect(true), 1500);
+      break;
+
+    case 'mute':
+      mutedUsers.add(target);
+      io.to(targetUser.id).emit('muted');
+      break;
+
+    case 'unmute':
+      mutedUsers.delete(target);
+      io.to(targetUser.id).emit('unmuted');
+      break;
+
+    case 'promote':
+      if (!tempMods.modos.has(target)) {
+        tempMods.modos.add(target);
+        if (users[target]) users[target].role = 'modo';
+        io.emit('role update', { username: target, newRole: 'modo' });
+        io.emit('server message', `${target} a été promu modérateur.`);
+      }
+      break;
+  }
+
+  // Message système dans le salon
+  const channel = userChannels[targetUser.id];
+  if (channel) {
+    io.to(channel).emit('chat message', {
+      username: 'Système',
+      message: `${target} a été ${cmd} par ${sender.username}`,
+      timestamp: new Date().toISOString(),
+      channel
+    });
+  }
+
+  console.log(`🛠️ Modération : ${sender.username} → ${cmd} ${target}`);
+});
+
+
  socket.on('disconnect', () => {
   const user = Object.values(users).find(u => u.id === socket.id);
   if (user) {
