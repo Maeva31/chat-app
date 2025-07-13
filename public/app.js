@@ -1957,7 +1957,22 @@ const defaultStyle = {
 
 function loadSavedStyle() {
   const saved = localStorage.getItem('chatStyle');
-  return saved ? JSON.parse(saved) : defaultStyle;
+  if (saved) {
+    const style = JSON.parse(saved);
+    return {
+      color: style.color || '#fff',
+      bold: style.bold || false,
+      italic: style.italic || false,
+      font: style.font || 'Arial'  // ← ✅ ajout police par défaut
+    };
+  } else {
+    return {
+      color: '#fff',
+      bold: false,
+      italic: false,
+      font: 'Arial'
+    };
+  }
 }
 
 function saveStyle(style) {
@@ -1965,25 +1980,40 @@ function saveStyle(style) {
 }
 
 function applyStyleToInput(style) {
-  const mainInput = document.getElementById('message-input');
-  const channelInput = document.getElementById('new-channel-name');
+  const inputs = [
+    document.getElementById('message-input'),
+    document.getElementById('new-channel-name')
+  ];
 
-  [mainInput, channelInput].forEach(input => {
+  inputs.forEach(input => {
     if (!input) return;
+
     input.style.color = style.color;
     input.style.fontWeight = style.bold ? 'bold' : 'normal';
     input.style.fontStyle = style.italic ? 'italic' : 'normal';
     input.style.fontFamily = style.font;
+    input.style.padding = '0 12px';
+    input.style.boxSizing = 'border-box';
+
+    // 🎯 Hauteur spécifique par champ
+    if (input.id === 'message-input') {
+      input.style.height = '45px';
+      input.style.lineHeight = '48px';
+    } else if (input.id === 'new-channel-name') {
+      input.style.height = '30px';
+      input.style.lineHeight = '40px';
+    }
   });
 }
 
-
+// 🟢 Chargement au démarrage
 const currentStyle = loadSavedStyle();
 styleColor.value = currentStyle.color;
 styleBold.checked = currentStyle.bold;
 styleItalic.checked = currentStyle.italic;
-styleFont.value = currentStyle.font;
+styleFont.value = currentStyle.font || 'Arial'; // 🔒 au cas où DOM n'aime pas undefined
 applyStyleToInput(currentStyle);
+
 
 // 🎨 toggle menu
 colorTextBtn.addEventListener('click', (e) => {
