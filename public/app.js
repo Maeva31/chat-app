@@ -42,6 +42,22 @@ function updateAllInputStyles() {
   });
 }
 
+const newChannelInput = document.getElementById('new-channel-name');
+
+if (newChannelInput) {
+  newChannelInput.addEventListener('input', () => {
+    // Supprimer les espaces en direct
+    newChannelInput.value = newChannelInput.value.replace(/\s/g, '');
+
+    // Limiter à 10 caractères max
+    if (newChannelInput.value.length > 10) {
+      newChannelInput.value = newChannelInput.value.slice(0, 10);
+    }
+  });
+}
+
+ applyStyleToInput(newChannelInput, currentStyle);
+
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
@@ -1535,8 +1551,8 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     const input = document.getElementById('new-channel-name');
     if (!input) return;
     const newRoom = input.value.trim();
-    if (!newRoom || newRoom.length > 20 || /\s/.test(newRoom)) {
-      showBanner("Nom de salon invalide : pas d'espaces, max 20 caractères.", 'error');
+    if (!newRoom || newRoom.length > 10 || /\s/.test(newRoom)) {
+      showBanner("Nom de salon invalide : pas d'espaces, max 10 caractères.", 'error');
       return;
     }
     socket.emit('createRoom', newRoom);
@@ -1949,13 +1965,18 @@ function saveStyle(style) {
 }
 
 function applyStyleToInput(style) {
-  const input = document.getElementById('message-input');
-  if (!input) return;
-  input.style.color = style.color;
-  input.style.fontWeight = style.bold ? 'bold' : 'normal';
-  input.style.fontStyle = style.italic ? 'italic' : 'normal';
-  input.style.fontFamily = style.font;
+  const mainInput = document.getElementById('message-input');
+  const channelInput = document.getElementById('new-channel-name');
+
+  [mainInput, channelInput].forEach(input => {
+    if (!input) return;
+    input.style.color = style.color;
+    input.style.fontWeight = style.bold ? 'bold' : 'normal';
+    input.style.fontStyle = style.italic ? 'italic' : 'normal';
+    input.style.fontFamily = style.font;
+  });
 }
+
 
 const currentStyle = loadSavedStyle();
 styleColor.value = currentStyle.color;
