@@ -1,5 +1,13 @@
 const socket = io();
 
+let users = [];
+let userCache = {};
+let currentRoom = 'Général'; 
+let bannedRooms = [];
+let roomOwners = {};
+let roomModerators = {};
+
+
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
   if (!container) return;
@@ -61,8 +69,6 @@ if (newChannelInput) {
 
 
    // ── 1) Stockage et mise à jour de la liste users ──
-  let users = [];
-  let userCache = {};
 
   socket.on('user list', list => {
     users = list;
@@ -862,6 +868,247 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
 
 
 
+// Message système dans le chat avec l'heure
+let bannerLocked = false;
+
+// Affichage messages système dans le chat
+socket.on('server message', msg => {
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  const chatContainer = document.querySelector('.chat-messages');
+  if (!chatContainer) return;
+
+  const messageDiv = document.createElement('div');
+  messageDiv.className = 'system-message';
+
+  const text = typeof msg === 'string' ? msg : (msg.text || JSON.stringify(msg));
+
+  messageDiv.innerHTML = `<span class="time" style="font-style: italic; color: grey;">${time}</span> ${text}`;
+
+  chatContainer.appendChild(messageDiv);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+});
+
+// Gestion de la bannière d’erreur
+socket.on('error message', msg => {
+  const banner = document.getElementById('error-banner');
+  const bannerText = document.getElementById('error-banner-text');
+  if (!banner || !bannerText) return;
+
+  bannerText.textContent = msg;
+  banner.style.display = 'block';
+
+  // Ne pas cacher automatiquement si banni d’un salon
+  if (!msg.includes("banni du salon")) {
+    setTimeout(() => {
+      banner.style.display = 'none';
+    }, 4000);
+  }
+});
+
+
+// Fonction appelée quand on change de salon
+function hideErrorBannerOnRoomChange(roomName) {
+  const banner = document.getElementById('error-banner');
+  if (banner) banner.style.display = 'none';
+  bannerLocked = false;
+
+  // Affiche dans le chat qu’on a changé de salon
+  const chatContainer = document.querySelector('.chat-messages');
+  if (chatContainer) {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const messageDiv = document.createElement('div');
+    messageDiv.className = 'system-message';
+    messageDiv.innerHTML = `<span class="time" style="font-style: italic; color: grey;">${time}</span> Vous avez rejoint le salon #${roomName}`;
+    chatContainer.appendChild(messageDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+}
+
+socket.on('kicked from room', room => {
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const chatContainer = document.querySelector('.chat-messages');
+  if (chatContainer) {
+    const div = document.createElement('div');
+    div.className = 'system-message';
+    div.innerHTML = `<span class="time" style="font-style: italic; color: grey;">${time}</span> Vous avez été expulsé du salon #${room}`;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  // Bannières persistantes
+  const banner = document.getElementById('error-banner');
+  const bannerText = document.getElementById('error-banner-text');
+  if (banner && bannerText) {
+    bannerText.textContent = `Tu as été expulsé du salon ${room}`;
+    banner.style.display = 'block';
+    bannerLocked = true;
+  }
+});
+
+socket.on('banned from room', room => {
+  const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const chatContainer = document.querySelector('.chat-messages');
+  if (chatContainer) {
+    const div = document.createElement('div');
+    div.className = 'system-message';
+    div.innerHTML = `<span class="time" style="font-style: italic; color: grey;">${time}</span> Vous avez été banni du salon #${room}`;
+    chatContainer.appendChild(div);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+
+  // Bannières persistantes
+  const banner = document.getElementById('error-banner');
+  const bannerText = document.getElementById('error-banner-text');
+  if (banner && bannerText) {
+    bannerText.textContent = `Tu as été banni du salon ${room}`;
+    banner.style.display = 'block';
+    bannerLocked = true;
+  }
+});
+
+socket.on('redirect to room', roomName => {
+  const roomElement = Array.from(document.querySelectorAll('.channel'))
+    .find(el => el.textContent.toLowerCase().includes(roomName.toLowerCase()));
+  
+  if (roomElement) {
+    roomElement.click(); // ✅ Simule un clic pour changer visuellement de salon
+  }
+
+  // Optionnel : notifier dans le chat
+  const chatContainer = document.querySelector('.chat-messages');
+  if (chatContainer) {
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const msgDiv = document.createElement('div');
+    msgDiv.className = 'system-message';
+    msgDiv.innerHTML = `<span class="time" style="font-style: italic; color: grey;">${time}</span> Vous avez été redirigé vers #${roomName}`;
+    chatContainer.appendChild(msgDiv);
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+  }
+});
+
+document.querySelectorAll('.channel').forEach(channelEl => {
+  channelEl.addEventListener('click', () => {
+    const channelName = channelEl.textContent.trim().replace(/^#/, '').split('┊')[1].trim();
+
+    // Demande de rejoindre le salon
+    socket.emit('join room', channelName);
+  });
+});
+socket.on('error message', msg => {
+  const banner = document.getElementById('error-banner');
+  const bannerText = document.getElementById('error-banner-text');
+
+  if (!banner || !bannerText) return;
+
+  bannerText.textContent = msg;
+  banner.style.display = 'block';
+
+  // Si l'utilisateur est banni, ne pas laisser le salon s'ouvrir
+  if (msg.toLowerCase().includes("tu as été banni du salon")) {
+  const match = msg.match(/tu as été banni du salon (.+?)\./i);
+  const bannedRoom = match ? match[1] : null;
+
+  if (bannedRoom) {
+    // Annule l'affichage du salon interdit
+    document.querySelectorAll('.channel').forEach(c => c.classList.remove('selected'));
+
+    // Récupère ton salon actuel et redirige
+    if (currentRoom) {
+      const currentEl = Array.from(document.querySelectorAll('.channel'))
+        .find(el => el.textContent.toLowerCase().includes(currentRoom.toLowerCase()));
+      if (currentEl) currentEl.click(); // ✅ Retour visuel au bon salon
+    }
+
+    // Et affiche une bannière si ce n'est pas déjà le cas
+    const banner = document.getElementById('error-banner');
+    const bannerText = document.getElementById('error-banner-text');
+    if (banner && bannerText) {
+      bannerText.textContent = `Tu es banni du salon ${bannedRoom}`;
+      banner.style.display = 'block';
+    }
+  }
+}
+
+
+  // Affiche la bannière pendant 4s (ou laisse ouverte selon ton besoin)
+  setTimeout(() => {
+    banner.style.display = 'none';
+  }, 4000);
+});
+socket.on('room joined', roomName => {
+  currentRoom = roomName;
+
+  // Met à jour l’UI (titre, messages, liste d’utilisateurs, etc.)
+  document.querySelectorAll('.channel').forEach(c => {
+    const text = c.textContent.toLowerCase();
+    if (text.includes(roomName.toLowerCase())) c.classList.add('selected');
+    else c.classList.remove('selected');
+  });
+
+  // Efface l'ancien chat
+  const chatContainer = document.querySelector('.chat-messages');
+  if (chatContainer) chatContainer.innerHTML = '';
+
+  // Demande historique si tu l'as
+  socket.emit('request history', roomName);
+});
+
+socket.on('force leave room', (roomName) => {
+  if (currentRoom === roomName) {
+    // Empêche affichage visuel du salon interdit
+    alert(`Tu es banni du salon ${roomName}. Redirection...`);
+    socket.emit('joinRoom', 'Général');
+  }
+});
+
+
+socket.on('error message', msg => {
+  if (msg.startsWith('Tu es banni du salon')) {
+    // alert(msg); ✅ Supprimé, plus d'alerte
+
+    // Extraire le nom du salon
+    const match = msg.match(/Tu es banni du salon (.+?) /);
+    const bannedRoom = match ? match[1] : null;
+
+    if (bannedRoom) {
+      const roomElement = document.querySelector(`.room-item[data-room="${bannedRoom}"]`);
+      if (roomElement) {
+        roomElement.classList.add('room-banned');
+        roomElement.style.opacity = '0.4';
+        roomElement.style.pointerEvents = 'none';
+        roomElement.title = "Vous êtes banni de ce salon";
+      }
+    }
+  }
+});
+
+socket.on('banned rooms list', rooms => {
+  bannedRooms = rooms || [];
+  updateRoomButtons(); // appelle ta fonction qui construit les boutons
+});
+
+function updateRoomButtons() {
+  const list = document.getElementById('channel-list');
+  if (!list) return;
+
+  list.innerHTML = '';
+
+  savedRooms.forEach(room => {
+    const li = document.createElement('li');
+    li.className = 'channel';
+    li.dataset.room = room;
+    li.textContent = `# ${room}`;
+
+    if (bannedRooms.includes(room)) {
+      li.style.opacity = '0.4';
+      li.style.pointerEvents = 'none';
+      li.title = 'Tu es banni de ce salon';
+    }
+
+    list.appendChild(li);
+  });
+}
 
 
 
@@ -981,8 +1228,17 @@ if (usernameInput && passwordInput) {
     return text.replace(/^#?\s*[\p{L}\p{N}\p{S}\p{P}\s]*/u, '').trim();
   }
 
+  // ⚠️ Assure-toi que tu as bien roomOwner et roomModerators définis !
+if (typeof roomOwner !== 'undefined' && roomModerators instanceof Set) {
+  users.forEach(u => {
+    u.isRoomOwner = (u.username === roomOwner);
+    u.isRoomModo = roomModerators.has(u.username);
+  });
+}
+
+
   // Met à jour la liste des utilisateurs affichée
-  function updateUserList(users) {
+function updateUserList(users) {
   const userList = document.getElementById('users');
   if (!userList) return;
   userList.innerHTML = '';
@@ -993,23 +1249,94 @@ if (usernameInput && passwordInput) {
     const age = user?.age || '?';
     const gender = user?.gender || 'non spécifié';
     const role = user?.role || 'user';
+    const isRoomOwner = user?.isRoomOwner === true;
+    const isRoomModo = user?.isRoomModo === true;
 
     const li = document.createElement('li');
     li.classList.add('user-item');
 
-    const color = role === 'admin' ? 'red' : role === 'modo' ? 'limegreen' : getUsernameColor(gender);
+    let color = getUsernameColor(gender);
+    if (role === 'admin') color = 'red';
+    else if (role === 'modo') color = 'limegreen';
+    if (isRoomOwner) color = '#a020f0'; // violet
+    else if (isRoomModo) color = '#cc66ff'; // mauve
 
-    li.innerHTML = `
-      <span class="role-icon"></span> 
-      <div class="gender-square" style="background-color: ${getUsernameColor(gender)}">${age}</div>
-      <span class="username-span clickable-username" style="color: ${color}" title="${role === 'admin' ? 'Admin' : role === 'modo' ? 'Modérateur' : ''}">${username}</span>
-    `;
+    const badgeWrapper = document.createElement('div');
+    badgeWrapper.classList.add('badge-wrapper');
 
-    const roleIconSpan = li.querySelector('.role-icon');
-    const icon = createRoleIcon(role);
-    if (icon) roleIconSpan.appendChild(icon);
+    const genderSquare = document.createElement('div');
+    genderSquare.classList.add('gender-square');
+    genderSquare.style.backgroundColor = getUsernameColor(gender);
+    genderSquare.textContent = age;
 
-    const usernameSpan = li.querySelector('.username-span');
+    if (isRoomOwner) {
+      const icon = document.createElement('img');
+      icon.src = '/diamond.ico';
+      icon.alt = 'Créateur';
+      icon.title = 'Créateur du salon';
+      Object.assign(icon.style, {
+        width: '20px', height: '18px', marginRight: '2px', verticalAlign: '-2px'
+      });
+      badgeWrapper.appendChild(icon);
+    } else if (isRoomModo) {
+      const icon = document.createElement('img');
+      icon.src = '/favicon.ico';
+      icon.alt = 'Modérateur';
+      icon.title = 'Modérateur du salon';
+      Object.assign(icon.style, {
+        width: '20px', height: '20px', marginRight: '2px', verticalAlign: '-2px'
+      });
+      badgeWrapper.appendChild(icon);
+    }
+
+    badgeWrapper.appendChild(genderSquare);
+
+    // 🎯 CLIC SUR L’ÂGE → ouvrir menu modération si autorisé
+    genderSquare.addEventListener('click', (e) => {
+      e.preventDefault();
+      const targetUser = username;
+
+      const myUsername = localStorage.getItem('username');
+      const currentRoom = localStorage.getItem('currentRoom');
+      const me = userCache[myUsername];
+
+      const isAdmin = me?.role === 'admin';
+      const isModo = me?.role === 'modo';
+      const isGlobalMod = isAdmin || isModo;
+      const isRoomOwner = roomOwners?.[currentRoom] === myUsername;
+      const isRoomModo = roomModerators?.[currentRoom]?.has(myUsername);
+
+      const canShowMenu = isGlobalMod || isRoomOwner || isRoomModo;
+
+      if (!canShowMenu) return;
+
+      const rect = genderSquare.getBoundingClientRect();
+      const x = rect.left + window.scrollX;
+      const y = rect.bottom + window.scrollY;
+
+      showModerationMenu(targetUser, x, y);
+    });
+
+    const usernameSpan = document.createElement('span');
+    usernameSpan.classList.add('username-span', 'clickable-username');
+    usernameSpan.textContent = username;
+    usernameSpan.style.color = color;
+
+    if (role === 'admin') usernameSpan.title = 'Admin';
+    else if (role === 'modo') usernameSpan.title = 'Modérateur';
+    else if (isRoomOwner) usernameSpan.title = 'Créateur du salon';
+    else if (isRoomModo) usernameSpan.title = 'Modérateur du salon';
+
+    if (!isRoomOwner && !isRoomModo) {
+      const roleIconSpan = document.createElement('span');
+      roleIconSpan.classList.add('role-icon');
+      const icon = createRoleIcon(role);
+      if (icon) roleIconSpan.appendChild(icon);
+      li.appendChild(roleIconSpan);
+    }
+
+    li.append(badgeWrapper, usernameSpan);
+
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${username} `;
@@ -1021,6 +1348,10 @@ if (usernameInput && passwordInput) {
     userList.appendChild(li);
   });
 }
+
+
+
+
 
 
 function createRoleIcon(role) {
@@ -1633,26 +1964,28 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   }
   
   
-  function showModerationMenu(targetUsername, x, y) {
+function showModerationMenu(targetUsername, x, y) {
   const existing = document.getElementById('moderation-menu');
   if (existing) existing.remove();
 
   const myUsername = localStorage.getItem('username');
-  if (targetUsername === myUsername) return; // 🔒 Ne pas ouvrir le menu sur soi-même
+  if (targetUsername === myUsername) return;
+
   const me = userCache[myUsername];
-  if (!me || (me.role !== 'admin' && me.role !== 'modo')) return;
-
   const target = userCache[targetUsername];
-if (!target) return;
+  if (!me || !target) return;
 
-// 🔒 Ne pas autoriser un /addadmin à ouvrir le menu sur un vrai admin/modo
-const isRealAdmin = me.isRealAdmin === true;
-const isTargetProtected = target.isRealAdmin === true;
-
-if (!isRealAdmin && isTargetProtected) return;
-
+  const isRealAdmin = me.isRealAdmin === true;
+  const isTargetProtected = target.isRealAdmin === true;
+  if (!isRealAdmin && isTargetProtected) return;
 
   const isAdmin = me.role === 'admin';
+  const isModo = me.role === 'modo';
+  const isGlobalMod = isAdmin || isModo;
+
+  const currentRoom = localStorage.getItem('currentRoom');
+  const isRoomOwner = currentRoom && roomOwners[currentRoom] === myUsername;
+  const isRoomModo = currentRoom && roomModerators[currentRoom]?.has(myUsername);
 
   const menu = document.createElement('div');
   menu.id = 'moderation-menu';
@@ -1667,21 +2000,36 @@ if (!isRealAdmin && isTargetProtected) return;
     borderRadius: '6px',
     padding: '6px 0',
     fontSize: '14px',
-    minWidth: '160px',
+    minWidth: '180px',
     zIndex: '9999',
     boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
   });
 
-    const actions = [
+  const actions = [];
+
+  // Commandes globales (uniquement pour les vrais modos globaux)
+  if (isGlobalMod) {
+    actions.push(
       { label: '👢 Kick', cmd: 'kick' },
       { label: '🚫 Ban', cmd: 'ban', adminOnly: true },
       { label: '🔇 Mute', cmd: 'mute' },
       { label: '🔊 Unmute', cmd: 'unmute' },
-      { label: '👑 Ajouté Modo', cmd: 'promote', adminOnly: true },
-      { label: '🟡 Ajouté Admin', cmd: 'addadmin', adminOnly: true },
+      { label: '👑 Ajouter Modo', cmd: 'addmodo', adminOnly: true },
+      { label: '🟡 Ajouter Admin', cmd: 'addadmin', adminOnly: true },
       { label: '❌ Retirer Modo/Admin', cmd: ['removemodo', 'removeadmin'], adminOnly: true }
-    ];
+    );
+  }
 
+  // Commandes locales (uniquement pour les créateurs ou modos du salon, pas les modos globaux)
+  if (!isGlobalMod && (isRoomOwner || isRoomModo)) {
+    actions.push(
+      { label: '👢 Kick (Salon)', cmd: 'kickroom' },
+      { label: '🚫 Ban (Salon)', cmd: 'banroom' },
+      { label: '♻️ Unban (Salon)', cmd: 'unbanroom' },
+      { label: '👑 Ajouter Modo (Salon)', cmd: 'addroommodo', roomOnly: true },
+      { label: '❌ Retirer Modo (Salon)', cmd: 'removeroommodo', roomOnly: true }
+    );
+  }
 
   actions.forEach(({ label, cmd, adminOnly }) => {
     if (adminOnly && !isAdmin) return;
@@ -1694,32 +2042,34 @@ if (!isRealAdmin && isTargetProtected) return;
     item.addEventListener('mouseover', () => item.style.background = '#444');
     item.addEventListener('mouseout', () => item.style.background = 'transparent');
 
-item.addEventListener('click', () => {
-  const cmdMap = {
-    promote: 'addmodo',
-    addadmin: 'addadmin',
-    removemodo: 'removemodo',
-    removeadmin: 'removeadmin',
-    kick: 'kick',
-    ban: 'ban',
-    mute: 'mute',
-    unmute: 'unmute'
-  };
+    item.addEventListener('click', () => {
+      const cmdMap = {
+        kick: 'kick',
+        ban: 'ban',
+        mute: 'mute',
+        unmute: 'unmute',
+        addmodo: 'addmodo',
+        addadmin: 'addadmin',
+        removemodo: 'removemodo',
+        removeadmin: 'removeadmin',
+        kickroom: 'kickroom',
+        banroom: 'banroom',
+        unbanroom: 'unbanroom',
+        addroommodo: 'addroommodo',
+        removeroommodo: 'removeroommodo'
+      };
 
-  const cmds = Array.isArray(cmd) ? cmd : [cmd];
-  const cmdList = cmds.map(c => cmdMap[c]?.toUpperCase() || c.toUpperCase()).join(' + ');
+      const cmds = Array.isArray(cmd) ? cmd : [cmd];
+      const cmdList = cmds.map(c => cmdMap[c]?.toUpperCase()).join(' + ');
 
-  showConfirmBox(`Es-tu sûr de vouloir ${cmdList} pour ${targetUsername} ?`, () => {
-    cmds.forEach(c => {
-      const realCommand = cmdMap[c] || c;
-      socket.emit('chat message', `/${realCommand} ${targetUsername}`);
+      showConfirmBox(`Es-tu sûr de vouloir ${cmdList} pour ${targetUsername} ?`, () => {
+        cmds.forEach(c => {
+          const realCommand = cmdMap[c] || c;
+          socket.emit('chat message', `/${realCommand} ${targetUsername}`);
+        });
+        menu.remove();
+      });
     });
-    menu.remove();
-  });
-});
-
-
-
 
     menu.appendChild(item);
   });
@@ -1734,6 +2084,11 @@ item.addEventListener('click', () => {
   };
   setTimeout(() => document.addEventListener('click', close), 10);
 }
+
+
+
+
+
 
 function showConfirmBox(message, onConfirm) {
   const overlay = document.createElement('div');
@@ -1771,20 +2126,30 @@ document.addEventListener('click', (e) => {
   const usernameSpan = userItem.querySelector('.username-span');
   if (!usernameSpan) return;
 
-  const username = usernameSpan.textContent.trim();
-  const userObj = userCache[username];
-  if (!userObj) return;
+  const targetUsername = usernameSpan.textContent.trim();
+  const target = userCache[targetUsername];
+  if (!target) return;
+
+  const myUsername = localStorage.getItem('username');
+  const me = userCache[myUsername];
+  if (!me) return;
 
   const rect = ageBox.getBoundingClientRect();
   const x = rect.right + window.scrollX;
   const y = rect.top + window.scrollY;
 
-  showModerationMenu(username, x, y);
+  const isGlobal = me.role === 'admin' || me.role === 'modo';
+  const isOwner = window.roomOwners?.[currentRoom] === myUsername;
+  const isRoomModo = window.roomModerators?.[currentRoom]?.has(myUsername);
+
+  if (isGlobal) {
+    showModerationMenu(targetUsername, x, y);
+  } else if (isOwner || isRoomModo) {
+    showRoomModerationMenu(targetUsername, x, y);
+  }
 });
 
-function moderateUser(action, target) {
-  socket.emit('moderation', { action, target });
-}
+
 
 
 
@@ -1814,6 +2179,8 @@ function moderateUser(action, target) {
   socket.on('no permission', () => {
     showBanner("Vous n'avez pas les droits pour utiliser les commandes.", "error");
   });
+
+  
 
   // --- Début ajout mode invisible ---
 
@@ -1929,6 +2296,84 @@ socket.on('user list', list => {
     });
   }
 });
+
+
+// Modération salon 
+function showRoomModerationMenu(targetUsername, x, y) {
+  const existing = document.getElementById('moderation-menu');
+  if (existing) existing.remove();
+
+  const myUsername = localStorage.getItem('username');
+  if (targetUsername === myUsername) return;
+  const me = userCache[myUsername];
+  if (!me) return;
+
+  const isOwner = window.roomOwners?.[currentRoom] === myUsername;
+  const isRoomModo = window.roomModerators?.[currentRoom]?.has(myUsername);
+  if (!isOwner && !isRoomModo) return;
+
+  const target = userCache[targetUsername];
+  if (!target) return;
+
+  const menu = document.createElement('div');
+  menu.id = 'moderation-menu';
+  menu.classList.add('moderation-context-menu');
+  Object.assign(menu.style, {
+    position: 'absolute',
+    left: x + 'px',
+    top: y + 'px',
+    background: '#222',
+    color: '#fff',
+    border: '1px solid #555',
+    borderRadius: '6px',
+    padding: '6px 0',
+    fontSize: '14px',
+    minWidth: '160px',
+    zIndex: '9999',
+    boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
+  });
+
+  const actions = [
+    { label: '👢 Kick Salon', cmd: 'kickroom' },
+    { label: '🚫 Ban Salon', cmd: 'banroom' },
+    { label: '✅ Unban Salon', cmd: 'unbanroom' },
+    ...(isOwner ? [
+      { label: '🛡️ Ajouter Modo Salon', cmd: 'addroommodo' },
+      { label: '❌ Retirer Modo Salon', cmd: 'removeroommodo' }
+    ] : [])
+  ];
+
+  actions.forEach(({ label, cmd }) => {
+    const item = document.createElement('div');
+    item.textContent = label;
+    item.style.padding = '6px 12px';
+    item.style.cursor = 'pointer';
+
+    item.addEventListener('mouseover', () => item.style.background = '#444');
+    item.addEventListener('mouseout', () => item.style.background = 'transparent');
+
+    item.addEventListener('click', () => {
+      showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} pour ${targetUsername} ?`, () => {
+        socket.emit('chat message', `/${cmd} ${targetUsername}`);
+        menu.remove();
+      });
+    });
+
+    menu.appendChild(item);
+  });
+
+  document.body.appendChild(menu);
+
+  const close = (e) => {
+    if (!menu.contains(e.target)) {
+      menu.remove();
+      document.removeEventListener('click', close);
+    }
+  };
+  setTimeout(() => document.addEventListener('click', close), 10);
+}
+
+
 
 
 
