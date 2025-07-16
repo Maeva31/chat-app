@@ -1399,28 +1399,43 @@ function updateUserList(users) {
       showIcon = true;
     } else {
       // Pas protégé → icône de genre
-      if (gender === 'Homme') {
-        icon.src = '/male.ico';
-        icon.alt = 'Homme';
-        icon.title = 'Homme';
-        showIcon = true;
-      } else if (gender === 'Femme') {
-        icon.src = '/female.ico';
-        icon.alt = 'Femme';
-        icon.title = 'Femme';
-        showIcon = true;
-      } else if (gender === 'Trans') {
-        icon.src = '/trans.ico';
-        icon.alt = 'Trans';
-        icon.title = 'Trans';
-        showIcon = true;
-      }
+if (gender === 'Homme') {
+  icon.src = '/male.ico';
+  icon.alt = 'Homme';
+  icon.title = 'Homme';
+  showIcon = true;
 
+  Object.assign(icon.style, {
+    width: '21px',
+    height: '20px',
+    verticalAlign: '-1px'
+  });
 
-      Object.assign(icon.style, {
-        width: '18px', height: '18px', marginRight: '3px', verticalAlign: '-1px'
-      });
-    }
+} else if (gender === 'Femme') {
+  icon.src = '/female.ico';
+  icon.alt = 'Femme';
+  icon.title = 'Femme';
+  showIcon = true;
+
+  Object.assign(icon.style, {
+    width: '21px',
+    height: '20px',
+    verticalAlign: '-1px'
+  });
+
+} else if (gender === 'Trans') {
+  icon.src = '/trans.ico';
+  icon.alt = 'Trans';
+  icon.title = 'Trans';
+  showIcon = true;
+
+  Object.assign(icon.style, {
+    width: '21px',
+    height: '20px',
+    verticalAlign: '-1px'
+  });
+}
+}
 
     if (showIcon) badgeWrapper.appendChild(icon);
 
