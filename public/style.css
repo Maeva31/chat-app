@@ -608,9 +608,11 @@ button:focus {
 .user-item .role-icon svg {
   max-width: 20px;
   max-height: 18px;
-  display: block;
+  display: inline-block;
   margin-right: 5px;
+  vertical-align: middle; /* ou -2px si tu veux descendre un peu */
 }
+
 
 /* Carré âge, largeur fixe */
 .user-item .age-square {
