@@ -1215,27 +1215,8 @@ socket.on('banned rooms list', rooms => {
   updateRoomButtons(); // appelle ta fonction qui construit les boutons
 });
 
-function updateRoomButtons() {
-  const list = document.getElementById('channel-list');
-  if (!list) return;
 
-  list.innerHTML = '';
 
-  savedRooms.forEach(room => {
-    const li = document.createElement('li');
-    li.className = 'channel';
-    li.dataset.room = room;
-    li.textContent = `# ${room}`;
-
-    if (bannedRooms.includes(room)) {
-      li.style.opacity = '0.4';
-      li.style.pointerEvents = 'none';
-      li.title = 'Tu es banni de ce salon';
-    }
-
-    list.appendChild(li);
-  });
-}
 
 
 
@@ -2092,7 +2073,41 @@ socket.on('chat message', msg => {
   // Emoji Picker
   const emojiButton = document.getElementById('emoji-button');
   const emojiPicker = document.getElementById('emoji-picker');
-  const messageInput = document.getElementById('message-input');
+  const sendBtn = document.getElementById('send-button');
+const messageInput = document.getElementById('message-input');
+
+if (sendBtn && messageInput) {
+  sendBtn.addEventListener('click', () => {
+    const message = messageInput.value.trim();
+    if (message !== '') {
+      const username = localStorage.getItem('username') || 'Anonyme';
+      const gender = localStorage.getItem('gender') || 'non spécifié';
+      const age = localStorage.getItem('age') || '';
+      const role = localStorage.getItem('role') || ''; // si tu stockes le rôle
+      const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      socket.emit('chat message', {
+        username,
+        gender,
+        age,
+        role,
+        message,
+        time
+      });
+
+      messageInput.value = '';
+    }
+  });
+
+  // Entrée pour envoyer
+  messageInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      sendBtn.click();
+    }
+  });
+}
+
 
   if (emojiPicker && emojiButton && messageInput) {
     emojiPicker.style.display = 'none';
