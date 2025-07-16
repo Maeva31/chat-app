@@ -190,9 +190,13 @@ buttonGroup.style.gap = '6px'; // petit espacement
 const minimizeBtn = document.createElement('button');
 minimizeBtn.textContent = '🗕';
 minimizeBtn.title = 'Réduire';
+
 minimizeBtn.onclick = () => {
-  win.classList.toggle('minimized');
+  const minimized = win.classList.toggle('minimized');
+  minimizeBtn.textContent = minimized ? '🗖' : '🗕';
+  minimizeBtn.title = minimized ? 'Restaurer' : 'Réduire';
 };
+
 
 const closeBtn = document.createElement('button');
 closeBtn.textContent = '×';
