@@ -230,7 +230,7 @@ if (genderIcon) title.appendChild(genderIcon);
 // ⬛ Ajout du carré d’âge avec couleur selon genre
 if (age) {
   const ageBox = document.createElement('span');
-  ageBox.textContent = age; // 👈 plus de crochets ici
+  ageBox.textContent = age;
   ageBox.style.backgroundColor = usernameColors[gender] || '#444';
   ageBox.style.color = '#fff';
   ageBox.style.borderRadius = '4px';
