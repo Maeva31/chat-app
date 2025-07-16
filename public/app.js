@@ -174,13 +174,17 @@ function openPrivateChat(username, role, gender) {
   }
 
   // ✅ Récupération des infos utilisateur si manquantes
-  if (!role || !gender) {
-    const cachedUser = userCache[username];
-    if (cachedUser) {
-      role = role || cachedUser.role;
-      gender = gender || cachedUser.gender;
-    }
+let age; 
+
+if (!role || !gender || !age) {
+  const cachedUser = userCache[username];
+  if (cachedUser) {
+    role = role || cachedUser.role;
+    gender = gender || cachedUser.gender;
+    age = cachedUser.age;
   }
+}
+
 
   // ✅ Création de la fenêtre
   win = document.createElement('div');
@@ -223,8 +227,26 @@ const genderIcon = !isProtected ? createGenderIcon(gender) : null;
 if (roleIcon) title.appendChild(roleIcon);
 if (genderIcon) title.appendChild(genderIcon);
 
+// ⬛ Ajout du carré d’âge avec couleur selon genre
+if (age) {
+  const ageBox = document.createElement('span');
+  ageBox.textContent = age; // 👈 plus de crochets ici
+  ageBox.style.backgroundColor = usernameColors[gender] || '#444';
+  ageBox.style.color = '#fff';
+  ageBox.style.borderRadius = '4px';
+  ageBox.style.padding = '2px 6px';
+  ageBox.style.fontSize = '12px';
+  ageBox.style.fontWeight = 'bold';
+  ageBox.style.fontFamily = 'monospace';
+  ageBox.style.marginRight = '2px';
+  title.appendChild(ageBox);
+}
+
+
 // Ajout du pseudo
 title.appendChild(document.createTextNode(username));
+
+
 
 // ✅ Groupe pour les deux boutons à droite
 const buttonGroup = document.createElement('div');
