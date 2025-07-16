@@ -102,7 +102,7 @@ if (newChannelInput) {
     modo: 'limegreen',
     Homme: 'dodgerblue',
     Femme: '#f0f',
-    Autre: '#0ff',
+    Trans: '#EE82EE',
     'non spécifié': '#aaa',
     default: '#aaa'
   };
@@ -1201,7 +1201,7 @@ if (usernameInput && passwordInput) {
   const genderColors = {
     Homme: 'dodgerblue',
     Femme: '#f0f',
-    Autre: '#0ff',
+    Trans: '#EE82EE',
     'non spécifié': '#aaa',
     default: '#aaa'
   };
@@ -1341,12 +1341,13 @@ function updateUserList(users) {
         icon.alt = 'Femme';
         icon.title = 'Femme';
         showIcon = true;
-      } else if (gender === 'Autre') {
+      } else if (gender === 'Trans') {
         icon.src = '/trans.ico';
-        icon.alt = 'Autre';
-        icon.title = 'Autre';
+        icon.alt = 'Trans';
+        icon.title = 'Trans';
         showIcon = true;
       }
+
 
       Object.assign(icon.style, {
         width: '18px', height: '18px', marginRight: '3px', verticalAlign: '-1px'
@@ -1797,17 +1798,18 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
-  socket.once('username accepted', ({ username, gender, age }) => {
+socket.once('username accepted', ({ username, gender, age }) => {
+  if (gender === 'Autre') gender = 'Trans'; // ✅ Correction ici
+
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
   localStorage.setItem('age', age);
 
   document.getElementById('myModal').style.display = 'none';
- const chatWrapper = document.getElementById('chat-wrapper');
-if (chatWrapper) chatWrapper.style.display = 'block';
-else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
-
+  const chatWrapper = document.getElementById('chat-wrapper');
+  if (chatWrapper) chatWrapper.style.display = 'block';
+  else console.warn('⚠️ Élément #chat-wrapper introuvable');
 
   socket.emit('joinRoom', currentChannel);
   selectChannelInUI(currentChannel);
@@ -1815,6 +1817,7 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
   hasSentUserInfo = true;
   initialLoadComplete = true;
 });
+
 
 
   // Écouteurs socket divers
@@ -2359,12 +2362,20 @@ socket.on('role update', ({ username, newRole }) => {
 });
 
 socket.on('user list', list => {
+  // Corriger tous les genres "Autre" en "Trans"
+  list.forEach(u => {
+    if (u.gender === 'Autre') u.gender = 'Trans';
+  });
+
   users = list;
   userCache = {};
   list.forEach(u => {
     userCache[u.username] = u;
   });
+
   updateUserList(list);
+
+
 
   // Mise à jour couleurs fenêtres privées
   const container = document.getElementById('private-chat-container');
