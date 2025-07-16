@@ -200,15 +200,20 @@ app.post('/upload', upload.single('file'), (req, res) => {
 };
 
 
-    if (!messageHistory[room]) messageHistory[room] = [];
-    messageHistory[room].push(message);
-    if (messageHistory[room].length > MAX_HISTORY) messageHistory[room].shift();
+if (!messageHistory[room]) messageHistory[room] = [];
 
-    io.to(room).emit('chat message', message);
+const messageObject = {
+  username: username,
+  message: message,
+  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+};
 
-    res.json({ success: true, url: fileUrl });
-  } else {
-    res.status(400).json({ error: 'Informations utilisateur ou salon manquantes ou invalides' });
+messageHistory[room].push(messageObject);
+if (messageHistory[room].length > MAX_HISTORY) messageHistory[room].shift();
+
+io.to(room).emit('chat message', messageObject); // ✅ on envoie un vrai objet !
+
+res.json({ success: true, url: fileUrl });
   }
 });
 
