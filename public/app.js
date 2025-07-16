@@ -1815,6 +1815,15 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     messages.forEach(addMessageToChat);
   });
 
+  socket.on('chat message', addMessageToChat);
+  socket.on('server message', (msg) => {
+  const message = {
+    username: 'Système',
+    message: msg,
+    timestamp: new Date().toISOString()
+  };
+  addMessageToChat(message);
+});
 
   socket.on('user list', updateUserList);
 
