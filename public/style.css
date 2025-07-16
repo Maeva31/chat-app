@@ -891,8 +891,10 @@ button:focus {
 
 /* Fenêtre privée */
 .private-chat-window {
-  pointer-events: auto; /* Permet d’interagir avec la fenêtre */
-  /* background: #1a0055; */
+  position: absolute; /* ✅ Indispensable pour gérer le z-index */
+  z-index: 1000;       /* z-index initial */
+  pointer-events: auto;
+
   border: 2px solid #8e44ad;
   border-radius: 10px;
   box-shadow: 0 0 10px #8e44ad;
@@ -902,9 +904,10 @@ button:focus {
   font-family: Arial, sans-serif;
   user-select: none;
 
-  max-height: 300px;  /* Hauteur max fixée pour limiter la taille */
-  width: 535px;       /* Largeur fixe, ajustable */
+  max-height: 300px;
+  width: 535px;
 }
+
 
 /* Header de la fenêtre privée */
 .private-chat-header {
@@ -933,9 +936,28 @@ button:focus {
   transition: color 0.2s ease;
 }
 
+
 .private-chat-header button:hover {
   color: #ff8888;
 }
+
+.private-chat-window.minimized {
+  height: auto !important;
+  max-height: none !important;
+  overflow: hidden;
+  resize: none;
+}
+
+.private-chat-window.minimized .private-chat-body,
+.private-chat-window.minimized .private-chat-input {
+  display: none !important;
+}
+
+.private-chat-body,
+.private-chat-input {
+  transition: all 0.2s ease;
+}
+
 
 /* Corps de la fenêtre (zone des messages) */
 .private-chat-body {
@@ -1180,3 +1202,4 @@ button:focus {
   align-items: center;
   gap: 2px;
 }
+
