@@ -1808,22 +1808,33 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
     modalError.style.display = 'block';
   });
 
-  socket.on('chat history', (messages) => {
-    const chatMessages = document.getElementById('chat-messages');
-    if (!chatMessages) return;
-    chatMessages.innerHTML = '';
-    messages.forEach(addMessageToChat);
-  });
+socket.on('chat history', messages => {
+  const chatMessages = document.getElementById('chat-messages');
+  if (!chatMessages) return;
 
-  socket.on('chat message', addMessageToChat);
-  socket.on('server message', (msg) => {
-  const message = {
-    username: 'Système',
-    message: msg,
-    timestamp: new Date().toISOString()
-  };
-  addMessageToChat(message);
+  chatMessages.innerHTML = '';
+
+  messages.forEach(msg => {
+    if (msg.username === 'Système' || msg.type === 'system') {
+      const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      appendSystemMessage(msg.message || msg.content, time);
+    } else {
+      addMessageToChat(msg);
+    }
+  });
 });
+
+
+socket.on('chat message', msg => {
+  if (msg.type === 'system') {
+    appendSystemMessage(msg.content, msg.timestamp);
+    return;
+  }
+
+  // Sinon message normal
+  addMessageToChat(msg);
+});
+
 
   socket.on('user list', updateUserList);
 
@@ -2008,6 +2019,18 @@ else console.warn('⚠️ Élément #chat-wrapper introuvable');
       e.stopPropagation();
     });
   }
+
+  function appendSystemMessage(content, time) {
+  const msg = document.createElement('div');
+  msg.classList.add('system-message');
+  msg.innerHTML = `<span class="timestamp" style="font-style: italic; color: grey;">${time}</span> <i>${content}</i>`;
+  const container = document.querySelector('.chat-messages');
+  if (container) {
+    container.appendChild(msg);
+    container.scrollTop = container.scrollHeight;
+  }
+}
+
   
   
 function showModerationMenu(targetUsername, x, y) {
