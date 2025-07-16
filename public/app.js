@@ -1286,9 +1286,8 @@ if (typeof roomOwner !== 'undefined' && roomModerators instanceof Set) {
   // Met à jour la liste des utilisateurs affichée
 function updateUserList(users) {
   const userList = document.getElementById('users');
-  if (!userList) return;
+  if (!userList || !Array.isArray(users)) return;
   userList.innerHTML = '';
-  if (!Array.isArray(users)) return;
 
   users.forEach(user => {
     const username = user?.username || 'Inconnu';
@@ -1310,34 +1309,60 @@ function updateUserList(users) {
     const badgeWrapper = document.createElement('div');
     badgeWrapper.classList.add('badge-wrapper');
 
-    const genderSquare = document.createElement('div');
-    genderSquare.classList.add('gender-square');
-    genderSquare.style.backgroundColor = getUsernameColor(gender);
-    genderSquare.textContent = age;
+    // 🎖 Icône rôle/genre (alignée à GAUCHE du carré d'âge)
+    const icon = document.createElement('img');
+    let showIcon = false;
 
-    if (isRoomOwner) {
-      const icon = document.createElement('img');
+    if (isRoomOwner || role === 'admin') {
       icon.src = '/diamond.ico';
       icon.alt = 'Créateur';
       icon.title = 'Créateur du salon';
       Object.assign(icon.style, {
         width: '20px', height: '18px', marginRight: '2px', verticalAlign: '-2px'
       });
-      badgeWrapper.appendChild(icon);
-    } else if (isRoomModo) {
-      const icon = document.createElement('img');
+      showIcon = true;
+    } else if (isRoomModo || role === 'modo') {
       icon.src = '/favicon.ico';
       icon.alt = 'Modérateur';
-      icon.title = 'Modérateur du salon';
+      icon.title = 'Modérateur';
       Object.assign(icon.style, {
         width: '20px', height: '20px', marginRight: '2px', verticalAlign: '-2px'
       });
-      badgeWrapper.appendChild(icon);
+      showIcon = true;
+    } else {
+      // Pas protégé → icône de genre
+      if (gender === 'Homme') {
+        icon.src = '/male.ico';
+        icon.alt = 'Homme';
+        icon.title = 'Homme';
+        showIcon = true;
+      } else if (gender === 'Femme') {
+        icon.src = '/female.ico';
+        icon.alt = 'Femme';
+        icon.title = 'Femme';
+        showIcon = true;
+      } else if (gender === 'Autre') {
+        icon.src = '/trans.ico';
+        icon.alt = 'Autre';
+        icon.title = 'Autre';
+        showIcon = true;
+      }
+
+      Object.assign(icon.style, {
+        width: '18px', height: '18px', marginRight: '3px', verticalAlign: '-1px'
+      });
     }
 
+    if (showIcon) badgeWrapper.appendChild(icon);
+
+    // 🎯 Carré d’âge
+    const genderSquare = document.createElement('div');
+    genderSquare.classList.add('gender-square');
+    genderSquare.style.backgroundColor = getUsernameColor(gender);
+    genderSquare.textContent = age;
     badgeWrapper.appendChild(genderSquare);
 
-    // 🎯 CLIC SUR L’ÂGE → ouvrir menu modération si autorisé
+    // 🎯 CLIC sur âge → menu modération
     genderSquare.addEventListener('click', (e) => {
       e.preventDefault();
       const targetUser = username;
@@ -1353,16 +1378,15 @@ function updateUserList(users) {
       const isRoomModo = roomModerators?.[currentRoom]?.has(myUsername);
 
       const canShowMenu = isGlobalMod || isRoomOwner || isRoomModo;
-
       if (!canShowMenu) return;
 
       const rect = genderSquare.getBoundingClientRect();
       const x = rect.left + window.scrollX;
       const y = rect.bottom + window.scrollY;
-
       showModerationMenu(targetUser, x, y);
     });
 
+    // ✨ Pseudo
     const usernameSpan = document.createElement('span');
     usernameSpan.classList.add('username-span', 'clickable-username');
     usernameSpan.textContent = username;
@@ -1373,16 +1397,7 @@ function updateUserList(users) {
     else if (isRoomOwner) usernameSpan.title = 'Créateur du salon';
     else if (isRoomModo) usernameSpan.title = 'Modérateur du salon';
 
-    if (!isRoomOwner && !isRoomModo) {
-      const roleIconSpan = document.createElement('span');
-      roleIconSpan.classList.add('role-icon');
-      const icon = createRoleIcon(role);
-      if (icon) roleIconSpan.appendChild(icon);
-      li.appendChild(roleIconSpan);
-    }
-
-    li.append(badgeWrapper, usernameSpan);
-
+    // Clic pseudo → mention
     usernameSpan.addEventListener('click', () => {
       const input = document.getElementById('message-input');
       const mention = `@${username} `;
@@ -1391,9 +1406,12 @@ function updateUserList(users) {
       selectedUser = username;
     });
 
+    // ➕ Assemble les éléments
+    li.append(badgeWrapper, usernameSpan);
     userList.appendChild(li);
   });
 }
+
 
 
 
