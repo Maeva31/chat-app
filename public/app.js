@@ -300,6 +300,11 @@ closeBtn.onclick = () => container.removeChild(win);
 // Ajoute les deux boutons au groupe
 buttonGroup.append(minimizeBtn, closeBtn);
 
+header.style.display = 'flex';
+header.style.alignItems = 'center';
+header.style.justifyContent = 'space-between';
+
+
 // Ajoute le groupe de boutons et le titre au header
 header.append(title, buttonGroup);
 
