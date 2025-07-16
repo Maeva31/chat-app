@@ -167,29 +167,51 @@ function openPrivateChat(username, role, gender) {
   });
 
   // ── Header ──
-  const header = document.createElement('div');
-  header.classList.add('private-chat-header');
+const header = document.createElement('div');
+header.classList.add('private-chat-header');
 
-  const icon = createRoleIcon(role);
-  if (icon) header.appendChild(icon);
+const icon = createRoleIcon(role);
+if (icon) header.appendChild(icon);
 
-  const title = document.createElement('span');
-  title.classList.add('username-text');
-  title.textContent = username;
-  title.style.color = (role === 'admin') ? usernameColors.admin
-                    : (role === 'modo') ? usernameColors.modo
-                    : (usernameColors[gender] || usernameColors.default);
+const title = document.createElement('span');
+title.classList.add('username-text');
+title.textContent = username;
+title.style.color = (role === 'admin') ? usernameColors.admin
+                  : (role === 'modo') ? usernameColors.modo
+                  : (usernameColors[gender] || usernameColors.default);
 
-  const closeBtn = document.createElement('button');
-  closeBtn.textContent = '×';
-  closeBtn.onclick = () => container.removeChild(win);
+// ✅ Groupe pour les deux boutons à droite
+const buttonGroup = document.createElement('div');
+buttonGroup.style.marginLeft = 'auto';
+buttonGroup.style.display = 'flex';
+buttonGroup.style.alignItems = 'center';
+buttonGroup.style.gap = '6px'; // petit espacement
 
-  header.append(title, closeBtn);
+const minimizeBtn = document.createElement('button');
+minimizeBtn.textContent = '🗕';
+minimizeBtn.title = 'Réduire';
+minimizeBtn.onclick = () => {
+  win.classList.toggle('minimized');
+};
 
-  // 👉 N'oublie pas d'ajouter le header à la fenêtre, sinon rien ne s'affiche
+const closeBtn = document.createElement('button');
+closeBtn.textContent = '×';
+closeBtn.title = 'Fermer';
+closeBtn.onclick = () => container.removeChild(win);
+
+// Ajoute les deux boutons dans le groupe
+buttonGroup.append(minimizeBtn, closeBtn);
+
+// Ajoute tous les éléments au header
+header.append(title, buttonGroup);
+
+
+
+
+  // Header à la fenêtre
   win.appendChild(header);
 
-  // 👉 Et d'ajouter la fenêtre au conteneur
+  // Fenêtre au conteneur
   container.appendChild(win);
 
 
