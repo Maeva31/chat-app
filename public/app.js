@@ -703,11 +703,24 @@ wiizzBtn.appendChild(wiizzIcon);
 
     // Bouton envoyer
     const sendBtn = document.createElement('button');
-    sendBtn.textContent = 'Envoyer';
-    sendBtn.title = 'Envoyer le message';
-    sendBtn.style.cursor = 'pointer';
-    sendBtn.style.marginLeft = '5px';
-    sendBtn.style.padding = '4px 8px';
+sendBtn.textContent = '➤';
+sendBtn.title = 'Envoyer le message';
+
+Object.assign(sendBtn.style, {
+  cursor: 'pointer',
+  marginLeft: '5px',
+  padding: '0',
+  width: '36px',
+  height: '36px',
+  borderRadius: '50%',
+  fontSize: '14px',
+  fontWeight: 'bold',
+  border: 'none',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center'
+});
+
 
     // Assemblage inputBar : emoji avant upload
     const wiizzBtn = setupWiizzButton(username, win, container);
