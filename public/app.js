@@ -6,6 +6,8 @@ let currentRoom = 'Général';
 let bannedRooms = [];
 let roomOwners = {};
 let roomModerators = {};
+let topZIndex = 1000;
+
 
 
 function updateAllPrivateChatsStyle(style) {
@@ -132,46 +134,64 @@ if (newChannelInput) {
   }
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
-  function openPrivateChat(username, role, gender) {
-    const container = document.getElementById('private-chat-container');
-    let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
-    if (win) {
-      container.appendChild(win);
-      return;
+function openPrivateChat(username, role, gender) {
+  const container = document.getElementById('private-chat-container');
+  let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
+
+  // ✅ Si la fenêtre existe déjà → la ramener au premier plan
+  if (win) {
+    win.style.zIndex = ++topZIndex;
+    return;
+  }
+
+  // ✅ Récupération des infos utilisateur si manquantes
+  if (!role || !gender) {
+    const cachedUser = userCache[username];
+    if (cachedUser) {
+      role = role || cachedUser.role;
+      gender = gender || cachedUser.gender;
     }
+  }
 
-    if (!role || !gender) {
-      const cachedUser = userCache[username];
-      if (cachedUser) {
-        role = role || cachedUser.role;
-        gender = gender || cachedUser.gender;
-      }
-    }
+  // ✅ Création de la fenêtre
+  win = document.createElement('div');
+  win.classList.add('private-chat-window');
+  win.dataset.user = username;
 
-    // Création fenêtre
-    win = document.createElement('div');
-    win.classList.add('private-chat-window');
-    win.dataset.user = username;
+  win.style.position = 'absolute';      // nécessaire pour le z-index
+  win.style.zIndex = ++topZIndex;
 
-    // Header
-    const header = document.createElement('div');
-    header.classList.add('private-chat-header');
+  // ✅ Au clic, remonter au premier plan
+  win.addEventListener('mousedown', () => {
+    win.style.zIndex = ++topZIndex;
+  });
 
-    const icon = createRoleIcon(role);
-    if (icon) header.appendChild(icon);
+  // ── Header ──
+  const header = document.createElement('div');
+  header.classList.add('private-chat-header');
 
-    const title = document.createElement('span');
-    title.classList.add('username-text');
-    title.textContent = username;
-    title.style.color = (role === 'admin') ? usernameColors.admin
-                      : (role === 'modo') ? usernameColors.modo
-                      : (usernameColors[gender] || usernameColors.default);
+  const icon = createRoleIcon(role);
+  if (icon) header.appendChild(icon);
 
-    const closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.onclick = () => container.removeChild(win);
+  const title = document.createElement('span');
+  title.classList.add('username-text');
+  title.textContent = username;
+  title.style.color = (role === 'admin') ? usernameColors.admin
+                    : (role === 'modo') ? usernameColors.modo
+                    : (usernameColors[gender] || usernameColors.default);
 
-    header.append(title, closeBtn);
+  const closeBtn = document.createElement('button');
+  closeBtn.textContent = '×';
+  closeBtn.onclick = () => container.removeChild(win);
+
+  header.append(title, closeBtn);
+
+  // 👉 N'oublie pas d'ajouter le header à la fenêtre, sinon rien ne s'affiche
+  win.appendChild(header);
+
+  // 👉 Et d'ajouter la fenêtre au conteneur
+  container.appendChild(win);
+
 
     // Body
     const body = document.createElement('div');
@@ -2298,80 +2318,6 @@ socket.on('user list', list => {
 });
 
 
-// Modération salon 
-function showRoomModerationMenu(targetUsername, x, y) {
-  const existing = document.getElementById('moderation-menu');
-  if (existing) existing.remove();
-
-  const myUsername = localStorage.getItem('username');
-  if (targetUsername === myUsername) return;
-  const me = userCache[myUsername];
-  if (!me) return;
-
-  const isOwner = window.roomOwners?.[currentRoom] === myUsername;
-  const isRoomModo = window.roomModerators?.[currentRoom]?.has(myUsername);
-  if (!isOwner && !isRoomModo) return;
-
-  const target = userCache[targetUsername];
-  if (!target) return;
-
-  const menu = document.createElement('div');
-  menu.id = 'moderation-menu';
-  menu.classList.add('moderation-context-menu');
-  Object.assign(menu.style, {
-    position: 'absolute',
-    left: x + 'px',
-    top: y + 'px',
-    background: '#222',
-    color: '#fff',
-    border: '1px solid #555',
-    borderRadius: '6px',
-    padding: '6px 0',
-    fontSize: '14px',
-    minWidth: '160px',
-    zIndex: '9999',
-    boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
-  });
-
-  const actions = [
-    { label: '👢 Kick Salon', cmd: 'kickroom' },
-    { label: '🚫 Ban Salon', cmd: 'banroom' },
-    { label: '✅ Unban Salon', cmd: 'unbanroom' },
-    ...(isOwner ? [
-      { label: '🛡️ Ajouter Modo Salon', cmd: 'addroommodo' },
-      { label: '❌ Retirer Modo Salon', cmd: 'removeroommodo' }
-    ] : [])
-  ];
-
-  actions.forEach(({ label, cmd }) => {
-    const item = document.createElement('div');
-    item.textContent = label;
-    item.style.padding = '6px 12px';
-    item.style.cursor = 'pointer';
-
-    item.addEventListener('mouseover', () => item.style.background = '#444');
-    item.addEventListener('mouseout', () => item.style.background = 'transparent');
-
-    item.addEventListener('click', () => {
-      showConfirmBox(`Es-tu sûr de vouloir ${cmd.toUpperCase()} pour ${targetUsername} ?`, () => {
-        socket.emit('chat message', `/${cmd} ${targetUsername}`);
-        menu.remove();
-      });
-    });
-
-    menu.appendChild(item);
-  });
-
-  document.body.appendChild(menu);
-
-  const close = (e) => {
-    if (!menu.contains(e.target)) {
-      menu.remove();
-      document.removeEventListener('click', close);
-    }
-  };
-  setTimeout(() => document.addEventListener('click', close), 10);
-}
 
 
 
