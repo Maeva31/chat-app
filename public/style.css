@@ -202,6 +202,48 @@ main {
   100% { background-position: 0% 50%; }
 }
 
+/* === Bouton envoyer chat général === */
+#send-button {
+  background-color: #444;
+  color: white;
+  border: none;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  z-index: 1;
+  transition: background 0.5s;
+}
+
+#send-button:hover {
+  background: linear-gradient(
+    45deg,
+    rgba(251, 0, 255, 1),
+    rgba(0, 218, 222, 1),
+    rgba(251, 0, 255, 1),
+    rgba(0, 218, 222, 1)
+  );
+  background-size: 400% 400%;
+  animation: gradientThumb 10s ease infinite;
+  box-shadow: 0 0 10px rgba(251, 0, 255, 0.6),
+              0 0 10px rgba(0, 218, 222, 0.6);
+  color: #fff;
+}
+
+@keyframes gradientThumb {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+
 
 /* === CHAT CONTAINER (CENTER) === */
 #chat-container {
