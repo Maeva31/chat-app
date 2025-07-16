@@ -108,30 +108,59 @@ if (newChannelInput) {
   };
 
   // Création icône selon rôle
-  function createRoleIcon(role) {
-    if (role === 'admin') {
-      const icon = document.createElement('img');
-      icon.src = '/diamond.ico';
-      icon.alt = 'Admin';
-      icon.title = 'Admin';
-      icon.style.width = '20px';
-      icon.style.height = '17px';
-      icon.style.marginRight = '3px';
-      icon.style.verticalAlign = 'middle';
-      return icon;
-    } else if (role === 'modo') {
-      const icon = document.createElement('img');
-      icon.src = '/favicon.ico';
-      icon.alt = 'Modérateur';
-      icon.title = 'Modérateur';
-      icon.style.width = '20px';
-      icon.style.height = '20px';
-      icon.style.marginRight = '3px';
-      icon.style.verticalAlign = 'middle';
-      return icon;
-    }
+// Création icône selon rôle
+function createRoleIcon(role) {
+  if (role === 'admin') {
+    const icon = document.createElement('img');
+    icon.src = '/diamond.ico';
+    icon.alt = 'Admin';
+    icon.title = 'Admin';
+    icon.style.width = '20px';
+    icon.style.height = '17px';
+    icon.style.marginRight = '3px';
+    icon.style.verticalAlign = 'middle';
+    return icon;
+  } else if (role === 'modo') {
+    const icon = document.createElement('img');
+    icon.src = '/favicon.ico';
+    icon.alt = 'Modérateur';
+    icon.title = 'Modérateur';
+    icon.style.width = '20px';
+    icon.style.height = '20px';
+    icon.style.marginRight = '3px';
+    icon.style.verticalAlign = 'middle';
+    return icon;
+  }
+  return null;
+}
+
+// Création icône selon genre
+function createGenderIcon(gender) {
+  const icon = document.createElement('img');
+  icon.style.width = '16px';
+  icon.style.height = '16px';
+  icon.style.marginRight = '3px';
+  icon.style.verticalAlign = 'middle';
+
+  if (gender === 'Homme') {
+    icon.src = '/male.ico';
+    icon.alt = 'Homme';
+    icon.title = 'Homme';
+  } else if (gender === 'Femme') {
+    icon.src = '/female.ico';
+    icon.alt = 'Femme';
+    icon.title = 'Femme';
+  } else if (gender === 'Trans') {
+    icon.src = '/trans.ico';
+    icon.alt = 'Trans';
+    icon.title = 'Trans';
+  } else {
     return null;
   }
+
+  return icon;
+}
+
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
 function openPrivateChat(username, role, gender) {
@@ -170,22 +199,39 @@ function openPrivateChat(username, role, gender) {
 const header = document.createElement('div');
 header.classList.add('private-chat-header');
 
-const icon = createRoleIcon(role);
-if (icon) header.appendChild(icon);
-
+// Crée le bloc de titre avec icônes
 const title = document.createElement('span');
 title.classList.add('username-text');
-title.textContent = username;
+title.style.display = 'flex';
+title.style.alignItems = 'center';
+title.style.gap = '5px';
+
 title.style.color = (role === 'admin') ? usernameColors.admin
                   : (role === 'modo') ? usernameColors.modo
                   : (usernameColors[gender] || usernameColors.default);
+
+// Ajout des icônes
+const roleIcon = createRoleIcon(role);
+
+// Détection si protégé
+const isProtected = role === 'admin' || role === 'modo' ||
+  roomOwners[currentRoom] === username ||
+  (roomModerators[currentRoom] && roomModerators[currentRoom].has(username));
+
+const genderIcon = !isProtected ? createGenderIcon(gender) : null;
+
+if (roleIcon) title.appendChild(roleIcon);
+if (genderIcon) title.appendChild(genderIcon);
+
+// Ajout du pseudo
+title.appendChild(document.createTextNode(username));
 
 // ✅ Groupe pour les deux boutons à droite
 const buttonGroup = document.createElement('div');
 buttonGroup.style.marginLeft = 'auto';
 buttonGroup.style.display = 'flex';
 buttonGroup.style.alignItems = 'center';
-buttonGroup.style.gap = '6px'; // petit espacement
+buttonGroup.style.gap = '6px';
 
 const minimizeBtn = document.createElement('button');
 minimizeBtn.textContent = '🗕';
@@ -197,17 +243,17 @@ minimizeBtn.onclick = () => {
   minimizeBtn.title = minimized ? 'Restaurer' : 'Réduire';
 };
 
-
 const closeBtn = document.createElement('button');
 closeBtn.textContent = '×';
 closeBtn.title = 'Fermer';
 closeBtn.onclick = () => container.removeChild(win);
 
-// Ajoute les deux boutons dans le groupe
+// Ajoute les deux boutons
 buttonGroup.append(minimizeBtn, closeBtn);
 
-// Ajoute tous les éléments au header
+// Ajoute tout au header
 header.append(title, buttonGroup);
+
 
 
 
