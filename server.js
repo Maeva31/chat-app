@@ -29,8 +29,15 @@ let roomOwners = {};        // { roomName: username }
 let roomModerators = {};    // { roomName: Set(username) }
 let roomBans = {};          // { roomName: Set(username) }
 
+
 const usernameToSocketId = {};
 const socketIdToUsername = {};
+
+
+// Anti-spam
+const spamTracker = {}; // { socket.id: [timestamps] }
+const SPAM_LIMIT = 5; // nombre max de messages autorisés
+const SPAM_WINDOW_MS = 5000; // période de contrôle (en ms) → 5 secondes
 
 
 // Chargement des modérateurs
@@ -425,6 +432,18 @@ socket.on('chat message', (msg) => {
 
   const room = userChannels[socket.id];
   const channel = userChannels[socket.id] || defaultChannel;
+
+    // Anti-spam
+  const now = Date.now();
+  spamTracker[socket.id] = spamTracker[socket.id] || [];
+  spamTracker[socket.id] = spamTracker[socket.id].filter(ts => now - ts < SPAM_WINDOW_MS);
+  spamTracker[socket.id].push(now);
+
+  if (spamTracker[socket.id].length > SPAM_LIMIT) {
+    socket.emit('error message', '⛔ Tu écris trop vite, attends un peu !');
+    return;
+  }
+
 
   // Vérifie si l'utilisateur est banni du salon actuel
   if (roomBans[channel]?.has(user.username)) {
@@ -1059,6 +1078,8 @@ roomBans[newChannel] = new Set();  // ⬅️ initialise les bannissements locaux
 
     delete users[user.username];
     delete userChannels[socket.id];
+    delete spamTracker[socket.id];
+
 
     cleanupEmptyDynamicRooms();
   } else {
