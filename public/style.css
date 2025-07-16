@@ -610,7 +610,6 @@ button:focus {
   max-height: 18px;
   display: block;
   margin-right: 5px;
-  vertical-align: -2px;
 }
 
 /* Carré âge, largeur fixe */
@@ -646,10 +645,12 @@ button:focus {
   font-weight: bold;
   background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
   background-size: 400% 400%;
+  background-clip: text;              /* ✅ ajout standard */
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: laserTexteMenu 2s linear infinite;
 }
+
 
 @keyframes laserTexteMenu {
   0% {
@@ -1202,4 +1203,3 @@ button:focus {
   align-items: center;
   gap: 2px;
 }
-
