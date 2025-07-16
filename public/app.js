@@ -255,26 +255,54 @@ buttonGroup.style.display = 'flex';
 buttonGroup.style.alignItems = 'center';
 buttonGroup.style.gap = '6px';
 
+// Crée bouton Réduire
 const minimizeBtn = document.createElement('button');
 minimizeBtn.textContent = '🗕';
 minimizeBtn.title = 'Réduire';
 
+// Crée bouton Fermer
+const closeBtn = document.createElement('button');
+closeBtn.textContent = '×';
+closeBtn.title = 'Fermer';
+
+// Appliquer un style uniforme à chaque bouton
+[minimizeBtn, closeBtn].forEach(btn => {
+  btn.style.background = 'transparent';
+  btn.style.border = 'none';
+  btn.style.padding = '2px';
+  btn.style.margin = '0';
+  btn.style.fontSize = '16px';
+  btn.style.width = '26px';
+  btn.style.height = '26px';
+  btn.style.lineHeight = '1';
+  btn.style.display = 'flex';
+  btn.style.alignItems = 'center';
+  btn.style.justifyContent = 'center';
+  btn.style.cursor = 'pointer';
+  btn.style.borderRadius = '4px';
+  btn.style.transition = 'background 0.2s';
+
+  // Hover visuel
+  btn.onmouseenter = () => btn.style.backgroundColor = '#444';
+  btn.onmouseleave = () => btn.style.backgroundColor = 'transparent';
+});
+
+// Action Réduire / Restaurer
 minimizeBtn.onclick = () => {
   const minimized = win.classList.toggle('minimized');
   minimizeBtn.textContent = minimized ? '🗖' : '🗕';
   minimizeBtn.title = minimized ? 'Restaurer' : 'Réduire';
 };
 
-const closeBtn = document.createElement('button');
-closeBtn.textContent = '×';
-closeBtn.title = 'Fermer';
+// Action Fermer
 closeBtn.onclick = () => container.removeChild(win);
 
-// Ajoute les deux boutons
+// Ajoute les deux boutons au groupe
 buttonGroup.append(minimizeBtn, closeBtn);
 
-// Ajoute tout au header
+// Ajoute le groupe de boutons et le titre au header
 header.append(title, buttonGroup);
+
 
 
 
