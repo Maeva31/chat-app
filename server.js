@@ -673,15 +673,24 @@ case '/unbanroom': {
     return socket.emit('error message', "Tu n'es pas modérateur de ce salon.");
   }
 
-  if (roomBans[room].has(targetName)) {
+  if (roomBans[room]?.has(targetName)) {
     roomBans[room].delete(targetName);
+
     socket.emit('server message', `${targetName} a été débanni du salon ${room}.`);
     socket.emit('error message', `${targetName} a bien été débanni du salon ${room}.`);
+
+    // 🔔 Prévenir l'utilisateur ciblé s'il est en ligne
+    const targetSocketId = usernameToSocketId[targetName];
+    if (targetSocketId && io.sockets.sockets.get(targetSocketId)) {
+      io.to(targetSocketId).emit('server message', `Tu as été débanni du salon ${room}.`);
+    }
+
   } else {
     socket.emit('error message', `${targetName} n'est pas banni de ce salon.`);
   }
   break;
 }
+
 
 
 
