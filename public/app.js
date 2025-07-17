@@ -1342,7 +1342,15 @@ if (usernameInput && passwordInput) {
     "Détente": "🌿",
     "Lesbiennes": "♀️",
     "GayGay": "♂️",
-    "TransGirl": "⚧️"
+    "TransGirl": "⚧️",
+    "Paris": "💬",
+    "Reims": "💬",
+    "Lyon": "💬",
+    "Marseille": "💬",
+    "Nice": "💬",
+    "Toulouse": "💬",
+    "Sexe": "🔞"
+
   };
 
   // Affiche la modal si pas de pseudo
@@ -2062,6 +2070,7 @@ socket.on('chat message', msg => {
 const sectionTitles = {
   "__LGBT__": "🌈 Lgbt",
   "__Regions__": "🌐 Régions",
+  "__Adulte__": "🔞 Adulte",
   "__Salons Manager__": "🌴 Salons Manager",
   "__VOCAL__": "🎙️ Vocaux",
   "__SAFE__": "🛡️ Zone sûre"
