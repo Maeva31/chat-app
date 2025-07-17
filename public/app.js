@@ -707,6 +707,18 @@ wiizzBtn.appendChild(wiizzIcon);
           audio.style.padding = '4px';
           audio.style.backgroundColor = '#212529';
           msgDiv.appendChild(audio);
+            const darkMode = true; // ou détecte selon préférence
+
+          if (darkMode) {
+            audio.style.backgroundColor = '#212529';
+            audio.style.border = '2px solid #007bff';
+            audio.style.color = '#fff';
+          } else {
+            audio.style.backgroundColor = '#f5f5f5';
+            audio.style.border = '2px solid #007bff';
+            audio.style.color = '#000';
+          }
+
 
         } else if (file.type.startsWith('video/')) {
           const video = document.createElement('video');
@@ -1002,7 +1014,21 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
       audio.style.border = '2px solid #007bff';
       audio.style.borderRadius = '8px';
       audio.style.padding = '4px';
+      audio.style.backgroundColor = '#212529';
       msgDiv.appendChild(audio);
+
+        const darkMode = true;
+
+      if (darkMode) {
+        audio.style.backgroundColor = '#212529';
+        audio.style.border = '2px solid #007bff';
+        audio.style.color = '#fff';
+      } else {
+        audio.style.backgroundColor = '#343a40';
+        audio.style.border = '2px solid #007bff';
+        audio.style.color = '#000';
+      }
+
 
     } else if (mimetype.startsWith('video/')) {
       const video = document.createElement('video');
@@ -2890,7 +2916,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     audio.style.border = '2px solid #007bff';
     audio.style.borderRadius = '8px';
     audio.style.padding = '4px';
-    audio.style.backgroundColor = '#f9f9f9';
+    audio.style.backgroundColor = '#343a40';
     audio.onloadeddata = () => {
       chatMessages.scrollTop = chatMessages.scrollHeight;
     };
