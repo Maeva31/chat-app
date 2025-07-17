@@ -1343,10 +1343,47 @@ button:focus {
 }
 
 
+audio {
+  width: 100%;
+  max-width: 400px;
+  background-color: #212529;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  padding: 6px;
+  margin-top: 6px;
+  box-shadow: 0 0 10px rgba(0, 123, 255, 0.2);
+}
 
+/* Personnalisation WebKit (Chrome, Edge, Brave, etc.) */
+audio::-webkit-media-controls-panel {
+  background: linear-gradient(270deg, #00dade, #fb00ff, #00dade, #fb00ff);
+  background-size: 800% 800%;
+  animation: audioGradientFlow 5s ease infinite;
+  border-radius: 8px;
+}
 
+/* Barre de volume */
+audio::-webkit-media-controls-volume-slider {
+  background-color: #fff;
+}
 
+/* Boutons lecture / pause */
+audio::-webkit-media-controls-play-button,
+audio::-webkit-media-controls-pause-button {
+  background-color: #fff;
+  border-radius: 50%;
+}
 
+/* Hover effet autour du lecteur */
+audio:hover {
+  border-color: #00bfff;
+  box-shadow: 0 0 15px rgba(0, 191, 255, 0.5);
+}
 
+@keyframes audioGradientFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
 
 
