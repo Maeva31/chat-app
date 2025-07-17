@@ -2034,7 +2034,8 @@ socket.on('chat message', msg => {
 
 
 const sectionTitles = {
-  "__LGBT__": "🌈 LGBT",
+  "__LGBT__": "🌈 Lgbt",
+  "__Salons Manager__": "🌴 Salons Manager",
   "__VOCAL__": "🎙️ Vocaux",
   "__SAFE__": "🛡️ Zone sûre"
 };
@@ -2063,7 +2064,7 @@ if (channelName.startsWith('__') && channelName.endsWith('__')) {
   emojiSpan.textContent = emoji;
 
   const textSpan = document.createElement('span');
-  textSpan.className = 'texte-laser';
+  textSpan.className = 'texte-laser-italique';
   textSpan.textContent = text;
 
   li.appendChild(emojiSpan);
