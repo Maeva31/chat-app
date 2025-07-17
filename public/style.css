@@ -1320,13 +1320,17 @@ button:focus {
   }
 }
 
-
-
-
-
-
-
-
-
-
+.texte-laser-italique {
+  font-size: 15px;
+  font-weight: bold;
+  font-style: italic;
+  font-family: Arial, "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif; /* 💯 même police */
+  background: linear-gradient(45deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(0, 218, 222, 1), rgba(251, 0, 255, 1), rgba(251, 0, 255, 1));
+  background-size: 400% 400%;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: laserTexteMenu 2s linear infinite;
+  line-height: 1.2; /* 💡 pour égaliser avec les autres */
+}
 
