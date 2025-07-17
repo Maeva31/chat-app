@@ -67,19 +67,47 @@ try {
 }
 
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
-let savedRooms = [];
+const protectedRooms = ['Lesbiennes', 'GayGay', 'TransGirl'];
+
+
+let roomList = [];
 try {
   const data = fs.readFileSync('rooms.json', 'utf-8');
-  savedRooms = JSON.parse(data);
-} catch {
-  savedRooms = [...defaultRooms];
+  roomList = JSON.parse(data); // ← on lit l'ordre original
+} catch (err) {
+  console.warn('⚠️ rooms.json introuvable, fallback.');
+  roomList = ['Général'];
 }
 
-savedRooms = [...new Set([...defaultRooms, ...savedRooms])];
+// ✅ Fusion sans doublons, on garde l’ordre de rooms.json
+let savedRooms = [...defaultRooms];
+roomList.forEach(room => {
+  if (!savedRooms.includes(room)) savedRooms.push(room);
+});
+
+// ✅ Préparation des structures pour chaque vrai salon
+savedRooms.forEach(room => {
+  if (room.startsWith('__') && room.endsWith('__')) return; // ← on ignore les séparateurs
+  if (!messageHistory[room]) messageHistory[room] = [];
+  if (!roomUsers[room]) roomUsers[room] = [];
+});
+
+
+
+// Préparation des structures internes
 savedRooms.forEach(room => {
   if (!messageHistory[room]) messageHistory[room] = [];
   if (!roomUsers[room]) roomUsers[room] = [];
 });
+
+// ✅ Dans ta connexion socket :
+io.on('connection', (socket) => {
+  // ... tes autres blocs socket ...
+
+  // Envoie les salons complets au client
+  socket.emit('room list', savedRooms);
+});
+
 
 app.use(express.static('public'));
 
@@ -135,19 +163,28 @@ function emitUserList(channel) {
 
 function cleanupEmptyDynamicRooms() {
   for (const room of savedRooms) {
-    if (!defaultRooms.includes(room)) {
-      if (roomUsers[room] && roomUsers[room].length === 0) {
-        delete messageHistory[room];
-        delete roomUsers[room];
-        savedRooms = savedRooms.filter(r => r !== room);
-        fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
-        console.log(`❌ Salon supprimé (vide) : ${room}`);
-        io.emit('room list', savedRooms);
-      }
+    if (
+      defaultRooms.includes(room) ||                       // salons de base
+      protectedRooms.includes(room) ||                     // salons protégés manuellement
+      (room.startsWith('__') && room.endsWith('__'))       // titres comme __LGBT__
+    ) continue;
+
+    if (roomUsers[room] && roomUsers[room].length === 0) {
+      delete messageHistory[room];
+      delete roomUsers[room];
+      savedRooms = savedRooms.filter(r => r !== room);
+      fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
+      console.log(`❌ Salon supprimé (vide) : ${room}`);
+      io.emit('room list', savedRooms);
     }
   }
+
   updateRoomUserCounts();
 }
+
+
+
+
 
 const UPLOAD_DIR = path.resolve('./public/uploads');
 if (!fs.existsSync(UPLOAD_DIR)) {
