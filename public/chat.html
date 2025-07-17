@@ -100,35 +100,39 @@
   <!-- Wrapper principal -->
   <main>
     <!-- Sidebar gauche : salons -->
-    <aside id="channel-sidebar">
-      <header>
-        <div class="texte-laser"><h3>Salons</h3></div>
-      </header>
+<aside id="channel-sidebar">
+  <header>
+    <div class="texte-laser"><h3>Salons</h3></div>
+  </header>
 
-      <ul id="channel-list">
-        <li class="channel selected"># 💬 ┊ Général</li>
-        <li class="channel"># 🎧 ┊ Musique</li>
-        <li class="channel"># 🎮 ┊ Gaming</li>
-        <li class="channel"># 🌿 ┊ Détente</li>
-        <li class="channel-group-title">Lgbt</li>
-        <li class="channel"># ♀️ ┊ Lesbiennes</li>
-        <li class="channel"># ♂️ ┊ GayGay</li>
-        <li class="channel"># ⚧️ ┊ TransGirl</li>
-        <li class="channel-group-title">Régions</li>
-        <li class="channel"># 💬 ┊ Paris</li>
-        <li class="channel"># 💬 ┊ Lyon</li>
-        <li class="channel"># 💬 ┊ Marseille</li>
-        <li class="channel"># 💬 ┊ Nice</li>
-        <li class="channel"># 💬 ┊ Toulouse</li>
-        <li class="channel-group-title">Salons Manager</li>
-      </ul>
+  <!-- Liste des salons scrollable -->
+  <div id="channel-list-wrapper">
+    <ul id="channel-list">
+      <li class="channel selected"># 💬 ┊ Général</li>
+      <li class="channel"># 🎧 ┊ Musique</li>
+      <li class="channel"># 🎮 ┊ Gaming</li>
+      <li class="channel"># 🌿 ┊ Détente</li>
+      <li class="channel-group-title">Lgbt</li>
+      <li class="channel"># ♀️ ┊ Lesbiennes</li>
+      <li class="channel"># ♂️ ┊ GayGay</li>
+      <li class="channel"># ⚧️ ┊ TransGirl</li>
+      <li class="channel-group-title">Régions</li>
+      <li class="channel"># 💬 ┊ Paris</li>
+      <li class="channel"># 💬 ┊ Lyon</li>
+      <li class="channel"># 💬 ┊ Marseille</li>
+      <li class="channel"># 💬 ┊ Nice</li>
+      <li class="channel"># 💬 ┊ Toulouse</li>
+      <li class="channel-group-title">Salons Manager</li>
+    </ul>
+  </div>
 
-      <!-- ZONE CRÉATION SALON -->
-      <div id="create-channel">
-        <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off" />
-        <button id="create-channel-button">Créer</button>
-      </div>
-    </aside>
+  <!-- En dehors du scroll -->
+  <div id="create-channel">
+    <input type="text" id="new-channel-name" placeholder="Nouveau salon..." maxlength="20" autocomplete="off" />
+    <button id="create-channel-button">Créer</button>
+  </div>
+</aside>
+
 
     <!-- Zone centrale : chat -->
     <section id="chat-container">
