@@ -1268,7 +1268,7 @@ socket.on('banned rooms list', rooms => {
 
 
 
- const adminUsernames = ['MaEvA'];
+ const adminUsernames = ['MaEvA','rookie'];
  const modoUsernames = ['DarkGirL'];
 
 
@@ -1488,6 +1488,9 @@ function updateUserList(users) {
     // 🧑‍💻 Pseudo
     const usernameSpan = document.createElement('span');
     usernameSpan.classList.add('username-span', 'clickable-username');
+    if (username === localStorage.getItem('username') && role === 'admin' && localStorage.getItem('password')) {
+    usernameSpan.classList.add('rainbow-admin');
+}
     usernameSpan.textContent = username;
     usernameSpan.style.color = color;
 
