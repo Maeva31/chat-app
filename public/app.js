@@ -1496,16 +1496,20 @@ function updateUserList(users) {
     else if (isRoomOwner) usernameSpan.title = 'Créateur du salon';
     else if (isRoomModo) usernameSpan.title = 'Modérateur du salon';
 
-    // 👉 Clic gauche = rien
-    usernameSpan.addEventListener('click', (e) => {
-      e.preventDefault(); // rien
-    });
+// 🖱️ Clic gauche → ouvrir MP
+usernameSpan.addEventListener('click', () => {
+  openPrivateChat(username, role, gender);
+});
 
-    // 🖱️ Clic droit = MP
-    usernameSpan.addEventListener('contextmenu', (e) => {
-      e.preventDefault();
-      openPrivateChat(username, role, gender);
-    });
+// 🖱️ Clic droit → mentionner
+usernameSpan.addEventListener('contextmenu', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('message-input');
+  const mention = `@${username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
+
 
     li.append(badgeWrapper, usernameSpan);
     userList.appendChild(li);
