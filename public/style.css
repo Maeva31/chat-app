@@ -1294,7 +1294,35 @@ button:focus {
 }
 
 /* 💫 Hover */
+/* Animation au survol */
 .username-span:hover {
-  color: #7f00ff !important;
+  background-image: linear-gradient(
+    90deg,
+    #00dede,
+    #fb00ff,
+    #00dede
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  -webkit-text-fill-color: transparent;
+  animation: textGradientHover 2.5s linear infinite;
 }
+
+/* Animation dégradé */
+@keyframes textGradientHover {
+  0% {
+    background-position: 0% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+
+
+
+
+
 
