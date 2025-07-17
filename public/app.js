@@ -1849,6 +1849,9 @@ usernameSpan.addEventListener('contextmenu', (e) => {
     currentChannel = newChannel;
     localStorage.setItem('currentChannel', newChannel);
     const chatMessages = document.getElementById('chat-messages');
+    const input = document.getElementById('message-input');
+    if (input) input.value = '';
+
     if (chatMessages) chatMessages.innerHTML = '';
     selectChannelInUI(newChannel);
     selectedUser = null;
@@ -1866,6 +1869,9 @@ usernameSpan.addEventListener('contextmenu', (e) => {
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
     const chatMessages = document.getElementById('chat-messages');
+    const input = document.getElementById('message-input');
+    if (input) input.value = '';
+
     if (chatMessages) chatMessages.innerHTML = '';
     selectChannelInUI(currentChannel);
     selectedUser = null;
@@ -2029,6 +2035,9 @@ socket.on('chat message', msg => {
         currentChannel = clickedRoom;
         localStorage.setItem('currentChannel', currentChannel);
         const chatMessages = document.getElementById('chat-messages');
+        const input = document.getElementById('message-input');
+        if (input) input.value = '';
+
         if (chatMessages) chatMessages.innerHTML = '';
         selectChannelInUI(currentChannel);
         socket.emit('joinRoom', currentChannel);
@@ -2123,6 +2132,9 @@ if (channelName.startsWith('__') && channelName.endsWith('__')) {
       currentChannel = clickedRoom;
       localStorage.setItem('currentChannel', currentChannel);
       const chatMessages = document.getElementById('chat-messages');
+      const input = document.getElementById('message-input');
+      if (input) input.value = '';
+
       if (chatMessages) chatMessages.innerHTML = '';
       selectChannelInUI(currentChannel);
       socket.emit('joinRoom', currentChannel);
@@ -2137,6 +2149,9 @@ if (channelName.startsWith('__') && channelName.endsWith('__')) {
     localStorage.setItem('currentChannel', currentChannel);
     socket.emit('joinRoom', currentChannel);
     const chatMessages = document.getElementById('chat-messages');
+    const input = document.getElementById('message-input');
+    if (input) input.value = '';
+
     if (chatMessages) chatMessages.innerHTML = '';
   }
 
