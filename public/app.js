@@ -680,7 +680,7 @@ wiizzBtn.appendChild(wiizzIcon);
           img.src = `data:${file.type};base64,${base64}`;
           img.style.maxWidth = '150px';
           img.style.cursor = 'pointer';
-          img.style.border = '2px solid #ccc';
+          img.style.border = '2px solid #007bff';
           img.style.borderRadius = '8px';
           img.style.padding = '4px';
           img.addEventListener('click', () => {
@@ -702,10 +702,10 @@ wiizzBtn.appendChild(wiizzIcon);
           audio.controls = true;
           audio.src = `data:${file.type};base64,${base64}`;
           audio.style.marginTop = '4px';
-          audio.style.border = '2px solid #ccc';
+          audio.style.border = '2px solid #007bff';
           audio.style.borderRadius = '8px';
           audio.style.padding = '4px';
-          audio.style.backgroundColor = '#f9f9f9';
+          audio.style.backgroundColor = '#212529';
           msgDiv.appendChild(audio);
 
         } else if (file.type.startsWith('video/')) {
@@ -715,7 +715,7 @@ wiizzBtn.appendChild(wiizzIcon);
           video.style.maxWidth = '300px';
           video.style.maxHeight = '300px';
           video.style.marginTop = '4px';
-          video.style.border = '2px solid #ccc';
+          video.style.border = '2px solid #007bff';
           video.style.borderRadius = '8px';
           video.style.padding = '4px';
           video.style.backgroundColor = '#000';
@@ -975,7 +975,7 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
       img.src = `data:${mimetype};base64,${data}`;
       img.style.maxWidth = '150px';
       img.style.cursor = 'pointer';
-      img.style.border = '2px solid #ccc';
+      img.style.border = '2px solid #007bff';
       img.style.borderRadius = '8px';
       img.style.padding = '4px';
       img.addEventListener('click', () => {
@@ -999,7 +999,7 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
       audio.controls = true;
       audio.src = `data:${mimetype};base64,${data}`;
       audio.style.marginTop = '4px';
-      audio.style.border = '2px solid #ccc';
+      audio.style.border = '2px solid #007bff';
       audio.style.borderRadius = '8px';
       audio.style.padding = '4px';
       msgDiv.appendChild(audio);
@@ -1011,7 +1011,7 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
       video.style.maxWidth = '300px';
       video.style.maxHeight = '300px';
       video.style.marginTop = '4px';
-      video.style.border = '2px solid #ccc';
+      video.style.border = '2px solid #007bff';
       video.style.borderRadius = '8px';
       video.style.padding = '4px';
       msgDiv.appendChild(video);
@@ -2850,7 +2850,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     img.src = `data:${mimetype};base64,${data}`;
     img.style.maxWidth = '100px';
     img.style.cursor = 'pointer';
-    img.style.border = '2px solid #ccc';
+    img.style.border = '2px solid #007bff';
     img.style.borderRadius = '8px';
     img.style.padding = '4px';
 
@@ -2887,7 +2887,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     audio.controls = true;
     audio.src = `data:${mimetype};base64,${data}`;
     audio.style.marginTop = '4px';
-    audio.style.border = '2px solid #ccc';
+    audio.style.border = '2px solid #007bff';
     audio.style.borderRadius = '8px';
     audio.style.padding = '4px';
     audio.style.backgroundColor = '#f9f9f9';
@@ -2903,7 +2903,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     video.style.maxWidth = '300px';
     video.style.maxHeight = '300px';
     video.style.marginTop = '4px';
-    video.style.border = '2px solid #ccc';
+    video.style.border = '2px solid #007bff';
     video.style.borderRadius = '8px';
     video.style.padding = '4px';
     video.style.backgroundColor = '#000';
