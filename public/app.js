@@ -2119,18 +2119,27 @@ if (channelName.startsWith('__') && channelName.endsWith('__')) {
   }, 10000);
 
   // Création nouveau salon
-  document.getElementById('create-channel-button').addEventListener('click', () => {
-    const input = document.getElementById('new-channel-name');
-    if (!input) return;
-    const newRoom = input.value.trim();
-    if (!newRoom || newRoom.length > 10 || /\s/.test(newRoom)) {
-      showBanner("Nom de salon invalide : pas d'espaces, max 10 caractères.", 'error');
-      return;
-    }
-    socket.emit('createRoom', newRoom);
-    input.value = '';
-    input.focus();
-  });
+// Création nouveau salon
+document.getElementById('create-channel-button').addEventListener('click', () => {
+  const input = document.getElementById('new-channel-name');
+  if (!input) return;
+  const newRoom = input.value.trim();
+  if (!newRoom || newRoom.length > 10 || /\s/.test(newRoom)) {
+    showBanner("Nom de salon invalide : pas d'espaces, max 10 caractères.", 'error');
+    return;
+  }
+
+  socket.emit('createRoom', newRoom);
+  input.value = '';
+  input.focus();
+
+  // 🔽 Scroll automatique vers le bas du bloc salons
+  const wrapper = document.getElementById('channel-list-wrapper');
+  if (wrapper) {
+    wrapper.scrollTop = wrapper.scrollHeight;
+  }
+});
+
 
   // Envoi message avec touche Entrée
   document.getElementById('message-input').addEventListener('keypress', (e) => {
