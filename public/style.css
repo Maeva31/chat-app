@@ -141,14 +141,14 @@ main {
 /* === Création Salon Fixé en Bas === */
 #create-channel {
   position: absolute;
-  bottom: 110px;
+  bottom: 70px;
   left: 1em;
   right: 1em;
   display: flex;
   gap: 5px;
   border-top: 1px solid #444;
   background: #222222b8;
-  padding-top: 10px;
+  padding-top: 5px;
   flex-wrap: nowrap;
   align-items: center;
   box-sizing: border-box;
@@ -1341,9 +1341,6 @@ button:focus {
   animation: laserTexteMenu 2s linear infinite;
   line-height: 1.2; /* 💡 pour égaliser avec les autres */
 }
-
-
-
 
 
 
