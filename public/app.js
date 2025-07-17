@@ -55,15 +55,15 @@ function updateAllInputStyles() {
 const newChannelInput = document.getElementById('new-channel-name');
 
 if (newChannelInput) {
-  newChannelInput.addEventListener('input', () => {
-    // Supprimer les espaces en direct
-    newChannelInput.value = newChannelInput.value.replace(/\s/g, '');
+newChannelInput.addEventListener('input', () => {
+  // Supprime caractères non autorisés (tout sauf lettres/chiffres)
+  newChannelInput.value = newChannelInput.value.replace(/[^a-zA-Z0-9]/g, '');
 
-    // Limiter à 10 caractères max
-    if (newChannelInput.value.length > 10) {
-      newChannelInput.value = newChannelInput.value.slice(0, 10);
-    }
-  });
+  // Limite à 10 caractères
+  if (newChannelInput.value.length > 10) {
+    newChannelInput.value = newChannelInput.value.slice(0, 10);
+  }
+});
 }
 
  applyStyleToInput(newChannelInput, currentStyle);
@@ -1308,19 +1308,22 @@ socket.on('banned rooms list', rooms => {
 const usernameInput = document.getElementById('username-input');
 const passwordInput = document.getElementById('password-input');
 
-
 if (usernameInput && passwordInput) {
   usernameInput.addEventListener('input', () => {
-  const val = usernameInput.value.trim(); // ❌ retirer .toLowerCase()
-  if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
-    passwordInput.style.display = 'block'; // afficher le mot de passe
-  } else {
-    passwordInput.style.display = 'none';  // cacher sinon
-    passwordInput.value = '';              // vider le mot de passe
-  }
-});
+    // Supprime les caractères spéciaux dès la saisie
+    usernameInput.value = usernameInput.value.replace(/[^a-zA-Z0-9]/g, '').slice(0, 16);
 
- const initialUsername = usernameInput.value.trim();
+    const val = usernameInput.value.trim();
+    if (adminUsernames.includes(val) || modoUsernames.includes(val)) {
+      passwordInput.style.display = 'block'; // afficher le mot de passe
+    } else {
+      passwordInput.style.display = 'none';  // cacher sinon
+      passwordInput.value = '';              // vider le champ
+    }
+  });
+
+  // Vérifie à l'ouverture s'il faut afficher le champ mot de passe
+  const initialUsername = usernameInput.value.trim();
   if (adminUsernames.includes(initialUsername) || modoUsernames.includes(initialUsername)) {
     passwordInput.style.display = 'block';
   }
@@ -1911,8 +1914,8 @@ function submitUserInfo() {
   const age = parseInt(ageInput.value.trim(), 10);
   const password = passwordInput.value.trim();
 
-  if (!username || username.includes(' ') || username.length > 16) {
-    modalError.textContent = "Le pseudo ne doit pas contenir d'espaces et doit faire 16 caractères max.";
+  if (!username || !/^[a-zA-Z0-9]{1,16}$/.test(username)) {
+    modalError.textContent = "Le pseudo ne doit contenir que des lettres et chiffres, sans caractères spéciaux (max 16).";
     modalError.style.display = 'block';
     return;
   }
@@ -2174,10 +2177,11 @@ document.getElementById('create-channel-button').addEventListener('click', () =>
   const input = document.getElementById('new-channel-name');
   if (!input) return;
   const newRoom = input.value.trim();
-  if (!newRoom || newRoom.length > 10 || /\s/.test(newRoom)) {
-    showBanner("Nom de salon invalide : pas d'espaces, max 10 caractères.", 'error');
+  if (!/^[a-zA-Z0-9]{1,10}$/.test(newRoom)) {
+    showBanner("Nom de salon invalide : uniquement lettres et chiffres (max 10 caractères, sans espaces ni caractères spéciaux).", 'error');
     return;
   }
+
 
   socket.emit('createRoom', newRoom);
   input.value = '';
