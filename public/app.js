@@ -173,6 +173,7 @@ function openPrivateChat(username, role, gender) {
     return;
   }
 
+  
   // ✅ Récupération des infos utilisateur si manquantes
 let age; 
 
@@ -198,6 +199,7 @@ if (!role || !gender || !age) {
   win.addEventListener('mousedown', () => {
     win.style.zIndex = ++topZIndex;
   });
+  
 
   // ── Header ──
 const header = document.createElement('div');
@@ -434,6 +436,8 @@ socket.on('private wiizz', ({ from }) => {
     container.appendChild(win);
   }
 
+  
+
   triggerWiizzEffect(win);
 
   const body = win.querySelector('.private-chat-body');
@@ -448,6 +452,7 @@ socket.on('private wiizz', ({ from }) => {
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
 });
+
 
 // Affiche une bannière temporaire de cooldown
 function showCooldownBanner(username, win) {
@@ -822,6 +827,8 @@ inputBar.append(emojiBtn, wiizzBtn, uploadBtn, emojiPicker, fileInput, input, se
     container.appendChild(win);
   }
 
+  window.openPrivateChat = openPrivateChat;
+
   // ── 4) Ajoute un message dans la fenêtre privée ──
 function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) {
   const msgDiv = document.createElement('div');
@@ -1134,6 +1141,7 @@ socket.on('redirect to room', roomName => {
   if (roomElement) {
     roomElement.click(); // ✅ Simule un clic pour changer visuellement de salon
   }
+  
 
   // Optionnel : notifier dans le chat
   const chatContainer = document.querySelector('.chat-messages');
@@ -1494,13 +1502,30 @@ function updateUserList(users) {
     else if (isRoomModo) usernameSpan.title = 'Modérateur du salon';
 
     // Clic pseudo → mention
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-      selectedUser = username;
-    });
+// ✅ Clic gauche → ouvrir MP
+usernameSpan.addEventListener('click', () => {
+  openPrivateChat(username, role, gender); // ⬅️ assure-toi que cette fonction existe bien
+});
+
+// ✅ Clic droit → mention
+usernameSpan.addEventListener('contextmenu', (e) => {
+  e.preventDefault(); // empêche le menu natif
+  const input = document.getElementById('message-input');
+  const mention = `@${username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
+
+
+// ✅ Clic droit → mention
+usernameSpan.addEventListener('contextmenu', (e) => {
+  e.preventDefault(); // empêche menu contextuel du navigateur
+  const input = document.getElementById('message-input');
+  const mention = `@${username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
+
 
     // ➕ Assemble les éléments
     li.append(badgeWrapper, usernameSpan);
@@ -1701,13 +1726,25 @@ if (msg.username === 'Système') {
     }
 
     // Clic pour mentionner
-    usernameSpan.addEventListener('click', () => {
-      const input = document.getElementById('message-input');
-      const mention = `@${msg.username} `;
-      if (!input.value.includes(mention)) input.value = mention + input.value;
-      input.focus();
-    });
+// 🖱️ Clic gauche → mentionner dans l'input
+usernameSpan.addEventListener('click', () => {
+  const input = document.getElementById('message-input');
+  const mention = `@${msg.username} `;
+  if (!input.value.includes(mention)) input.value = mention + input.value;
+  input.focus();
+});
+
+// 🖱️ Clic droit → ouvrir messagerie privée
+usernameSpan.addEventListener('contextmenu', (e) => {
+  e.preventDefault(); // empêche le menu contextuel natif
+  if (typeof openPrivateChat === 'function') {
+    openPrivateChat(msg.username, msg.role, msg.gender);
+  } else {
+    console.warn('❌ openPrivateChat() non défini');
   }
+});
+}
+
 
   function isYouTubeUrl(url) {
     return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
@@ -1950,6 +1987,8 @@ socket.on('chat message', msg => {
   // Sinon message normal
   addMessageToChat(msg);
 });
+
+
 
 
   socket.on('user list', updateUserList);
@@ -2843,6 +2882,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     link.target = '_blank';
     wrapper.appendChild(link);
   }
+
 
   chatMessages.appendChild(wrapper);
   setTimeout(() => {
