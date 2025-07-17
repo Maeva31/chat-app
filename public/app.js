@@ -1507,15 +1507,6 @@ usernameSpan.addEventListener('click', () => {
   openPrivateChat(username, role, gender); // ⬅️ assure-toi que cette fonction existe bien
 });
 
-// ✅ Clic droit → mention
-usernameSpan.addEventListener('contextmenu', (e) => {
-  e.preventDefault(); // empêche le menu natif
-  const input = document.getElementById('message-input');
-  const mention = `@${username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-});
-
 
 // ✅ Clic droit → mention
 usernameSpan.addEventListener('contextmenu', (e) => {
@@ -1532,9 +1523,6 @@ usernameSpan.addEventListener('contextmenu', (e) => {
     userList.appendChild(li);
   });
 }
-
-
-
 
 
 
