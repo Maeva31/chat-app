@@ -67,7 +67,7 @@ try {
 }
 
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
-const protectedRooms = ['Lesbiennes', 'GayGay', 'TransGirl'];
+const protectedRooms = ['Lesbiennes', 'GayGay', 'TransGirl', 'Paris', 'Lyon', 'Marseille', 'Nice', 'Toulouse'];
 
 
 let roomList = [];
