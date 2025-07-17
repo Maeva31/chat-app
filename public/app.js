@@ -1313,7 +1313,10 @@ if (usernameInput && passwordInput) {
     "Général": "💬",
     "Musique": "🎧",
     "Gaming": "🎮",
-    "Détente": "🌿"
+    "Détente": "🌿",
+    "Lesbiennes": "♀️",
+    "GayGay": "♂️",
+    "TransGirl": "⚧️"
   };
 
   // Affiche la modal si pas de pseudo
@@ -2030,43 +2033,83 @@ socket.on('chat message', msg => {
 });
 
 
-  socket.on('room list', (rooms) => {
-    const channelList = document.getElementById('channel-list');
-    if (!channelList) return;
-    const previousChannel = currentChannel;
+const sectionTitles = {
+  "__LGBT__": "🌈 LGBT",
+  "__VOCAL__": "🎙️ Vocaux",
+  "__SAFE__": "🛡️ Zone sûre"
+};
 
-    channelList.innerHTML = '';
+socket.on('room list', (rooms) => {
+  const channelList = document.getElementById('channel-list');
+  if (!channelList) return;
+  const previousChannel = currentChannel;
+  channelList.innerHTML = '';
 
-    rooms.forEach(channelName => {
-      const li = document.createElement('li');
-      li.classList.add('channel');
-      const emoji = channelEmojis[channelName] || "💬";
-      li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+  const realRooms = [];
 
-      li.addEventListener('click', () => {
-        const clickedRoom = extractChannelName(li.textContent);
-        if (clickedRoom === currentChannel) return;
-        currentChannel = clickedRoom;
-        localStorage.setItem('currentChannel', currentChannel);
-        const chatMessages = document.getElementById('chat-messages');
-        if (chatMessages) chatMessages.innerHTML = '';
-        selectChannelInUI(currentChannel);
-        socket.emit('joinRoom', currentChannel);
-      });
+  rooms.forEach(channelName => {
+    // 🎯 Affichage des titres séparateurs
+if (channelName.startsWith('__') && channelName.endsWith('__')) {
+  const li = document.createElement('li');
+  li.className = 'channel-group-title';
 
-      channelList.appendChild(li);
-    });
+  const rawText = sectionTitles[channelName] || channelName.replace(/^__|__$/g, '').toUpperCase();
+  const emojiMatch = rawText.match(/^(\p{Emoji_Presentation}|\p{Emoji})/u);
+  const emoji = emojiMatch ? emojiMatch[0] : '';
+  const text = emoji ? rawText.replace(emoji, '').trim() : rawText;
 
-    if (!rooms.includes(previousChannel)) {
-      currentChannel = 'Général';
+  const emojiSpan = document.createElement('span');
+  emojiSpan.className = 'emoji';
+  emojiSpan.textContent = emoji;
+
+  const textSpan = document.createElement('span');
+  textSpan.className = 'texte-laser';
+  textSpan.textContent = text;
+
+  li.appendChild(emojiSpan);
+  li.appendChild(textSpan);
+  channelList.appendChild(li);
+  return;
+}
+
+
+    realRooms.push(channelName);
+
+    const li = document.createElement('li');
+    li.classList.add('channel');
+    const emoji = channelEmojis[channelName] || "💬";
+    li.textContent = `# ${emoji} ┊ ${channelName} (0)`;
+
+    li.addEventListener('click', () => {
+      const clickedRoom = extractChannelName(li.textContent);
+      if (clickedRoom === currentChannel) return;
+      currentChannel = clickedRoom;
       localStorage.setItem('currentChannel', currentChannel);
-      socket.emit('joinRoom', currentChannel);
       const chatMessages = document.getElementById('chat-messages');
       if (chatMessages) chatMessages.innerHTML = '';
-    }
+      selectChannelInUI(currentChannel);
+      socket.emit('joinRoom', currentChannel);
+    });
 
-    selectChannelInUI(currentChannel);
+    channelList.appendChild(li);
   });
+
+  // 🛑 Protection : on revient à Général seulement si nécessaire
+  if (!realRooms.includes(previousChannel)) {
+    currentChannel = 'Général';
+    localStorage.setItem('currentChannel', currentChannel);
+    socket.emit('joinRoom', currentChannel);
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) chatMessages.innerHTML = '';
+  }
+
+  selectChannelInUI(currentChannel);
+});
+
+
+
+
+
 
   // Ping périodique
   setInterval(() => {
