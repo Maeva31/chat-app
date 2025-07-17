@@ -2035,6 +2035,7 @@ socket.on('chat message', msg => {
 
 const sectionTitles = {
   "__LGBT__": "🌈 Lgbt",
+  "__Regions__": "🌐 Régions",
   "__Salons Manager__": "🌴 Salons Manager",
   "__VOCAL__": "🎙️ Vocaux",
   "__SAFE__": "🛡️ Zone sûre"
