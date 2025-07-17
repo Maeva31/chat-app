@@ -1248,3 +1248,53 @@ button:focus {
   align-items: center;
   gap: 2px;
 }
+
+
+.username-span[data-gender="Homme"][data-role="user"]:not([data-roomrole="owner"]):not([data-roomrole="mod"]) {
+  color: dodgerblue;
+}
+.username-span[data-gender="Femme"][data-role="user"]:not([data-roomrole="owner"]):not([data-roomrole="mod"]) {
+  color: #f0f;
+}
+
+.username-span[data-gender="Trans"][data-role="user"]:not([data-roomrole="owner"]):not([data-roomrole="mod"]) {
+  color: #ee82ee;
+}
+.username-span {
+  transition: color 0.2s;
+  cursor: pointer;
+}
+
+.username-span[data-role="admin"] {
+  color: red;
+}
+
+.username-span[data-role="modo"] {
+  color: limegreen;
+}
+
+.username-span[data-roomrole="owner"] {
+  color: #a020f0;
+}
+
+.username-span[data-roomrole="mod"] {
+  color: #cc66ff;
+}
+
+.username-span[data-gender="Homme"]:not([data-role]):not([data-roomrole="owner"]):not([data-roomrole="mod"]) {
+  color: dodgerblue;
+}
+
+.username-span[data-gender="Femme"]:not([data-role]):not([data-roomrole="owner"]):not([data-roomrole="mod"]) {
+  color: #f0f;
+}
+
+.username-span[data-gender="Trans"]:not([data-role]):not([data-roomrole="owner"]):not([data-roomrole="mod"]) {
+  color: #ee82ee;
+}
+
+/* 💫 Hover */
+.username-span:hover {
+  color: #7f00ff !important;
+}
+
