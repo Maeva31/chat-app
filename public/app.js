@@ -9,7 +9,6 @@ let roomModerators = {};
 let topZIndex = 1000;
 
 // Affichage mobile
-// Affichage mobile
 
 document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll("#mobile-tabs button");
@@ -81,7 +80,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
 //  Fin affichage mobile
 
-//  Fin affichage mobile
 
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
