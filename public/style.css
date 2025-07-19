@@ -1932,9 +1932,7 @@ body.modal-open #mobile-tabs {
   margin-right: 4px;
 }
 
-.message .message-text {
-  color: #fff;
-}
 .message > .clickable-username {
   color: inherit !important;
 }
+
