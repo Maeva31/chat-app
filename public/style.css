@@ -1387,3 +1387,376 @@ audio:hover {
 }
 
 
+
+
+
+
+
+/* Affichage Mobile */
+
+@media (max-width: 768px) {
+  /* 📱 Conteneur principal mobile */
+  #content-container {
+    flex-direction: column !important;
+    height: auto !important;
+    overflow: hidden !important;
+  }
+
+  /* 📚 Sections principales en overlay (cachées par défaut) */
+  #channel-sidebar,
+  #chat-container,
+  #user-list {
+    opacity: 0;
+    pointer-events: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100% !important;
+    height: auto !important;
+    padding: 0.5em !important;
+    display: block !important;
+    z-index: 1;
+    transition: opacity 0.3s ease;
+  }
+
+  /* ✅ Section visible (active) */
+  #channel-sidebar.active,
+  #chat-container.active,
+  #user-list.active {
+    opacity: 1;
+    pointer-events: auto;
+    position: relative;
+    z-index: 2;
+  }
+
+  /* 🧵 Hauteur chat responsive */
+  #chat-container {
+    display: flex !important;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: calc(100vh - 96px);
+    padding-bottom: 120px !important; /* espace pour input + onglets */
+  }
+
+  .chat-messages {
+    flex-grow: 1;
+    overflow-y: auto;
+    max-height: calc(100vh - 200px);
+  }
+
+  /* 💬 Barre de message */
+  #message-input-container {
+    position: fixed;
+    bottom: 48px;
+    left: 0;
+    right: 0;
+    background: #111;
+    padding: 8px 10px;
+    z-index: 999;
+    border-top: 1px solid #444;
+  }
+
+  #chat-input {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  #chat-input input[type="text"] {
+    flex: 1;
+    padding: 8px;
+    font-size: 14px;
+    border-radius: 6px;
+    border: 1px solid #555;
+    background-color: #222;
+    color: #fff;
+  }
+
+  #chat-input button {
+    padding: 8px;
+    border-radius: 6px;
+    border: none;
+    background-color: #0ff;
+    color: #000;
+    font-weight: bold;
+    cursor: pointer;
+  }
+
+  /* 📱 Onglets fixes en bas */
+  #mobile-tabs {
+    display: flex !important;
+    justify-content: space-around;
+    align-items: center;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 48px;
+    background-color: #111;
+    border-top: 1px solid #444;
+    z-index: 9999;
+  }
+
+  #mobile-tabs button {
+    flex: 1;
+    padding: 10px 0;
+    background: none;
+    color: white;
+    border: none;
+    font-size: 14px;
+  }
+
+  #mobile-tabs button.active {
+    color: #0ff;
+    font-weight: bold;
+  }
+
+  main {
+    margin-bottom: 48px;
+  }
+}
+/* Mobile : affichage selon l'onglet actif */
+@media (max-width: 768px) {
+  #chat-container,
+  #channel-sidebar,
+  #user-list {
+    display: none;
+  }
+
+  #chat-container.active,
+  #channel-sidebar.active,
+  #user-list.active {
+    display: block;
+  }
+
+  #mobile-tabs {
+    display: flex;
+    justify-content: space-around;
+    background: #111;
+    color: #fff;
+    padding: 5px 0;
+    border-top: 1px solid #333;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9999;
+  }
+
+  #mobile-tabs button {
+    background: none;
+    border: none;
+    color: #888;
+    font-weight: bold;
+    font-size: 14px;
+  }
+
+  #mobile-tabs button.active {
+    color: #00ffff;
+  }
+
+  #top-bar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+  }
+
+  body {
+    overflow: hidden; /* évite la barre de scroll verticale */
+  }
+}
+
+@media (max-width: 768px) {
+  #chat-input {
+    position: fixed;
+    bottom: 48px; /* juste au-dessus de la barre mobile */
+    left: 0;
+    right: 0;
+    background: #111;
+    padding: 6px 8px;
+    z-index: 999;
+    border-top: 1px solid #444;
+  }
+
+  #chat-container {
+    padding-bottom: 120px !important;
+  }
+}
+/* 🖥️ Masquer les onglets mobiles sur PC */
+#mobile-tabs {
+  display: none !important;
+}
+
+/* 📱 Réactiver les onglets sur mobile */
+@media (max-width: 768px) {
+  #mobile-tabs {
+    display: flex !important;
+  }
+}
+@media (max-width: 768px) {
+  #channel-sidebar {
+    order: 2; /* pour l'afficher après chat si en flex column */
+  }
+
+  main {
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+#chat-input {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+  background: #111;
+  border-top: 1px solid #444;
+}
+
+#chat-input input[type="text"] {
+  flex: 1;
+  padding: 8px;
+  font-size: 14px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background-color: #222;
+  color: #fff;
+}
+
+#chat-input button {
+  font-size: 20px;
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  padding: 6px;
+}
+
+
+
+  #chat-input button {
+    font-size: 20px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+  }
+
+.input-buttons {
+  display: flex;
+  gap: 4px;
+}
+@media (max-width: 768px) {
+  #chat-input {
+    flex-direction: row-reverse;
+  }
+}
+#channel-list-wrapper {
+  max-height: calc(100vh - 150px); /* Ajuste selon ta mise en page */
+  overflow-y: auto;
+  padding-right: 6px; /* optionnel : pour laisser de la place à la scrollbar */
+}
+/* 🌐 Liste des salons scrollable */
+#channel-list-wrapper {
+  max-height: calc(100vh - 180px); /* hauteur ajustée */
+  overflow-y: auto;
+  padding-right: 6px;
+}
+
+/* 👥 Liste des utilisateurs scrollable */
+#user-list {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+#user-list ul#users {
+  flex: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 160px); /* Ajuste selon boutons */
+  padding-right: 6px;
+}
+
+/* 💬 Messages du chat scrollables */
+.chat-messages {
+  flex-grow: 1;
+  overflow-y: auto;
+  max-height: calc(100vh - 180px); /* hauteur = écran - top bar - input */
+  padding-right: 6px;
+}
+@media (max-width: 768px) {
+  html, body {
+    overflow: hidden !important;
+    height: 100% !important;
+  }
+
+  main {
+    height: 100vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #channel-sidebar,
+  #chat-container,
+  #user-list {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(30, 30, 30, 0.85); /* fond gris opaque */
+  }
+
+  #channel-list-wrapper,
+  .chat-messages,
+  #users {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding-right: 6px;
+    padding-bottom: 12px;
+  }
+
+  #create-channel {
+    flex-shrink: 0;
+    padding: 10px;
+    border-top: 1px solid #444;
+    background-color: rgba(20, 20, 20, 0.8);
+  }
+}
+@media (max-width: 768px) {
+  #channel-sidebar {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    background-color: rgba(30, 30, 30, 0.85);
+  }
+
+  #channel-list-wrapper {
+    flex: 1 1 auto;
+    overflow-y: auto;
+    padding: 10px;
+    margin-bottom: 80px; /* espace pour ne pas que la liste touche "Créer" */
+  }
+
+  #create-channel {
+    position: fixed;
+    bottom: 48px; /* juste au-dessus des boutons onglets */
+    left: 0;
+    width: 100%;
+    padding: 8px 12px;
+    background-color: rgba(20, 20, 20, 0.95);
+    box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.4);
+    z-index: 999;
+  }
+
+  #create-channel input,
+  #create-channel button {
+    width: 100%;
+    margin-bottom: 6px;
+  }
+}
