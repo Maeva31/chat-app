@@ -73,6 +73,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 });
+// 🔄 Lors de la création d’un salon, on bascule sur le chat (mobile uniquement)
+if (typeof socket !== 'undefined') {
+  socket.on('room created', (roomName) => {
+    if (window.innerWidth <= 768) {
+      switchTab("chat-container");
+    }
+  });
+}
 
 
 
