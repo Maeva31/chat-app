@@ -1790,6 +1790,7 @@ function addMessageToChat(msg) {
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+  // ⏰ Heure
   const timeSpan = document.createElement('span');
   timeSpan.textContent = timeString + ' ';
   timeSpan.style.color = '#888';
@@ -1797,17 +1798,18 @@ function addMessageToChat(msg) {
   timeSpan.style.marginRight = '5px';
   newMessage.appendChild(timeSpan);
 
+  // 👤 Pseudo
   const usernameSpan = document.createElement('span');
   usernameSpan.classList.add('clickable-username');
   const color = (msg.role === 'admin') ? 'red' :
                 (msg.role === 'modo') ? 'limegreen' :
                 getUsernameColor(msg.gender);
-  usernameSpan.style.color = color || '#fff';
   usernameSpan.style.setProperty('color', color || '#fff', 'important');
   usernameSpan.textContent = msg.username + ': ';
   usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                        (msg.role === 'modo') ? 'Modérateur' : '';
 
+  // 🏅 Icônes
   if (msg.role === 'admin') {
     const icon = document.createElement('img');
     icon.src = '/diamond.ico';
@@ -1830,6 +1832,7 @@ function addMessageToChat(msg) {
     usernameSpan.insertBefore(icon, usernameSpan.firstChild);
   }
 
+  // 🖱️ Clic
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
     const mention = `@${msg.username} `;
@@ -1846,6 +1849,12 @@ function addMessageToChat(msg) {
     }
   });
 
+  // 📦 Fichier ?
+  const isImage = /\.(jpg|jpeg|png|gif|webp)$/i.test(msg.message);
+  const isAudio = /\.(mp3|wav|ogg)$/i.test(msg.message);
+  const isVideo = /\.(mp4|webm|ogg)$/i.test(msg.message);
+
+  // 💬 Texte
   const messageText = document.createElement('span');
   const style = msg.style || {};
   messageText.classList.add('message-text');
@@ -1874,21 +1883,55 @@ function addMessageToChat(msg) {
     }
   });
 
-  // Ajout pseudo et texte (même vide)
+  // ✅ Afficher le pseudo dans tous les cas
   if (msg.username !== 'Système') {
     newMessage.appendChild(usernameSpan);
-  } else {
-    messageText.style.color = '#888';
-    messageText.style.fontStyle = 'italic';
   }
 
-  newMessage.appendChild(messageText);
+  // 💬 Texte simple
+  if (messageText.textContent.trim() !== '') {
+    newMessage.appendChild(messageText);
+  }
 
+  // 🖼️ Image
+  if (isImage) {
+    const img = document.createElement('img');
+    img.src = msg.message;
+    img.alt = 'Image';
+    img.classList.add('chat-image');
+    img.style.maxWidth = '100%';
+    img.style.marginTop = '5px';
+    newMessage.appendChild(img);
+  }
+
+  // 🔊 Audio
+  if (isAudio) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    const source = document.createElement('source');
+    source.src = msg.message;
+    audio.appendChild(source);
+    newMessage.appendChild(audio);
+  }
+
+  // 🎥 Vidéo
+  if (isVideo) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.width = 320;
+    const source = document.createElement('source');
+    source.src = msg.message;
+    video.appendChild(source);
+    newMessage.appendChild(video);
+  }
+
+  // 🎬 YouTube
   addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
 
