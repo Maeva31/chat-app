@@ -1887,6 +1887,10 @@ usernameSpan.style.setProperty('color', color || '#fff', 'important');
   });
 
   // Ajout pseudo et texte (même vide)
+  if (!msg.message) {
+  console.warn(`[VIDE] Fichier ou message vide reçu de ${msg.username}`);
+}
+
   if (msg.username !== 'Système') {
     newMessage.appendChild(usernameSpan);
   } else {
