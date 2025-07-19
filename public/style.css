@@ -1932,7 +1932,11 @@ body.modal-open #mobile-tabs {
   margin-right: 4px;
 }
 
-.message > .clickable-username {
+.message .clickable-username {
   color: inherit !important;
+  font-weight: inherit !important;
+  font-style: inherit !important;
+  font-family: inherit !important;
 }
+
 
