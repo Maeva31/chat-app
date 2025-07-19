@@ -1951,3 +1951,12 @@ body.modal-open #mobile-tabs {
     border-radius: 0;
   }
 }
+
+span.pseudo-colored {
+  color: inherit !important;
+}
+
+.message .pseudo-colored {
+  font-weight: bold;
+  color: inherit !important;
+}
