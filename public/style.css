@@ -1923,3 +1923,10 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
+
+/* Test */
+
+.message > .clickable-username {
+  color: inherit !important;
+  font-weight: bold;
+}
