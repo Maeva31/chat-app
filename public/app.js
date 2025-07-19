@@ -9,6 +9,8 @@ let roomModerators = {};
 let topZIndex = 1000;
 
 // Affichage mobile
+// Affichage mobile
+
 document.addEventListener("DOMContentLoaded", () => {
   const buttons = document.querySelectorAll("#mobile-tabs button");
   const sections = {
@@ -16,6 +18,10 @@ document.addEventListener("DOMContentLoaded", () => {
     "channel-sidebar": document.getElementById("channel-sidebar"),
     "user-list": document.getElementById("user-list")
   };
+
+  const modal = document.getElementById("myModal");
+  const topBar = document.getElementById("top-bar");
+  const mobileTabs = document.getElementById("mobile-tabs");
 
   function switchTab(targetId) {
     Object.keys(sections).forEach(id => {
@@ -38,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   switchTab("chat-container");
 
-  // ✅ Active #chat-container quand on clique sur un salon
   const channelList = document.getElementById("channel-list");
   if (channelList) {
     channelList.addEventListener("click", (e) => {
@@ -48,22 +53,33 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     });
   }
+
+  function updateUIVisibility() {
+    const isModalVisible = getComputedStyle(modal).display !== 'none';
+    document.body.classList.toggle("modal-open", isModalVisible);
+  }
+
+  const observer = new MutationObserver(updateUIVisibility);
+  observer.observe(modal, { attributes: true, attributeFilter: ["style"] });
+
+  updateUIVisibility();
+
+  if (typeof socket !== 'undefined') {
+    socket.once('username accepted', ({ username, gender, age }) => {
+      localStorage.setItem('username', username);
+      localStorage.setItem('gender', gender);
+      localStorage.setItem('age', age);
+      document.getElementById("myModal").style.display = "none";
+      updateUIVisibility();
+    });
+  }
 });
-// Afficher le top-bar sauf si la modal est ouverte
-const modal = document.getElementById('myModal');
-const topBar = document.getElementById('top-bar');
 
-function updateTopBarVisibility() {
-  const isModalOpen = getComputedStyle(modal).display !== 'none';
-  topBar.style.display = isModalOpen ? 'none' : 'flex';
-}
 
-// Surveille les changements de la modale
-const observer = new MutationObserver(updateTopBarVisibility);
-observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
 
-// Appliquer une première fois au chargement
-updateTopBarVisibility();
+
+
+//  Fin affichage mobile
 
 //  Fin affichage mobile
 
