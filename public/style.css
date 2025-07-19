@@ -1935,3 +1935,6 @@ body.modal-open #mobile-tabs {
 .message .message-text {
   color: #fff;
 }
+.message > .clickable-username {
+  color: inherit !important;
+}
