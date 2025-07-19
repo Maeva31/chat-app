@@ -400,6 +400,17 @@ header.append(title, buttonGroup);
   // Fenêtre au conteneur
   container.appendChild(win);
 
+    // ✅ Si sur mobile, la rendre plein écran
+  if (window.innerWidth <= 768) {
+  win.style.left = "0";
+  win.style.top = "55px";
+  win.style.width = "100vw";
+  win.style.maxWidth = "100vw";
+  win.style.height = "calc(100vh - 110px)";
+  win.style.maxHeight = "calc(100vh - 110px)";
+  win.style.transform = "none";
+  win.style.borderRadius = "0";
+}
 
     // Body
     const body = document.createElement('div');
