@@ -1923,20 +1923,3 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
-.message .clickable-username {
-  color: inherit !important;
-}
-
-.message .clickable-username img {
-  vertical-align: middle;
-  margin-right: 4px;
-}
-
-.message .clickable-username {
-  color: inherit !important;
-  font-weight: inherit !important;
-  font-style: inherit !important;
-  font-family: inherit !important;
-}
-
-
