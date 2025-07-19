@@ -437,6 +437,7 @@ main {
   box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
   border: 2px solid #444;
   animation: popIn 0.4s ease;
+  box-sizing: border-box;
 }
 
 .modal-content h2 {
@@ -1773,4 +1774,42 @@ audio:hover {
 body.modal-open #top-bar,
 body.modal-open #mobile-tabs {
   display: none !important;
+}
+@media (max-width: 480px) {
+  .modal-content {
+    padding: 1.2em;
+    border-radius: 12px;
+    max-width: 95vw;
+    width: 95vw;
+    box-sizing: border-box; /* ✅ pour éviter tout débordement */
+  }
+
+  .modal-content h2 {
+    font-size: 1.4em;
+  }
+
+  .modal-content label {
+    font-size: 0.9em;
+  }
+
+  .modal-content input,
+  .modal-content select {
+    font-size: 0.95em;
+    padding: 0.7em;
+    width: 100%;              /* ✅ important pour mobile */
+    box-sizing: border-box;   /* ✅ évite les scrolls latéraux */
+  }
+
+  .modal-content button {
+    font-size: 1em;
+    padding: 0.7em;
+    width: 100%;              /* ✅ mieux sur petit écran */
+    box-sizing: border-box;
+  }
+
+  .modal-image {
+    width: 40px;
+    height: 40px;
+    margin-bottom: 15px;
+  }
 }
