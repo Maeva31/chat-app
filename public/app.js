@@ -338,7 +338,7 @@ buttonGroup.style.gap = '6px';
 
 // Crée bouton Réduire
 const minimizeBtn = document.createElement('button');
-minimizeBtn.textContent = '🗕';
+minimizeBtn.textContent = '−'; // Par défaut (sera mis à jour plus tard)
 minimizeBtn.title = 'Réduire';
 
 // Crée bouton Fermer
@@ -362,18 +362,28 @@ closeBtn.title = 'Fermer';
   btn.style.cursor = 'pointer';
   btn.style.borderRadius = '4px';
   btn.style.transition = 'background 0.2s';
+  btn.style.touchAction = 'manipulation'; // Améliore réactivité mobile
 
-  // Hover visuel
   btn.onmouseenter = () => btn.style.backgroundColor = '#444';
   btn.onmouseleave = () => btn.style.backgroundColor = 'transparent';
 });
 
+// 👉 Ajuste tailles pour mobile
+if (window.innerWidth <= 480) {
+  [minimizeBtn, closeBtn].forEach(btn => {
+    btn.style.width = '36px';
+    btn.style.height = '36px';
+    btn.style.fontSize = '22px';
+  });
+}
+
 // Action Réduire / Restaurer
 minimizeBtn.onclick = () => {
   const minimized = win.classList.toggle('minimized');
-  minimizeBtn.textContent = minimized ? '🗖' : '🗕';
+  minimizeBtn.textContent = minimized ? '☐' : '−';
   minimizeBtn.title = minimized ? 'Restaurer' : 'Réduire';
 };
+
 
 // Action Fermer
 closeBtn.onclick = () => container.removeChild(win);
