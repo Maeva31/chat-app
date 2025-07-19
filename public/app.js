@@ -1734,14 +1734,12 @@ if (logoutModal) {
 }
 
 // Extrait l'ID vidéo YouTube depuis une URL et retourne l'URL de la miniature
-function getYouTubeThumbnail(url) {
-  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  if (match) {
-    return `https://img.youtube.com/vi/${match[1]}/hqdefault.jpg`;
-  }
-  return null;
+function getYouTubeVideoId(url) {
+  const regex = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([\w-]{11})/;
+  const match = url.match(regex);
+  return match ? match[1] : null;
 }
+
 
 
 // Ajoute une miniature YouTube au message s'il contient un ou plusieurs liens YouTube
@@ -1949,23 +1947,36 @@ function addMessageToChat(msg) {
   });
 
   // Envoi message
-  function sendMessage() {
-    const input = document.getElementById('message-input');
-    if (!input) return;
-    const message = input.value.trim();
-    const username = localStorage.getItem('username');
-    if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
-    if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
+function sendMessage() {
+  const input = document.getElementById('message-input');
+  if (!input) return;
 
-    if (username) {
-      socket.emit('chat message', {
-        message,
-        timestamp: new Date().toISOString(),
-        style: loadSavedStyle() 
-      });
-      input.value = '';
-    }
-  }
+  const message = input.value.trim();
+  console.log("Message envoyé :", message); // 👈 AJOUT ICI
+
+  if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
+  if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
+
+  const username = localStorage.getItem('username') || 'Anonyme';
+  const gender = localStorage.getItem('gender') || 'non spécifié';
+  const age = localStorage.getItem('age') || '';
+  const role = localStorage.getItem('role') || '';
+  const style = loadSavedStyle();
+  const timestamp = new Date().toISOString();
+
+  socket.emit('chat message', {
+    username,
+    gender,
+    age,
+    role,
+    message,
+    timestamp,
+    style
+  });
+
+  input.value = '';
+}
+
 
 
 function submitUserInfo() {
