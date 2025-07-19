@@ -1924,9 +1924,3 @@ body.modal-open #mobile-tabs {
   }
 }
 
-/* Test */
-
-.message > .clickable-username {
-  color: inherit !important;
-  font-weight: bold;
-}
