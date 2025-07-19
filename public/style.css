@@ -1624,7 +1624,7 @@ audio:hover {
   border-radius: 6px;
   border: 1px solid #555;
   background-color: #222;
-  color: #fff;
+  
 }
 
 #chat-input button {
@@ -1923,4 +1923,3 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
-
