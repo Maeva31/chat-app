@@ -1807,13 +1807,14 @@ function addMessageToChat(msg) {
   timeSpan.style.marginRight = '5px';
   newMessage.appendChild(timeSpan);
 
-  const usernameSpan = document.createElement('span');
-  usernameSpan.classList.add('clickable-username');
-  const color = (msg.role === 'admin') ? 'red' :
-                (msg.role === 'modo') ? 'limegreen' :
-                getUsernameColor(msg.gender);
-  usernameSpan.style.color = color || '#fff';
-  usernameSpan.style.setProperty('color', color || '#fff', 'important');
+const usernameSpan = document.createElement('span');
+usernameSpan.classList.add('clickable-username', 'pseudo-colored');
+const color = (msg.role === 'admin') ? 'red' :
+              (msg.role === 'modo') ? 'limegreen' :
+              getUsernameColor(msg.gender);
+usernameSpan.style.color = color || '#fff';
+usernameSpan.style.setProperty('color', color || '#fff', 'important');
+
   console.log(`[Color DEBUG] ${msg.username} - ${color}`);
   usernameSpan.textContent = msg.username + ': ';
   usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
