@@ -1768,15 +1768,6 @@ function addYouTubeVideoIfAny(messageElement, messageText) {
 
 
 // Fonction utilitaire pour extraire l’ID vidéo YouTube d’une URL
-function getYouTubeVideoId(url) {
-  const regExp = /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))([a-zA-Z0-9_-]{11})/;
-  const match = url.match(regExp);
-  return match ? match[1] : null;
-}
-
-
-
-  // Ajoute un message dans la zone de chat
 function addMessageToChat(msg) {
   if (msg.username === 'Système') {
     if (/est maintenant visible\.$/i.test(msg.message)) return;
@@ -1799,7 +1790,6 @@ function addMessageToChat(msg) {
   const date = new Date(msg.timestamp);
   const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-  // ⏰ Horodatage
   const timeSpan = document.createElement('span');
   timeSpan.textContent = timeString + ' ';
   timeSpan.style.color = '#888';
@@ -1807,20 +1797,17 @@ function addMessageToChat(msg) {
   timeSpan.style.marginRight = '5px';
   newMessage.appendChild(timeSpan);
 
-  // 👤 Pseudo
   const usernameSpan = document.createElement('span');
   usernameSpan.classList.add('clickable-username');
-  let color = (msg.role === 'admin') ? 'red' :
-              (msg.role === 'modo') ? 'limegreen' :
-              getUsernameColor(msg.gender);
+  const color = (msg.role === 'admin') ? 'red' :
+                (msg.role === 'modo') ? 'limegreen' :
+                getUsernameColor(msg.gender);
   usernameSpan.style.color = color || '#fff';
-  usernameSpan.style.setProperty('color', color || '#fff', 'important'); // 👈 Force la couleur
-
+  usernameSpan.style.setProperty('color', color || '#fff', 'important');
   usernameSpan.textContent = msg.username + ': ';
   usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                        (msg.role === 'modo') ? 'Modérateur' : '';
 
-  // 👑 Icône rôle
   if (msg.role === 'admin') {
     const icon = document.createElement('img');
     icon.src = '/diamond.ico';
@@ -1843,7 +1830,6 @@ function addMessageToChat(msg) {
     usernameSpan.insertBefore(icon, usernameSpan.firstChild);
   }
 
-  // 🖱️ Clic pour mention ou MP
   usernameSpan.addEventListener('click', () => {
     const input = document.getElementById('message-input');
     const mention = `@${msg.username} `;
@@ -1860,12 +1846,6 @@ function addMessageToChat(msg) {
     }
   });
 
-  if (msg.username !== 'Système') {
-    newMessage.appendChild(usernameSpan);
-  }
-
-  // 💬 Texte ou fichier
-  const parts = (msg.message || '').split(/(https?:\/\/[^\s]+)/g);
   const messageText = document.createElement('span');
   const style = msg.style || {};
   messageText.classList.add('message-text');
@@ -1874,9 +1854,9 @@ function addMessageToChat(msg) {
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
 
-  function isYouTubeUrl(url) {
-    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
-  }
+  const parts = (msg.message || '').split(/(https?:\/\/[^\s]+)/g);
+  const isYouTubeUrl = url =>
+    /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
 
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
@@ -1889,27 +1869,27 @@ function addMessageToChat(msg) {
       a.style.color = style.color || '#00aaff';
       a.style.textDecoration = 'underline';
       messageText.appendChild(a);
-    } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
+    } else if (part.trim() !== '') {
+      messageText.appendChild(document.createTextNode(part));
     }
   });
 
-  if (msg.username === 'Système') {
+  // Ajout pseudo et texte (même vide)
+  if (msg.username !== 'Système') {
+    newMessage.appendChild(usernameSpan);
+  } else {
     messageText.style.color = '#888';
     messageText.style.fontStyle = 'italic';
-    newMessage.appendChild(messageText);
-  } else {
-    newMessage.appendChild(messageText); // ✅ Toujours l’ajouter même vide
   }
 
-  // 🎥 Intégration YouTube
+  newMessage.appendChild(messageText);
+
   addYouTubeVideoIfAny(newMessage, msg.message);
 
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
 
 
