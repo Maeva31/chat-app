@@ -1779,9 +1779,7 @@ function getYouTubeVideoId(url) {
   // Ajoute un message dans la zone de chat
 function addMessageToChat(msg) {
   if (msg.username === 'Système') {
-    // Ignore le message "est maintenant visible."
     if (/est maintenant visible\.$/i.test(msg.message)) return;
-
     const salonRegex = /salon\s+(.+)$/i;
     const match = salonRegex.exec(msg.message);
     if (match && match[1]) {
@@ -1791,140 +1789,151 @@ function addMessageToChat(msg) {
   }
 
   const chatMessages = document.getElementById('chat-messages');
-if (!chatMessages) return;
+  if (!chatMessages) return;
 
-const newMessage = document.createElement('div');
-const date = new Date(msg.timestamp);
-const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const newMessage = document.createElement('div');
+  newMessage.classList.add('message');
+  newMessage.dataset.username = msg.username;
 
-const usernameSpan = document.createElement('span');
-const color = (msg.role === 'admin') ? 'red' :
-              (msg.role === 'modo') ? 'limegreen' :
-              getUsernameColor(msg.gender);
+  const date = new Date(msg.timestamp);
+  const timeString = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
-if (msg.username === 'Système') {
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.style.color = '#888';
-  usernameSpan.style.fontWeight = 'bold';
-} else {
+  const timeSpan = document.createElement('span');
+  timeSpan.textContent = timeString + ' ';
+  timeSpan.style.color = '#888';
+  timeSpan.style.fontStyle = 'italic';
+  timeSpan.style.marginRight = '5px';
+  newMessage.appendChild(timeSpan);
+
+  // Pseudo
+  const usernameSpan = document.createElement('span');
   usernameSpan.classList.add('clickable-username');
-  usernameSpan.style.color = color;
-  usernameSpan.textContent = msg.username + ': ';
-  usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                       (msg.role === 'modo') ? 'Modérateur' : '';
 
+  if (msg.username === 'Système') {
+    usernameSpan.textContent = msg.username + ': ';
+    usernameSpan.style.color = '#888';
+    usernameSpan.style.fontWeight = 'bold';
+  } else {
+    const color = (msg.role === 'admin') ? 'red' :
+                  (msg.role === 'modo') ? 'limegreen' :
+                  getUsernameColor(msg.gender);
+    usernameSpan.style.color = color;
+    usernameSpan.textContent = msg.username + ': ';
+    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
+                         (msg.role === 'modo') ? 'Modérateur' : '';
 
-
-
-    // Icônes selon rôle
+    // Icônes
     if (msg.role === 'admin') {
       const icon = document.createElement('img');
       icon.src = '/diamond.ico';
       icon.alt = 'Admin';
       icon.title = 'Admin';
-      icon.style.width = '17px';
-      icon.style.height = '15px';
-      icon.style.marginRight = '2px';
-      icon.style.verticalAlign = '-1px';
+      Object.assign(icon.style, {
+        width: '17px', height: '15px', marginRight: '2px', verticalAlign: '-1px'
+      });
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     } else if (msg.role === 'modo') {
       const icon = document.createElement('img');
       icon.src = '/favicon.ico';
       icon.alt = 'Modérateur';
       icon.title = 'Modérateur';
-      icon.style.width = '16px';
-      icon.style.height = '16px';
-      icon.style.marginRight = '1px';
-      icon.style.verticalAlign = '-2px';
+      Object.assign(icon.style, {
+        width: '16px', height: '16px', marginRight: '1px', verticalAlign: '-2px'
+      });
       usernameSpan.insertBefore(icon, usernameSpan.firstChild);
     }
 
-    // Clic pour mentionner
-// 🖱️ Clic gauche → mentionner dans l'input
-usernameSpan.addEventListener('click', () => {
-  const input = document.getElementById('message-input');
-  const mention = `@${msg.username} `;
-  if (!input.value.includes(mention)) input.value = mention + input.value;
-  input.focus();
-});
+    // Mentions
+    usernameSpan.addEventListener('click', () => {
+      const input = document.getElementById('message-input');
+      const mention = `@${msg.username} `;
+      if (!input.value.includes(mention)) input.value = mention + input.value;
+      input.focus();
+    });
 
-// 🖱️ Clic droit → ouvrir messagerie privée
-usernameSpan.addEventListener('contextmenu', (e) => {
-  e.preventDefault(); // empêche le menu contextuel natif
-  if (typeof openPrivateChat === 'function') {
-    openPrivateChat(msg.username, msg.role, msg.gender);
-  } else {
-    console.warn('❌ openPrivateChat() non défini');
-  }
-});
-}
-
-
-  function isYouTubeUrl(url) {
-    return /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
-  }
-
-  const parts = msg.message.split(/(https?:\/\/[^\s]+)/g);
-
-  const messageText = document.createElement('span');
-  const style = msg.style || {};
-  messageText.style.color = style.color || '#fff';
-  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
-  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
-  messageText.style.fontFamily = style.font || 'Arial';
-
-  parts.forEach(part => {
-    if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) {
-        return; // ignore dans texte, vidéo intégrée ailleurs
-      } else {
-        const a = document.createElement('a');
-        a.href = part;
-        a.textContent = part;
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-        a.style.color = style.color || '#00aaff';
-        a.style.textDecoration = 'underline';
-        messageText.appendChild(a);
+    usernameSpan.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+      if (typeof openPrivateChat === 'function') {
+        openPrivateChat(msg.username, msg.role, msg.gender);
       }
-    } else {
-      if (part.trim() !== '') {
-        messageText.appendChild(document.createTextNode(part));
-      }
-    }
-  });
-
-  // --- Ici la modification principale : ajout du span timeSpan ---
-  const timeSpan = document.createElement('span');
-  timeSpan.textContent = timeString + ' ';
-  timeSpan.style.color = '#888';
-  timeSpan.style.fontStyle = 'italic';
-  timeSpan.style.marginRight = '5px';
-
-  newMessage.appendChild(timeSpan);
+    });
+  }
 
   if (msg.username !== 'Système') {
     newMessage.appendChild(usernameSpan);
   }
 
-  // Ajouter ":" + espace après le pseudo uniquement si message non vide
+  const style = msg.style || {};
+  const messageText = document.createElement('span');
+  messageText.classList.add('message-text');
+  messageText.style.color = style.color || '#fff';
+  messageText.style.fontWeight = style.bold ? 'bold' : 'normal';
+  messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
+  messageText.style.fontFamily = style.font || 'Arial';
+
+  // Gestion fichiers (si serveur t'envoie msg.fileUrl)
+  if (msg.fileUrl && msg.fileType) {
+    if (msg.fileType.startsWith('image/')) {
+      const img = document.createElement('img');
+      img.src = msg.fileUrl;
+      img.alt = "Image";
+      img.style.maxWidth = '100%';
+      img.style.borderRadius = '8px';
+      newMessage.appendChild(img);
+    } else if (msg.fileType.startsWith('audio/')) {
+      const audio = document.createElement('audio');
+      audio.src = msg.fileUrl;
+      audio.controls = true;
+      audio.style.marginTop = '5px';
+      newMessage.appendChild(audio);
+    } else if (msg.fileType.startsWith('video/')) {
+      const video = document.createElement('video');
+      video.src = msg.fileUrl;
+      video.controls = true;
+      video.style.maxWidth = '100%';
+      video.style.borderRadius = '8px';
+      video.style.marginTop = '5px';
+      newMessage.appendChild(video);
+    } else {
+      const link = document.createElement('a');
+      link.href = msg.fileUrl;
+      link.textContent = "📁 Fichier à télécharger";
+      link.target = "_blank";
+      link.style.color = style.color || '#00aaff';
+      newMessage.appendChild(link);
+    }
+  }
+
+  // Texte
+  const parts = msg.message?.split(/(https?:\/\/[^\s]+)/g) || [];
+  parts.forEach(part => {
+    if (/https?:\/\/[^\s]+/.test(part)) {
+      if (/(youtu\.be\/|youtube\.com)/.test(part)) return; // vidéo ajoutée à part
+      const a = document.createElement('a');
+      a.href = part;
+      a.textContent = part;
+      a.target = '_blank';
+      a.style.color = style.color || '#00aaff';
+      a.style.textDecoration = 'underline';
+      messageText.appendChild(a);
+    } else {
+      if (part.trim()) messageText.appendChild(document.createTextNode(part));
+    }
+  });
+
   if (msg.username === 'Système') {
     messageText.style.color = '#888';
     messageText.style.fontStyle = 'italic';
-
     newMessage.appendChild(messageText);
-  } else if (messageText.textContent.trim() !== '') {
+  } else if (messageText.textContent.trim()) {
     newMessage.appendChild(messageText);
   }
 
-  newMessage.classList.add('message');
-  newMessage.dataset.username = msg.username;
-
   addYouTubeVideoIfAny(newMessage, msg.message);
-
   chatMessages.appendChild(newMessage);
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
+
 
   // Sélectionne visuellement un salon dans la liste
   function selectChannelInUI(channelName) {
