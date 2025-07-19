@@ -1814,13 +1814,18 @@ function addMessageToChat(msg) {
     usernameSpan.style.color = '#888';
     usernameSpan.style.fontWeight = 'bold';
   } else {
-    const color = (msg.role === 'admin') ? 'red' :
-                  (msg.role === 'modo') ? 'limegreen' :
-                  getUsernameColor(msg.gender);
-    usernameSpan.style.color = color;
-    usernameSpan.textContent = msg.username + ': ';
-    usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
-                         (msg.role === 'modo') ? 'Modérateur' : '';
+const usernameSpan = document.createElement('span');
+let color;
+if (msg.role === 'admin') {
+  color = 'red';
+} else if (msg.role === 'modo') {
+  color = 'limegreen';
+} else {
+  color = getUsernameColor(msg.gender);
+}
+usernameSpan.style.color = color || '#fff';
+usernameSpan.style.setProperty('color', color || '#fff', 'important'); // 💪 renforce
+
 
     // Icônes
     if (msg.role === 'admin') {
