@@ -1923,3 +1923,31 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
+
+@media (max-width: 480px) {
+  .private-chat-window .chat-header .minimize-btn,
+  .private-chat-window .chat-header .close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 20px;
+    line-height: 32px;
+    text-align: center;
+    margin-left: 4px;
+    margin-right: 4px;
+    border-radius: 6px;
+  }
+
+  .private-chat-window .chat-header {
+    padding: 6px 8px;
+    flex-wrap: wrap;
+  }
+
+  .private-chat-window {
+    width: 100vw !important;
+    left: 0 !important;
+    right: 0 !important;
+    margin: 0 auto;
+    max-width: 100%;
+    border-radius: 0;
+  }
+}
