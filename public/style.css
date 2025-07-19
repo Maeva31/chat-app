@@ -1760,3 +1760,17 @@ audio:hover {
     margin-bottom: 6px;
   }
 }
+#mobile-tabs,
+#top-bar {
+  display: none;
+}
+/* Cache top-bar et mobile-tabs quand la modale est visible */
+#myModal:has(~ #top-bar),
+#myModal:has(~ #mobile-tabs) {
+  display: block; /* Empêche leur affichage forcé */
+}
+
+body.modal-open #top-bar,
+body.modal-open #mobile-tabs {
+  display: none !important;
+}
