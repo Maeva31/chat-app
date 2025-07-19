@@ -8,7 +8,64 @@ let roomOwners = {};
 let roomModerators = {};
 let topZIndex = 1000;
 
+// Affichage mobile
+document.addEventListener("DOMContentLoaded", () => {
+  const buttons = document.querySelectorAll("#mobile-tabs button");
+  const sections = {
+    "chat-container": document.getElementById("chat-container"),
+    "channel-sidebar": document.getElementById("channel-sidebar"),
+    "user-list": document.getElementById("user-list")
+  };
 
+  function switchTab(targetId) {
+    Object.keys(sections).forEach(id => {
+      if (sections[id]) {
+        sections[id].classList.toggle("active", id === targetId);
+      }
+    });
+
+    buttons.forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.target === targetId);
+    });
+  }
+
+  buttons.forEach(btn => {
+    btn.addEventListener("click", () => {
+      const target = btn.dataset.target;
+      switchTab(target);
+    });
+  });
+
+  switchTab("chat-container");
+
+  // ✅ Active #chat-container quand on clique sur un salon
+  const channelList = document.getElementById("channel-list");
+  if (channelList) {
+    channelList.addEventListener("click", (e) => {
+      const li = e.target.closest("li.channel");
+      if (li) {
+        switchTab("chat-container");
+      }
+    });
+  }
+});
+// Afficher le top-bar sauf si la modal est ouverte
+const modal = document.getElementById('myModal');
+const topBar = document.getElementById('top-bar');
+
+function updateTopBarVisibility() {
+  const isModalOpen = getComputedStyle(modal).display !== 'none';
+  topBar.style.display = isModalOpen ? 'none' : 'flex';
+}
+
+// Surveille les changements de la modale
+const observer = new MutationObserver(updateTopBarVisibility);
+observer.observe(modal, { attributes: true, attributeFilter: ['style'] });
+
+// Appliquer une première fois au chargement
+updateTopBarVisibility();
+
+//  Fin affichage mobile
 
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
