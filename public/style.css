@@ -1952,11 +1952,3 @@ body.modal-open #mobile-tabs {
   }
 }
 
-span.pseudo-colored {
-  color: inherit !important;
-}
-
-.message .pseudo-colored {
-  font-weight: bold;
-  color: inherit !important;
-}
