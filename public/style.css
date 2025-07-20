@@ -1923,29 +1923,3 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
-/* 🌐 Affichage responsive du picker d'emoji */
-.emoji-picker {
-  position: fixed;
-  bottom: 60px; /* hauteur au-dessus du champ message */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 90vw;
-  max-width: 400px;
-  max-height: 45vh;
-  overflow-y: auto;
-  background-color: #1e1e1e;
-  border: 1px solid #555;
-  border-radius: 10px;
-  padding: 10px;
-  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
-  z-index: 9999;
-}
-
-/* Optionnel : amélioration de la scrollbar mobile */
-.emoji-picker::-webkit-scrollbar {
-  width: 6px;
-}
-.emoji-picker::-webkit-scrollbar-thumb {
-  background: #888;
-  border-radius: 4px;
-}
