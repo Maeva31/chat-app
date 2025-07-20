@@ -1708,7 +1708,7 @@ audio:hover {
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow: hidden;
+    overflow: visible;
     background-color: rgba(30, 30, 30, 0.85); /* fond gris opaque */
   }
 
@@ -1970,4 +1970,3 @@ body.modal-open #mobile-tabs {
   touch-action: pan-y; /* permet uniquement le scroll vertical */
   overscroll-behavior: contain; /* bloque le débordement vers le body */
 }
-
