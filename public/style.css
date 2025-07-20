@@ -1923,3 +1923,28 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
+/* 🌐 Affichage responsive du picker d'emoji */
+.emoji-picker {
+  max-height: 50vh; /* Limite la hauteur à 50% de l’écran */
+  overflow-y: auto; /* Scroll interne si ça déborde */
+  position: absolute;
+  bottom: 60px; /* Ajuste selon la hauteur de ta barre de saisie */
+  z-index: 2000;
+  background-color: #1c1c1c;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 8px;
+  width: 100%;
+  max-width: 300px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.4);
+}
+
+/* Pour les petits écrans */
+@media screen and (max-width: 600px) {
+  .emoji-picker {
+    max-height: 40vh;
+    width: 90vw;
+    left: 5vw;
+    bottom: 70px; /* espace au-dessus de la barre de saisie */
+  }
+}
