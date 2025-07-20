@@ -1923,3 +1923,19 @@ body.modal-open #mobile-tabs {
     border: none;
   }
 }
+
+
+
+/* Espacement entre les boutons */
+#logoutModal .modal-content button {
+  display: block;
+  width: 100%;
+  margin: 8px 0; /* 🔥 espace vertical haut et bas */
+  padding: 12px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  background: linear-gradient(to right, #00ffff, #ff00ff);
+  color: white;
+  cursor: pointer;
+}
