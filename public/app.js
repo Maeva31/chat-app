@@ -2924,14 +2924,14 @@ function insertMention(username) {
   input.focus();
 }
 
-socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender }) => {
+socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, role, gender, age }) => {
   const chatMessages = document.getElementById('chat-messages');
   if (!chatMessages) return;
 
   const wrapper = document.createElement('div');
   wrapper.classList.add('message');
 
-  // Timestamp
+  // 🕒 Timestamp
   const timeSpan = document.createElement('span');
   timeSpan.textContent = new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) + ' ';
   timeSpan.style.color = '#888';
@@ -2939,7 +2939,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   timeSpan.style.marginRight = '5px';
   wrapper.appendChild(timeSpan);
 
-  // Pseudo + icône
+  // 👤 Pseudo + style
   const usernameContainer = document.createElement('span');
   usernameContainer.style.fontWeight = 'bold';
   usernameContainer.style.marginRight = '4px';
@@ -2948,13 +2948,12 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.position = 'relative';
   usernameContainer.style.top = '2px';
 
-  let color = 'white';
+  let color = getUsernameColor(gender);
   if (role === 'admin') color = 'red';
   else if (role === 'modo') color = 'limegreen';
-  else if (gender === 'Femme') color = '#f0f';
-  else if (gender === 'Homme') color = 'dodgerblue';
   usernameContainer.style.color = color;
 
+  // 👑 Icône rôle
   if (role === 'admin' || role === 'modo') {
     const icon = createRoleIcon(role);
     if (icon) {
@@ -2966,10 +2965,37 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     }
   }
 
+  // ⬛ Âge + icône genre
+  if (age) {
+    const ageBox = document.createElement('span');
+    ageBox.textContent = `${age}`;
+    ageBox.style.backgroundColor = usernameColors[gender] || '#444';
+    ageBox.style.color = '#fff';
+    ageBox.style.borderRadius = '4px';
+    ageBox.style.padding = '2px 6px';
+    ageBox.style.fontSize = '12px';
+    ageBox.style.fontWeight = 'bold';
+    ageBox.style.fontFamily = 'monospace';
+    ageBox.style.marginRight = '4px';
+
+    const genreIcon = document.createElement('img');
+    genreIcon.style.width = '14px';
+    genreIcon.style.height = '14px';
+    genreIcon.style.marginRight = '4px';
+    genreIcon.style.verticalAlign = 'middle';
+
+    if (gender === 'Homme') genreIcon.src = '/male.ico';
+    else if (gender === 'Femme') genreIcon.src = '/female.ico';
+    else if (gender === 'Trans') genreIcon.src = '/trans.ico';
+
+    ageBox.prepend(genreIcon);
+    wrapper.appendChild(ageBox);
+  }
+
+  // 📎 Pseudo cliquable
   const clickableUsername = document.createElement('span');
   clickableUsername.textContent = username;
   clickableUsername.style.cursor = 'pointer';
-
   clickableUsername.addEventListener('click', () => {
     insertMention(username);
   });
@@ -2977,7 +3003,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.appendChild(clickableUsername);
   wrapper.appendChild(usernameContainer);
 
-  // Affichage du fichier
+  // 📂 Affichage du fichier
   if (mimetype.startsWith('image/')) {
     const img = document.createElement('img');
     img.src = `data:${mimetype};base64,${data}`;
@@ -3005,8 +3031,6 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
           </html>
         `);
         newWindow.document.close();
-      } else {
-        alert('Impossible d’ouvrir un nouvel onglet, vérifie le bloqueur de popups.');
       }
     });
 
@@ -3046,15 +3070,28 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     wrapper.appendChild(video);
 
   } else {
+    const fileBox = document.createElement('div');
+    fileBox.style.border = '2px dashed #888';
+    fileBox.style.borderRadius = '8px';
+    fileBox.style.padding = '8px';
+    fileBox.style.marginTop = '6px';
+    fileBox.style.backgroundColor = '#222';
+    fileBox.style.color = '#0cf';
+    fileBox.style.display = 'inline-block';
+
     const link = document.createElement('a');
     link.href = `data:${mimetype};base64,${data}`;
     link.download = filename;
     link.textContent = `📎 ${filename}`;
+    link.style.color = 'inherit';
+    link.style.textDecoration = 'none';
     link.target = '_blank';
-    wrapper.appendChild(link);
+
+    fileBox.appendChild(link);
+    wrapper.appendChild(fileBox);
   }
 
-
+  // Ajout et scroll
   chatMessages.appendChild(wrapper);
   setTimeout(() => {
     chatMessages.scrollTop = chatMessages.scrollHeight;
