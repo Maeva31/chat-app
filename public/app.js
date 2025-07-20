@@ -2948,11 +2948,10 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
   usernameContainer.style.position = 'relative';
   usernameContainer.style.top = '2px';
 
-  let color = 'white';
-  if (role === 'admin') color = 'red';
-  else if (role === 'modo') color = 'limegreen';
-  else if (gender === 'Femme') color = '#f0f';
-  else if (gender === 'Homme') color = 'dodgerblue';
+let color = (role === 'admin') ? usernameColors.admin :
+            (role === 'modo') ? usernameColors.modo :
+            (usernameColors[gender] || usernameColors.default);
+
   usernameContainer.style.color = color;
 
   if (role === 'admin' || role === 'modo') {
