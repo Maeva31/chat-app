@@ -1926,26 +1926,26 @@ body.modal-open #mobile-tabs {
 /* 🌐 Affichage responsive du picker d'emoji */
 .emoji-picker {
   position: fixed;
-  bottom: 60px; /* au-dessus de la barre de message */
+  bottom: 60px; /* hauteur au-dessus du champ message */
   left: 50%;
   transform: translateX(-50%);
-  max-height: 45vh; /* max visible sur mobile */
+  width: 90vw;
+  max-width: 400px;
+  max-height: 45vh;
   overflow-y: auto;
-  width: 95vw;
-  max-width: 320px;
   background-color: #1e1e1e;
-  border: 1px solid #444;
+  border: 1px solid #555;
   border-radius: 10px;
   padding: 10px;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.5);
   z-index: 9999;
-  box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
 }
 
-/* Pour éviter le débordement horizontal */
-@media screen and (max-width: 480px) {
-  .emoji-picker {
-    width: 90vw;
-    bottom: 70px;
-    max-height: 50vh;
-  }
+/* Optionnel : amélioration de la scrollbar mobile */
+.emoji-picker::-webkit-scrollbar {
+  width: 6px;
+}
+.emoji-picker::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
 }
