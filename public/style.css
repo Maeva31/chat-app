@@ -1962,3 +1962,12 @@ body.modal-open #mobile-tabs {
 #channel-list-wrapper {
   overscroll-behavior: contain;
 }
+
+#chat-messages,
+#channel-list-wrapper {
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch; /* pour iOS */
+  touch-action: pan-y; /* permet uniquement le scroll vertical */
+  overscroll-behavior: contain; /* bloque le débordement vers le body */
+}
+
