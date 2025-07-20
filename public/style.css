@@ -1939,3 +1939,22 @@ body.modal-open #mobile-tabs {
   color: white;
   cursor: pointer;
 }
+
+
+/* 📱 Affichage mobile amélioré pour la palette d'émojis */
+@media (max-width: 600px) {
+  #emoji-picker {
+    position: absolute !important;
+    bottom: 120px !important;  /* 🔼 Ajuste cette valeur si besoin */
+    left: 10px;
+    right: 10px;
+    z-index: 9999;
+    max-height: 240px;
+    overflow-y: auto;
+    background: #222;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(255, 0, 255, 0.3);
+    padding: 10px;
+  }
+}
+
