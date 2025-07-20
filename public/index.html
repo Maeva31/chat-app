@@ -6,24 +6,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chat</title>
   <link rel="stylesheet" href="style.css" />
-      <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            height: 100%;
-            width: 100%;
-            overflow: hidden;
-            overscroll-behavior: contain; /* empêche pull-to-refresh sur certains navigateurs */
-            touch-action: none; /* bloque les gestes comme double-tap zoom (optionnel) */
-        }
-
-        iframe {
-            width: 100%;
-            height: 100%;
-            border: none;
-            display: block;
-        }
-    </style>
 </head>
 <body>
 
@@ -80,7 +62,7 @@
   <div id="logoutModal" class="modal" style="display:none;">
     <div class="modal-content">
       <h3>Confirmer la déconnexion</h3>
-      <p>Voulez-vous vraiment vous déconnecter?</p>
+      <p>Voulez-vous vraiment vous déconnecter ?</p>
       <button id="logoutConfirmBtn">Oui</button>
       <button id="logoutCancelBtn">Non</button>
     </div>
@@ -368,24 +350,6 @@
   <button data-target="user-list">👥 Utilisateurs</button>
 </div>
 
-    <script>
-      let touchStartY = 0;
-
-      window.addEventListener('touchstart', function (e) {
-        if (e.touches.length !== 1) return;
-        touchStartY = e.touches[0].clientY;
-      });
-
-      window.addEventListener('touchmove', function (e) {
-        const touchY = e.touches[0].clientY;
-        const deltaY = touchY - touchStartY;
-
-        // Empêche pull-to-refresh en haut de la page
-        if (window.scrollY === 0 && deltaY > 0) {
-          e.preventDefault();
-        }
-      }, { passive: false });
-    </script>
 
 </body>
 </html>
