@@ -965,6 +965,26 @@ socket.on('joinRoom', (newChannel) => {
   const user = Object.values(users).find(u => u.id === socket.id);
   if (!user) return;
 
+  // 💥 Blocage par genre
+const isPrivileged = user.isPrivilegedAdmin || user.role === 'admin' || user.role === 'modo';
+
+// 🔒 Blocage Homme dans Lesbiennes (sauf staff)
+if (newChannel === 'Lesbiennes' && user.gender === 'Homme' && !isPrivileged) {
+  return socket.emit('error message', "Tu n'es pas autorisé à entrer dans ce salon.");
+}
+
+// 🔒 Blocage Femme dans GayGay (sauf staff)
+if (newChannel === 'GayGay' && user.gender === 'Femme' && !isPrivileged) {
+  return socket.emit('error message', "Tu n'es pas autorisée à entrer dans ce salon.");
+}
+
+// 🔒 Blocage Trans dans GayGay (sauf staff)
+if (newChannel === 'GayGay' && user.gender === 'Trans' && !isPrivileged) {
+  return socket.emit('error message', "Tu n'es pas autorisé à entrer dans ce salon.");
+}
+
+
+
   // 🔒 Vérification du ban local AVANT de joindre le salon
   if (roomBans[newChannel]?.has(user.username)) {
     return socket.emit('error message', `Tu es banni du salon ${newChannel} et ne peux pas y accéder.`);
@@ -986,35 +1006,34 @@ socket.on('joinRoom', (newChannel) => {
     roomUsers[newChannel] = roomUsers[newChannel].filter(u => u.id !== socket.id);
     roomUsers[newChannel].push(user);
 
+    if (!user.invisible) {
+      io.to(newChannel).emit('chat message', {
+        username: 'Système',
+        message: `${user.username} a rejoint le salon ${newChannel}`,
+        timestamp: new Date().toISOString(),
+        channel: newChannel
+      });
 
-      // Message système uniquement si non invisible
-      if (!user.invisible) {
-        io.to(newChannel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a rejoint le salon ${newChannel}`,
-          timestamp: new Date().toISOString(),
-          channel: newChannel
-        });
-
-        io.to(oldChannel).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a quitté le salon ${oldChannel}`,
-          timestamp: new Date().toISOString(),
-          channel: oldChannel
-        });
-      }
-    } else {
-      if (!roomUsers[newChannel].some(u => u.id === socket.id)) {
-        roomUsers[newChannel].push(user);
-      }
+      io.to(oldChannel).emit('chat message', {
+        username: 'Système',
+        message: `${user.username} a quitté le salon ${oldChannel}`,
+        timestamp: new Date().toISOString(),
+        channel: oldChannel
+      });
     }
+  } else {
+    if (!roomUsers[newChannel].some(u => u.id === socket.id)) {
+      roomUsers[newChannel].push(user);
+    }
+  }
 
-    socket.emit('chat history', messageHistory[newChannel]);
-    emitUserList(newChannel);
-    socket.emit('joinedRoom', newChannel);
-    updateRoomUserCounts();
-    cleanupEmptyDynamicRooms();
-  });
+  socket.emit('chat history', messageHistory[newChannel]);
+  emitUserList(newChannel);
+  socket.emit('joinedRoom', newChannel);
+  updateRoomUserCounts();
+  cleanupEmptyDynamicRooms();
+});
+
 
   socket.on('createRoom', (newChannel) => {
     const user = Object.values(users).find(u => u.id === socket.id);
