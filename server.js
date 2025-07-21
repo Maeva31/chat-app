@@ -1035,37 +1035,53 @@ if (newChannel === 'GayGay' && user.gender === 'Trans' && !isPrivileged) {
 });
 
 
-  socket.on('createRoom', (newChannel) => {
-    const user = Object.values(users).find(u => u.id === socket.id);
-    if (!user) return;
+socket.on('createRoom', (newChannel) => {
+  const user = Object.values(users).find(u => u.id === socket.id);
+  if (!user) return;
 
-    if (mutedUsers.has(user.username)) {
-      socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
-      // Retiré la ligne de redirection
-      return;
+  if (mutedUsers.has(user.username)) {
+    socket.emit('error', 'Vous êtes muté et ne pouvez pas créer de salons.');
+    return;
+  }
+
+  if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
+    return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
+  }
+
+  // 🔒 Protection création de salon selon genre
+  const isPrivileged = user.isPrivilegedAdmin || user.role === 'admin' || user.role === 'modo';
+
+  if (newChannel === 'Lesbiennes' && user.gender === 'Homme' && !isPrivileged) {
+    return socket.emit('error message', "Tu ne peux pas créer ce salon.");
+  }
+
+  if (newChannel === 'GayGay') {
+    if (user.gender === 'Femme' && !isPrivileged) {
+      return socket.emit('error message', "Tu ne peux pas créer ce salon.");
     }
-
-    if (typeof newChannel !== 'string' || !newChannel.trim() || newChannel.length > 20 || /\s/.test(newChannel)) {
-      return socket.emit('error', "Nom de salon invalide (pas d'espaces, max 20 caractères).");
+    if (user.gender === 'Trans' && !isPrivileged) {
+      return socket.emit('error message', "Tu ne peux pas créer ce salon.");
     }
+  }
 
-    if (savedRooms.includes(newChannel)) {
-      return socket.emit('room exists', newChannel);
-    }
+  if (savedRooms.includes(newChannel)) {
+    return socket.emit('room exists', newChannel);
+  }
 
-    if (savedRooms.length >= MAX_ROOMS) {
-      return socket.emit('error', 'Nombre maximum de salons atteint.');
-    }
+  if (savedRooms.length >= MAX_ROOMS) {
+    return socket.emit('error', 'Nombre maximum de salons atteint.');
+  }
 
-    roomOwners[newChannel] = user.username;  // ⬅️ définit le créateur comme propriétaire
-roomModerators[newChannel] = new Set([user.username]);  // ⬅️ ajoute aussi en tant que modo salon
-roomBans[newChannel] = new Set();  // ⬅️ initialise les bannissements locaux
+  roomOwners[newChannel] = user.username;
+  roomModerators[newChannel] = new Set([user.username]);
+  roomBans[newChannel] = new Set();
+
+  messageHistory[newChannel] = [];
+  roomUsers[newChannel] = [];
+  savedRooms.push(newChannel);
+  savedRooms = [...new Set(savedRooms)];
 
 
-    messageHistory[newChannel] = [];
-    roomUsers[newChannel] = [];
-    savedRooms.push(newChannel);
-    savedRooms = [...new Set(savedRooms)];
 
     fs.writeFileSync('rooms.json', JSON.stringify(savedRooms, null, 2));
     console.log(`🆕 Salon créé : ${newChannel}`);
