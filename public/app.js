@@ -1491,8 +1491,8 @@ if (usernameInput && passwordInput) {
     "Marseille": "💬",
     "Nice": "💬",
     "Toulouse": "💬",
-    "Sexe": "🔞"
-
+    "Sexe": "🔞",
+    "Amateur": "🔞"
   };
 
   // Affiche la modal si pas de pseudo
