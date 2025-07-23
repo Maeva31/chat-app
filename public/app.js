@@ -1480,6 +1480,7 @@ if (usernameInput && passwordInput) {
     "Général": "💬",
     "Musique": "🎧",
     "Gaming": "🎮",
+    "Célibataire": "💌",
     "Détente": "🌿",
     "Insultes": "🤬",
     "Lesbiennes": "♀️",
