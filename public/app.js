@@ -243,6 +243,9 @@ function createGenderIcon(gender) {
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
 function openPrivateChat(username, role, gender) {
+  const myUsername = localStorage.getItem('username');
+  if (username === myUsername) return; // 🛑 Interdit d'ouvrir un MP avec soi-même
+
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
 
@@ -251,6 +254,7 @@ function openPrivateChat(username, role, gender) {
     win.style.zIndex = ++topZIndex;
     return;
   }
+
 
   
   // ✅ Récupération des infos utilisateur si manquantes
@@ -1640,22 +1644,28 @@ function updateUserList(users) {
     else if (isRoomModo) usernameSpan.title = 'Modérateur du salon';
 
 // 🖱️ Clic gauche → ouvrir MP
+// 🖱️ Clic gauche → ouvrir MP
 usernameSpan.addEventListener('click', () => {
+  const myUsername = localStorage.getItem('username');
+  if (username === myUsername) return; // ❌ Interdit d'ouvrir un MP avec soi-même
   openPrivateChat(username, role, gender);
 });
 
 // 🖱️ Clic droit → mentionner
 usernameSpan.addEventListener('contextmenu', (e) => {
   e.preventDefault();
+  const myUsername = localStorage.getItem('username');
+  if (username === myUsername) return; // ❌ Interdit de se mentionner soi-même
+
   const input = document.getElementById('message-input');
   const mention = `@${username} `;
   if (!input.value.includes(mention)) input.value = mention + input.value;
   input.focus();
 });
 
+li.append(badgeWrapper, usernameSpan);
+userList.appendChild(li);
 
-    li.append(badgeWrapper, usernameSpan);
-    userList.appendChild(li);
   });
 }
 
