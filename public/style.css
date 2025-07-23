@@ -1389,6 +1389,33 @@ audio:hover {
 
 
 
+/* Règlement */
+.reglement-link {
+  color: grey;
+  text-decoration: none;
+  font-size: 11px;
+  display: inline-block;
+  margin-right: 23px;  
+  vertical-align: middle; 
+}
+/* Cacher sur les écrans mobiles (max 768px) */
+@media (max-width: 768px) {
+  .reglement-desktop {
+    display: none !important;
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
