@@ -1405,6 +1405,22 @@ audio:hover {
   }
 }
 
+#send-button {
+  cursor: pointer;
+  margin-left: 5px;
+  padding: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: white;
+}
 
 
 
