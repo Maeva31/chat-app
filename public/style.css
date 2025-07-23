@@ -1468,7 +1468,7 @@ audio:hover {
     flex: 1;
     padding: 8px;
     font-size: 14px;
-    border-radius: 6px;
+    border-radius: 30px;
     border: 1px solid #555;
     background-color: #222;
     color: #fff;
@@ -1621,7 +1621,7 @@ audio:hover {
   flex: 1;
   padding: 8px;
   font-size: 14px;
-  border-radius: 6px;
+  border-radius: 30px;
   border: 1px solid #555;
   background-color: #222;
   color: #fff;
