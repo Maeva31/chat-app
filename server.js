@@ -66,7 +66,7 @@ try {
   console.warn("⚠️ Impossible de charger passwords.json, pas d'authentification renforcée.");
 }
 
-const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente'];
+const defaultRooms = ['Général', 'Musique', 'Gaming', 'Détente', 'Insultes'];
 const protectedRooms = ['Lesbiennes', 'GayGay', 'TransGirl', 'Paris', 'Reims', 'Lyon', 'Marseille', 'Nice', 'Toulouse', 'Sexe'];
 
 
