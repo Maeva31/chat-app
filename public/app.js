@@ -8,6 +8,9 @@ let roomOwners = {};
 let roomModerators = {};
 let topZIndex = 1000;
 
+let blockPrivateMessages = localStorage.getItem('blockPrivateMessages') === 'true';
+
+
 // Affichage mobile
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -240,11 +243,42 @@ function createGenderIcon(gender) {
   return icon;
 }
 
+const toggleMPButton = document.getElementById('toggleMPButton');
+
+function updateMPButtonUI() {
+  const isBlocked = localStorage.getItem('blockPrivateMessages') === 'true';
+  toggleMPButton.title = isBlocked ? 'Débloquer les MP' : 'Bloquer les MP';
+  toggleMPButton.textContent = isBlocked ? '💬🔒' : '💬🔓';
+}
+
+toggleMPButton.addEventListener('click', () => {
+  const current = localStorage.getItem('blockPrivateMessages') === 'true';
+  const newState = (!current).toString();
+  localStorage.setItem('blockPrivateMessages', newState);
+  updateMPButtonUI();
+
+  // ✅ Message système dans le salon
+  const msg = newState === 'true'
+    ? "🔒 Vous avez bloqué les messages privés, vous ne pouvez pas en envoyer ni en recevoir."
+    : "🔓 Vous avez débloqué les messages privés.";
+
+  addMessageToChat({
+    username: 'Système',
+    message: msg,
+    timestamp: Date.now()
+  });
+});
+
+updateMPButtonUI(); // initialise à l'ouverture
+
+
 
   // ── 3) Ouvre ou remonte une fenêtre privée ──
 function openPrivateChat(username, role, gender) {
   const myUsername = localStorage.getItem('username');
-  if (username === myUsername) return; // 🛑 Interdit d'ouvrir un MP avec soi-même
+
+  // 🔒 Bloque les MP vers soi-même OU si les MP sont désactivés
+  if (username === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
 
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${username}"]`);
@@ -526,8 +560,8 @@ const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souve
 
 // Réception d’un Wiizz
 socket.on('private wiizz', ({ from }) => {
-  const container = document.getElementById('private-chat-container');
-  if (!container) return;
+  const myUsername = localStorage.getItem('username');
+  if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
 
   const now = Date.now();
   const lastTime = lastWiizzReceived.get(from) || 0;
@@ -1018,9 +1052,9 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
   });
 
   // ── 6) Réception message privé ──
-  socket.on('private message', ({ from, message, role, gender, style }) => {
+socket.on('private message', ({ from, message, role, gender, style }) => {
   const myUsername = localStorage.getItem('username');
-  if (from === myUsername) return;
+  if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
 
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
@@ -1040,9 +1074,9 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
 
 
   // ── 7) Réception fichier privé ──
-  socket.on('private file', ({ from, filename, data, mimetype, timestamp, role, gender }) => {
-    const myUsername = localStorage.getItem('username');
-    if (from === myUsername) return;
+socket.on('private file', ({ from, file }) => {
+  const myUsername = localStorage.getItem('username');
+  if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
     const container = document.getElementById('private-chat-container');
     if (!container) return;
 
