@@ -1943,6 +1943,34 @@ function addMessageToChat(msg) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+document.getElementById('send-button').addEventListener('click', () => {
+  const input = document.getElementById('message-input');
+  const message = input.value.trim();
+  if (!message) return;
+
+  const style = {};
+
+  const colorInput = document.getElementById('style-color');
+  if (colorInput && colorInput.value && colorInput.value !== '#ffffff') {
+    style.color = colorInput.value;
+  }
+
+  if (document.getElementById('style-bold')?.checked) {
+    style.bold = true;
+  }
+
+  if (document.getElementById('style-italic')?.checked) {
+    style.italic = true;
+  }
+
+  const font = document.getElementById('style-font')?.value;
+  if (font) {
+    style.font = font;
+  }
+
+  socket.emit('chat message', { message, style });
+  input.value = '';
+});
 
 
 
