@@ -2846,20 +2846,21 @@ function loadSavedStyle() {
   if (saved) {
     const style = JSON.parse(saved);
     return {
-      color: style.color || '#fff',
+      color: style.color || '#ffffff', // ← ici, forcer le blanc
       bold: style.bold || false,
       italic: style.italic || false,
-      font: style.font || 'Arial'  // ← ✅ ajout police par défaut
+      font: style.font || 'Arial'
     };
   } else {
     return {
-      color: '#fff',
+      color: '#ffffff', // ← ici aussi, forcer le blanc
       bold: false,
       italic: false,
       font: 'Arial'
     };
   }
 }
+
 
 function saveStyle(style) {
   localStorage.setItem('chatStyle', JSON.stringify(style));
