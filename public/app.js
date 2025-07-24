@@ -817,6 +817,7 @@ wiizzBtn.appendChild(wiizzIcon);
           const img = document.createElement('img');
           img.src = `data:${file.type};base64,${base64}`;
           img.style.maxWidth = '150px';
+          img.classList.add('media-hover');
           img.style.cursor = 'pointer';
           img.style.border = '2px solid #007bff';
           img.style.borderRadius = '8px';
@@ -863,6 +864,7 @@ wiizzBtn.appendChild(wiizzIcon);
           video.controls = true;
           video.src = `data:${file.type};base64,${base64}`;
           video.style.maxWidth = '300px';
+          video.classList.add('media-hover');
           video.style.maxHeight = '300px';
           video.style.marginTop = '4px';
           video.style.border = '2px solid #007bff';
@@ -1074,7 +1076,7 @@ socket.on('private message', ({ from, message, role, gender, style }) => {
 
 
   // ── 7) Réception fichier privé ──
-socket.on('private file', ({ from, file }) => {
+socket.on('private file', ({ from, filename, mimetype, data, role, gender }) => {
   const myUsername = localStorage.getItem('username');
   if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
     const container = document.getElementById('private-chat-container');
@@ -1124,6 +1126,7 @@ socket.on('private file', ({ from, file }) => {
       const img = document.createElement('img');
       img.src = `data:${mimetype};base64,${data}`;
       img.style.maxWidth = '150px';
+      img.classList.add('media-hover');
       img.style.cursor = 'pointer';
       img.style.border = '2px solid #007bff';
       img.style.borderRadius = '8px';
@@ -1173,6 +1176,7 @@ socket.on('private file', ({ from, file }) => {
       video.controls = true;
       video.src = `data:${mimetype};base64,${data}`;
       video.style.maxWidth = '300px';
+      video.classList.add('media-hover');
       video.style.maxHeight = '300px';
       video.style.marginTop = '4px';
       video.style.border = '2px solid #007bff';
@@ -3082,6 +3086,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     const img = document.createElement('img');
     img.src = `data:${mimetype};base64,${data}`;
     img.style.maxWidth = '100px';
+    img.classList.add('media-hover');
     img.style.cursor = 'pointer';
     img.style.border = '2px solid #007bff';
     img.style.borderRadius = '8px';
@@ -3132,6 +3137,7 @@ socket.on('file uploaded', ({ username, filename, data, mimetype, timestamp, rol
     video.controls = true;
     video.src = `data:${mimetype};base64,${data}`;
     video.style.maxWidth = '300px';
+    video.classList.add('media-hover');
     video.style.maxHeight = '300px';
     video.style.marginTop = '4px';
     video.style.border = '2px solid #007bff';
