@@ -6,6 +6,47 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Chat</title>
   <link rel="stylesheet" href="style.css" />
+
+  <style>
+    .star-field {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: -1;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 2px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(0, 218, 222, 1), rgba(251, 0, 255, 1));
+  border-radius: 50%;
+  opacity: 0;
+  animation: move-star 6s linear infinite;
+}
+
+@keyframes move-star {
+  0% {
+    transform: translate(var(--x), var(--y)) scale(1);
+    opacity: 0;
+  }
+  5% {
+    opacity: 1;
+  }
+  100% {
+    transform: translate(0px, 0px) scale(0);
+    opacity: 0;
+  }
+}
+
+  </style>
+
 </head>
 <body>
 
@@ -397,6 +438,8 @@
   <ul id="users"></ul>
 </aside>
 
+<div class="bg"></div>
+<div class="star-field" id="starField"></div>
 
   <!-- Scripts -->
   <script>
@@ -426,6 +469,30 @@
     
   <script src="/socket.io/socket.io.js"></script>
   <script src="app.js"></script>
+
+  <script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const starField = document.getElementById('starField');
+    const numberOfStars = 200;
+
+    for (let i = 0; i < numberOfStars; i++) {
+      const star = document.createElement('div');
+      star.classList.add('star');
+
+      const angle = Math.random() * 2 * Math.PI;
+      const radius = Math.random() * 800 + 200;
+      const x = Math.cos(angle) * radius;
+      const y = Math.sin(angle) * radius;
+
+      star.style.setProperty('--x', `${x}px`);
+      star.style.setProperty('--y', `${y}px`);
+      star.style.animationDelay = `${Math.random() * 5}s`;
+
+      starField.appendChild(star);
+    }
+  });
+</script>
+
 
   <div id="mobile-tabs">
   <button data-target="channel-sidebar"># Salons</button>
