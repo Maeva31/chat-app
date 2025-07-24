@@ -831,16 +831,26 @@ button:focus {
 
 /* Responsive : ajuste automatiquement la taille en dessous de 500px */
 .youtube-wrapper {
-  width: 64%;        /* prend toute la largeur possible */
-  max-width: 640px;   /* ne dépasse pas 640px */
+  width: 64%;
+  max-width: 640px;
   aspect-ratio: 16 / 9;
   margin: 10px 0 10px 10px;
-  background-color: #222;
-  border: 3px solid #888;
-  border-radius: 6px;
+  background-color: #121212;
+  border: 2px solid #007bff; /* identique aux fichiers */
+  border-radius: 8px;        /* identique aux .media-hover */
   box-sizing: border-box;
   overflow: hidden;
+  transition: box-shadow 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
 }
+
+.youtube-wrapper:hover {
+  box-shadow: 0 0 10px #007bff, 0 0 10px #007bff;
+  border-color: #007bff;
+  z-index: 10;
+}
+
+
 
 .youtube-wrapper iframe {
   width: 100%;
