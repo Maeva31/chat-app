@@ -2029,3 +2029,21 @@ body.modal-open #mobile-tabs {
   }
 }
 
+@media (max-width: 600px) {
+  #top-bar h2 {
+    font-size: 15px;
+    max-width: 50vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  #top-bar .texte-laser {
+    flex: 1;
+    min-width: 0;
+  }
+
+  #top-bar {
+    gap: 6px;
+  }
+}
