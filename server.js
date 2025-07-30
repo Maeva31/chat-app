@@ -422,7 +422,6 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
     socketIdToUsername[socket.id] = username;
 
     // VÉRIFICATION : Mot de passe pour les rôles privilégiés
-    let isRealAdmin = false;
     if (requiresPassword(username)) {
       if (!password) {
         return socket.emit('password required', username);
@@ -431,9 +430,7 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
         return socket.emit('password error', 'Mot de passe incorrect pour ce compte privilégié.');
       }
       console.log(`🔐 Authentification réussie pour ${username}`);
-      isRealAdmin = true;
     }
-
 
     // Récupérer invisible si l'utilisateur existait déjà
     const invisibleFromClient = invisible === true;
@@ -441,18 +438,7 @@ socket.on('upload private file', ({ to, filename, mimetype, data, timestamp }) =
 
     const role = getUserRole(username);
     // Par défaut invisible = false, sauf si récupéré
-    const userData = {
-  username,
-  gender,
-  age,
-  id: socket.id,
-  role,
-  banned: false,
-  muted: false,
-  invisible: prevInvisible,
-  isRealAdmin // ← on ajoute ici
-};
-
+    const userData = { username, gender, age, id: socket.id, role, banned: false, muted: false, invisible: prevInvisible };
     users[username] = userData;
 
     let channel = userChannels[socket.id] || defaultChannel;
@@ -615,34 +601,6 @@ switch (cmd) {
       socket.emit('error message', `${targetName} n'est pas banni.`);
     }
     break;
-
-    case '/ip': {
-  if (!isPrivilegedAdmin) {
-    socket.emit('error message', "❌ Commande réservée aux administrateurs authentifiés.");
-    return;
-  }
-
-  if (!targetName || !users[targetName]) {
-    socket.emit('error message', `❌ Utilisateur introuvable.`);
-    return;
-  }
-
-  const targetSocketId = usernameToSocketId[targetName];
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-
-  if (targetSocket && targetSocket.handshake?.address) {
-    let ip = targetSocket.handshake.address;
-if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
-if (ip === '::1') ip = '127.0.0.1';
-socket.emit('server message', `ℹ️ Adresse IP de ${targetName} : ${ip}`);
-
-    console.log(`🔍 ${user.username} a consulté l’IP de ${targetName} => ${targetSocket.handshake.address}`);
-  } else {
-    socket.emit('error message', `❌ Impossible de récupérer l'adresse IP.`);
-  }
-  break;
-}
-
 
 case '/kickroom': {
   const room = userChannels[socket.id];
