@@ -2016,7 +2016,7 @@ body.modal-open #mobile-tabs {
 @media (max-width: 600px) {
   #emoji-picker {
     position: absolute !important;
-    bottom: 120px !important;  /* 🔼 Ajuste cette valeur si besoin */
+    bottom: 120px !important;  
     left: 10px;
     right: 10px;
     z-index: 9999;
