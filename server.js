@@ -616,7 +616,7 @@ switch (cmd) {
     }
     break;
 
-case '/ip': {
+    case '/ip': {
   if (!isPrivilegedAdmin) {
     socket.emit('error message', "❌ Commande réservée aux administrateurs authentifiés.");
     return;
@@ -632,16 +632,16 @@ case '/ip': {
 
   if (targetSocket && targetSocket.handshake?.address) {
     let ip = targetSocket.handshake.address;
-    if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+if (ip.startsWith('::ffff:')) ip = ip.replace('::ffff:', '');
+if (ip === '::1') ip = '127.0.0.1';
+socket.emit('server message', `ℹ️ Adresse IP de ${targetName} : ${ip}`);
 
-    socket.emit('server message', `ℹ️ Adresse IP de ${targetName} : ${ip}`);
-    console.log(`🔍 ${user.username} a consulté l’IP de ${targetName} => ${ip}`);
+    console.log(`🔍 ${user.username} a consulté l’IP de ${targetName} => ${targetSocket.handshake.address}`);
   } else {
     socket.emit('error message', `❌ Impossible de récupérer l'adresse IP.`);
   }
   break;
 }
-
 
 
 case '/kickroom': {
