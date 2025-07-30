@@ -2479,6 +2479,10 @@ function showModerationMenu(targetUsername, x, y) {
   if (targetUsername === myUsername) return;
 
   const me = userCache[myUsername];
+  if (me && me.role === 'admin') {
+  me.isRealAdmin = true; // TEMPORAIRE si le serveur ne l’envoie pas
+}
+
   const target = userCache[targetUsername];
   if (!me || !target) return;
 
@@ -2512,6 +2516,8 @@ function showModerationMenu(targetUsername, x, y) {
     boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
   });
 
+
+
   const actions = [];
 
   // Commandes globales (uniquement pour les vrais modos globaux)
@@ -2526,6 +2532,24 @@ function showModerationMenu(targetUsername, x, y) {
       { label: '❌ Retirer Modo/Admin', cmd: ['removemodo', 'removeadmin'], adminOnly: true }
     );
   }
+
+    // Bouton spécial Voir IP (réservé aux vrais admins)
+if (isRealAdmin) {
+  const ipBtn = document.createElement('div');
+  ipBtn.innerHTML = '📡 <span style="color:#0ff">Voir IP</span>';
+  ipBtn.className = 'moderation-button';
+  Object.assign(ipBtn.style, {
+    padding: '6px 12px',
+    cursor: 'pointer'
+  });
+  ipBtn.addEventListener('mouseover', () => ipBtn.style.background = '#444');
+  ipBtn.addEventListener('mouseout', () => ipBtn.style.background = 'transparent');
+  ipBtn.onclick = () => {
+    socket.emit('chat message', `/ip ${targetUsername}`);
+    menu.remove();
+  };
+  menu.appendChild(ipBtn);
+}
 
   // Commandes locales (uniquement pour les créateurs ou modos du salon, pas les modos globaux)
   if (!isGlobalMod && (isRoomOwner || isRoomModo)) {
