@@ -2030,7 +2030,7 @@ function sendMessage() {
   if (!input) return;
 
   const message = input.value.trim();
-  console.log("Message envoyé :", message); // 👈 AJOUT ICI
+  console.log("Message envoyé :", message); 
 
   if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
   if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
@@ -2118,7 +2118,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
 socket.once('username accepted', ({ username, gender, age }) => {
-  if (gender === 'Autre') gender = 'Trans'; // ✅ Correction ici
+  if (gender === 'Autre') gender = 'Trans'; 
 
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
@@ -2479,10 +2479,6 @@ function showModerationMenu(targetUsername, x, y) {
   if (targetUsername === myUsername) return;
 
   const me = userCache[myUsername];
-  if (me && me.role === 'admin') {
-  me.isRealAdmin = true; // TEMPORAIRE si le serveur ne l’envoie pas
-}
-
   const target = userCache[targetUsername];
   if (!me || !target) return;
 
@@ -2516,8 +2512,6 @@ function showModerationMenu(targetUsername, x, y) {
     boxShadow: '0 2px 10px rgba(0,0,0,0.4)'
   });
 
-
-
   const actions = [];
 
   // Commandes globales (uniquement pour les vrais modos globaux)
@@ -2532,24 +2526,6 @@ function showModerationMenu(targetUsername, x, y) {
       { label: '❌ Retirer Modo/Admin', cmd: ['removemodo', 'removeadmin'], adminOnly: true }
     );
   }
-
-    // Bouton spécial Voir IP (réservé aux vrais admins)
-if (isRealAdmin) {
-  const ipBtn = document.createElement('div');
-  ipBtn.innerHTML = '📡 <span style="color:#0ff">Voir IP</span>';
-  ipBtn.className = 'moderation-button';
-  Object.assign(ipBtn.style, {
-    padding: '6px 12px',
-    cursor: 'pointer'
-  });
-  ipBtn.addEventListener('mouseover', () => ipBtn.style.background = '#444');
-  ipBtn.addEventListener('mouseout', () => ipBtn.style.background = 'transparent');
-  ipBtn.onclick = () => {
-    socket.emit('chat message', `/ip ${targetUsername}`);
-    menu.remove();
-  };
-  menu.appendChild(ipBtn);
-}
 
   // Commandes locales (uniquement pour les créateurs ou modos du salon, pas les modos globaux)
   if (!isGlobalMod && (isRoomOwner || isRoomModo)) {
@@ -2870,14 +2846,14 @@ function loadSavedStyle() {
   if (saved) {
     const style = JSON.parse(saved);
     return {
-      color: style.color || '#ffffff', // ← ici, forcer le blanc
+      color: style.color || '#ffffff', // forcer le blanc
       bold: style.bold || false,
       italic: style.italic || false,
       font: style.font || 'Arial'
     };
   } else {
     return {
-      color: '#ffffff', // ← ici aussi, forcer le blanc
+      color: '#ffffff', // forcer le blanc
       bold: false,
       italic: false,
       font: 'Arial'
@@ -2950,7 +2926,7 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     saveStyle(newStyle);
     applyStyleToInput(newStyle);
 
-    // AJOUT À FAIRE ICI :
+    
     Object.assign(currentStyle, newStyle);
     updateAllPrivateChatsStyle(newStyle);
   });
