@@ -49,7 +49,7 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
-// <-- Ici, ajoute la déclaration de tempMods
+// déclaration de tempMods
 const tempMods = {
   admins: new Set(),
   modos: new Set()
