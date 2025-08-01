@@ -25,6 +25,7 @@ let roomUsers = {};
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
+let webcamStatus = {};  // { username: true/false }
 let roomOwners = {};        // { roomName: username }
 let roomModerators = {};    // { roomName: Set(username) }
 let roomBans = {};          // { roomName: Set(username) }
@@ -254,11 +255,27 @@ res.json({ success: true, url: fileUrl });
   }
 });
 
+function getUserListForClient() {
+  return Object.values(users)
+    .filter(user => !user.invisible)
+    .map(user => ({
+      username: user.username,
+      age: user.age,
+      gender: user.gender,
+      role: user.role,
+      isRealAdmin: user.isRealAdmin || false,
+      webcamActive: webcamStatus[user.username] || false,
+      room: userChannels[user.username] || null
+    }));
+}
+
 
 
 
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
+
+  
 
 socket.on('private wiizz', ({ to }) => {
   const targetSocketId = usernameToSocketId[to];
@@ -1281,9 +1298,66 @@ socket.on('call user', ({ to, from }) => {
   }
 });
 
+    // Envoi initial de la liste utilisateurs au client connecté
+  socket.emit('user list', getUserListForClient());
+
+  // Mise à jour du statut webcam
+  socket.on('webcam status', ({ username, active }) => {
+    if (users[username]) {
+      users[username].webcamActive = active;
+      webcamStatus[username] = active;
+    }
+
+    console.log('Emitting webcam status update for', username, active);
+
+    io.emit('webcam status update', { username, active });
+    io.emit('user list', getUserListForClient());
+  });
+
+  socket.on('signal', ({ to, from, data }) => {
+  // Si l'expéditeur est en mode invisible, bloquer l'envoi du signal
+  if (users[from]?.invisible) {
+    console.warn(`🔒 Signal bloqué : ${from} est en mode invisible`);
+    return;
+  }
+
+  const toSocketId = usernameToSocketId[to];
+  if (toSocketId) {
+    io.to(toSocketId).emit('signal', { from, data });
+    // console.log(`📡 Signal envoyé de ${from} vers ${to}`);
+  } else {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    // console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
+  }
+});
 
 
- 
+
+
+
+
+  socket.on('watch webcam', ({ from, to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    io.to(toSocketId).emit('watch webcam request', { from });
+  });
+
+  socket.on('request call', ({ to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    const senderUser = Object.values(users).find(u => u.id === socket.id);
+    const fromUsername = senderUser ? senderUser.username : socket.id;
+
+    io.to(toSocketId).emit('request call', { from: fromUsername });
+  });
+
+
 
   //FIN WEBRTC
 
