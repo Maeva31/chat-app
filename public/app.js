@@ -91,6 +91,23 @@ if (typeof socket !== 'undefined') {
 
 //  Fin affichage mobile
 
+function updateRoomButtons(rooms) {
+  const container = document.getElementById('room-buttons');
+  if (!container) return;
+
+  container.innerHTML = ''; // Vide le container avant mise à jour
+
+  rooms.forEach(room => {
+    const btn = document.createElement('button');
+    btn.textContent = room;
+    btn.classList.add('room-button');
+    btn.addEventListener('click', () => {
+      socket.emit('join room', room);
+    });
+    container.appendChild(btn);
+  });
+}
+
 
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
