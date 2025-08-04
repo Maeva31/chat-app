@@ -91,23 +91,6 @@ if (typeof socket !== 'undefined') {
 
 //  Fin affichage mobile
 
-function updateRoomButtons(rooms) {
-  const container = document.getElementById('room-buttons');
-  if (!container) return;
-
-  container.innerHTML = ''; // Vide le container avant mise à jour
-
-  rooms.forEach(room => {
-    const btn = document.createElement('button');
-    btn.textContent = room;
-    btn.classList.add('room-button');
-    btn.addEventListener('click', () => {
-      socket.emit('join room', room);
-    });
-    container.appendChild(btn);
-  });
-}
-
 
 function updateAllPrivateChatsStyle(style) {
   const container = document.getElementById('private-chat-container');
@@ -2047,7 +2030,7 @@ function sendMessage() {
   if (!input) return;
 
   const message = input.value.trim();
-  console.log("Message envoyé :", message); 
+  console.log("Message envoyé :", message); // 👈 AJOUT ICI
 
   if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
   if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
@@ -2135,7 +2118,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
 socket.once('username accepted', ({ username, gender, age }) => {
-  if (gender === 'Autre') gender = 'Trans'; 
+  if (gender === 'Autre') gender = 'Trans'; // ✅ Correction ici
 
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
@@ -2863,14 +2846,14 @@ function loadSavedStyle() {
   if (saved) {
     const style = JSON.parse(saved);
     return {
-      color: style.color || '#ffffff', // forcer le blanc
+      color: style.color || '#ffffff', // ← ici, forcer le blanc
       bold: style.bold || false,
       italic: style.italic || false,
       font: style.font || 'Arial'
     };
   } else {
     return {
-      color: '#ffffff', // forcer le blanc
+      color: '#ffffff', // ← ici aussi, forcer le blanc
       bold: false,
       italic: false,
       font: 'Arial'
@@ -2943,7 +2926,7 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     saveStyle(newStyle);
     applyStyleToInput(newStyle);
 
-    
+    // AJOUT À FAIRE ICI :
     Object.assign(currentStyle, newStyle);
     updateAllPrivateChatsStyle(newStyle);
   });
