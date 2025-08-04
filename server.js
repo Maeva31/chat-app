@@ -25,7 +25,6 @@ let roomUsers = {};
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
-let webcamStatus = {};  // { username: true/false }
 let roomOwners = {};        // { roomName: username }
 let roomModerators = {};    // { roomName: Set(username) }
 let roomBans = {};          // { roomName: Set(username) }
@@ -50,7 +49,7 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
-// déclaration de tempMods
+// <-- Ici, ajoute la déclaration de tempMods
 const tempMods = {
   admins: new Set(),
   modos: new Set()
@@ -255,27 +254,11 @@ res.json({ success: true, url: fileUrl });
   }
 });
 
-function getUserListForClient() {
-  return Object.values(users)
-    .filter(user => !user.invisible)
-    .map(user => ({
-      username: user.username,
-      age: user.age,
-      gender: user.gender,
-      role: user.role,
-      isRealAdmin: user.isRealAdmin || false,
-      webcamActive: webcamStatus[user.username] || false,
-      room: userChannels[user.username] || null
-    }));
-}
-
 
 
 
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
-
-  
 
 socket.on('private wiizz', ({ to }) => {
   const targetSocketId = usernameToSocketId[to];
@@ -1228,138 +1211,7 @@ socket.on('createRoom', (newChannel) => {
     socket.emit('private message', privateMsg);
   });
 
- // WEBRTC AUDIO/VIDEO
 
-
-// Transmission des offres SDP entre pairs
-socket.on('webrtc offer', ({ to, offer }) => {
-  if (users[to]?.invisible) {
-    console.warn(`🔒 Offre bloquée : ${to} est en mode invisible`);
-    socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
-    return;
-  }
-
-  const targetSocketId = usernameToSocketId[to];
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-  if (targetSocket) {
-    targetSocket.emit('webrtc offer', { from: socket.id, offer });
-  }
-});
-
-// Transmission des réponses SDP entre pairs
-socket.on('webrtc answer', ({ to, answer }) => {
-  if (users[to]?.invisible) {
-    console.warn(`🔒 Réponse bloquée : ${to} est en mode invisible`);
-    return;
-  }
-
-  if (users[socketIdToUsername[socket.id]]?.invisible) {
-    console.warn(`🔒 Réponse bloquée : l'utilisateur est invisible`);
-    return;
-  }
-
-  const targetSocketId = usernameToSocketId[to];
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-  if (targetSocket) {
-    targetSocket.emit('webrtc answer', { from: socket.id, answer });
-  }
-});
-
-// Transmission des ICE candidates entre pairs
-socket.on('webrtc ice candidate', ({ to, candidate }) => {
-  if (users[to]?.invisible || users[socketIdToUsername[socket.id]]?.invisible) {
-    console.warn(`🔒 ICE bloqué entre invisible(s)`);
-    return;
-  }
-
-  const targetSocketId = usernameToSocketId[to];
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-  if (targetSocket) {
-    targetSocket.emit('webrtc ice candidate', { from: socket.id, candidate });
-  }
-});
-
-// Transmission appel utilisateur
-socket.on('call user', ({ to, from }) => {
-  if (users[to]?.invisible) {
-    socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
-    return;
-  }
-
-  if (users[socketIdToUsername[socket.id]]?.invisible) {
-    console.warn(`🔒 Appel bloqué : utilisateur en mode invisible`);
-    return;
-  }
-
-  const targetSocketId = usernameToSocketId[to];
-  const targetSocket = io.sockets.sockets.get(targetSocketId);
-  if (targetSocket) {
-    targetSocket.emit('call user', { from });
-  }
-});
-
-    // Envoi initial de la liste utilisateurs au client connecté
-  socket.emit('user list', getUserListForClient());
-
-  // Mise à jour du statut webcam
-  socket.on('webcam status', ({ username, active }) => {
-    if (users[username]) {
-      users[username].webcamActive = active;
-      webcamStatus[username] = active;
-    }
-
-    console.log('Emitting webcam status update for', username, active);
-
-    io.emit('webcam status update', { username, active });
-    io.emit('user list', getUserListForClient());
-  });
-
-  socket.on('signal', ({ to, from, data }) => {
-  // Si l'expéditeur est en mode invisible, bloquer l'envoi du signal
-  if (users[from]?.invisible) {
-    console.warn(`🔒 Signal bloqué : ${from} est en mode invisible`);
-    return;
-  }
-
-  const toSocketId = usernameToSocketId[to];
-  if (toSocketId) {
-    io.to(toSocketId).emit('signal', { from, data });
-    // console.log(`📡 Signal envoyé de ${from} vers ${to}`);
-  } else {
-    socket.emit('error message', `Utilisateur ${to} non connecté`);
-    // console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
-  }
-});
-
-
-
-
-
-
-  socket.on('watch webcam', ({ from, to }) => {
-    const toSocketId = usernameToSocketId[to];
-    if (!toSocketId) {
-      socket.emit('error message', `Utilisateur ${to} non connecté`);
-      return;
-    }
-    io.to(toSocketId).emit('watch webcam request', { from });
-  });
-
-  socket.on('request call', ({ to }) => {
-    const toSocketId = usernameToSocketId[to];
-    if (!toSocketId) {
-      socket.emit('error message', `Utilisateur ${to} non connecté`);
-      return;
-    }
-    const senderUser = Object.values(users).find(u => u.id === socket.id);
-    const fromUsername = senderUser ? senderUser.username : socket.id;
-
-    io.to(toSocketId).emit('request call', { from: fromUsername });
-  });
-
-
-
-  //FIN WEBRTC
 
 });
 
