@@ -25,6 +25,7 @@ let roomUsers = {};
 let userChannels = {};
 let bannedUsers = new Set();   // pseudos bannis (simple set, pour persister on peut ajouter fichier json)
 let mutedUsers = new Set();    // pseudos mutés
+let webcamStatus = {};  // { username: true/false }
 let roomOwners = {};        // { roomName: username }
 let roomModerators = {};    // { roomName: Set(username) }
 let roomBans = {};          // { roomName: Set(username) }
@@ -49,7 +50,7 @@ try {
   console.warn("⚠️ Impossible de charger moderators.json, pas de modérateurs définis.");
 }
 
-// <-- Ici, ajoute la déclaration de tempMods
+// déclaration de tempMods
 const tempMods = {
   admins: new Set(),
   modos: new Set()
@@ -94,25 +95,13 @@ savedRooms.forEach(room => {
 
 
 
-// Préparation des structures internes
-savedRooms.forEach(room => {
-  if (!messageHistory[room]) messageHistory[room] = [];
-  if (!roomUsers[room]) roomUsers[room] = [];
-});
 
-// ✅ Dans ta connexion socket :
-io.on('connection', (socket) => {
-  // ... tes autres blocs socket ...
-
-  // Envoie les salons complets au client
-  socket.emit('room list', savedRooms);
-});
 
 
 app.use(express.static('public'));
 
 app.get('/', (req, res) => {
-  res.redirect('/chat.html');
+  res.redirect('/index.html');
 });
 
 app.get('/health', (req, res) => {
@@ -212,53 +201,70 @@ const upload = multer({
 
 
 app.post('/upload', upload.single('file'), (req, res) => {
-  const userId = req.body.userId; // id socket ou username
+  const socketId = req.body.userId; // should be validated
   const room = req.body.room;
 
   if (!req.file) {
     return res.status(400).json({ error: 'Aucun fichier reçu' });
   }
 
+  if (!socketId || !io.sockets.sockets.has(socketId)) {
+    return res.status(400).json({ error: 'Utilisateur invalide pour upload.' });
+  }
+
+  if (!room || !savedRooms.includes(room)) {
+    return res.status(400).json({ error: 'Salon invalide.' });
+  }
+
+  const user = Object.values(users).find(u => u.id === socketId);
+  if (!user) {
+    return res.status(400).json({ error: 'Utilisateur introuvable.' });
+  }
+
   const fileUrl = `/uploads/${req.file.filename}`;
 
-  // Envoi message dans le salon via Socket.IO
-  if (userId && room && io.sockets.sockets.has(userId)) {
-    const userSocket = io.sockets.sockets.get(userId);
-    const user = Object.values(users).find(u => u.id === userId);
+  // Build message object properly
+  const messageObject = {
+    username: user.username,
+    gender: user.gender || 'non spécifié',
+    role: user.role || 'user',
+    message: '',
+    file: fileUrl,
+    timestamp: new Date().toISOString(),
+    channel: room,
+  };
 
-    const message = {
-  username: user ? user.username : 'Utilisateur',
-  gender: user ? user.gender : 'non spécifié',
-  role: user ? user.role : 'user',
-  message: '',
-  file: fileUrl,
-  timestamp: new Date().toISOString(),
-  channel: room,
-};
+  if (!messageHistory[room]) messageHistory[room] = [];
+  messageHistory[room].push(messageObject);
+  if (messageHistory[room].length > MAX_HISTORY) messageHistory[room].shift();
 
+  io.to(room).emit('chat message', messageObject);
 
-if (!messageHistory[room]) messageHistory[room] = [];
-
-const messageObject = {
-  username: username,
-  message: message,
-  time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-};
-
-messageHistory[room].push(messageObject);
-if (messageHistory[room].length > MAX_HISTORY) messageHistory[room].shift();
-
-io.to(room).emit('chat message', messageObject); // ✅ on envoie un vrai objet !
-
-res.json({ success: true, url: fileUrl });
-  }
+  res.json({ success: true, url: fileUrl });
 });
+
+
+function getUserListForClient() {
+  return Object.values(users)
+    .filter(user => !user.invisible)
+    .map(user => ({
+      username: user.username,
+      age: user.age,
+      gender: user.gender,
+      role: user.role,
+      isRealAdmin: user.isRealAdmin || false,
+      webcamActive: webcamStatus[user.username] || false,
+      room: userChannels[user.username] || null
+    }));
+}
 
 
 
 
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
+
+  
 
 socket.on('private wiizz', ({ to }) => {
   const targetSocketId = usernameToSocketId[to];
@@ -1141,21 +1147,26 @@ socket.on('createRoom', (newChannel) => {
     delete usernameToSocketId[user.username];
     delete socketIdToUsername[socket.id];
 
-    // SUPPRESSION des rôles temporaires à la déconnexion
-    tempMods.admins.delete(user.username);
-    tempMods.modos.delete(user.username);
+      // SUPPRESSION des rôles temporaires à la déconnexion
+      tempMods.admins.delete(user.username);
+      tempMods.modos.delete(user.username);
 
-    const room = userChannels[socket.id];
-    if (room) {
-      if (!user.invisible) {
-        io.to(room).emit('chat message', {
-          username: 'Système',
-          message: `${user.username} a quitté le serveur`,
-          timestamp: new Date().toISOString(),
-          channel: room
-        });
+      if (user && webcamStatus[user.username]) {
+        webcamStatus[user.username] = false;
+        io.emit('webcam status update', { username: user.username, active: false });
       }
-    }
+
+      const room = userChannels[socket.id];
+      if (room) {
+        if (!user.invisible) {
+          io.to(room).emit('chat message', {
+            username: 'Système',
+            message: `${user.username} a quitté le serveur`,
+            timestamp: new Date().toISOString(),
+            channel: room
+          });
+        }
+      }
 
     for (const channel in roomUsers) {
       roomUsers[channel] = roomUsers[channel].filter(u => u.id !== socket.id);
@@ -1211,7 +1222,138 @@ socket.on('createRoom', (newChannel) => {
     socket.emit('private message', privateMsg);
   });
 
+ // WEBRTC AUDIO/VIDEO
 
+
+// Transmission des offres SDP entre pairs
+socket.on('webrtc offer', ({ to, offer }) => {
+  if (users[to]?.invisible) {
+    console.warn(`🔒 Offre bloquée : ${to} est en mode invisible`);
+    socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
+    return;
+  }
+
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
+  if (targetSocket) {
+    targetSocket.emit('webrtc offer', { from: socket.id, offer });
+  }
+});
+
+// Transmission des réponses SDP entre pairs
+socket.on('webrtc answer', ({ to, answer }) => {
+  if (users[to]?.invisible) {
+    console.warn(`🔒 Réponse bloquée : ${to} est en mode invisible`);
+    return;
+  }
+
+  if (users[socketIdToUsername[socket.id]]?.invisible) {
+    console.warn(`🔒 Réponse bloquée : l'utilisateur est invisible`);
+    return;
+  }
+
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
+  if (targetSocket) {
+    targetSocket.emit('webrtc answer', { from: socket.id, answer });
+  }
+});
+
+// Transmission des ICE candidates entre pairs
+socket.on('webrtc ice candidate', ({ to, candidate }) => {
+  if (users[to]?.invisible || users[socketIdToUsername[socket.id]]?.invisible) {
+    console.warn(`🔒 ICE bloqué entre invisible(s)`);
+    return;
+  }
+
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
+  if (targetSocket) {
+    targetSocket.emit('webrtc ice candidate', { from: socket.id, candidate });
+  }
+});
+
+// Transmission appel utilisateur
+socket.on('call user', ({ to, from }) => {
+  if (users[to]?.invisible) {
+    socket.emit('error message', `${to} est en mode invisible et ne peut pas recevoir d'appel.`);
+    return;
+  }
+
+  if (users[socketIdToUsername[socket.id]]?.invisible) {
+    console.warn(`🔒 Appel bloqué : utilisateur en mode invisible`);
+    return;
+  }
+
+  const targetSocketId = usernameToSocketId[to];
+  const targetSocket = io.sockets.sockets.get(targetSocketId);
+  if (targetSocket) {
+    targetSocket.emit('call user', { from });
+  }
+});
+
+    // Envoi initial de la liste utilisateurs au client connecté
+  socket.emit('user list', getUserListForClient());
+
+  // Mise à jour du statut webcam
+  socket.on('webcam status', ({ username, active }) => {
+    if (users[username]) {
+      users[username].webcamActive = active;
+      webcamStatus[username] = active;
+    }
+
+    console.log('Emitting webcam status update for', username, active);
+
+    io.emit('webcam status update', { username, active });
+    io.emit('user list', getUserListForClient());
+  });
+
+  socket.on('signal', ({ to, from, data }) => {
+  // Si l'expéditeur est en mode invisible, bloquer l'envoi du signal
+  if (users[from]?.invisible) {
+    console.warn(`🔒 Signal bloqué : ${from} est en mode invisible`);
+    return;
+  }
+
+  const toSocketId = usernameToSocketId[to];
+  if (toSocketId) {
+    io.to(toSocketId).emit('signal', { from, data });
+    // console.log(`📡 Signal envoyé de ${from} vers ${to}`);
+  } else {
+    socket.emit('error message', `Utilisateur ${to} non connecté`);
+    // console.warn(`Signal non envoyé : destinataire ${to} non connecté`);
+  }
+});
+
+
+
+
+
+
+  socket.on('watch webcam', ({ from, to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    io.to(toSocketId).emit('watch webcam request', { from });
+  });
+
+  socket.on('request call', ({ to }) => {
+    const toSocketId = usernameToSocketId[to];
+    if (!toSocketId) {
+      socket.emit('error message', `Utilisateur ${to} non connecté`);
+      return;
+    }
+    const senderUser = Object.values(users).find(u => u.id === socket.id);
+    const fromUsername = senderUser ? senderUser.username : socket.id;
+
+    io.to(toSocketId).emit('request call', { from: fromUsername });
+  });
+
+
+
+  //FIN WEBRTC
 
 });
 
