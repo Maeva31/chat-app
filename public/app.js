@@ -9,6 +9,71 @@ let roomModerators = {};
 let topZIndex = 1000;
 
 let blockPrivateMessages = localStorage.getItem('blockPrivateMessages') === 'true';
+let audioCtx;
+let localStream = null;
+
+// Fonction qui prépare le micro avec AudioWorklet
+async function setupMicroWithWorklet() {
+  audioCtx = new AudioContext();
+
+  // Charger le processeur
+  await audioCtx.audioWorklet.addModule("/processor.js");
+
+  // Récupérer micro
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const micSource = audioCtx.createMediaStreamSource(stream);
+
+  // Worklet node
+  const workletNode = new AudioWorkletNode(audioCtx, "chat-processor", {
+    parameterData: { cutoff: 150 } // filtre passe-haut
+  });
+
+  // pipeline micro -> worklet
+  micSource.connect(workletNode);
+
+  // Destination pour WebRTC
+  const dest = audioCtx.createMediaStreamDestination();
+  workletNode.connect(dest);
+
+  // Flux traité
+  localStream = dest.stream;
+
+  // Ajout aux peerConnections existants
+  Object.values(peerConnections).forEach(pc => {
+    localStream.getTracks().forEach(track => pc.addTrack(track, localStream));
+  });
+}
+
+// Quand la page est prête, attacher le bouton
+document.addEventListener("DOMContentLoaded", () => {
+  const micBtn = document.getElementById("mic-on-btn");
+
+  if (micBtn) {
+    micBtn.addEventListener("click", async () => {
+      try {
+        await setupMicroWithWorklet();
+        micBtn.innerHTML = "<b>Mic ON ✅</b>";
+      } catch (err) {
+        console.error("Erreur activation micro:", err);
+        micBtn.innerHTML = "<b>Mic ERROR ❌</b>";
+      }
+    });
+  }
+});
+
+// Push-to-talk ARL
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'ARL' && audioCtx) {
+    audioCtx.resume();
+  }
+});
+
+document.addEventListener('keyup', (e) => {
+  if (e.code === 'ARL' && audioCtx) {
+    audioCtx.suspend();
+  }
+});
+
 
 
 // Affichage mobile
@@ -90,6 +155,23 @@ if (typeof socket !== 'undefined') {
 
 
 //  Fin affichage mobile
+
+function updateRoomButtons(rooms) {
+  const container = document.getElementById('room-buttons');
+  if (!container) return;
+
+  container.innerHTML = ''; // Vide le container avant mise à jour
+
+  rooms.forEach(room => {
+    const btn = document.createElement('button');
+    btn.textContent = room;
+    btn.classList.add('room-button');
+    btn.addEventListener('click', () => {
+      socket.emit('join room', room);
+    });
+    container.appendChild(btn);
+  });
+}
 
 
 function updateAllPrivateChatsStyle(style) {
@@ -2030,7 +2112,7 @@ function sendMessage() {
   if (!input) return;
 
   const message = input.value.trim();
-  console.log("Message envoyé :", message); // 👈 AJOUT ICI
+  console.log("Message envoyé :", message); 
 
   if (!message) return showBanner("Vous ne pouvez pas envoyer de message vide.", 'error');
   if (message.length > 300) return showBanner("Message trop long (300 caractères max).", 'error');
@@ -2118,7 +2200,7 @@ if (adminUsernamesLower.includes(usernameLower) || modoUsernamesLower.includes(u
 
   // On écoute une seule fois 'username accepted' pour sauvegarder info et fermer modal
 socket.once('username accepted', ({ username, gender, age }) => {
-  if (gender === 'Autre') gender = 'Trans'; // ✅ Correction ici
+  if (gender === 'Autre') gender = 'Trans'; 
 
   localStorage.setItem('username', username);
   localStorage.setItem('gender', gender);
@@ -2846,14 +2928,14 @@ function loadSavedStyle() {
   if (saved) {
     const style = JSON.parse(saved);
     return {
-      color: style.color || '#ffffff', // ← ici, forcer le blanc
+      color: style.color || '#ffffff', // forcer le blanc
       bold: style.bold || false,
       italic: style.italic || false,
       font: style.font || 'Arial'
     };
   } else {
     return {
-      color: '#ffffff', // ← ici aussi, forcer le blanc
+      color: '#ffffff', // forcer le blanc
       bold: false,
       italic: false,
       font: 'Arial'
@@ -2926,7 +3008,7 @@ styleMenu.addEventListener('click', e => e.stopPropagation());
     saveStyle(newStyle);
     applyStyleToInput(newStyle);
 
-    // AJOUT À FAIRE ICI :
+    
     Object.assign(currentStyle, newStyle);
     updateAllPrivateChatsStyle(newStyle);
   });
