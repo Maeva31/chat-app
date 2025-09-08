@@ -107,6 +107,37 @@ socket.emit('request history', roomName);
 updateMicroFrameVisibility(roomName);
 });
 
+let audioCtx;
+let localAudioStream;
+
+async function startLocalAudio() {
+  try {
+    // Contexte audio
+    audioCtx = new AudioContext();
+
+    // Charger ton processeur AudioWorklet
+    await audioCtx.audioWorklet.addModule('processor.js');
+
+    // Demander le micro
+    localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+    // Créer une source micro
+    const source = audioCtx.createMediaStreamSource(localAudioStream);
+
+    // Créer le node AudioWorklet
+    const micNode = new AudioWorkletNode(audioCtx, 'mic-processor');
+
+    // Connecter le micro au worklet puis à la sortie
+    source.connect(micNode).connect(audioCtx.destination);
+
+    return localAudioStream;
+  } catch (err) {
+    console.error("Erreur démarrage micro:", err);
+    return null;
+  }
+}
+
+
 
 // Affichage mobile
 
