@@ -1,14 +1,111 @@
 const socket = io();
 
+
 let users = [];
 let userCache = {};
-let currentRoom = 'Général'; 
+let currentRoom = 'Général';
 let bannedRooms = [];
 let roomOwners = {};
 let roomModerators = {};
 let topZIndex = 1000;
 
+
 let blockPrivateMessages = localStorage.getItem('blockPrivateMessages') === 'true';
+
+
+// --- Bouton activer/désactiver micro ---
+const voxoBtn = document.getElementById('voxo');
+const voxiContainer = document.getElementById('voxi'); // cadre micro
+
+
+if (voxoBtn && voxiContainer) {
+voxoBtn.textContent = 'Mic OFF';
+
+
+voxoBtn.addEventListener('click', async () => {
+if (!micEnabled) {
+const audio = await startLocalAudio();
+if (!audio) {
+alert("Micro non disponible ou accès refusé.");
+return;
+}
+localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
+micEnabled = true;
+voxoBtn.textContent = 'Mic ON';
+
+
+// Afficher pseudo dans le cadre voxi
+voxiContainer.textContent = myUsername;
+
+
+Object.values(peerConnections).forEach(pc => {
+const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
+if (!hasAudioSender) {
+localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+} else {
+pc.getSenders().forEach(sender => {
+if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
+});
+}
+});
+} else {
+if (localAudioStream) {
+localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
+}
+micEnabled = false;
+voxoBtn.textContent = 'Mic OFF';
+
+
+voxiContainer.textContent = '';
+
+
+Object.values(peerConnections).forEach(pc => {
+pc.getSenders().forEach(sender => {
+if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
+});
+});
+}
+});
+}
+
+
+// 🔄 Gestion affichage cadre micro selon le salon
+function updateMicroFrameVisibility(roomName) {
+  const voxi = document.getElementById('voxi');
+  if (!voxi) return;
+
+  const salonsAvecMicro = ['Musique', 'Gaming'];
+
+  if (salonsAvecMicro.includes(roomName)) {
+    voxi.style.display = 'flex';   // 👈 plus visible que 'block'
+  } else {
+    voxi.style.display = 'none';
+  }
+}
+
+
+// Appel initial
+updateMicroFrameVisibility(currentRoom);
+
+
+// 📌 Mise à jour sur changement de salon
+socket.on('joinedRoom', (newChannel) => {
+currentRoom = newChannel;
+localStorage.setItem('currentRoom', newChannel);
+socket.emit('request history', newChannel);
+
+
+updateMicroFrameVisibility(newChannel);
+});
+
+
+socket.on('room joined', (roomName) => {
+currentRoom = roomName;
+socket.emit('request history', roomName);
+
+
+updateMicroFrameVisibility(roomName);
+});
 
 
 // Affichage mobile
