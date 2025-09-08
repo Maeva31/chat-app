@@ -1,6 +1,5 @@
 const socket = io();
 
-
 let users = [];
 let userCache = {};
 let currentRoom = 'Général';
@@ -9,65 +8,80 @@ let roomOwners = {};
 let roomModerators = {};
 let topZIndex = 1000;
 
-
 let blockPrivateMessages = localStorage.getItem('blockPrivateMessages') === 'true';
-
 
 // --- Bouton activer/désactiver micro ---
 const voxoBtn = document.getElementById('voxo');
 const voxiContainer = document.getElementById('voxi'); // cadre micro
 
+function addUserToVoxi(username) {
+  const container = document.getElementById('voxi-users');
+  if (!container) return;
+
+  if ([...container.children].some(el => el.textContent === username)) return;
+
+  if (container.children.length >= 5) return;
+
+  const userDiv = document.createElement('div');
+  userDiv.className = 'voxi-user';
+  userDiv.textContent = username;
+  container.appendChild(userDiv);
+}
+
+function removeUserFromVoxi(username) {
+  const container = document.getElementById('voxi-users');
+  if (!container) return;
+
+  [...container.children].forEach(el => {
+    if (el.textContent === username) el.remove();
+  });
+}
 
 if (voxoBtn && voxiContainer) {
-voxoBtn.textContent = 'Mic OFF';
+  voxoBtn.textContent = 'Mic OFF';
 
+  voxoBtn.addEventListener('click', async () => {
+    if (!micEnabled) {
+      const audio = await startLocalAudio();
+      if (!audio) {
+        alert("Micro non disponible ou accès refusé.");
+        return;
+      }
+      localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
+      micEnabled = true;
+      voxoBtn.textContent = 'Mic ON';
 
-voxoBtn.addEventListener('click', async () => {
-if (!micEnabled) {
-const audio = await startLocalAudio();
-if (!audio) {
-alert("Micro non disponible ou accès refusé.");
-return;
+      // 🔄 Ajoute le pseudo dans le cadre micro
+      addUserToVoxi(myUsername);
+
+      Object.values(peerConnections).forEach(pc => {
+        const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
+        if (!hasAudioSender) {
+          localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
+        } else {
+          pc.getSenders().forEach(sender => {
+            if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
+          });
+        }
+      });
+    } else {
+      if (localAudioStream) {
+        localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
+      }
+      micEnabled = false;
+      voxoBtn.textContent = 'Mic OFF';
+
+      // 🔄 Retire le pseudo du cadre micro
+      removeUserFromVoxi(myUsername);
+
+      Object.values(peerConnections).forEach(pc => {
+        pc.getSenders().forEach(sender => {
+          if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
+        });
+      });
+    }
+  });
 }
-localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
-micEnabled = true;
-voxoBtn.textContent = 'Mic ON';
-
-
-// Afficher pseudo dans le cadre voxi
-voxiContainer.textContent = myUsername;
-
-
-Object.values(peerConnections).forEach(pc => {
-const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
-if (!hasAudioSender) {
-localAudioStream.getAudioTracks().forEach(track => pc.addTrack(track, localAudioStream));
-} else {
-pc.getSenders().forEach(sender => {
-if (sender.track && sender.track.kind === 'audio') sender.track.enabled = true;
-});
-}
-});
-} else {
-if (localAudioStream) {
-localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
-}
-micEnabled = false;
-voxoBtn.textContent = 'Mic OFF';
-
-
-voxiContainer.textContent = '';
-
-
-Object.values(peerConnections).forEach(pc => {
-pc.getSenders().forEach(sender => {
-if (sender.track && sender.track.kind === 'audio') sender.track.enabled = false;
-});
-});
-}
-});
-}
-
 
 // 🔄 Gestion affichage cadre micro selon le salon
 function updateMicroFrameVisibility(roomName) {
@@ -77,34 +91,29 @@ function updateMicroFrameVisibility(roomName) {
   const salonsAvecMicro = ['Musique', 'Gaming'];
 
   if (salonsAvecMicro.includes(roomName)) {
-    voxi.style.display = 'flex';   // 👈 plus visible que 'block'
+    voxi.style.display = 'flex';
   } else {
     voxi.style.display = 'none';
   }
 }
 
-
 // Appel initial
 updateMicroFrameVisibility(currentRoom);
 
-
 // 📌 Mise à jour sur changement de salon
 socket.on('joinedRoom', (newChannel) => {
-currentRoom = newChannel;
-localStorage.setItem('currentRoom', newChannel);
-socket.emit('request history', newChannel);
+  currentRoom = newChannel;
+  localStorage.setItem('currentRoom', newChannel);
+  socket.emit('request history', newChannel);
 
-
-updateMicroFrameVisibility(newChannel);
+  updateMicroFrameVisibility(newChannel);
 });
 
-
 socket.on('room joined', (roomName) => {
-currentRoom = roomName;
-socket.emit('request history', roomName);
+  currentRoom = roomName;
+  socket.emit('request history', roomName);
 
-
-updateMicroFrameVisibility(roomName);
+  updateMicroFrameVisibility(roomName);
 });
 
 let audioCtx;
@@ -112,22 +121,16 @@ let localAudioStream;
 
 async function startLocalAudio() {
   try {
-    // Contexte audio
     audioCtx = new AudioContext();
 
-    // Charger ton processeur AudioWorklet
     await audioCtx.audioWorklet.addModule('processor.js');
 
-    // Demander le micro
     localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
-    // Créer une source micro
     const source = audioCtx.createMediaStreamSource(localAudioStream);
 
-    // Créer le node AudioWorklet
     const micNode = new AudioWorkletNode(audioCtx, 'mic-processor');
 
-    // Connecter le micro au worklet puis à la sortie
     source.connect(micNode).connect(audioCtx.destination);
 
     return localAudioStream;
@@ -136,6 +139,7 @@ async function startLocalAudio() {
     return null;
   }
 }
+
 
 
 
