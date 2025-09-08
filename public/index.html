@@ -46,8 +46,90 @@
 }
 
   </style>
+  <style>
+#voxi {
+  position: absolute;
+  bottom: 11px;
+  right: 350px;
+  width: 150px;
+  height: 100px;
+  background-color: #222222;
+  border: 1px solid rgb(155 0 255);
+  box-shadow: 0 0 8px rgb(155 0 255);
+  padding: 5px;
+  box-sizing: border-box;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  user-select: none;
+  cursor: default;
+  font-family: Arial, sans-serif;
+  z-index: 50;
+}
 
+#voxo, #voxz {
+  position: absolute;
+  top: 3px;
+  height: 20px;
+  background-color: #444;
+  color: #000000;
+  cursor: default;
+  user-select: none;
+  line-height: 20px;
+  text-align: center;
+  border-radius: 4px;
+  font-size: 13px;
+  padding: 0 4px;
+}
+
+#voxo {
+  left: 3px;
+  width: 60px;
+  font-weight: bold;
+}
+
+#voxz {
+  left: 78px;
+  width: 38px;
+  font-weight: normal;
+}
+
+#muto {
+  position: absolute;
+  top: 13px;
+  left: 117px;
+  font-size: 10px;
+  background-color: #444;
+  cursor: default;
+  user-select: none;
+  padding: 2px 6px;
+  /* border: 1px solid #ccc; */
+  border-radius: 4px;
+  color: #000000;
+  font-weight: normal;
+}
+
+#micra {
+  position: absolute;
+  top: 0;
+  left: 138px;
+  width: 10px;
+  height: 10px;
+  background-color: #000000;
+  border-radius: 50%;
+  color: black;
+}
+
+
+</style>
 </head>
+<!-- Cadre micro (affiché uniquement Musique & Gaming) -->
+<div id="voxi" style="display:none;">
+  <div id="voxo">Mic OFF</div>
+  <div id="voxz"></div>
+  <div id="muto">Mute</div>
+  <div id="micra"></div>
+</div>
+
 <body>
 
   <!-- Bandeau d'erreur -->
@@ -430,7 +512,7 @@
 
   <div class="texte-laser">
     <div style="display: flex; align-items: center; justify-content: center; gap: 8px;">
-     <!-- <button id="start-webcam-btn" class="sprite-button" title="Activer ma webcam" aria-label="Activer ma webcam"></button> -->
+      <button id="start-webcam-btn" class="sprite-button" title="Activer ma webcam" aria-label="Activer ma webcam"></button>
       <button id="upload-btn" class="sprite-button" title="Envoyer un fichier" aria-label="Envoyer un fichier"></button>
       <h3 style="margin: 0;">Liste du salon</h3>
     </div>
