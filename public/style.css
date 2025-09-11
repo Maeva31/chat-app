@@ -428,7 +428,7 @@ main {
 }
 
 .modal-content {
-    position: fixed; /* ou absolute si tu préfères */
+    position: fixed;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
@@ -440,9 +440,8 @@ main {
     max-width: 400px;
     box-shadow: 0 0 20px rgba(0, 255, 255, 0.3);
     border: 2px solid #444;
-    animation: popIn 0.4s ease;
     box-sizing: border-box;
-    z-index: 1000; /* pour être sûr qu'elle soit au-dessus des autres éléments */
+    z-index: 1000;
 }
 
 
