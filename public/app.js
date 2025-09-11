@@ -10,6 +10,12 @@ let topZIndex = 1000;
 
 let blockPrivateMessages = localStorage.getItem('blockPrivateMessages') === 'true';
 
+// --- Variables micro ---
+let myUsername = localStorage.getItem('username') || 'Invité';
+let micEnabled = false;
+let audioCtx;
+let localAudioStream;
+
 // --- Bouton activer/désactiver micro ---
 const voxoBtn = document.getElementById('voxo');
 const voxiContainer = document.getElementById('voxi'); // cadre micro
@@ -19,7 +25,6 @@ function addUserToVoxi(username) {
   if (!container) return;
 
   if ([...container.children].some(el => el.textContent === username)) return;
-
   if (container.children.length >= 5) return;
 
   const userDiv = document.createElement('div');
@@ -42,18 +47,22 @@ if (voxoBtn && voxiContainer) {
 
   voxoBtn.addEventListener('click', async () => {
     if (!micEnabled) {
+      // --- Activation micro ---
       const audio = await startLocalAudio();
       if (!audio) {
         alert("Micro non disponible ou accès refusé.");
         return;
       }
+
       localAudioStream.getAudioTracks().forEach(track => (track.enabled = true));
       micEnabled = true;
       voxoBtn.textContent = 'Mic ON';
 
-      // 🔄 Ajoute le pseudo dans le cadre micro
+      // 🔄 Ajoute pseudo local + signale au serveur
       addUserToVoxi(myUsername);
+      socket.emit('mic status', { username: myUsername, active: true });
 
+      // Ajout aux connexions WebRTC
       Object.values(peerConnections).forEach(pc => {
         const hasAudioSender = pc.getSenders().some(sender => sender.track && sender.track.kind === 'audio');
         if (!hasAudioSender) {
@@ -64,15 +73,18 @@ if (voxoBtn && voxiContainer) {
           });
         }
       });
+
     } else {
+      // --- Désactivation micro ---
       if (localAudioStream) {
         localAudioStream.getAudioTracks().forEach(track => (track.enabled = false));
       }
       micEnabled = false;
       voxoBtn.textContent = 'Mic OFF';
 
-      // 🔄 Retire le pseudo du cadre micro
+      // 🔄 Retire pseudo local + signale au serveur
       removeUserFromVoxi(myUsername);
+      socket.emit('mic status', { username: myUsername, active: false });
 
       Object.values(peerConnections).forEach(pc => {
         pc.getSenders().forEach(sender => {
@@ -116,9 +128,7 @@ socket.on('room joined', (roomName) => {
   updateMicroFrameVisibility(roomName);
 });
 
-let audioCtx;
-let localAudioStream;
-
+// --- Fonction démarrage micro ---
 async function startLocalAudio() {
   try {
     audioCtx = new AudioContext();
@@ -128,7 +138,6 @@ async function startLocalAudio() {
     localAudioStream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
     const source = audioCtx.createMediaStreamSource(localAudioStream);
-
     const micNode = new AudioWorkletNode(audioCtx, 'mic-processor');
 
     source.connect(micNode).connect(audioCtx.destination);
@@ -140,6 +149,17 @@ async function startLocalAudio() {
   }
 }
 
+// 🔄 Mise à jour du cadre micro selon les utilisateurs qui parlent
+socket.on('mic users', (usernames) => {
+  const container = document.getElementById('voxi-users');
+  if (!container) return;
+
+  container.innerHTML = ''; // on vide tout
+
+  usernames.forEach(username => {
+    addUserToVoxi(username);
+  });
+});
 
 
 
