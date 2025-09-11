@@ -506,7 +506,7 @@ main {
 .modal-image {
   display: block;
   width: 140px;
-  height: 60px;
+  height: 50px;
   object-fit: cover; /* ou contain selon le rendu voulu */
   margin: 0 auto 20px auto;
   border-radius: 10px;
