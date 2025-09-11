@@ -29,6 +29,7 @@ let webcamStatus = {};  // { username: true/false }
 let roomOwners = {};        // { roomName: username }
 let roomModerators = {};    // { roomName: Set(username) }
 let roomBans = {};          // { roomName: Set(username) }
+let activeMics = new Map(); // socket.id → username
 
 
 const usernameToSocketId = {};
@@ -264,7 +265,23 @@ function getUserListForClient() {
 io.on('connection', (socket) => {
   console.log(`✅ Connexion : ${socket.id}`);
 
-  
+  // --- Gestion micro ---
+socket.on('mic status', ({ username, active }) => {
+  if (active) {
+    activeMics.set(socket.id, username);
+  } else {
+    activeMics.delete(socket.id);
+  }
+
+  // Diffuser la liste des micros actifs à tout le monde
+  io.emit('mic users', Array.from(activeMics.values()));
+});
+
+socket.on('disconnect', () => {
+  activeMics.delete(socket.id);
+  io.emit('mic users', Array.from(activeMics.values()));
+});
+
 
 socket.on('private wiizz', ({ to }) => {
   const targetSocketId = usernameToSocketId[to];
@@ -1361,4 +1378,3 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`🚀 Serveur démarré sur http://localhost:${PORT}`);
 });
- 
