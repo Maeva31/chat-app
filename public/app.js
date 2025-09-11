@@ -1605,7 +1605,7 @@ socket.on('banned rooms list', rooms => {
 
 
 
- const adminUsernames = ['MaEvA','rookie'];
+ const adminUsernames = ['MaEvA','rookie','Admin'];
  const modoUsernames = ['DarkGirL'];
 
 
