@@ -1430,6 +1430,13 @@ audio:hover {
   margin-right: 23px;  
   vertical-align: middle; 
 }
+
+.reglement-link:hover {
+  color: #ff0000 !important;
+}
+
+
+
 /* Cacher sur les écrans mobiles (max 768px) */
 @media (max-width: 768px) {
   .reglement-desktop {
