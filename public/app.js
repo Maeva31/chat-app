@@ -2031,7 +2031,6 @@ function addMessageToChat(msg) {
                 getUsernameColor(msg.gender);
   usernameSpan.style.color = color || '#fff';
   usernameSpan.style.setProperty('color', color || '#fff', 'important');
-  console.log(`[Color DEBUG] ${msg.username} - ${color}`);
   usernameSpan.textContent = msg.username + ': ';
   usernameSpan.title = (msg.role === 'admin') ? 'Admin' :
                        (msg.role === 'modo') ? 'Modérateur' : '';
@@ -2082,27 +2081,32 @@ function addMessageToChat(msg) {
   messageText.style.fontStyle = style.italic ? 'italic' : 'normal';
   messageText.style.fontFamily = style.font || 'Arial';
 
+  // 🔑 Utilise la valeur envoyée par le serveur
+  const isAdminWithPassword = !!msg.isAdminWithPassword;
+
   const parts = (msg.message || '').split(/(https?:\/\/[^\s]+)/g);
   const isYouTubeUrl = url =>
     /(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/))/.test(url);
 
   parts.forEach(part => {
     if (/https?:\/\/[^\s]+/.test(part)) {
-      if (isYouTubeUrl(part)) return;
-      const a = document.createElement('a');
-      a.href = part;
-      a.textContent = part;
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.style.color = style.color || '#00aaff';
-      a.style.textDecoration = 'underline';
-      messageText.appendChild(a);
+      if (isAdminWithPassword || isYouTubeUrl(part)) {
+        const a = document.createElement('a');
+        a.href = part;
+        a.textContent = part;
+        a.target = '_blank';
+        a.rel = 'noopener noreferrer';
+        a.style.color = style.color || '#00aaff';
+        a.style.textDecoration = 'underline';
+        messageText.appendChild(a);
+      } else {
+        messageText.appendChild(document.createTextNode('coco'));
+      }
     } else if (part.trim() !== '') {
       messageText.appendChild(document.createTextNode(part));
     }
   });
 
-  // Ajout pseudo et texte (même vide)
   if (msg.username !== 'Système') {
     newMessage.appendChild(usernameSpan);
   } else {
@@ -2118,34 +2122,26 @@ function addMessageToChat(msg) {
   chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
+// Envoi de message
 document.getElementById('send-button').addEventListener('click', () => {
   const input = document.getElementById('message-input');
   const message = input.value.trim();
   if (!message) return;
 
   const style = {};
-
   const colorInput = document.getElementById('style-color');
-  if (colorInput && colorInput.value && colorInput.value !== '#ffffff') {
-    style.color = colorInput.value;
-  }
-
-  if (document.getElementById('style-bold')?.checked) {
-    style.bold = true;
-  }
-
-  if (document.getElementById('style-italic')?.checked) {
-    style.italic = true;
-  }
-
+  if (colorInput && colorInput.value && colorInput.value !== '#ffffff') style.color = colorInput.value;
+  if (document.getElementById('style-bold')?.checked) style.bold = true;
+  if (document.getElementById('style-italic')?.checked) style.italic = true;
   const font = document.getElementById('style-font')?.value;
-  if (font) {
-    style.font = font;
-  }
+  if (font) style.font = font;
 
-  socket.emit('chat message', { message, style });
+  const password = localStorage.getItem('adminPassword'); // Si admin, envoyer le mot de passe
+  socket.emit('chat message', { message, style, password });
+
   input.value = '';
 });
+
 
 
 
