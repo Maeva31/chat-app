@@ -1670,7 +1670,7 @@ if (usernameInput && passwordInput) {
     "Hentai": "🔞",
     "Lesbienne": "🔞",
     "Gay": "🔞",
-    "Trans Gif": "🔞"
+    "TransGif": "🔞"
   };
 
   // Affiche la modal si pas de pseudo
