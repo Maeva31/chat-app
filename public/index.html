@@ -289,6 +289,25 @@
     </div>
   </div>
 
+    <script>
+document.addEventListener("DOMContentLoaded", () => {
+  const modal = document.getElementById("myModal");
+  const submitBtn = document.getElementById("username-submit");
+
+  // Tous les champs de la modal
+  const inputs = modal.querySelectorAll("input, select");
+
+  inputs.forEach(input => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault(); // empêche la soumission par défaut
+        submitBtn.click(); // clic sur le bouton valider
+      }
+    });
+  });
+});
+</script>
+
   <!-- Wrapper principal -->
    <div id="chat-wrapper">
   <main>
