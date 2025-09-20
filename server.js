@@ -69,7 +69,7 @@ try {
 }
 
 const defaultRooms = ['Général', 'Musique', 'Gaming', 'Célibataire', 'Détente', 'Insultes'];
-const protectedRooms = ['Lesbiennes', 'GayGay', 'TransGirl', 'Paris', 'Reims', 'Lyon', 'Marseille', 'Montpellier', 'Nice', 'Toulouse', 'Sexe', 'Amateur'];
+const protectedRooms = ['Lesbiennes', 'GayGay', 'TransGirl', 'Paris', 'Reims', 'Lyon', 'Marseille', 'Montpellier', 'Nice', 'Toulouse', 'Sexe', 'Amateur', 'Hentai', 'Lesbienne', 'Gay', 'Trans Gif'];
 
 
 let roomList = [];
