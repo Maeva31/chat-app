@@ -238,6 +238,38 @@ if (typeof socket !== 'undefined') {
 }
 
 
+// ── Blacklist MP (stockée en localStorage) ──
+function loadMPBlacklist() {
+  try {
+    const raw = localStorage.getItem('mpBlacklist');
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    console.warn('Erreur parse mpBlacklist', e);
+    return [];
+  }
+}
+function saveMPBlacklist(list) {
+  localStorage.setItem('mpBlacklist', JSON.stringify(list));
+}
+function isBlacklisted(username) {
+  if (!username) return false;
+  const list = loadMPBlacklist();
+  return list.includes(username);
+}
+function addToBlacklist(username) {
+  if (!username) return;
+  const list = loadMPBlacklist();
+  if (!list.includes(username)) {
+    list.push(username);
+    saveMPBlacklist(list);
+  }
+}
+function removeFromBlacklist(username) {
+  if (!username) return;
+  let list = loadMPBlacklist();
+  list = list.filter(u => u !== username);
+  saveMPBlacklist(list);
+}
 
 
 
@@ -458,6 +490,15 @@ function openPrivateChat(username, role, gender) {
     return;
   }
 
+// Après création de la fenêtre privée (dans openPrivateChat)
+if (isBlacklisted(username)) {
+  addMessageToChat({
+    username: 'Système',
+    message: `🔒 ${username} est actuellement bloqué. Cliquez sur "Débloquer" pour autoriser à nouveau ses MP.`,
+    timestamp: Date.now()
+  }, true); // true = privé
+}
+
 
   
   // ✅ Récupération des infos utilisateur si manquantes
@@ -552,6 +593,29 @@ minimizeBtn.title = 'Réduire';
 const closeBtn = document.createElement('button');
 closeBtn.textContent = '×';
 closeBtn.title = 'Fermer';
+
+// Bouton Bloquer / Débloquer
+const blockBtn = document.createElement('button');
+function updateBlockBtn() {
+  const blocked = isBlacklisted(username);
+  blockBtn.textContent = blocked ? 'Débloquer' : 'Bloquer';
+  blockBtn.title = blocked ? `Débloquer ${username}` : `Bloquer ${username}`;
+}
+updateBlockBtn();
+
+blockBtn.addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (isBlacklisted(username)) {
+    removeFromBlacklist(username);
+    addMessageToChat({ username: 'Système', message: `🔓 ${username} a été débloqué.`, timestamp: Date.now() }, true);
+  } else {
+    addToBlacklist(username);
+    addMessageToChat({ username: 'Système', message: `🔒 ${username} a été bloqué.`, timestamp: Date.now() }, true);
+  }
+  updateBlockBtn();
+});
+buttonGroup.appendChild(blockBtn);
+
 
 // Appliquer un style uniforme à chaque bouton
 [minimizeBtn, closeBtn].forEach(btn => {
@@ -717,20 +781,15 @@ header.append(title, buttonGroup);
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
     // Initialisation son unique en haut du script
-        // WIZZZ
-function getCurrentTimeString() {
-  const now = new Date();
-  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-}
-
-const wiizzSound = new Audio('/wizz.mp3');
-const wiizzCooldowns = new Map();       // Pour éviter d'en envoyer trop souvent
-const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souvent
-
 // Réception d’un Wiizz
 socket.on('private wiizz', ({ from }) => {
   const myUsername = localStorage.getItem('username');
   if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
+
+  // 🚫 Vérifie si l'expéditeur est dans la blacklist
+  if (isBlacklisted(from)) {
+    return; // On ignore totalement le Wiizz si la personne est bloquée
+  }
 
   const now = Date.now();
   const lastTime = lastWiizzReceived.get(from) || 0;
@@ -742,8 +801,6 @@ socket.on('private wiizz', ({ from }) => {
     win = createPrivateChatWindow(from);
     container.appendChild(win);
   }
-
-  
 
   triggerWiizzEffect(win);
 
@@ -759,6 +816,7 @@ socket.on('private wiizz', ({ from }) => {
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
 });
+
 
 
 // Affiche une bannière temporaire de cooldown
@@ -1222,10 +1280,16 @@ function appendPrivateMessage(bodyElem, from, text, role, gender, style = null) 
     openPrivateChat(username, userObj.role, userObj.gender);
   });
 
-  // ── 6) Réception message privé ──
+// ── 6) Réception message privé ──
 socket.on('private message', ({ from, message, role, gender, style }) => {
   const myUsername = localStorage.getItem('username');
   if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
+
+  // 🚫 Vérifie si l'expéditeur est dans la blacklist
+  if (isBlacklisted(from)) {
+    // On ignore le message mais on laisse la possibilité d'ouvrir le MP pour débloquer
+    return;
+  }
 
   const container = document.getElementById('private-chat-container');
   let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
@@ -1244,129 +1308,135 @@ socket.on('private message', ({ from, message, role, gender, style }) => {
 });
 
 
-  // ── 7) Réception fichier privé ──
+
+// ── 7) Réception fichier privé ──
 socket.on('private file', ({ from, filename, mimetype, data, role, gender }) => {
   const myUsername = localStorage.getItem('username');
   if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
-    const container = document.getElementById('private-chat-container');
-    if (!container) return;
 
-    let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-    if (!win) {
-      const userObj = userCache[from] || {};
-      openPrivateChat(from, userObj.role, userObj.gender);
-      win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
-      if (!win) return;
+  // 🚫 Vérifie si l'expéditeur est dans la blacklist
+  if (isBlacklisted(from)) {
+    return; // On ignore totalement le fichier si la personne est bloquée
+  }
+
+  const container = document.getElementById('private-chat-container');
+  if (!container) return;
+
+  let win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+  if (!win) {
+    const userObj = userCache[from] || {};
+    openPrivateChat(from, userObj.role, userObj.gender);
+    win = container.querySelector(`.private-chat-window[data-user="${from}"]`);
+    if (!win) return;
+  }
+
+  const body = win.querySelector('.private-chat-body');
+
+  const msgDiv = document.createElement('div');
+  msgDiv.style.margin = '4px 0';
+
+  const who = document.createElement('span');
+  who.style.fontWeight = 'bold';
+  who.style.marginRight = '4px';
+  who.style.display = 'inline-flex';
+  who.style.alignItems = 'center';
+
+  let userRole = role;
+  let userGender = gender;
+  if (!userRole || !userGender) {
+    const cachedUser = userCache[from];
+    if (cachedUser) {
+      userRole = userRole || cachedUser.role;
+      userGender = userGender || cachedUser.gender;
     }
+  }
 
-    const body = win.querySelector('.private-chat-body');
+  const icon = createRoleIcon(userRole);
+  if (icon) who.appendChild(icon);
 
-    const msgDiv = document.createElement('div');
-    msgDiv.style.margin = '4px 0';
+  who.appendChild(document.createTextNode(from + ': '));
+  who.style.color = userRole === 'admin' ? usernameColors.admin
+               : userRole === 'modo' ? usernameColors.modo
+               : (usernameColors[userGender] || usernameColors.default);
 
-    const who = document.createElement('span');
-    who.style.fontWeight = 'bold';
-    who.style.marginRight = '4px';
-    who.style.display = 'inline-flex';
-    who.style.alignItems = 'center';
+  msgDiv.appendChild(who);
 
-    let userRole = role;
-    let userGender = gender;
-    if (!userRole || !userGender) {
-      const cachedUser = userCache[from];
-      if (cachedUser) {
-        userRole = userRole || cachedUser.role;
-        userGender = userGender || cachedUser.gender;
-      }
-    }
-
-    const icon = createRoleIcon(userRole);
-    if (icon) who.appendChild(icon);
-
-    who.appendChild(document.createTextNode(from + ': '));
-    who.style.color = userRole === 'admin' ? usernameColors.admin
-                 : userRole === 'modo' ? usernameColors.modo
-                 : (usernameColors[userGender] || usernameColors.default);
-
-    msgDiv.appendChild(who);
-
-    // Affichage fichier
-    if (mimetype.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.src = `data:${mimetype};base64,${data}`;
-      img.style.maxWidth = '150px';
-      img.classList.add('media-hover');
-      img.style.cursor = 'pointer';
-      img.style.border = '2px solid #007bff';
-      img.style.borderRadius = '8px';
-      img.style.padding = '4px';
-      img.addEventListener('click', () => {
-        const newWin = window.open();
-        if (newWin) {
-          newWin.document.write(`
-            <html><head><title>${filename}</title></head>
-            <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
-            <img src="${img.src}" alt="${filename}" style="max-width:100vw;max-height:100vh;" />
-            </body></html>
-          `);
-          newWin.document.close();
-        } else {
-          alert('Impossible d’ouvrir un nouvel onglet. Vérifie le bloqueur de popups.');
-        }
-      });
-      msgDiv.appendChild(img);
-
-    } else if (mimetype.startsWith('audio/')) {
-      const audio = document.createElement('audio');
-      audio.controls = true;
-      audio.src = `data:${mimetype};base64,${data}`;
-      audio.style.marginTop = '4px';
-      audio.style.border = '2px solid #007bff';
-      audio.style.borderRadius = '8px';
-      audio.style.padding = '4px';
-      audio.style.backgroundColor = '#212529';
-      msgDiv.appendChild(audio);
-
-        const darkMode = true;
-
-      if (darkMode) {
-        audio.style.backgroundColor = '#212529';
-        audio.style.border = '2px solid #007bff';
-        audio.style.color = '#fff';
+  // Affichage fichier
+  if (mimetype.startsWith('image/')) {
+    const img = document.createElement('img');
+    img.src = `data:${mimetype};base64,${data}`;
+    img.style.maxWidth = '150px';
+    img.classList.add('media-hover');
+    img.style.cursor = 'pointer';
+    img.style.border = '2px solid #007bff';
+    img.style.borderRadius = '8px';
+    img.style.padding = '4px';
+    img.addEventListener('click', () => {
+      const newWin = window.open();
+      if (newWin) {
+        newWin.document.write(`
+          <html><head><title>${filename}</title></head>
+          <body style="margin:0;display:flex;justify-content:center;align-items:center;background:#000;">
+          <img src="${img.src}" alt="${filename}" style="max-width:100vw;max-height:100vh;" />
+          </body></html>
+        `);
+        newWin.document.close();
       } else {
-        audio.style.backgroundColor = '#343a40';
-        audio.style.border = '2px solid #007bff';
-        audio.style.color = '#000';
+        alert('Impossible d’ouvrir un nouvel onglet. Vérifie le bloqueur de popups.');
       }
+    });
+    msgDiv.appendChild(img);
 
+  } else if (mimetype.startsWith('audio/')) {
+    const audio = document.createElement('audio');
+    audio.controls = true;
+    audio.src = `data:${mimetype};base64,${data}`;
+    audio.style.marginTop = '4px';
+    audio.style.border = '2px solid #007bff';
+    audio.style.borderRadius = '8px';
+    audio.style.padding = '4px';
+    audio.style.backgroundColor = '#212529';
+    msgDiv.appendChild(audio);
 
-    } else if (mimetype.startsWith('video/')) {
-      const video = document.createElement('video');
-      video.controls = true;
-      video.src = `data:${mimetype};base64,${data}`;
-      video.style.maxWidth = '300px';
-      video.classList.add('media-hover');
-      video.style.maxHeight = '300px';
-      video.style.marginTop = '4px';
-      video.style.border = '2px solid #007bff';
-      video.style.borderRadius = '8px';
-      video.style.padding = '4px';
-      msgDiv.appendChild(video);
+    const darkMode = true;
 
+    if (darkMode) {
+      audio.style.backgroundColor = '#212529';
+      audio.style.border = '2px solid #007bff';
+      audio.style.color = '#fff';
     } else {
-      const link = document.createElement('a');
-      link.href = `data:${mimetype};base64,${data}`;
-      link.download = filename;
-      link.textContent = `📎 ${filename}`;
-      link.target = '_blank';
-      link.style.display = 'inline-block';
-      link.style.marginTop = '4px';
-      msgDiv.appendChild(link);
+      audio.style.backgroundColor = '#343a40';
+      audio.style.border = '2px solid #007bff';
+      audio.style.color = '#000';
     }
 
-    body.appendChild(msgDiv);
-    body.scrollTop = body.scrollHeight;
-  });
+  } else if (mimetype.startsWith('video/')) {
+    const video = document.createElement('video');
+    video.controls = true;
+    video.src = `data:${mimetype};base64,${data}`;
+    video.style.maxWidth = '300px';
+    video.classList.add('media-hover');
+    video.style.maxHeight = '300px';
+    video.style.marginTop = '4px';
+    video.style.border = '2px solid #007bff';
+    video.style.borderRadius = '8px';
+    video.style.padding = '4px';
+    msgDiv.appendChild(video);
+
+  } else {
+    const link = document.createElement('a');
+    link.href = `data:${mimetype};base64,${data}`;
+    link.download = filename;
+    link.textContent = `📎 ${filename}`;
+    link.target = '_blank';
+    link.style.display = 'inline-block';
+    link.style.marginTop = '4px';
+    msgDiv.appendChild(link);
+  }
+
+  body.appendChild(msgDiv);
+  body.scrollTop = body.scrollHeight;
+});
 });
 
 
