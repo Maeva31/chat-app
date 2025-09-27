@@ -605,6 +605,20 @@ updateBlockBtn();
 
 blockBtn.addEventListener('click', (e) => {
   e.stopPropagation();
+
+  // ⚠️ Vérifier si l'utilisateur est admin ou modo
+  const userObj = userCache[username] || {};
+  const userRole = userObj.role || role; // si "role" est passé à openPrivateChat
+  if (userRole === 'admin' || userRole === 'modo') {
+    addMessageToChat({
+      username: 'Système',
+      message: `⚠️ ${username} est ${userRole}, il ne peut pas être bloqué.`,
+      timestamp: Date.now()
+    }, true);
+    return;
+  }
+
+  // --- comportement normal si utilisateur classique ---
   if (isBlacklisted(username)) {
     removeFromBlacklist(username);
     addMessageToChat({ username: 'Système', message: `🔓 ${username} a été débloqué.`, timestamp: Date.now() }, true);
@@ -612,9 +626,12 @@ blockBtn.addEventListener('click', (e) => {
     addToBlacklist(username);
     addMessageToChat({ username: 'Système', message: `🔒 ${username} a été bloqué.`, timestamp: Date.now() }, true);
   }
+
   updateBlockBtn();
 });
+
 buttonGroup.appendChild(blockBtn);
+
 
 
 // Appliquer un style uniforme à chaque bouton
