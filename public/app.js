@@ -605,20 +605,6 @@ updateBlockBtn();
 
 blockBtn.addEventListener('click', (e) => {
   e.stopPropagation();
-
-  // ⚠️ Vérifier si l'utilisateur est admin ou modo
-  const userObj = userCache[username] || {};
-  const userRole = userObj.role || role; // si "role" est passé à openPrivateChat
-  if (userRole === 'admin' || userRole === 'modo') {
-    addMessageToChat({
-      username: 'Système',
-      message: `⚠️ ${username} est ${userRole}, il ne peut pas être bloqué.`,
-      timestamp: Date.now()
-    }, true);
-    return;
-  }
-
-  // --- comportement normal si utilisateur classique ---
   if (isBlacklisted(username)) {
     removeFromBlacklist(username);
     addMessageToChat({ username: 'Système', message: `🔓 ${username} a été débloqué.`, timestamp: Date.now() }, true);
@@ -626,12 +612,9 @@ blockBtn.addEventListener('click', (e) => {
     addToBlacklist(username);
     addMessageToChat({ username: 'Système', message: `🔒 ${username} a été bloqué.`, timestamp: Date.now() }, true);
   }
-
   updateBlockBtn();
 });
-
 buttonGroup.appendChild(blockBtn);
-
 
 
 // Appliquer un style uniforme à chaque bouton
@@ -798,15 +781,20 @@ header.append(title, buttonGroup);
     emojiPicker.addEventListener('click', e => e.stopPropagation());
 
     // Initialisation son unique en haut du script
+        // WIZZZ
+function getCurrentTimeString() {
+  const now = new Date();
+  return now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+const wiizzSound = new Audio('/wizz.mp3');
+const wiizzCooldowns = new Map();       // Pour éviter d'en envoyer trop souvent
+const lastWiizzReceived = new Map();    // Pour éviter d'en recevoir trop souvent
+
 // Réception d’un Wiizz
 socket.on('private wiizz', ({ from }) => {
   const myUsername = localStorage.getItem('username');
   if (from === myUsername || localStorage.getItem('blockPrivateMessages') === 'true') return;
-
-  // 🚫 Vérifie si l'expéditeur est dans la blacklist
-  if (isBlacklisted(from)) {
-    return; // On ignore totalement le Wiizz si la personne est bloquée
-  }
 
   const now = Date.now();
   const lastTime = lastWiizzReceived.get(from) || 0;
@@ -818,6 +806,8 @@ socket.on('private wiizz', ({ from }) => {
     win = createPrivateChatWindow(from);
     container.appendChild(win);
   }
+
+  
 
   triggerWiizzEffect(win);
 
@@ -833,7 +823,6 @@ socket.on('private wiizz', ({ from }) => {
   body.appendChild(msgDiv);
   body.scrollTop = body.scrollHeight;
 });
-
 
 
 // Affiche une bannière temporaire de cooldown
